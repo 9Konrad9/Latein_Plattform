@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ludī Rōmānī - Die Latein-Arena</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 10px;
+            background-image: radial-gradient(circle, #2d2d2d 1px, rgba(0, 0, 0, 0) 1px);
+            background-size: 30px 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-family: var(--font-display);
+            color: var(--roman-marble);
+            font-size: 1.2rem;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        /* Grid-Layout für die Spieleauswahl */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 900px;
+            padding: 10px;
+        }
+
+        /* Spiele-Kacheln */
+        .game-card {
+            background: var(--card-bg);
+            border: 3px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Kleiner Deko-Effekt für die Kacheln */
+        .game-card::before {
+            content: '🏛️';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 4rem;
+            opacity: 0.05;
+        }
+
+        .game-card h2 {
+            font-family: var(--font-display);
+            color: var(--roman-gold);
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .game-card p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .play-btn {
+            background-color: var(--roman-gold);
+            color: var(--roman-red);
+            font-family: var(--font-display);
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        /* Feedback beim Antippen auf dem iPad */
+        .play-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 5px rgba(212, 175, 55, 0.2);
+        }
+
+        .disabled-card {
+            opacity: 0.6;
+            border-style: dashed;
+        }
+
+        .disabled-btn {
+            background-color: #555;
+            color: #888;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Ludī Rōmānī</h1>
+        <div class="subtitle">Das digitale Trainingslager für junge Römer</div>
+    </header>
+
+    <div class="hub-grid">
+        <!-- KACHEL 1: Das Hauptspiel (Lektion 1-6) -->
+        <div class="game-card">
+            <div>
+                <h2>Circus Maximus</h2>
+                <p>Tritt im 5-Minuten-Dauermodus gegen die KI an! Gefragt werden Vokabeln, Genitive und die exakten Deklinations- & Konjugationsklassen der Lektionen 1 bis 6.</p>
+            </div>
+            <a href="zirkus_championship.html" class="play-btn">Rennen starten!</a>
+        </div>
+
+        <!-- KACHEL 2: Platzhalter für ein zukünftiges reines Grammatikspiel -->
+        <div class="game-card disabled-card">
+            <div>
+                <h2>Formen-Kastell</h2>
+                <p>Beschütze das römische Lager, indem du die richtigen Endungen der konsonantischen Konjugation und Deklination blitzschnell zuordnest.</p>
+            </div>
+            <button class="play-btn disabled-btn" disabled>Bald verfügbar</button>
+        </div>
+
+        <!-- KACHEL 3: Platzhalter für ein zukünftiges Geschichts-/Kulturrätsel -->
+        <div class="game-card disabled-card">
+            <div>
+                <h2>Forum Romanum</h2>
+                <p>Ein interaktives Text-Abenteuer. Nutze dein Lateinwissen, um einen mysteriösen Diebstahl auf dem Marktplatz aufzuklären.</p>
+            </div>
+            <button class="play-btn disabled-btn" disabled>Bald verfügbar</button>
+        </div>
+    </div>
+
+</body>
+</html>

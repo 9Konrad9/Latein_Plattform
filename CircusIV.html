@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Circus Maximus - Championship Edition</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --text-dark: #1a1a1a;
+
+            --faction-russata: #cc0000;
+            --faction-albata: #e0e0e0;
+            --faction-prasina: #008800;
+            --faction-veneta: #0000cc;
+
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle, #2d2d2d 1px, rgba(0, 0, 0, 0) 1px);
+            background-size: 30px 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            color: var(--roman-marble);
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            background: #222;
+            border: 2px solid var(--roman-bronze);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .timer-box { color: #ffcc00; }
+        .score-box { color: var(--roman-marble); }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 5px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        #setup-screen {
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .faction-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .faction-btn {
+            padding: 25px;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        #btn-russata { background-color: var(--faction-russata); }
+        #btn-albata { background-color: var(--faction-albata); color: var(--text-dark); text-shadow: none; }
+        #btn-prasina { background-color: var(--faction-prasina); }
+        #btn-veneta { background-color: var(--faction-veneta); }
+
+        .faction-btn.selected {
+            border-color: var(--roman-gold);
+            box-shadow: 0 0 20px var(--roman-gold);
+        }
+
+        .track-container {
+            position: relative;
+            background: #cdb293; 
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="1" height="1" fill="%238b5a2b" opacity="0.3"/></svg>');
+            border: 8px solid #8b5a2b;
+            border-radius: 60px;
+            height: 180px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        .spina {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 65%;
+            height: 35px;
+            background: #c0c0c0;
+            border: 3px solid #555;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #333;
+            font-family: var(--font-display);
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+
+        .chariot {
+            position: absolute;
+            width: 32px;
+            height: 24px;
+            border-radius: 4px;
+            transition: all 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+            border: 2px solid #ccc;
+        }
+
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .question-box {
+            background: rgba(240, 230, 210, 0.1);
+            border-left: 6px solid var(--roman-gold);
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .question-box .question-type {
+            font-size: 0.9rem;
+            color: var(--roman-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .question-box .latin-word {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--roman-marble);
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .option-btn {
+            background-color: var(--card-bg);
+            border: 3px solid var(--roman-bronze);
+            color: var(--roman-marble);
+            padding: 20px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-btn:not(:disabled):active {
+            transform: translateY(2px);
+        }
+
+        .round-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 12px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .start-btn {
+            background-color: var(--roman-gold);
+            color: var(--roman-red);
+            font-family: var(--font-display);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .correct { background-color: #4CAF50 !important; border-color: #4CAF50 !important; color: white !important; }
+        .wrong { background-color: #F44336 !important; border-color: #F44336 !important; color: white !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Circus Maximus</h1>
+    </header>
+
+    <div class="status-bar" id="status-bar" style="display:none;">
+        <div class="timer-box">⏳ Zeit: <span id="timer-display">5:00</span></div>
+        <div class="score-box">🏆 Deine Siege: <span id="player-wins">0</span> | Gegner-Siege: <span id="ai-wins">0</span></div>
+    </div>
+
+    <div class="game-container">
+        <div class="round-overlay" id="round-overlay">
+            <h2 id="overlay-title">Rundenende</h2>
+            <p id="overlay-msg" style="font-size: 1.2rem; margin: 15px 0;"></p>
+            <button class="start-btn" onclick="nextRace()">Nächstes Rennen!</button>
+        </div>
+
+        <div id="setup-screen">
+            <h2>Wähle deine Factio:</h2>
+            <div class="faction-grid">
+                <button class="faction-btn" id="btn-russata" onclick="selectFaction('russata')">russata (rot)</button>
+                <button class="faction-btn" id="btn-albata" onclick="selectFaction('albata')">albata (weiß)</button>
+                <button class="faction-btn" id="btn-prasina" onclick="selectFaction('prasina')">prasina (grün)</button>
+                <button class="faction-btn" id="btn-veneta" onclick="selectFaction('veneta')">veneta (blau)</button>
+            </div>
+            <p style="color: #aaa; font-style: italic;">Das Spiel dauert genau 5 Minuten. Gewinne so viele Rennen wie möglich!</p>
+            <button class="start-btn" id="start-race-btn" style="display:none;" onclick="startGameSession()">Meisterschaft starten!</button>
+        </div>
+
+        <div id="race-screen" style="display:none;">
+            <div class="track-container">
+                <div class="spina">SPINA</div>
+                <div class="chariot" id="chariot-russata" style="background:var(--faction-russata); color: white;">r</div>
+                <div class="chariot" id="chariot-albata" style="background:var(--faction-albata); color: var(--text-dark);">a</div>
+                <div class="chariot" id="chariot-prasina" style="background:var(--faction-prasina); color: white;">p</div>
+                <div class="chariot" id="chariot-veneta" style="background:var(--faction-veneta); color: white;">v</div>
+            </div>
+
+            <div class="quiz-container">
+                <div class="question-box">
+                    <div class="question-type" id="q-type">Frage</div>
+                    <div class="latin-word" id="q-latin">---</div>
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" id="opt0" onclick="checkAnswer(0)">-</button>
+                    <button class="option-btn" id="opt1" onclick="checkAnswer(1)">-</button>
+                    <button class="option-btn" id="opt2" onclick="checkAnswer(2)">-</button>
+                    <button class="option-btn" id="opt3" onclick="checkAnswer(3)">-</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="end-screen" style="display:none; text-align:center; padding: 20px 10px;">
+            <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold);">MEISTERSCHAFT BEENDET</h2>
+            <p id="end-msg" style="margin: 20px 0; font-size: 1.3rem; line-height: 1.6;"></p>
+            <button class="start-btn" onclick="resetGame()">Neue Meisterschaft</button>
+        </div>
+    </div>
+
+    <script>
+        // DER KOMPLETTE VOKABELSCHATZ (LEKTION 1 - 6) - JETZT VOLLSTÄNDIG KLEINGESCHRIEBEN
+        const vocabularyPool = [
+            // Vorlektion: Salve!
+            { latin: "salvē!", type: "other", middle: "Ausruf", gram_clue: "", gram_class: "", meaning: "Sei begrüßt!" },
+            { latin: "pater", type: "noun", middle: "patris m.", gram_clue: "Genitiv: patris, m.", gram_class: "konsonantische Deklination", meaning: "der Vater" },
+            { latin: "māter", type: "noun", middle: "mātris f.", gram_clue: "Genitiv: mātris, f.", gram_class: "konsonantische Deklination", meaning: "die Mutter" },
+            { latin: "fīlius", type: "noun", middle: "fīliī m.", gram_clue: "Genitiv: fīliī, m.", gram_class: "o-Deklination", meaning: "der Sohn" },
+            { latin: "fīlia", type: "noun", middle: "fīliae f.", gram_clue: "Genitiv: fīliae, f.", gram_class: "a-Deklination", meaning: "die Tochter" },
+            { latin: "avus", type: "noun", middle: "avī m.", gram_clue: "Genitiv: avī, m.", gram_class: "o-Deklination", meaning: "der Großvater" },
+            { latin: "servus", type: "noun", middle: "servī m.", gram_clue: "Genitiv: servī, m.", gram_class: "o-Deklination", meaning: "der Sklave" },
+            { latin: "serva", type: "noun", middle: "servae f.", gram_clue: "Genitiv: servae, f.", gram_class: "a-Deklination", meaning: "die Sklavin" },
+            { latin: "catella", type: "noun", middle: "catellae f.", gram_clue: "Genitiv: catellae, f.", gram_class: "a-Deklination", meaning: "das Hündchen" },
+            { latin: "hic", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "hier" },
+            { latin: "est", type: "verb", middle: "sum", gram_clue: "1. Pers. Sg.: sum", gram_class: "unregelmäßiges Verb", meaning: "er/sie/es ist; es gibt" },
+            { latin: "dominus", type: "noun", middle: "dominī m.", gram_clue: "Genitiv: dominī, m.", gram_class: "o-Deklination", meaning: "der Herr, der Hausherr" },
+            { latin: "clāmat", type: "verb", middle: "clāmō", gram_clue: "1. Pers. Sg.: clāmō", gram_class: "a-Konjugation", meaning: "er/sie/es ruft" },
+            { latin: "venit", type: "verb", middle: "veniō", gram_clue: "1. Pers. Sg.: veniō", gram_class: "i-Konjugation", meaning: "er/sie/es kommt" },
+            { latin: "domina", type: "noun", middle: "dominae f.", gram_clue: "Genitiv: dominae, f.", gram_class: "a-Deklination", meaning: "die Hausherrin" },
+            { latin: "labōrat", type: "verb", middle: "labōrō", gram_clue: "1. Pers. Sg.: labōrō", gram_class: "a-Konjugation", meaning: "er/sie/es arbeitet" },
+            { latin: "lūdit", type: "verb", middle: "lūdō", gram_clue: "1. Pers. Sg.: lūdō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es spielt" },
+            { latin: "cantat", type: "verb", middle: "cantō", gram_clue: "1. Pers. Sg.: cantō", gram_class: "a-Konjugation", meaning: "er/sie/es singt" },
+            { latin: "et", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "und" },
+            { latin: "gaudet", type: "verb", middle: "gaudeō", gram_clue: "1. Pers. Sg.: gaudeō", gram_class: "e-Konjugation", meaning: "er/sie/es freut sich" },
+            { latin: "currit", type: "verb", middle: "currō", gram_clue: "1. Pers. Sg.: currō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es läuft" },
+
+            // Lektion 1
+            { latin: "nam", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "denn" },
+            { latin: "hodiē", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "heute" },
+            { latin: "familia", type: "noun", middle: "familiae f.", gram_clue: "Genitiv: familiae, f.", gram_class: "a-Deklination", meaning: "die Familie, Hausgemeinschaft" },
+            { latin: "exspectat", type: "verb", middle: "exspectō", gram_clue: "1. Pers. Sg.: exspectō", gram_class: "a-Konjugation", meaning: "er/sie/es erwartet" },
+            { latin: "subitō", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "plötzlich" },
+            { latin: "clāmor", type: "noun", middle: "clāmōris m.", gram_clue: "Genitiv: clāmōris, m.", gram_class: "konsonantische Deklination", meaning: "der Lärm, das Geschrei" },
+            { latin: "audit", type: "verb", middle: "audiō", gram_clue: "1. Pers. Sg.: audiō", gram_class: "i-Konjugation", meaning: "er/sie/es hört (zu)" },
+            { latin: "rogat", type: "verb", middle: "rogō", gram_clue: "1. Pers. Sg.: rogō", gram_class: "a-Konjugation", meaning: "er/sie/es fragt" },
+            { latin: "quid?", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "was?" },
+            { latin: "quaerit", type: "verb", middle: "quaerō", gram_clue: "1. Pers. Sg.: quaerō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es sucht" },
+            { latin: "nōn", type: "other", middle: "Negation", gram_clue: "", gram_class: "", meaning: "nicht" },
+            { latin: "videt", type: "verb", middle: "videō", gram_clue: "1. Pers. Sg.: videō", gram_class: "e-Konjugation", meaning: "er/sie/es sieht" },
+            { latin: "sed", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "aber, sondern" },
+            { latin: "ubi?", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "wo?" },
+            { latin: "ecce!", type: "other", middle: "Ausruf", gram_clue: "", gram_class: "", meaning: "sieh(e) da!" },
+            { latin: "intrat", type: "verb", middle: "intrō", gram_clue: "1. Pers. Sg.: intrō", gram_class: "a-Konjugation", meaning: "er/sie/es betritt" },
+            { latin: "tum", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "dann, darauf" },
+            { latin: "ibi", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "dort" },
+            { latin: "nunc", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "nun, jetzt" },
+            { latin: "etiam", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "auch" },
+            { latin: "ridet", type: "verb", middle: "rīdeō", gram_clue: "1. Pers. Sg.: rīdeō", gram_class: "e-Konjugation", meaning: "er/sie/es lacht" },
+            { latin: "tenet", type: "verb", middle: "teneō", gram_clue: "1. Pers. Sg.: teneō", gram_class: "e-Konjugation", meaning: "er/sie/es hält" },
+
+            // Lektion 2
+            { latin: "amāre", type: "verb", middle: "amō", gram_clue: "1. Pers. Sg.: amō", gram_class: "a-Konjugation", meaning: "lieben, mögen" },
+            { latin: "soror", type: "noun", middle: "sorōris f.", gram_clue: "Genitiv: sorōris, f.", gram_class: "konsonantische Deklination", meaning: "die Schwester" },
+            { latin: "respondēre", type: "verb", middle: "respondeō", gram_clue: "1. Pers. Sg.: respondeō", gram_class: "e-Konjugation", meaning: "antworten" },
+            { latin: "iterum", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "wieder" },
+            { latin: "statim", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "sofort" },
+            { latin: "puer", type: "noun", middle: "puerī m.", gram_clue: "Genitiv: puerī, m.", gram_class: "o-Deklination", meaning: "das Kind, der Junge" },
+            { latin: "puella", type: "noun", middle: "puellae f.", gram_clue: "Genitiv: puellae, f.", gram_class: "a-Deklination", meaning: "das Mädchen" },
+            { latin: "frāter", type: "noun", middle: "frātris m.", gram_clue: "Genitiv: frātris, m.", gram_class: "konsonantische Deklination", meaning: "der Bruder" },
+            { latin: "itaque", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "deshalb" },
+            { latin: "sunt", type: "verb", middle: "sum", gram_clue: "1. Pers. Sg.: sum", gram_class: "unregelmäßiges Verb", meaning: "sie sind" },
+            { latin: "culīna", type: "noun", middle: "culīnae f.", gram_clue: "Genitiv: culīnae, f.", gram_class: "a-Deklination", meaning: "die Küche" },
+            { latin: "dēbēre", type: "verb", middle: "dēbeō", gram_clue: "1. Pers. Sg.: dēbeō", gram_class: "e-Konjugation", meaning: "müssen" },
+            { latin: "adhūc", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "bis jetzt, noch" },
+            { latin: "illīc", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "dort" },
+            { latin: "līberī", type: "noun", middle: "līberōrum m. pl.", gram_clue: "Genitiv: līberōrum, m. pl.", gram_class: "o-Deklination", meaning: "die Kinder" },
+            { latin: "vir", type: "noun", middle: "virī m.", gram_clue: "Genitiv: virī, m.", gram_class: "o-Deklination", meaning: "der Mann" },
+            { latin: "ātrium", type: "noun", middle: "ātriī n.", gram_clue: "Genitiv: ātriī, n.", gram_class: "o-Deklination", meaning: "das Atrium" },
+            { latin: "ōtium", type: "noun", middle: "ōtiī n.", gram_clue: "Genitiv: ōtiī, n.", gram_class: "o-Deklination", meaning: "die Ruhe, Freizeit" },
+            { latin: "parentēs", type: "noun", middle: "parentum m. pl.", gram_clue: "Genitiv: parentum, m. pl.", gram_class: "konsonantische Deklination", meaning: "die Eltern" },
+            { latin: "peristýlium", type: "noun", middle: "peristýliī n.", gram_clue: "Genitiv: peristýliī, n.", gram_class: "o-Deklination", meaning: "das Peristyl" },
+            { latin: "officium", type: "noun", middle: "officiī n.", gram_clue: "Genitiv: officiī, n.", gram_class: "o-Deklination", meaning: "die Pflicht" },
+            { latin: "explēre", type: "verb", middle: "expleō", gram_clue: "1. Pers. Sg.: expleō", gram_class: "e-Konjugation", meaning: "erfüllen" },
+            { latin: "dīcere", type: "verb", middle: "dīcō", gram_clue: "1. Pers. Sg.: dīcō", gram_class: "konsonantische Konjugation", meaning: "sagen" },
+            { latin: "cūr?", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "warum?" },
+            { latin: "semper", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "immer" },
+            { latin: "placēre", type: "verb", middle: "placeō", gram_clue: "1. Pers. Sg.: placeō", gram_class: "e-Konjugation", meaning: "gefallen, Spaß machen" },
+            { latin: "labor", type: "noun", middle: "labōris m.", gram_clue: "Genitiv: labōris, m.", gram_class: "konsonantische Deklination", meaning: "die Mühe, Arbeit" },
+            { latin: "neglegere", type: "verb", middle: "neglegō", gram_clue: "1. Pers. Sg.: neglegō", gram_class: "konsonantische Konjugation", meaning: "vernachlässigen" },
+            { latin: "pergere", type: "verb", middle: "pergō", gram_clue: "1. Pers. Sg.: pergō", gram_class: "konsonantische Konjugation", meaning: "etw. weiter tun" },
+
+            // Lektion 3
+            { latin: "equus", type: "noun", middle: "equī m.", gram_clue: "Genitiv: equī, m.", gram_class: "o-Deklination", meaning: "das Pferd" },
+            { latin: "ego / mē", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "ich / mich" },
+            { latin: "tū / tē", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "du / dich" },
+            { latin: "nōs", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "wir / uns" },
+            { latin: "vōs", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "ihr / euch" },
+            { latin: "canis", type: "noun", middle: "canis m.", gram_clue: "Genitiv: canis, m.", gram_class: "konsonantische Deklination", meaning: "der Hund" },
+            { latin: "dēlectāre", type: "verb", middle: "dēlectō", gram_clue: "1. Pers. Sg.: dēlectō", gram_class: "a-Konjugation", meaning: "erfreuen" },
+            { latin: "bōs", type: "noun", middle: "bovis m.", gram_clue: "Genitiv: bovis, m.", gram_class: "konsonantische Deklination", meaning: "das Rind, der Ochse" },
+            { latin: "alere", type: "verb", middle: "alō", gram_clue: "1. Pers. Sg.: alō", gram_class: "konsonantische Konjugation", meaning: "nähren, ernähren" },
+            { latin: "paulō post", type: "other", middle: "Adverbiale", gram_clue: "", gram_class: "", meaning: "ein wenig später" },
+            { latin: "villa", type: "noun", middle: "villae f.", gram_clue: "Genitiv: villae, f.", gram_class: "a-Deklination", meaning: "das Landhaus" },
+            { latin: "salūtāre", type: "verb", middle: "salūtō", gram_clue: "1. Pers. Sg.: salūtō", gram_class: "a-Konjugation", meaning: "grüßen" },
+            { latin: "iam", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "schon, gleich" },
+            { latin: "uxor", type: "noun", middle: "uxōris f.", gram_clue: "Genitiv: uxōris, f.", gram_class: "konsonantische Deklination", meaning: "die Ehefrau" },
+            { latin: "cēna", type: "noun", middle: "cēnae f.", gram_clue: "Genitiv: cēnae, f.", gram_class: "a-Deklination", meaning: "die Mahlzeit, das Essen" },
+            { latin: "parāre", type: "verb", middle: "parō", gram_clue: "1. Pers. Sg.: parō", gram_class: "a-Konjugation", meaning: "vorbereiten, zubereiten" },
+            { latin: "adiuvāre", type: "verb", middle: "adiuvō", gram_clue: "1. Pers. Sg.: adiuvō", gram_class: "a-Konjugation", meaning: "unterstützen" },
+            { latin: "in (+ akk)", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "in (... hinein)" },
+            { latin: "properāre", type: "verb", middle: "properō", gram_clue: "1. Pers. Sg.: properō", gram_class: "a-Konjugation", meaning: "eilen, sich beeilen" },
+            { latin: "instruere", type: "verb", middle: "instruō", gram_clue: "1. Pers. Sg.: instruō", gram_class: "konsonantische Konjugation", meaning: "anweisen, unterrichten" },
+            { latin: "ante", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "vor" },
+            { latin: "agere", type: "verb", middle: "agō", gram_clue: "1. Pers. Sg.: agō", gram_class: "konsonantische Konjugation", meaning: "tun, handeln" },
+            { latin: "ad", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "zu (... hin)" },
+            { latin: "bene", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "gut" },
+            { latin: "caedere", type: "verb", middle: "caedō", gram_clue: "1. Pers. Sg.: caedō", gram_class: "konsonantische Konjugation", meaning: "töten, schlachten" },
+            { latin: "servāre", type: "verb", middle: "servō", gram_clue: "1. Pers. Sg.: servō", gram_class: "a-Konjugation", meaning: "retten" },
+            { latin: "certē", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "sicher, gewiss" },
+            { latin: "hortus", type: "noun", middle: "hortī m.", gram_clue: "Genitiv: hortī, m.", gram_class: "o-Deklination", meaning: "der Garten" },
+            { latin: "per", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "über, durch" },
+            { latin: "autem", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "aber" },
+            { latin: "obsecrāre", type: "verb", middle: "obsecrō", gram_clue: "1. Pers. Sg.: obsecrō", gram_class: "a-Konjugation", meaning: "anflehen" },
+            { latin: "igitur", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "also" },
+
+            // Lektion 4
+            { latin: "schola", type: "noun", middle: "scholae f.", gram_clue: "Genitiv: scholae, f.", gram_class: "a-Deklination", meaning: "die Schule" },
+            { latin: "dūcere", type: "verb", middle: "dūcō", gram_clue: "1. Pers. Sg.: dūcō", gram_class: "konsonantische Konjugation", meaning: "führen" },
+            { latin: "vocāre", type: "verb", middle: "vocō", gram_clue: "1. Pers. Sg.: vocō", gram_class: "a-Konjugation", meaning: "rufen" },
+            { latin: "magister", type: "noun", middle: "magistrī m.", gram_clue: "Genitiv: magistrī, m.", gram_class: "o-Deklination", meaning: "der Lehrer" },
+            { latin: "sedēre", type: "verb", middle: "sedeō", gram_clue: "1. Pers. Sg.: sedeō", gram_class: "e-Konjugation", meaning: "sitzen" },
+            // HIER KORRIGIERT: cōnsīdere mit kurzem e
+            { latin: "cōnsīdere", type: "verb", middle: "cōnsīdō", gram_clue: "1. Pers. Sg.: cōnsīdō", gram_class: "konsonantische Konjugation", meaning: "sich hinsetzen" },
+            { latin: "-que", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "und" },
+            { latin: "habēre", type: "verb", middle: "habeo", gram_clue: "1. Pers. Sg.: habeo", gram_class: "e-Konjugation", meaning: "haben, halten" },
+            { latin: "tabula", type: "noun", middle: "tabulae f.", gram_clue: "Genitiv: tabulae, f.", gram_class: "a-Deklination", meaning: "das Wachstäfelchen" },
+            { latin: "discipulus", type: "noun", middle: "discipulī m.", gram_clue: "Genitiv: discipulī, m.", gram_class: "o-Deklination", meaning: "der Schüler" },
+            { latin: "discipula", type: "noun", middle: "discipulae f.", gram_clue: "Genitiv: discipulae, f.", gram_class: "a-Deklination", meaning: "die Schülerin" },
+            { latin: "posse", type: "verb", middle: "possum", gram_clue: "1. Pers. Sg.: possum", gram_class: "unregelmäßiges Verb", meaning: "können" },
+            { latin: "discere", type: "verb", middle: "discō", gram_clue: "1. Pers. Sg.: discō", gram_class: "konsonantische Konjugation", meaning: "lernen" },
+            { latin: "scrībere", type: "verb", middle: "scrībō", gram_clue: "1. Pers. Sg.: scrībō", gram_class: "konsonantische Konjugation", meaning: "schreiben" },
+            { latin: "atque", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "und" },
+            { latin: "legere", type: "verb", middle: "legō", gram_clue: "1. Pers. Sg.: legō", gram_class: "konsonantische Konjugation", meaning: "lesen" },
+            { latin: "tacēre", type: "verb", middle: "taceō", gram_clue: "1. Pers. Sg.: taceō", gram_class: "e-Konjugation", meaning: "schweigen" },
+            { latin: "monēre", type: "verb", middle: "moneō", gram_clue: "1. Pers. Sg.: moneō", gram_class: "e-Konjugation", meaning: "ermahnen" },
+            { latin: "ita", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "so" },
+            { latin: "posteā", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "danach, später" },
+            { latin: "mōnstrāre", type: "verb", middle: "mōnstrō", gram_clue: "1. Pers. Sg.: mōnstrō", gram_class: "a-Konjugation", meaning: "zeigen" },
+            { latin: "ridēre", type: "verb", middle: "rideō", gram_clue: "1. Pers. Sg.: rideō", gram_class: "e-Konjugation", meaning: "lachen, auslachen" },
+            { latin: "domum", type: "other", middle: "Direktion", gram_clue: "", gram_class: "", meaning: "nach Hause" },
+            { latin: "pūnīre", type: "verb", middle: "pūniō", gram_clue: "1. Pers. Sg.: pūniō", gram_class: "i-Konjugation", meaning: "bestrafen" },
+            { latin: "portāre", type: "verb", middle: "portō", gram_clue: "1. Pers. Sg.: portō", gram_class: "a-Konjugation", meaning: "tragen" },
+            { latin: "docēre", type: "verb", middle: "doceō", gram_clue: "1. Pers. Sg.: doceō", gram_class: "e-Konjugation", meaning: "unterrichten, lehren" },
+            { latin: "ergō", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "deshalb, also" },
+
+            // Lektion 5
+            { latin: "forum", type: "noun", middle: "forī n.", gram_clue: "Genitiv: forī, n.", gram_class: "o-Deklination", meaning: "das Forum, der Marktplatz" },
+            { latin: "rōmānus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "römisch" },
+            { latin: "multī", type: "other", middle: "Adjektiv Pl.", gram_clue: "", gram_class: "", meaning: "viele" },
+            { latin: "monumentum", type: "noun", middle: "monumentī n.", gram_clue: "Genitiv: monumentī, n.", gram_class: "o-Deklination", meaning: "das Denkmal" },
+            { latin: "statua", type: "noun", middle: "statuae f.", gram_clue: "Genitiv: statuae, f.", gram_class: "a-Deklination", meaning: "die Statue" },
+            { latin: "parvus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "klein" },
+            { latin: "magnus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "groß" },
+            { latin: "pulcher", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "schön" },
+            { latin: "prope", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "nahe bei" },
+            { latin: "homō", type: "noun", middle: "hominis m.", gram_clue: "Genitiv: hominis, m.", gram_class: "konsonantische Deklination", meaning: "der Mensch, der Mann" },
+            { latin: "conspicere", type: "verb", middle: "cōnspiciō", gram_clue: "1. Pers. Sg.: cōnspiciō", gram_class: "gemischte Konjugation", meaning: "erblicken, sehen" },
+            { latin: "accēdere", type: "verb", middle: "accēdō", gram_clue: "1. Pers. Sg.: accēdō", gram_class: "konsonantische Konjugation", meaning: "sich nähern" },
+            { latin: "īrātus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "zornig, wütend" },
+            { latin: "amīcus", type: "noun", middle: "amīcī m.", gram_clue: "Genitiv: amīcī, m.", gram_class: "o-Deklination", meaning: "der Freund" },
+            { latin: "amīca", type: "noun", middle: "amīcae f.", gram_clue: "Genitiv: amīcae, f.", gram_class: "a-Deklination", meaning: "die Freundin" },
+            { latin: "facere", type: "verb", middle: "faciō", gram_clue: "1. Pers. Sg.: faciō", gram_class: "gemischte Konjugation", meaning: "machen, tun" },
+            { latin: "cupere", type: "verb", middle: "cupiō", gram_clue: "1. Pers. Sg.: cupiō", gram_class: "gemischte Konjugation", meaning: "wollen, wünschen" },
+            { latin: "praebēre", type: "verb", middle: "praebeō", gram_clue: "1. Pers. Sg.: praebeō", gram_class: "e-Konjugation", meaning: "bieten, gewähren" },
+            { latin: "tam", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "so" },
+            { latin: "capere", type: "verb", middle: "capiō", gram_clue: "1. Pers. Sg.: capiō", gram_class: "gemischte Konjugation", meaning: "fangen, ergreifen" },
+            { latin: "accūsāre", type: "verb", middle: "accūsō", gram_clue: "1. Pers. Sg.: accūsō", gram_class: "a-Konjugation", meaning: "beschuldigen" },
+            { latin: "incipere", type: "verb", middle: "incipiō", gram_clue: "1. Pers. Sg.: incipiō", gram_class: "gemischte Konjugation", meaning: "anfangen, beginnen" },
+            { latin: "fūr", type: "noun", middle: "fūris m.", gram_clue: "Genitiv: fūris, m.", gram_class: "konsonantische Deklination", meaning: "der Dieb" },
+            { latin: "malus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "schlecht, böse" },
+            { latin: "fugere", type: "verb", middle: "fugiō", gram_clue: "1. Pers. Sg.: fugiō", gram_class: "gemischte Konjugation", meaning: "fliehen, entkommen" },
+            { latin: "aureus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "golden" },
+            { latin: "dōnum", type: "noun", middle: "dōnī n.", gram_clue: "Genitiv: dōnī, n.", gram_class: "o-Deklination", meaning: "das Geschenk" },
+            { latin: "reddere", type: "verb", middle: "reddō", gram_clue: "1. Pers. Sg.: reddō", gram_class: "konsonantische Konjugation", meaning: "zurückgeben" },
+            { latin: "mors", type: "noun", middle: "mortis f.", gram_clue: "Genitiv: mortis, f.", gram_class: "konsonantische Deklination", meaning: "der Tod" },
+            { latin: "manēre", type: "verb", middle: "maneō", gram_clue: "1. Pers. Sg.: maneō", gram_class: "e-Konjugation", meaning: "bleiben, erwarten" },
+            { latin: "bonus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "gut" },
+            { latin: "rēctus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "gerade, ehrlich" },
+            { latin: "miser", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "arm, unglücklich" },
+            { latin: "profectō", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "tatsächlich" },
+            { latin: "tūtus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "sicher" },
+
+            // Lektion 6
+            { latin: "circus maximus", type: "noun", middle: "circī maximī m.", gram_clue: "Genitiv: circī maximī, m.", gram_class: "o-Deklination", meaning: "der Circus Maximus" },
+            { latin: "spectātor", type: "noun", middle: "spectātōris m.", gram_clue: "Genitiv: spectātōris, m.", gram_class: "konsonantische Deklination", meaning: "der Zuschauer" },
+            { latin: "gaudium", type: "noun", middle: "gaudiī n.", gram_clue: "Genitiv: gaudiī, n.", gram_class: "o-Deklination", meaning: "die Freude" },
+            { latin: "agitātor", type: "noun", middle: "agitātōris m.", gram_clue: "Genitiv: agitātōris, m.", gram_class: "konsonantische Deklination", meaning: "der Wagenlenker" },
+            { latin: "praeclārus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "berühmt, ausgezeichnet" },
+            { latin: "tandem", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "schließlich, endlich" },
+            { latin: "tunica", type: "noun", middle: "tunicae f.", gram_clue: "Genitiv: tunicae, f.", gram_class: "a-Deklination", meaning: "die Tunika" },
+            { latin: "vincere", type: "verb", middle: "vincō", gram_clue: "1. Pers. Sg.: vincō", gram_class: "konsonantische Konjugation", meaning: "siegen, besiegen" },
+            { latin: "verbum", type: "noun", middle: "verbī n.", gram_clue: "Genitiv: verbī, n.", gram_class: "o-Deklination", meaning: "das Wort" },
+            { latin: "signum", type: "noun", middle: "signī n.", gram_clue: "Genitiv: signī, n.", gram_class: "o-Deklination", meaning: "das Zeichen" },
+            { latin: "imperātor", type: "noun", middle: "imperātōris m.", gram_clue: "Genitiv: imperātōris, m.", gram_class: "konsonantische Deklination", meaning: "der Kaiser" },
+            { latin: "tuba", type: "noun", middle: "tubae f.", gram_clue: "Genitiv: tubae, f.", gram_class: "a-Deklination", meaning: "die Trompete" },
+            { latin: "canere", type: "verb", middle: "canō", gram_clue: "1. Pers. Sg.: canō", gram_class: "konsonantische Konjugation", meaning: "ertönen" },
+            { latin: "dare", type: "verb", middle: "dō", gram_clue: "1. Pers. Sg.: dō", gram_class: "a-Konjugation", meaning: "geben" },
+            { latin: "incitāre", type: "verb", middle: "incitō", gram_clue: "1. Pers. Sg.: incitō", gram_class: "a-Konjugation", meaning: "antreiben, anfeuern" },
+            { latin: "arcēre", type: "verb", middle: "arceō", gram_clue: "1. Pers. Sg.: arceō", gram_class: "e-Konjugation", meaning: "abwehren, fernhalten" },
+            { latin: "surgere", type: "verb", middle: "surgō", gram_clue: "1. Pers. Sg.: surgō", gram_class: "konsonantische Konjugation", meaning: "aufstehen" },
+            { latin: "inter", type: "other", middle: "Präp.", gram_clue: "", gram_class: "", meaning: "zwischen, unter" },
+            { latin: "praestāre", type: "verb", middle: "praestō", gram_clue: "1. Pers. Sg.: praestō", gram_class: "a-Konjugation", meaning: "sich hervortun" },
+            { latin: "crēscere", type: "verb", middle: "crēscō", gram_clue: "1. Pers. Sg.: crēscō", gram_class: "konsonantische Konjugation", meaning: "wachsen" },
+            { latin: "simul", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "gleichzeitig" },
+            { latin: "ferē", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "fast, etwa" },
+            { latin: "tangere", type: "verb", middle: "tangō", gram_clue: "1. Pers. Sg.: tangō", gram_class: "konsonantische Konjugation", meaning: "berühren" },
+            { latin: "mortuus", type: "other", middle: "Adjektiv", gram_clue: "", gram_class: "", meaning: "tot" },
+            { latin: "pecūnia", type: "noun", middle: "pecūniae f.", gram_clue: "Genitiv: pecūniae, f.", gram_class: "a-Deklination", meaning: "das Geld" },
+            { latin: "spectāre", type: "verb", middle: "spectō", gram_clue: "1. Pers. Sg.: spectō", gram_class: "a-Konjugation", meaning: "anschauen, sehen" },
+            { latin: "audītor", type: "noun", middle: "audītōris m.", gram_clue: "Genitiv: audītōris, m.", gram_class: "konsonantische Deklination", meaning: "der Zuhörer" },
+            { latin: "victor", type: "noun", middle: "victōris m.", gram_clue: "Genitiv: victōris, m.", gram_class: "konsonantische Deklination", meaning: "der Sieger" }
+        ];
+
+        let playerFaction = '';
+        let positions = { russata: 0, albata: 0, prasina: 0, veneta: 0 };
+        let wins = { player: 0, ai: 0 };
+        
+        let currentCorrectAnswer = '';
+        let timerInterval = null;
+        let timeRemaining = 300; 
+        const winningScore = 100;
+
+        function selectFaction(faction) {
+            playerFaction = faction;
+            document.querySelectorAll('.faction-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('btn-' + faction).classList.add('selected');
+            document.getElementById('start-race-btn').style.display = 'inline-block';
+        }
+
+        function startGameSession() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('status-bar').style.display = 'flex';
+            document.getElementById('race-screen').style.display = 'block';
+            
+            wins = { player: 0, ai: 0 };
+            timeRemaining = 300;
+            updateStatusBar();
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateStatusBar();
+                if (timeRemaining <= 0) {
+                    endGameSession();
+                }
+            }, 1000);
+
+            startNewRace();
+        }
+
+        function updateStatusBar() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer-display').innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            document.getElementById('player-wins').innerText = wins.player;
+            document.getElementById('ai-wins').innerText = wins.ai;
+        }
+
+        function startNewRace() {
+            document.getElementById('round-overlay').style.display = 'none';
+            positions = { russata: 0, albata: 0, prasina: 0, veneta: 0 };
+            updateTrackPositions();
+            generateQuestion();
+        }
+
+        // NEUER ALGORITHMUS: Erzeugt hoch-relevante, morphologisch ähnliche Falschantworten auf Basis des gleichen Wortstammes!
+        function getSmartWrongMiddles(item) {
+            let wrongs = [];
+            if (item.type === 'noun') {
+                let parts = item.middle.split(' ');
+                let form = parts[0]; 
+                let genus = parts[1] || 'm.';
+                let oppGenus = (genus === 'm.') ? 'f.' : (genus === 'f.' ? 'm.' : 'n.');
+                
+                // 1. Richtige Form, aber falsches Geschlecht
+                wrongs.push(`${form} ${oppGenus}`);
+                
+                // Stamm isolieren für clevere Endungsfehler (z.B. cani-s -> cani-ī)
+                let base = form.replace(/(is|ī|ae|iī|is|um|īs)$/, '');
+                if (base.length < 2) base = form; 
+                
+                wrongs.push(`${base}ī ${genus}`);
+                wrongs.push(`${base}ae ${genus}`);
+                wrongs.push(`${base}ī ${oppGenus}`);
+                wrongs.push(`${base}is ${oppGenus}`);
+            } else if (item.type === 'verb') {
+                let form = item.middle;
+                let base = form.replace(/(ō|iō|eō|ō)$/, '');
+                if (base.length < 2) base = form;
+                
+                wrongs.push(`${base}it`);
+                wrongs.push(`${base}at`);
+                wrongs.push(`${base}et`);
+                wrongs.push(`${base}unt`);
+            }
+            // Filtern und Duplikate löschen
+            return [...new Set(wrongs)].filter(w => w !== item.middle && w !== "");
+        }
+
+        function generateQuestion() {
+            const item = vocabularyPool[Math.floor(Math.random() * vocabularyPool.length)];
+            let qType = Math.floor(Math.random() * 3);
+            
+            if (item.type === "other" && qType > 0) {
+                qType = 0; 
+            }
+
+            let questionText = "";
+            let categoryText = "";
+            let correctAnswer = "";
+            let wrongPool = [];
+
+            if (qType === 0) {
+                categoryText = "🔮 Vokabel-Bedeutung";
+                questionText = `Was bedeutet das Wort „${item.latin}“?`;
+                correctAnswer = item.meaning;
+                wrongPool = vocabularyPool.map(i => i.meaning).filter(m => m !== correctAnswer);
+            } 
+            else if (qType === 1) {
+                if (item.type === "noun") {
+                    categoryText = "🏛️ Genitiv & Geschlecht";
+                    questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
+                } else if (item.type === "verb") {
+                    categoryText = "⚡ Verb-Formen";
+                    questionText = `Wie lautet die 1. Person Singular von „${item.latin}“?`;
+                }
+                correctAnswer = item.middle;
+                
+                // Nutze die neue intelligente Ablenker-Logik
+                wrongPool = getSmartWrongMiddles(item);
+                
+                // Sicherheitsnetz: Falls zu wenig morphologische Treffer, mit normalen Formen auffüllen
+                if (wrongPool.length < 3) {
+                    let backupPool = vocabularyPool.filter(i => i.type === item.type).map(i => i.middle).filter(m => m !== correctAnswer);
+                    wrongPool = [...wrongPool, ...backupPool];
+                }
+            } 
+            else if (qType === 2) {
+                if (item.type === "noun") {
+                    categoryText = "⚔️ Arena der Deklinationen";
+                    questionText = `Zu welcher Deklination gehört „${item.latin}“ (${item.gram_clue})?`;
+                    correctAnswer = item.gram_class;
+                    wrongPool = ["a-Deklination", "o-Deklination", "konsonantische Deklination"].filter(c => c !== correctAnswer);
+                } else if (item.type === "verb") {
+                    categoryText = "🔥 Arena der Konjugationen";
+                    questionText = `Zu welcher Konjugation gehört „${item.latin}“ (${item.gram_clue})?`;
+                    correctAnswer = item.gram_class;
+                    wrongPool = ["a-Konjugation", "e-Konjugation", "i-Konjugation", "konsonantische Konjugation", "gemischte Konjugation"].filter(c => c !== correctAnswer);
+                }
+            }
+
+            currentCorrectAnswer = correctAnswer;
+
+            wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+            while(wrongPool.length < 3) wrongPool.push("---");
+
+            const options = [correctAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+
+            document.getElementById('q-type').innerText = categoryText;
+            document.getElementById('q-latin').innerText = questionText;
+
+            options.forEach((opt, idx) => {
+                const btn = document.getElementById('opt' + idx);
+                btn.innerText = opt;
+                btn.disabled = false;
+                btn.className = 'option-btn';
+            });
+        }
+
+        function checkAnswer(selectedIdx) {
+            for(let i=0; i<4; i++) document.getElementById('opt'+i).disabled = true;
+
+            const selectedText = document.getElementById('opt' + selectedIdx).innerText;
+            const isCorrect = (selectedText === currentCorrectAnswer);
+
+            if (isCorrect) {
+                document.getElementById('opt' + selectedIdx).classList.add('correct');
+                positions[playerFaction] += 20; 
+            } else {
+                document.getElementById('opt' + selectedIdx).classList.add('wrong');
+                for(let i=0; i<4; i++) {
+                    if(document.getElementById('opt'+i).innerText === currentCorrectAnswer) {
+                        document.getElementById('opt'+i).classList.add('correct');
+                    }
+                }
+                for (let fac in positions) {
+                    if (fac !== playerFaction) positions[fac] += 15;
+                }
+            }
+
+            updateTrackPositions();
+
+            setTimeout(() => {
+                let winner = null;
+                for (let fac in positions) {
+                    if (positions[fac] >= winningScore) {
+                        winner = fac;
+                        break;
+                    }
+                }
+
+                if (winner) {
+                    handleRaceEnd(winner);
+                } else {
+                    generateQuestion();
+                }
+            }, 1200);
+        }
+
+        function handleRaceEnd(winner) {
+            const overlay = document.getElementById('round-overlay');
+            const title = document.getElementById('overlay-title');
+            const msg = document.getElementById('overlay-msg');
+            
+            overlay.style.display = 'flex';
+
+            if (winner === playerFaction) {
+                wins.player++;
+                title.innerText = "🎉 RUNDENSIEG!";
+                title.style.color = "#4CAF50";
+                msg.innerHTML = `Exzellent! Deine Factio <strong>${winner}</strong> fährt als Erste durchs Ziel! +1 Punkt für dich.`;
+            } else {
+                wins.ai++;
+                title.innerText = "🐴 GEGNER-SIEG!";
+                title.style.color = "#F44336";
+                msg.innerHTML = `Die gegnerische Factio <strong>${winner}</strong> gewinnt dieses Rennen. Die KI holt den Punkt.`;
+            }
+            updateStatusBar();
+        }
+
+        function nextRace() {
+            if (timeRemaining > 0) {
+                startNewRace();
+            }
+        }
+
+        function endGameSession() {
+            clearInterval(timerInterval);
+            document.getElementById('race-screen').style.display = 'none';
+            document.getElementById('round-overlay').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+
+            const msg = document.getElementById('end-msg');
+            
+            if (wins.player > wins.ai) {
+                msg.innerHTML = `🏆 <strong>Glorreicher Triumph!</strong> 🏆<br><br>Du hast die Meisterschaft nach 5 Minuten mit <strong>${wins.player} : ${wins.ai}</strong> Siegen gewonnen!<br>Deine 6er haben den kaiserlichen Lorbeerkranz errungen!`;
+            } else if (wins.player < wins.ai) {
+                msg.innerHTML = `🛡️ <strong>Knappe Niederlage!</strong> 🛡️<br><br>Die KI gewinnt die Meisterschaft mit <strong>${wins.ai} : ${wins.player}</strong> Siegen.<br>Die Pferde brauchen beim nächsten Mal wohl noch etwas mehr Vokabel-Tuning!`;
+            } else {
+                msg.innerHTML = `🤝 <strong>Unentschieden!</strong> 🤝<br><br>Es steht am Ende unentschieden <strong>${wins.player} : ${wins.ai}</strong>.<br>Ein packendes Kopf-an-Kopf-Rennen im antiken Rom!`;
+            }
+        }
+
+        function resetGame() {
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('status-bar').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'block';
+            document.getElementById('start-race-btn').style.display = 'none';
+            document.querySelectorAll('.faction-btn').forEach(btn => btn.classList.remove('selected'));
+        }
+
+        function updateTrackPositions() {
+            const factions = ['russata', 'albata', 'prasina', 'veneta'];
+            factions.forEach((fac, index) => {
+                const chariot = document.getElementById('chariot-' + fac);
+                const progress = Math.min(positions[fac] / winningScore, 1.0);
+                const laneOffset = index * 10;
+                const width = 740 - laneOffset * 2;
+                const height = 160 - laneOffset * 2;
+                const angle = progress * Math.PI * 2 + Math.PI;
+                const centerX = 400;
+                const centerY = 90;
+                const xVal = centerX + (width/2) * Math.cos(angle);
+                const yVal = centerY + (height/2) * Math.sin(angle);
+                chariot.style.left = (xVal - 16) + 'px';
+                chariot.style.top = (yVal - 12) + 'px';
+            });
+        }
+
+        window.onresize = updateTrackPositions;
+    </script>
+</body>
+</html>
