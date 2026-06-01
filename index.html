@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Ludī Rōmānī - Die Latein-Arena</title>
+    <title>Lūdī Rōmānī - Lernspiele</title>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -11,19 +11,13 @@
             --roman-marble: #f0e6d2;
             --roman-red: #800000;
             --bg-dark: #121212;
-            --card-bg: #2d2d2d;
+            --card-bg: #222;
             --text-light: #f5f5f5;
             --font-display: 'Georgia', 'Times New Roman', serif;
             --font-body: 'Verdana', sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font-body);
@@ -33,172 +27,219 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 20px 10px;
-            background-image: radial-gradient(circle, #2d2d2d 1px, rgba(0, 0, 0, 0) 1px);
-            background-size: 30px 30px;
+            padding: 30px 15px;
         }
 
-        header {
+        .header-section {
             text-align: center;
-            margin-bottom: 30px;
-            max-width: 600px;
+            margin-bottom: 40px;
         }
 
         h1 {
             color: var(--roman-gold);
             font-family: var(--font-display);
-            font-size: 2.5rem;
             text-transform: uppercase;
-            letter-spacing: 4px;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+            font-size: 2.8rem;
             margin-bottom: 10px;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
 
         .subtitle {
-            font-family: var(--font-display);
             color: var(--roman-marble);
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-style: italic;
-            letter-spacing: 1px;
+            opacity: 0.8;
         }
 
-        .hub-grid {
+        .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             width: 100%;
-            max-width: 900px;
-            padding: 10px;
+            max-width: 1000px;
         }
 
         .game-card {
             background: var(--card-bg);
-            border: 3px solid var(--roman-bronze);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-            transition: all 0.2s ease;
+            border: 2px solid var(--roman-bronze);
+            border-top: 5px solid var(--roman-red);
+            border-radius: 10px;
+            padding: 25px 20px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .game-card::before {
-            content: '🏛️';
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 4rem;
-            opacity: 0.05;
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            border-color: var(--roman-gold);
         }
 
-        .game-card h2 {
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-title {
             font-family: var(--font-display);
+            font-size: 1.5rem;
             color: var(--roman-gold);
-            font-size: 1.4rem;
+            margin-bottom: 10px;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            text-align: center;
             letter-spacing: 1px;
         }
 
-        .game-card p {
-            color: #ccc;
+        .game-focus {
+            background: rgba(212, 175, 55, 0.1);
+            color: #ffcc00;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .game-desc {
             font-size: 0.95rem;
             line-height: 1.5;
-            margin-bottom: 20px;
+            color: #ccc;
             flex-grow: 1;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
         .play-btn {
-            background-color: var(--roman-gold);
-            color: var(--roman-red);
+            background: var(--roman-red);
+            color: var(--roman-marble);
+            text-decoration: none;
             font-family: var(--font-display);
             font-weight: bold;
             font-size: 1.1rem;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
             text-transform: uppercase;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            text-decoration: none;
-            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.3);
-            transition: all 0.2s ease;
-            display: inline-block;
+            border: 2px solid #5a0000;
+            transition: background 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .play-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 5px rgba(212, 175, 55, 0.2);
+            background: #5a0000;
         }
 
-        .disabled-card {
-            opacity: 0.6;
-            border-style: dashed;
+        /* Deaktivierter Zustand für das Quiz */
+        .card-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(80%);
         }
 
-        .disabled-btn {
-            background-color: #555;
+        .card-disabled .play-btn {
+            background: #444;
+            border-color: #333;
             color: #888;
-            box-shadow: none;
-            cursor: not-allowed;
+        }
+
+        .maintenance-badge {
+            background: #ff9800;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 10px;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Ludī Rōmānī</h1>
-        <div class="subtitle">Das digitale Trainingslager für junge Römer</div>
-    </header>
+    <div class="header-section">
+        <h1>Lūdī Rōmānī</h1>
+        <div class="subtitle">Wähle deine Trainingsarena</div>
+    </div>
 
-  <div class="hub-grid">
-        <!-- KACHEL 1: Wagenrennen -->
+    <div class="games-grid">
+        
+        <!-- Spiel 1: Circus Maximus -->
         <div class="game-card">
-            <div>
-                <h2>Circus Maximus</h2>
-                <p>Tritt im 5-Minuten-Dauermodus gegen die KI an! Gefragt werden Vokabeln, Genitive und die exakten Deklinations- & Konjugationsklassen der Lektionen 1 bis 6.</p>
+            <div class="game-icon">🐎</div>
+            <div class="game-title">Circus Maximus</div>
+            <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
+            <div class="game-desc">
+                Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen gegen die feindliche rote Factio.
             </div>
-            <a href="CircusV.html" class="play-btn">Rennen starten!</a>
+            <a href="CircusV.html" class="play-btn">Arena betreten</a>
         </div>
 
-        <!-- KACHEL 2: Das Kultur-Quiz -->
+        <!-- Spiel 2: Formen-Kastell -->
         <div class="game-card">
-            <div>
-                <h2>Antikes Alltagsleben</h2>
-                <p>Bist du ein wahrer Geschichtsexperte? Teste dein Wissen über das Forum Romanum, römische Wohnhäuser, Sklaven und die Gebräuche im alten Rom.</p>
+            <div class="game-icon">🏰</div>
+            <div class="game-title">Formen-Kastell</div>
+            <div class="game-focus">Schwerpunkt: Verb-Drill</div>
+            <div class="game-desc">
+                Verteidige die Mauern des Kastells gegen anfliegende Katapultsteine, indem du die Personalendungen der lateinischen Verben blitzschnell bestimmst.
             </div>
-            <a href="Quiz.html" class="play-btn">Quiz starten!</a>
+            <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
         </div>
 
-        <!-- KACHEL 3: Das Formen-Kastell -->
+        <!-- Spiel 3: Gladiatoren-Duell -->
         <div class="game-card">
-            <div>
-                <h2>Formen-Kastell</h2>
-                <p>Beschütze das römische Lager! Wehre die Katapultangriffe ab, indem du herannahenden Nomen blitzschnell das grammatikalisch exakt passende KNG-Adjektiv zuordnest.</p>
+            <div class="game-icon">⚔️</div>
+            <div class="game-title">Gladiatoren-Duell</div>
+            <div class="game-focus">Schwerpunkt: Multiplayer-Duell</div>
+            <div class="game-desc">
+                Das direkte 1-gegen-1 am selben iPad. Wer Vokabeln, Deklinationen und Konjugationen schneller erkennt, gewinnt den Kampf im Sand der Arena!
             </div>
-            <a href="Kastell.html" class="play-btn">Kastell verteidigen!</a>
+            <a href="Duell.html" class="play-btn">Duell starten</a>
         </div>
 
-        <!-- KACHEL 4: Das Gladiatorduell -->
+        <!-- Spiel 4: Aedificium Romanum (Villa) -->
         <div class="game-card">
-            <div>
-                <h2>Gladiatoren-Duell</h2>
-                <p><strong>Lokaler 2-Spieler-Modus!</strong> Legt das iPad flach auf den Tisch zwischen euch. Wer reagiert schneller und erringt den Sieg in der Arena?</p>
+            <div class="game-icon">🏛️</div>
+            <div class="game-title">Aedificium Rōmānum</div>
+            <div class="game-focus">Schwerpunkt: KNG-Kongruenz</div>
+            <div class="game-desc">
+                Erbaue eine prächtige römische Villa! Das Baumaterial erhältst du, indem du das passende Adjektiv im richtigen Fall, Zahl und Geschlecht zum Substantiv auswählst.
             </div>
-            <a href="Duell.html" class="play-btn">Duell starten!</a>
+            <a href="Villa.html" class="play-btn">Villa bauen</a>
         </div>
 
-        <!-- KACHEL 5: NEU - Der Villa-Baukasten -->
+        <!-- Spiel 5: Mysterium Villae (Textabenteuer) -->
         <div class="game-card">
-            <div>
-                <h2>Aedificium Rōmānum</h2>
-                <p>Errichte deine eigene römische Prachtvilla! Jede richtige Antwort spendiert dir ein neues, detailliertes Bauteil für dein antikes Landgut.</p>
+            <div class="game-icon">📜</div>
+            <div class="game-title">Mysterium Villae</div>
+            <div class="game-focus">Schwerpunkt: Syntax & Übersetzung</div>
+            <div class="game-desc">
+                Ein Textabenteuer durch die Villa Rustica. Übersetze Sätze mit Nominativ, Genitiv und Akkusativ korrekt, um den Großvater und den weißen Spitz Issa zu finden.
             </div>
-            <a href="Villa.html" class="play-btn">Bauen starten!</a>
+            <a href="Adventura.html" class="play-btn">Erkundung starten</a>
         </div>
+
+        <!-- Spiel 6: Alltags-Quiz (Deaktiviert) -->
+        <div class="game-card card-disabled" style="position: relative;">
+            <div class="maintenance-badge">In Überarbeitung</div>
+            <div class="game-icon">🏺</div>
+            <div class="game-title">Alltags-Quiz</div>
+            <div class="game-focus">Schwerpunkt: Römisches Leben</div>
+            <div class="game-desc">
+                Testet euer Wissen über den römischen Alltag, die Götterwelt und die Kultur der Antike. (Die Priester überarbeiten derzeit die Schriftrollen).
+            </div>
+            <a href="#" class="play-btn">Derzeit gesperrt</a>
+        </div>
+
     </div>
 
 </body>
