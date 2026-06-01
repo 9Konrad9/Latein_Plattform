@@ -3,74 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Römisches Alltags-Quiz</title>
-    <!-- Zuerst die Daten, dann die Logik -->
-    <script src="quizData.js"></script>
+    <title>Lūdī Rōmānī - Lernspiele</title>
     <style>
         :root {
             --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
             --roman-red: #800000;
             --bg-dark: #121212;
             --card-bg: #222;
-            --text-light: #e0d6c8;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
         }
-        body { font-family: 'Verdana', sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .quiz-container { width: 100%; max-width: 600px; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 2px solid var(--roman-bronze); }
-        .question { font-family: 'Georgia', serif; font-size: 1.3rem; margin-bottom: 20px; color: var(--roman-gold); }
-        .btn-opt { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: #333; border: 1px solid #555; color: white; border-radius: 6px; cursor: pointer; text-align: left; }
-        .btn-opt:active { background: #444; }
-        .correct { background: #1b4d24 !important; border-color: #4CAF50 !important; }
-        .wrong { background: #5c1b1b !important; border-color: #F44336 !important; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 15px;
+        }
+
+        .header-section { text-align: center; margin-bottom: 40px; }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .subtitle { color: var(--roman-marble); font-size: 1.1rem; font-style: italic; opacity: 0.8; }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border: 2px solid var(--roman-bronze);
+            border-top: 5px solid var(--roman-red);
+            border-radius: 10px;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            border-color: var(--roman-gold);
+        }
+
+        .game-icon { font-size: 3rem; margin-bottom: 15px; text-align: center; }
+
+        .game-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--roman-gold);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .game-focus {
+            background: rgba(212, 175, 55, 0.1);
+            color: #ffcc00;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .game-desc {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #ccc;
+            flex-grow: 1;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .play-btn {
+            background: var(--roman-red);
+            color: var(--roman-marble);
+            text-decoration: none;
+            font-family: var(--font-display);
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            text-transform: uppercase;
+            border: 2px solid #5a0000;
+            transition: background 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .play-btn:active { background: #5a0000; }
     </style>
 </head>
 <body>
 
-    <div class="quiz-container" id="quiz-box">
-        <div id="q-area">
-            <div id="category" style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px;"></div>
-            <div class="question" id="question"></div>
-            <div id="options"></div>
-        </div>
+    <div class="header-section">
+        <h1>Lūdī Rōmānī</h1>
+        <div class="subtitle">Wähle deine Trainingsarena</div>
     </div>
 
-    <script>
-        let currentQ = 0;
-        let pool = quizQuestions.sort(() => Math.random() - 0.5);
+    <div class="games-grid">
+        
+        <!-- Spiel 1: Circus Maximus -->
+        <div class="game-card">
+            <div class="game-icon">🐎</div>
+            <div class="game-title">Circus Maximus</div>
+            <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
+            <div class="game-desc">
+                Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen.
+            </div>
+            <a href="CircusV.html" class="play-btn">Arena betreten</a>
+        </div>
 
-        function loadQuestion() {
-            let q = pool[currentQ];
-            document.getElementById('category').innerText = q.category;
-            document.getElementById('question').innerText = q.question;
-            
-            let opts = [q.correct, ...q.wrong].sort(() => Math.random() - 0.5);
-            let html = "";
-            opts.forEach(o => {
-                html += `<button class="btn-opt" onclick="checkAnswer(this, '${o.replace(/'/g, "\\'")}', '${q.correct.replace(/'/g, "\\'")}')">${o}</button>`;
-            });
-            document.getElementById('options').innerHTML = html;
-        }
+        <!-- Spiel 2: Formen-Kastell -->
+        <div class="game-card">
+            <div class="game-icon">🏰</div>
+            <div class="game-title">Formen-Kastell</div>
+            <div class="game-focus">Schwerpunkt: Verb-Drill</div>
+            <div class="game-desc">
+                Verteidige die Mauern gegen Katapultsteine, indem du die Personalendungen der lateinischen Verben bestimmst.
+            </div>
+            <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
+        </div>
 
-        function checkAnswer(btn, selected, correct) {
-            let btns = document.querySelectorAll('.btn-opt');
-            btns.forEach(b => b.disabled = true);
-            
-            if(selected === correct) {
-                btn.classList.add('correct');
-            } else {
-                btn.classList.add('wrong');
-                btns.forEach(b => {
-                    if(b.innerText === correct) b.classList.add('correct');
-                });
-            }
-            
-            setTimeout(() => {
-                currentQ++;
-                if(currentQ < pool.length) loadQuestion();
-                else document.getElementById('quiz-box').innerHTML = "<h2>Quiz beendet!</h2><a href='index.html'>Zurück zur Arena</a>";
-            }, 1500);
-        }
+        <!-- Spiel 3: Gladiatoren-Duell -->
+        <div class="game-card">
+            <div class="game-icon">⚔️</div>
+            <div class="game-title">Gladiatoren-Duell</div>
+            <div class="game-focus">Schwerpunkt: Multiplayer-Duell</div>
+            <div class="game-desc">
+                1-gegen-1 am iPad. Wer Vokabeln, Deklinationen und Konjugationen schneller erkennt, gewinnt den Kampf!
+            </div>
+            <a href="Duell.html" class="play-btn">Duell starten</a>
+        </div>
 
-        loadQuestion();
-    </script>
+        <!-- Spiel 4: Aedificium Romanum -->
+        <div class="game-card">
+            <div class="game-icon">🏛️</div>
+            <div class="game-title">Aedificium Rōmānum</div>
+            <div class="game-focus">Schwerpunkt: KNG-Kongruenz</div>
+            <div class="game-desc">
+                Erbaue eine prächtige Villa! Baumaterial gewinnst du durch das richtige Anpassen von Adjektiven an Substantive.
+            </div>
+            <a href="Villa.html" class="play-btn">Villa bauen</a>
+        </div>
+
+        <!-- Spiel 5: Mysterium Villae -->
+        <div class="game-card">
+            <div class="game-icon">📜</div>
+            <div class="game-title">Mysterium Villae</div>
+            <div class="game-focus">Schwerpunkt: Syntax & Übersetzung</div>
+            <div class="game-desc">
+                Ein Textabenteuer: Übersetze Sätze korrekt, um den Großvater und den weißen Spitz Issa zu finden.
+            </div>
+            <a href="Adventura.html" class="play-btn">Erkundung starten</a>
+        </div>
+
+        <!-- Spiel 6: Alltags-Quiz (Jetzt AKTIVIERT) -->
+        <div class="game-card">
+            <div class="game-icon">🏺</div>
+            <div class="game-title">Alltags-Quiz</div>
+            <div class="game-focus">Schwerpunkt: Römische Kultur</div>
+            <div class="game-desc">
+                Teste dein Wissen über das Leben im alten Rom – von der Schule bis zum Forum Romanum.
+            </div>
+            <a href="Quiz.html" class="play-btn">Quiz starten</a>
+        </div>
+
+    </div>
+
 </body>
 </html>
