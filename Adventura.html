@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mysterium Villae - Textabenteuer</title>
+    <!-- Falls du das Vokabular später auslagern willst, kann man vocabulary.js hier anbinden. 
+         Für diese komplexe Syntax-Engine ist ein eigenes kleines Lexikon im Skript aber stabiler. -->
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-light: #e0d6c8;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body); background-color: var(--bg-dark);
+            color: var(--text-light); display: flex; flex-direction: column;
+            align-items: center; min-height: 100vh; padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold); font-family: var(--font-display);
+            text-transform: uppercase; font-size: 1.6rem; margin-bottom: 5px;
+            text-align: center; letter-spacing: 2px;
+        }
+
+        .game-container {
+            width: 100%; max-width: 750px; background: var(--card-bg);
+            border: 2px solid #444; border-top: 6px solid var(--roman-red);
+            border-radius: 8px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; min-height: 550px; position: relative;
+        }
+
+        /* Abenteuer-Text-Bereich */
+        .story-area {
+            flex-grow: 1; background: #151515; border: 1px solid #333;
+            border-radius: 6px; padding: 20px; margin-bottom: 20px;
+            overflow-y: auto; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+            font-size: 1.1rem; line-height: 1.6;
+        }
+
+        .story-text { margin-bottom: 15px; color: #b3a89a; }
+        .room-title { color: var(--roman-gold); font-family: var(--font-display); font-size: 1.3rem; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        
+        .latin-sentence {
+            font-family: var(--font-display); font-size: 1.4rem; color: #fff;
+            text-align: center; padding: 15px; background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--roman-gold); margin: 20px 0; font-weight: bold;
+        }
+
+        /* Antwort-Buttons */
+        .options-grid {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .translate-btn {
+            background: #2a2a2a; border: 1px solid var(--roman-bronze);
+            color: var(--text-light); padding: 15px; font-size: 1.05rem;
+            border-radius: 6px; cursor: pointer; text-align: left;
+            transition: background 0.2s; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent; display: flex; align-items: center;
+        }
+        .translate-btn::before { content: "►"; color: var(--roman-gold); margin-right: 12px; font-size: 0.8rem; }
+        .translate-btn:not(:disabled):active { background: #444; }
+
+        .correct { background: #1b4d24 !important; border-color: #4CAF50 !important; }
+        .wrong { background: #5c1b1b !important; border-color: #F44336 !important; }
+
+        /* Overlays */
+        .overlay-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 15, 0.96); border-radius: 8px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; z-index: 10;
+        }
+
+        .main-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 12px 30px;
+            border: none; border-radius: 25px; font-size: 1.1rem; cursor: pointer; text-transform: uppercase;
+            touch-action: manipulation; margin-top: 20px;
+        }
+
+        /* Fortschritt */
+        .progress-indicator { font-size: 0.85rem; color: #666; text-align: right; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Mysterium Villae</h1>
+    <div style="color: #aaa; margin-bottom: 15px; text-align: center; font-style: italic;">Übersetzungs-Abenteuer (Nom, Gen, Akk)</div>
+
+    <div class="game-container">
+        
+        <!-- Startbildschirm -->
+        <div class="overlay-screen" id="start-screen" style="display: flex;">
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2rem;">Die Suche</h2>
+            <p style="margin: 20px 0; max-width: 500px; line-height: 1.5; color: var(--text-light);">
+                Ein ruhiger Nachmittag in der Villa Rustica. Doch der Großvater ist verschwunden und auch der kleine weiße Spitz Issa ist nirgends zu sehen. <br><br>
+                Durchstreife die Räume des Landhauses. Um weiterzugehen, musst du das Geschehen im Raum korrekt übersetzen!
+            </p>
+            <button class="main-btn" id="btn-start">Abenteuer beginnen</button>
+        </div>
+
+        <!-- Endbildschirm -->
+        <div class="overlay-screen" id="end-screen">
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2rem;">Gefunden!</h2>
+            <p style="margin: 20px 0; max-width: 500px; line-height: 1.5; color: var(--text-light);">
+                Du hast den Weg durch die Villa gemeistert. Im Garten (hortus) sitzt der Großvater friedlich auf einer Bank, während Issa fröhlich um ihn herumspringt. Deine Grammatikkenntnisse haben den Tag gerettet!
+            </p>
+            <button class="main-btn" id="btn-restart">Nochmal erkunden</button>
+        </div>
+
+        <div class="progress-indicator" id="room-counter">Raum 1 / 7</div>
+        
+        <div class="story-area" id="story-area">
+            <div class="room-title" id="room-name">Vēstibulum (Eingangshalle)</div>
+            <div class="story-text" id="room-desc">Du trittst durch die schwere Holztür. Ein Sklave fegt den Boden. Du beobachtest die Szene:</div>
+            <div class="latin-sentence" id="latin-text">Servus dominum videt.</div>
+        </div>
+
+        <div class="options-grid">
+            <button class="translate-btn" id="opt0">-</button>
+            <button class="translate-btn" id="opt1">-</button>
+            <button class="translate-btn" id="opt2">-</button>
+            <button class="translate-btn" id="opt3">-</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- TEXT-ADVENTURE DATENBANK ---
+        const rooms = [
+            { name: "Ātrium (Haupthalle)", desc: "Das Licht fällt durch die Deckenöffnung in das Wasserbecken. Jemand steht am Rand:" },
+            { name: "Cubiculum (Schlafraum)", desc: "Es ist dunkel und ruhig hier. Die Vorhänge bewegen sich leicht:" },
+            { name: "Culīna (Küche)", desc: "Es riecht nach gebratenem Fleisch und Kräutern. In der Ecke hörst du ein Geräusch:" },
+            { name: "Trīclīnium (Speisezimmer)", desc: "Die Liegesofas sind ordentlich hergerichtet. Etwas zieht deine Aufmerksamkeit auf sich:" },
+            { name: "Peristȳlium (Säulengang)", desc: "Du läufst zwischen den Marmorsäulen hindurch. Ein Schatten huscht vorbei:" },
+            { name: "Tablīnum (Arbeitszimmer)", desc: "Schriftrollen stapeln sich auf dem Tisch. Eine unerwartete Szene spielt sich ab:" },
+            { name: "Hortus (Garten)", desc: "Du trittst hinaus in die Sonne. Endlich! Am Ende des Weges siehst du:" }
+        ];
+
+        // Vokabular für die semantische Engine (Nur Nom, Gen, Akk!)
+        const persons = [
+            { nom: "Aulus", acc: "Aulum", gen: "Aulī", deNom: "Aulus", deAcc: "den Aulus", deGen: "des Aulus" },
+            { nom: "Lūcius", acc: "Lūcium", gen: "Lūciī", deNom: "Lucius", deAcc: "den Lucius", deGen: "des Lucius" },
+            { nom: "avus", acc: "avum", gen: "avī", deNom: "der Großvater", deAcc: "den Großvater", deGen: "des Großvaters" },
+            { nom: "puella", acc: "puellam", gen: "puellae", deNom: "das Mädchen", deAcc: "das Mädchen", deGen: "des Mädchens" },
+            { nom: "servus", acc: "servum", gen: "servī", deNom: "der Sklave", deAcc: "den Sklaven", deGen: "des Sklaven" }
+        ];
+
+        const animals = [
+            { nom: "Issa", acc: "Issam", gen: "Issae", deNom: "der kleine Hund Issa", deAcc: "den kleinen Hund Issa", deGen: "des kleinen Hundes Issa" },
+            { nom: "equus", acc: "equum", gen: "equī", deNom: "das Pferd", deAcc: "das Pferd", deGen: "des Pferdes" }
+        ];
+
+        const verbsAction = [
+            { lat: "videt", de: "sieht", wrong: "sucht" },
+            { lat: "quaerit", de: "sucht", wrong: "ruft" },
+            { lat: "vocat", de: "ruft", wrong: "sieht" },
+            { lat: "audit", de: "hört", wrong: "lobt" }
+        ];
+
+        // --- SZENEN-GENERATOR (Sicher & Semantisch logisch) ---
+        function generateScene() {
+            // Wir nutzen feste Schablonen, damit der Sinn immer erhalten bleibt.
+            const templates = [
+                // 1: Person macht was mit Person (Subjekt + Objekt + Verb)
+                function() {
+                    let p1 = persons[Math.floor(Math.random() * persons.length)];
+                    let p2 = persons[Math.floor(Math.random() * persons.length)];
+                    while(p1.nom === p2.nom) p2 = persons[Math.floor(Math.random() * persons.length)]; // Keine Klone
+                    let v = verbsAction[Math.floor(Math.random() * verbsAction.length)];
+                    
+                    return {
+                        latin: `${p1.nom} ${p2.acc} ${v.lat}.`,
+                        correct: `${p1.deNom} ${v.de} ${p2.deAcc}.`,
+                        distractors: [
+                            `${p2.deNom} ${v.de} ${p1.deAcc}.`, // Täter-Opfer-Tausch (Akkusativ-Fehler)
+                            `${p1.deNom} ${v.wrong} ${p2.deAcc}.`, // Vokabelfehler Verb
+                            `${p1.deNom} ${v.de} den Freund ${p2.deGen}.` // Genitiv rein-halluziniert
+                        ]
+                    };
+                },
+                // 2: Person macht was mit Tier
+                function() {
+                    let p = persons[Math.floor(Math.random() * persons.length)];
+                    let a = animals[Math.floor(Math.random() * animals.length)];
+                    let v = verbsAction[Math.floor(Math.random() * verbsAction.length)];
+                    
+                    return {
+                        latin: `${p.nom} ${a.acc} ${v.lat}.`,
+                        correct: `${p.deNom} ${v.de} ${a.deAcc}.`,
+                        distractors: [
+                            `${a.deNom} ${v.de} ${p.deAcc}.`, // Tier wird zum Subjekt
+                            `${p.deNom} ${v.wrong} ${a.deAcc}.`, 
+                            `${p.deNom} und ${a.deNom} fliehen.` 
+                        ]
+                    };
+                },
+                // 3: Einbau des Genitivs! (Nom + Gen + Akk + Verb)
+                function() {
+                    let p1 = persons[Math.floor(Math.random() * persons.length)]; // Der Täter
+                    let p2 = persons[Math.floor(Math.random() * persons.length)]; // Der Besitzer
+                    while(p1.nom === p2.nom) p2 = persons[Math.floor(Math.random() * persons.length)];
+                    let a = animals[Math.floor(Math.random() * animals.length)]; // Das Objekt
+                    let v = verbsAction[Math.floor(Math.random() * verbsAction.length)];
+
+                    return {
+                        latin: `${p1.nom} ${a.acc} ${p2.gen} ${v.lat}.`,
+                        correct: `${p1.deNom} ${v.de} ${a.deAcc} ${p2.deGen}.`,
+                        distractors: [
+                            `${p1.deNom} ${v.de} ${p2.deAcc} ${a.deGen}.`, // Besitz vertauscht
+                            `${p2.deNom} ${v.de} ${a.deAcc} ${p1.deGen}.`, // Täter und Besitzer vertauscht
+                            `${p1.deNom} und ${p2.deNom} ${v.de} ${a.deAcc}.` // Genitiv als zweites Subjekt gelesen
+                        ]
+                    };
+                }
+            ];
+
+            let selectedTemplate = templates[Math.floor(Math.random() * templates.length)];
+            return selectedTemplate();
+        }
+
+        // --- SPIEL-LOGIK ---
+        let currentRoom = 0;
+        let roundLocked = false;
+        let correctAnswer = "";
+
+        window.onload = function() {
+            document.getElementById('btn-start').addEventListener('click', startGame);
+            document.getElementById('btn-restart').addEventListener('click', startGame);
+            for(let i=0; i<4; i++) {
+                document.getElementById('opt' + i).addEventListener('click', function() { checkTranslation(i); });
+            }
+        };
+
+        function startGame() {
+            currentRoom = 0;
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'none';
+            loadRoom();
+        }
+
+        function loadRoom() {
+            roundLocked = false;
+            document.getElementById('room-counter').innerText = `Raum ${currentRoom + 1} von ${rooms.length}`;
+            
+            let roomData = rooms[currentRoom];
+            document.getElementById('room-name').innerText = roomData.name;
+            document.getElementById('room-desc').innerText = roomData.desc;
+
+            // Szene generieren
+            let scene = generateScene();
+            document.getElementById('latin-text').innerText = scene.latin;
+            correctAnswer = scene.correct;
+
+            // Buttons befüllen und mischen
+            let options = [scene.correct, ...scene.distractors];
+            options.sort(() => Math.random() - 0.5);
+
+            for(let i=0; i<4; i++) {
+                let btn = document.getElementById('opt' + i);
+                btn.innerText = options[i];
+                btn.className = "translate-btn";
+                btn.disabled = false;
+            }
+        }
+
+        function checkTranslation(idx) {
+            if(roundLocked) return;
+            roundLocked = true;
+
+            for(let i=0; i<4; i++) document.getElementById('opt' + i).disabled = true;
+
+            let selectedBtn = document.getElementById('opt' + idx);
+            
+            if(selectedBtn.innerText === correctAnswer) {
+                selectedBtn.classList.add('correct');
+                setTimeout(() => {
+                    currentRoom++;
+                    if(currentRoom >= rooms.length) {
+                        document.getElementById('end-screen').style.display = 'flex';
+                    } else {
+                        loadRoom();
+                    }
+                }, 1200);
+            } else {
+                selectedBtn.classList.add('wrong');
+                for(let i=0; i<4; i++) {
+                    if(document.getElementById('opt' + i).innerText === correctAnswer) {
+                        document.getElementById('opt' + i).classList.add('correct');
+                    }
+                }
+                // Bei Fehler muss der Raum wiederholt werden (neue Szene generieren)
+                setTimeout(() => {
+                    loadRoom();
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
