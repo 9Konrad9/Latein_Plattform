@@ -19,8 +19,7 @@
             --font-body: 'Verdana', sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-
+        /* Keine globalen Blockaden mehr für Touch-Events */
         body {
             font-family: var(--font-body);
             background-color: var(--bg-dark);
@@ -71,7 +70,6 @@
         .timer-crit { color: #ff3333 !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.4; } }
 
-        /* Das ovale Circus-Maximus-Stadion */
         .circus-stadium {
             width: 100%;
             background: #222;
@@ -89,7 +87,6 @@
             height: auto;
         }
 
-        /* Frage-Struktur */
         .question-box {
             background: rgba(240, 230, 210, 0.06);
             border-left: 5px solid var(--roman-gold);
@@ -122,13 +119,14 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.1s;
-            -webkit-tap-highlight-color: transparent;
             text-align: center;
+            /* Optimiert für sofortige iPad-Touch-Reaktion ohne Delay */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
-        .race-btn:not(:disabled):active { background-color: #444; }
 
-        .correct { background-color: #4CAF50 !important; border-color: white !important; }
-        .wrong { background-color: #F44336 !important; border-color: white !important; }
+        .correct { background-color: #4CAF50 !important; border-color: white !important; color: white !important; }
+        .wrong { background-color: #F44336 !important; border-color: white !important; color: white !important; }
 
         .end-overlay {
             position: absolute;
@@ -149,7 +147,6 @@
             font-family: var(--font-display); font-weight: bold; padding: 14px 40px;
             border: none; border-radius: 25px; font-size: 1.2rem; cursor: pointer;
             text-transform: uppercase; text-decoration: none; margin-top: 15px; display: inline-block;
-            box-shadow: 0 4px 12px rgba(214,175,55,0.3);
         }
     </style>
 </head>
@@ -181,10 +178,8 @@
         <div class="circus-stadium">
             <svg class="svg-arena" viewBox="0 0 700 240">
                 <rect x="0" y="0" width="700" height="240" fill="#dfb784"/>
-                
                 <rect x="15" y="15" width="670" height="210" rx="105" fill="none" stroke="#aa7a44" stroke-width="6"/>
                 <rect x="45" y="45" width="610" height="150" rx="75" fill="none" stroke="#ca9e6a" stroke-width="3"/>
-                
                 <rect x="200" y="112" width="300" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
                 <rect x="210" y="115" width="280" height="10" rx="5" fill="#c0c0c0"/>
                 
@@ -235,10 +230,10 @@
                 <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
             <div class="options-grid">
-                <button class="race-btn" id="opt0" disabled>-</button>
-                <button class="race-btn" id="opt1" disabled>-</button>
-                <button class="race-btn" id="opt2" disabled>-</button>
-                <button class="race-btn" id="opt3" disabled>-</button>
+                <button class="race-btn" id="opt0" onclick="checkAnswer(0)" disabled>-</button>
+                <button class="race-btn" id="opt1" onclick="checkAnswer(1)" disabled>-</button>
+                <button class="race-btn" id="opt2" onclick="checkAnswer(2)" disabled>-</button>
+                <button class="race-btn" id="opt3" onclick="checkAnswer(3)" disabled>-</button>
             </div>
         </div>
     </div>
@@ -251,19 +246,9 @@
         let playerLaps = 0;
         let aiLaps = 0;
         let currentCorrectAnswer = "";
-        let roundLocked = true;
 
-        // Ausfallsichere Klick-Bindung beim Laden der Seite
         function initRace() {
             document.getElementById('end-screen').style.display = 'flex';
-            
-            // Programmatische Bindung der Buttons schließt iOS-Skriptfehler vollständig aus
-            for (let i = 0; i < 4; i++) {
-                const btn = document.getElementById('opt' + i);
-                btn.addEventListener('click', function() {
-                    checkAnswer(i);
-                });
-            }
             updatePositions();
         }
 
@@ -278,7 +263,6 @@
             aiProgress = 0;
             playerLaps = 0;
             aiLaps = 0;
-            roundLocked = false;
 
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('back-menu-btn').style.display = 'inline-block';
@@ -365,7 +349,6 @@
 
         function nextQuestion() {
             if(timeLeft <= 0) return;
-            roundLocked = false; 
 
             const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
             
@@ -378,7 +361,6 @@
             let questionText = "";
             let wrongPool = [];
 
-            // FRAGETYP 0: BEDEUTUNGEN (Strikter Wortart-Filter)
             if (qType === 0) {
                 categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
                 questionText = `Was bedeutet das Wort „${item.latin}“?`;
@@ -389,12 +371,13 @@
                     .map(i => i.meaning);
                 
                 wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
-                while (wrongPool.length < 3) {
+                let safety = 0;
+                while (wrongPool.length < 3 && safety < 50) {
+                    safety++;
                     let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
                     if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
                 }
             }
-            // FRAGETYP 1: GRAMMATISCHE STAMMFORMEN
             else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
@@ -410,12 +393,13 @@
                     .map(i => i.middle);
                 
                 wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
-                while (wrongPool.length < 3) {
+                let safety = 0;
+                while (wrongPool.length < 3 && safety < 50) {
+                    safety++;
                     let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
                     if (fb.middle && fb.middle !== currentCorrectAnswer && !wrongPool.includes(fb.middle)) wrongPool.push(fb.middle);
                 }
             }
-            // FRAGETYP 2: DEKLINATIONS- / KONJUGATIONSKLASSE (Didaktisch bereinigte Distraktoren)
             else if (qType === 2) {
                 if (item.type === "noun") {
                     categoryText = "⚔️ Deklinationsklassen";
@@ -443,33 +427,35 @@
 
             for (let i = 0; i < 4; i++) {
                 const btn = document.getElementById('opt' + i);
-                btn.innerText = finalOptions[i];
+                btn.textContent = finalOptions[i];
                 btn.className = "race-btn";
-                btn.disabled = false;
+                btn.disabled = false; // Knöpfe im iPad-Betriebssystem freischalten
             }
         }
 
         function checkAnswer(selectedIdx) {
-            if(roundLocked) return;
-            roundLocked = true; 
+            // Absolut unfehlbarer Schutz vor Mehrfachklicks durch sofortige Deaktivierung
+            // Dadurch wird keine anfällige 'roundLocked'-Variable im JavaScript benötigt!
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('opt' + i).disabled = true;
+            }
 
-            for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
-
-            const selectedText = document.getElementById('opt' + selectedIdx).innerText;
-            const isCorrect = (selectedText === currentCorrectAnswer);
+            const selectedButton = document.getElementById('opt' + selectedIdx);
+            const selectedText = selectedButton.textContent.trim();
+            const targetAnswer = currentCorrectAnswer.trim();
+            const isCorrect = (selectedText === targetAnswer);
 
             if (isCorrect) {
-                document.getElementById('opt' + selectedIdx).classList.add('correct');
+                selectedButton.classList.add('correct');
                 playerProgress += 10; 
-                
                 if (playerProgress >= 100) {
                     playerLaps++;
                     playerProgress -= 100;
                 }
             } else {
-                document.getElementById('opt' + selectedIdx).classList.add('wrong');
+                selectedButton.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
-                    if (document.getElementById('opt' + i).innerText === currentCorrectAnswer) {
+                    if (document.getElementById('opt' + i).textContent.trim() === targetAnswer) {
                         document.getElementById('opt' + i).classList.add('correct');
                     }
                 }
@@ -487,3 +473,42 @@
             setTimeout(() => {
                 if (timeLeft > 0) {
                     nextQuestion();
+                }
+            }, 1200);
+        }
+
+        function translateType(type) {
+            const types = {
+                noun: "Substantiv", verb: "Verb", adjective: "Adjektiv",
+                adverb: "Adverb", preposition: "Präposition", pronoun: "Pronomen",
+                conjunction: "Konjunktion", other: "Partikel"
+            };
+            return types[type] || type;
+        }
+
+        function endGame() {
+            const overlay = document.getElementById('end-screen');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            const actionBtn = document.getElementById('start-action-btn');
+
+            overlay.style.display = 'flex';
+            actionBtn.innerText = "Erneut antreten";
+            title.innerText = "⏱️ FINIS SPATIĪ!";
+            
+            if (playerLaps > aiLaps) {
+                msg.innerHTML = `<strong>Glorreicher Triumph!</strong><br>Die Sanduhr ist abgelaufen. Du hast dein Gespann meisterhaft gesteuert und die feindliche Fraktion im Staub zurückgelassen!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
+                title.style.color = "var(--roman-gold)";
+            } else if (playerLaps < aiLaps) {
+                msg.innerHTML = `<strong>Niederlage im Circus!</strong><br>Der rote Wagen hat dich auf den letzten Metern niedergerungen. Bessere deine Vokabel-Abwehr aus!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
+                title.style.color = "#ff3333";
+            } else {
+                msg.innerHTML = `<strong>Ex aequo - Gleichstand!</strong><br>Ein dramatisches Finale! Beide Wagen überqueren zeitgleich die Ziellinie.<br><br>🏁 Ihr beide schafft hervorragende <strong>${playerLaps} Runden</strong>!`;
+                title.style.color = "var(--roman-marble)";
+            }
+        }
+
+        window.onload = initRace;
+    </script>
+</body>
+</html>
