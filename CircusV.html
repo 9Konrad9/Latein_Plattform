@@ -235,10 +235,10 @@
                 <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
             <div class="options-grid">
-                <button class="race-btn" id="opt0" disabled>-</button>
-                <button class="race-btn" id="opt1" disabled>-</button>
-                <button class="race-btn" id="opt2" disabled>-</button>
-                <button class="race-btn" id="opt3" disabled>-</button>
+                <button class="race-btn" id="opt0" onclick="checkAnswer(0)" disabled>-</button>
+                <button class="race-btn" id="opt1" onclick="checkAnswer(1)" disabled>-</button>
+                <button class="race-btn" id="opt2" onclick="checkAnswer(2)" disabled>-</button>
+                <button class="race-btn" id="opt3" onclick="checkAnswer(3)" disabled>-</button>
             </div>
         </div>
     </div>
@@ -310,22 +310,19 @@
             document.getElementById('ai-laps').innerText = aiLaps;
         }
 
-        // MATHEMATISCH PRÄZISE OVAL-BAHN-STEUERUNG (Native SVG-Koordinaten)
         function getChariotCoords(progress, radius) {
             let x = 0, y = 0, angle = 0;
-            const centerXLeft = 210;  // Linker Scheitelpunkt der Spina
-            const centerXRight = 490; // Rechter Scheitelpunkt der Spina
-            const centerY = 120;      // Die absolute Mittelachse des Stadions
+            const centerXLeft = 210;  
+            const centerXRight = 490; 
+            const centerY = 120;      
 
             if (progress >= 0 && progress < 35) {
-                // 1. OBERE GERADE (Von links nach rechts)
                 let t = progress / 35;
                 x = centerXLeft + t * (centerXRight - centerXLeft);
                 y = centerY - radius;
                 angle = 0;
             } 
             else if (progress >= 35 && progress < 50) {
-                // 2. RECHTE WENDUNG (Um die östliche Meta)
                 let t = (progress - 35) / 15;
                 let alpha = -Math.PI / 2 + (t * Math.PI);
                 x = centerXRight + radius * Math.cos(alpha);
@@ -333,14 +330,12 @@
                 angle = t * 180;
             } 
             else if (progress >= 50 && progress < 85) {
-                // 3. UNTERE GEGENGERADE (Zurück von rechts nach links)
                 let t = (progress - 50) / 35;
                 x = centerXRight - t * (centerXRight - centerXLeft);
                 y = centerY + radius;
                 angle = 180;
             } 
             else if (progress >= 85 && progress <= 100) {
-                // 4. LINKE WENDUNG (Um die westliche Meta zurück zur Ziellinie)
                 let t = (progress - 85) / 15;
                 let alpha = Math.PI / 2 + (t * Math.PI);
                 x = centerXLeft + radius * Math.cos(alpha);
@@ -352,7 +347,6 @@
         }
 
         function updatePositions() {
-            // Spieler fährt auf der idealen Innenbahn (R=35), KI weicht nach außen aus (R=65)
             let pCoords = getChariotCoords(playerProgress, 35);
             let aiCoords = getChariotCoords(aiProgress, 65);
 
@@ -362,7 +356,7 @@
 
         function nextQuestion() {
             if(timeLeft <= 0) return;
-            roundLocked = false; // Schaltet die Klick-Sperre frei
+            roundLocked = false; 
 
             const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
             
@@ -417,7 +411,6 @@
                 }
             }
 
-            // Pool absichern und zufällig mischen
             wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
             while (wrongPool.length < 3) {
                 let fallbackItem = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
@@ -442,7 +435,7 @@
 
         function checkAnswer(selectedIdx) {
             if(roundLocked) return;
-            roundLocked = true; // Sperrt sofort Mehrfach-Klicks
+            roundLocked = true; 
 
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
@@ -451,7 +444,7 @@
 
             if (isCorrect) {
                 document.getElementById('opt' + selectedIdx).classList.add('correct');
-                playerProgress += 10; // 10 richtige Antworten = 1 komplette Stadionrunde
+                playerProgress += 10; 
                 
                 if (playerProgress >= 100) {
                     playerLaps++;
@@ -465,7 +458,7 @@
                     }
                 }
                 
-                aiProgress += 15; // Rote KI zieht bei Fehlern dynamisch vorüber
+                aiProgress += 15; 
                 if (aiProgress >= 100) {
                     aiLaps++;
                     aiProgress -= 100;
