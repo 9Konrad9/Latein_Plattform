@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Antikes Alltagsleben - Das Kultur-Quiz</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+        }
+
+        .progress-bar {
+            font-size: 0.9rem;
+            color: var(--roman-gold);
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--roman-marble);
+            margin-bottom: 20px;
+            line-height: 1.4;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-left: 5px solid var(--roman-gold);
+            border-radius: 4px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #3d3d3d;
+            border: 2px solid var(--roman-bronze);
+            color: var(--text-light);
+            padding: 16px;
+            font-size: 1.05rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .option-btn:not(:disabled):active { background: #555; }
+
+        .correct { background-color: #4CAF50 !important; border-color: #4CAF50 !important; color: white; }
+        .wrong { background-color: #F44336 !important; border-color: #F44336 !important; color: white; }
+
+        .result-screen { text-align: center; padding: 20px 10px; }
+        .result-score { font-size: 3rem; color: var(--roman-gold); font-family: var(--font-display); margin: 15px 0; }
+
+        .nav-btn {
+            background: var(--roman-gold);
+            color: var(--roman-red);
+            font-family: var(--font-display);
+            font-weight: bold;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Antikes Alltagsleben</h1>
+
+    <div class="quiz-container">
+        <!-- Spiel-Bereich -->
+        <div id="quiz-box">
+            <div class="progress-bar">Frage <span id="current-idx">1</span> von <span id="total-idx">5</span></div>
+            <div class="question-text" id="question-content">Lade Frage...</div>
+            <div class="options-list">
+                <button class="option-btn" id="opt0" onclick="selectOption(0)">-</button>
+                <button class="option-btn" id="opt1" onclick="selectOption(1)">-</button>
+                <button class="option-btn" id="opt2" onclick="selectOption(2)">-</button>
+            </div>
+        </div>
+
+        <!-- Ergebnis-Bereich -->
+        <div id="result-box" class="result-screen" style="display: none;">
+            <h2>Auswertung</h2>
+            <div class="result-score" id="score-display">0 / 0</div>
+            <p id="result-text" style="font-size: 1.1rem; margin-bottom: 20px; line-height: 1.5;"></p>
+            <button class="nav-btn" onclick="restartQuiz()">Nochmal versuchen</button>
+            <br>
+            <a href="index.html" class="nav-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px;">Zurück zum Hauptmenü</a>
+        </div>
+    </div>
+
+    <script>
+        // Fragen basierend auf den Kulturseiten der Lektionen 1-6
+        const quizQuestions = [
+            {
+                q: "Was versteht man im antiken römischen Haus unter dem „ātrium“?",
+                options: ["Den zentralen Empfangsraum des Hauses", "Die Küche, in der die Sklaven arbeiteten", "Den von Säulen umgebenen Garten im hinteren Teil"],
+                correct: 0
+            },
+            {
+                q: "Wer gehörte im alten Rom alles zur „familia“ (Hausgemeinschaft)?",
+                options: ["Nur Vater, Mutter und die eigenen Kinder", "Die Senatoren und die politischen Berufe einer Stadt", "Eltern, Kinder, aber auch alle Sklaven und Sklavinnen des Hauses"],
+                correct: 2
+            },
+            {
+                q: "Was war die sogenannte „spīna“ im Circus Maximus?",
+                options: ["Die hölzerne Startbox für die Rennpferde", "Die lange, geschmückte Mittelinsel, um die herum gefahren wurde", "Die Loge, in der der Kaiser den Sieger krönte"],
+                correct: 1
+            },
+            {
+                q: "Welche Farbe trugen die Wagenlenker des Rennstalls der „russata“?",
+                options: ["Grün", "Rot", "Blau"],
+                correct: 1
+            },
+            {
+                q: "Welcher Ort im antiken Rom war der zentrale Marktplatz und zugleich das politische Zentrum?",
+                options: ["Das Forum Romanum", "Das Peristyl", "Das Atrium"],
+                correct: 0
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('quiz-box').style.display = 'block';
+            document.getElementById('result-box').style.display = 'none';
+            document.getElementById('total-idx').innerText = quizQuestions.length;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const qData = quizQuestions[currentQuestionIndex];
+            document.getElementById('current-idx').innerText = currentQuestionIndex + 1;
+            document.getElementById('question-content').innerText = qData.q;
+
+            for (let i = 0; i < 3; i++) {
+                const btn = document.getElementById('opt' + i);
+                btn.innerText = qData.options[i];
+                btn.className = 'option-btn';
+                btn.disabled = false;
+            }
+        }
+
+        function selectOption(idx) {
+            const qData = quizQuestions[currentQuestionIndex];
+            for (let i = 0; i < 3; i++) document.getElementById('opt' + i).disabled = true;
+
+            if (idx === qData.correct) {
+                document.getElementById('opt' + idx).classList.add('correct');
+                score++;
+            } else {
+                document.getElementById('opt' + idx).classList.add('wrong');
+                document.getElementById('opt' + qData.correct).classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizQuestions.length) {
+                    showQuestion();
+                } else {
+                    showResults();
+                }
+            }, 1500);
+        }
+
+        function showResults() {
+            document.getElementById('quiz-box').style.display = 'none';
+            document.getElementById('result-box').style.display = 'block';
+            document.getElementById('score-display').innerText = `${score} / ${quizQuestions.length}`;
+            
+            const resText = document.getElementById('result-text');
+            if (score === quizQuestions.length) {
+                resText.innerHTML = "Sublimis! Du hast alle Fragen fehlerfrei beantwortet.<br>Ein wahrer patricius des römischen Wissens!";
+            } else if (score >= 3) {
+                resText.innerHTML = "Bene! Du kennst dich im antiken Rom schon richtig gut aus.<br>Die Götter sind zufrieden mit deiner Leistung.";
+            } else {
+                resText.innerHTML = "Gaius braucht wohl noch etwas Nachhilfe.<br>Lies dir die Kulturtexte im Buch am besten noch einmal durch!";
+            }
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        // Direkt beim Laden starten
+        window.onload = startQuiz;
+    </script>
+</body>
+</html>
