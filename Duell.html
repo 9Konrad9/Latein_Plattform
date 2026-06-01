@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gladiatoren-Duell - Split-Screen</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Gemeinsamer Teiler in der Mitte */
+        .divider {
+            height: 6px;
+            background: var(--roman-gold);
+            width: 100%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+
+        /* Spieler-Zonen */
+        .player-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+            position: relative;
+            background-color: #1a1a1a;
+            transition: background-color 0.2s ease;
+        }
+
+        /* SPIELER 1 WIRD UM 180 GRAD GEDREHT (Für das Gegenüber am Tisch) */
+        #player1 {
+            transform: rotate(180deg);
+            background-color: #221515; /* Leicht rötlicher Stich */
+        }
+
+        #player2 {
+            background-color: #151522; /* Leicht bläulicher Stich */
+        }
+
+        /* Statusleiste pro Spieler */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--roman-gold);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .health-display { font-size: 1.3rem; letter-spacing: 2px; }
+
+        /* Frage-Box */
+        .question-container {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            border-left: 4px solid var(--roman-gold);
+        }
+
+        .q-type { font-size: 0.75rem; text-transform: uppercase; color: #aaa; margin-bottom: 2px; }
+        .q-text { font-family: var(--font-display); font-size: 1.25rem; font-weight: bold; color: var(--roman-marble); }
+
+        /* Antworten-Raster */
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .arena-btn {
+            background: var(--card-bg);
+            border: 2px solid var(--roman-bronze);
+            color: white;
+            padding: 15px 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Treffer- und Schadensanimationen */
+        .flash-correct { background-color: #4CAF50 !important; }
+        .flash-wrong { background-color: #F44336 !important; }
+
+        /* Endbildschirm-Overlay */
+        .end-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .end-title { font-family: var(--font-display); font-size: 2.2rem; color: var(--roman-gold); margin-bottom: 15px; }
+        .end-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 12px 35px;
+            border: none; border-radius: 20px; font-size: 1.2rem; cursor: pointer; text-transform: uppercase;
+            text-decoration: none; margin-top: 15px; display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SPIELER 1 (Kopfstehend für das Gegenüber) -->
+    <div class="player-zone" id="player1">
+        <div class="header-bar">
+            <span>GLADIATOR I (Rot)</span>
+            <div class="health-display" id="p1-health">❤️❤️❤️❤️❤️</div>
+        </div>
+        <div class="question-container">
+            <div class="q-type" id="p1-qtype">Lade Kampf...</div>
+            <div class="q-text" id="p1-qtext">---</div>
+        </div>
+        <div class="answers-grid">
+            <button class="arena-btn" id="p1-opt0" onclick="playerClick(1, 0)">-</button>
+            <button class="arena-btn" id="p1-opt1" onclick="playerClick(1, 1)">-</button>
+            <button class="arena-btn" id="p1-opt2" onclick="playerClick(1, 2)">-</button>
+            <button class="arena-btn" id="p1-opt3" onclick="playerClick(1, 3)">-</button>
+        </div>
+    </div>
+
+    <!-- Trennlinie auf dem Tisch -->
+    <div class="divider"></div>
+
+    <!-- SPIELER 2 (Normal ausgerichtet) -->
+    <div class="player-zone" id="player2">
+        <div class="header-bar">
+            <span>ANGLO-GLADIATOR II (Blau)</span>
+            <div class="health-display" id="p2-health">❤️❤️❤️❤️❤️</div>
+        </div>
+        <div class="question-container">
+            <div class="q-type" id="p2-qtype">Lade Kampf...</div>
+            <div class="q-text" id="p2-qtext">---</div>
+        </div>
+        <div class="answers-grid">
+            <button class="arena-btn" id="p2-opt0" onclick="playerClick(2, 0)">-</button>
+            <button class="arena-btn" id="p2-opt1" onclick="playerClick(2, 1)">-</button>
+            <button class="arena-btn" id="p2-opt2" onclick="playerClick(2, 2)">-</button>
+            <button class="arena-btn" id="p2-opt3" onclick="playerClick(2, 3)">-</button>
+        </div>
+    </div>
+
+    <!-- Globaler Endbildschirm -->
+    <div class="end-screen" id="end-overlay">
+        <div class="end-title" id="end-winner-text">HAST DEINEN GEGNER BESIEGT!</div>
+        <p style="font-size: 1.2rem; margin-bottom: 20px;">Die Arena erzittert vor eurem Ruhm.</p>
+        <button class="end-btn" onclick="resetArena()">Nächstes Duell</button>
+        <br>
+        <a href="index.html" class="end-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px;">Zurück zum Hauptmenü</a>
+    </div>
+
+    <script>
+        // Bewährter Vokabelpool (Lektion 1-6, komplett kleingeschrieben)
+        const vocabularyPool = [
+            { latin: "pater", middle: "patris m.", meaning: "der Vater" },
+            { latin: "māter", middle: "mātris f.", meaning: "die Mutter" },
+            { latin: "fīlius", middle: "fīliī m.", meaning: "der Sohn" },
+            { latin: "fīlia", middle: "fīliae f.", meaning: "die Tochter" },
+            { latin: "avus", middle: "avī m.", meaning: "der Großvater" },
+            { latin: "servus", middle: "servī m.", meaning: "der Sklave" },
+            { latin: "serva", middle: "servae f.", meaning: "die Sklavin" },
+            { latin: "catella", middle: "catellae f.", meaning: "das Hündchen" },
+            { latin: "dominus", middle: "dominī m.", meaning: "der Herr, der Hausherr" },
+            { latin: "clāmat", middle: "clāmō", meaning: "er/sie/es ruft" },
+            { latin: "venit", middle: "veniō", meaning: "er/sie/es kommt" },
+            { latin: "domina", middle: "dominae f.", meaning: "die Hausherrin" },
+            { latin: "labōrat", middle: "labōrō", meaning: "er/sie/es arbeitet" },
+            { latin: "lūdit", middle: "lūdō", meaning: "er/sie/es spielt" },
+            { latin: "cantat", middle: "cantō", meaning: "er/sie/es singt" },
+            { latin: "gaudet", middle: "gaudeō", meaning: "er/sie/es freut sich" },
+            { latin: "currit", middle: "currō", meaning: "er/sie/es läuft" },
+            { latin: "familia", middle: "familiae f.", meaning: "die Familie, Hausgemeinschaft" },
+            { latin: "clāmor", middle: "clāmōris m.", meaning: "der Lärm, das Geschrei" },
+            { latin: "cōnsīdere", middle: "cōnsīdō", meaning: "sich hinsetzen" },
+            { latin: "vincere", middle: "vincō", meaning: "siegen, besiegen" }
+        ];
+
+        let hp = { p1: 5, p2: 5 };
+        let currentCorrectAnswer = "";
+        let roundLocked = false;
+
+        function initArena() {
+            hp = { p1: 5, p2: 5 };
+            roundLocked = false;
+            document.getElementById('end-overlay').style.display = 'none';
+            updateHearts();
+            nextRound();
+        }
+
+        function updateHearts() {
+            document.getElementById('p1-health').innerText = "❤️".repeat(hp.p1) + "🖤".repeat(5 - hp.p1);
+            document.getElementById('p2-health').innerText = "❤️".repeat(hp.p2) + "🖤".repeat(5 - hp.p2);
+        }
+
+        function nextRound() {
+            roundLocked = false;
+            
+            // Zufälliges Wort und Fragetyp bestimmen (0 = Bedeutung, 1 = Genitiv/1.Sg)
+            const item = vocabularyPool[Math.floor(Math.random() * vocabularyPool.length)];
+            const qType = Math.floor(Math.random() * 2);
+
+            let typeLabel = "";
+            let questionText = "";
+            let correctAnswer = "";
+            let wrongPool = [];
+
+            if (qType === 0) {
+                typeLabel = "Was bedeutet dieses Wort?";
+                questionText = item.latin;
+                correctAnswer = item.meaning;
+                wrongPool = vocabularyPool.map(i => i.meaning).filter(m => m !== correctAnswer);
+            } else {
+                typeLabel = "Wie lautet die grammatische Form / Zusatz?";
+                questionText = item.latin;
+                correctAnswer = item.middle;
+                wrongPool = vocabularyPool.map(i => i.middle).filter(m => m !== correctAnswer);
+            }
+
+            currentCorrectAnswer = correctAnswer;
+            wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+            const options = [correctAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+
+            // Beide Spieler-Zonen synchron mit den identischen Optionen befüllen
+            ["p1", "p2"].forEach(p => {
+                document.getElementById(`${p}-qtype`).innerText = typeLabel;
+                document.getElementById(`${p}-qtext`).innerText = questionText;
+                document.getElementById(p).backgroundColor = p === "p1" ? "#221515" : "#151522";
+
+                options.forEach((opt, idx) => {
+                    const btn = document.getElementById(`${p}-opt${idx}`);
+                    btn.innerText = opt;
+                    btn.className = "arena-btn";
+                    btn.disabled = false;
+                });
+            });
+        }
+
+        function playerClick(playerNum, optIdx) {
+            if (roundLocked) return;
+            roundLocked = true; // Verhindert, dass der andere Spieler in derselben Millisekunde klickt
+
+            const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
+            const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
+
+            let winnerZone = playerNum === 1 ? "player1" : "player2";
+            let loserZone = playerNum === 1 ? "player2" : "player1";
+
+            if (isCorrect) {
+                // Wer richtig klickt, zieht dem Gegner ein Leben ab!
+                if (playerNum === 1) hp.p2--; else hp.p1--;
+                document.getElementById(winnerZone).classList.add("flash-correct");
+            } else {
+                // Wer falsch klickt, verliert selbst ein Leben (Bestrafung für Spammen)
+                if (playerNum === 1) hp.p1--; else hp.p2--;
+                document.getElementById(winnerZone).classList.add("flash-wrong");
+            }
+
+            updateHearts();
+
+            // Optionen sperren
+            for(let i=0; i<4; i++) {
+                document.getElementById(`p1-opt${i}`).disabled = true;
+                document.getElementById(`p2-opt${i}`).disabled = true;
+            }
+
+            setTimeout(() => {
+                // Farben zurücksetzen
+                document.getElementById("player1").classList.remove("flash-correct", "flash-wrong");
+                document.getElementById("player2").classList.remove("flash-correct", "flash-wrong");
+
+                if (hp.p1 <= 0 || hp.p2 <= 0) {
+                    endMatch();
+                } else {
+                    nextRound();
+                }
+            }, 1200);
+        }
+
+        function endMatch() {
+            const overlay = document.getElementById('end-overlay');
+            const winText = document.getElementById('end-winner-text');
+            overlay.style.display = "flex";
+
+            if (hp.p1 > hp.p2) {
+                winText.innerText = "🏆 GLADIATOR I HAT GESIEGT! 🏆";
+                winText.style.color = "#cc0000";
+            } else {
+                winText.innerText = "🏆 GLADIATOR II HAT GESIEGT! 🏆";
+                winText.style.color = "#0000cc";
+            }
+        }
+
+        function resetArena() {
+            initArena();
+        }
+
+        window.onload = initArena;
+    </script>
+</body>
+</html>
