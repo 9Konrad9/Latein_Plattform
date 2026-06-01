@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Aedificium Rōmānum - Der Villa-Baukasten</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 750px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            position: relative;
+        }
+
+        /* Das interaktive Grafik-Baufeld */
+        .building-site {
+            width: 100%;
+            height: 260px;
+            background: linear-gradient(to bottom, #7ec0ee 0%, #ececec 50%, #66a15c 52%, #4d8044 100%);
+            border: 3px solid #333;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+
+        /* Fortschrittsanzeige */
+        .blueprint-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: var(--roman-gold);
+            font-weight: bold;
+            border: 1px solid var(--roman-bronze);
+        }
+
+        /* Ausgeblendete Bauteile werden per JS aktiviert */
+        .build-part {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .build-part.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Quiz-Bereich */
+        .question-box {
+            background: rgba(240, 230, 210, 0.08);
+            border-left: 5px solid var(--roman-gold);
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .q-text {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: var(--roman-marble);
+            font-weight: bold;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .build-btn {
+            background-color: #333;
+            border: 2px solid var(--roman-bronze);
+            color: var(--text-light);
+            padding: 18px 10px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            font-weight: bold;
+        }
+
+        .build-btn:not(:disabled):active { background-color: #444; }
+
+        .correct { background-color: #4CAF50 !important; border-color: white !important; }
+        .wrong { background-color: #F44336 !important; border-color: white !important; }
+
+        /* Endbildschirm-Overlay */
+        .completion-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20,20,20,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            text-align: center;
+            padding: 20px;
+            z-index: 20;
+        }
+
+        .nav-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 12px 35px;
+            border: none; border-radius: 20px; font-size: 1.1rem; cursor: pointer;
+            text-transform: uppercase; text-decoration: none; margin-top: 15px; display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Aedificium Rōmānum</h1>
+
+    <div class="game-container">
+        <!-- End-Bildschirm -->
+        <div class="completion-overlay" id="end-screen">
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2rem;">VILLA FERTIGGESTELLT!</h2>
+            <p style="font-size: 1.2rem; margin: 15px 0; max-width: 500px; line-height: 1.5;">
+                Magnifice! Durch dein exzellentes Lateinwissen hast du eine meisterhafte römische Landvilla errichtet. Die Architekten Roms ziehen ihren Hut vor dir!
+            </p>
+            <button class="nav-btn" onclick="resetGame()">Ein neues Haus bauen</button>
+            <br>
+            <a href="index.html" class="nav-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px;">Zurück zum Hauptmenü</a>
+        </div>
+
+        <!-- Baufeld mit den geschichteten SVG-Elementen -->
+        <div class="building-site">
+            <div class="blueprint-status">Baufortschritt: <span id="progress-text">0</span> / 8 Teilen</div>
+            
+            <svg width="100%" height="100%" viewBox="0 0 400 250" style="position: absolute; bottom: 0; left: 0;">
+                <defs>
+                    <!-- Definitionen für 3D-Marmor-Verläufe -->
+                    <linearGradient id="wall-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#b85c5c"/>
+                        <stop offset="70%" stop-color="#cc7070"/>
+                        <stop offset="100%" stop-color="#994444"/>
+                    </linearGradient>
+                    <linearGradient id="roof-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#e05a47"/>
+                        <stop offset="100%" stop-color="#9e3424"/>
+                    </linearGradient>
+                    <linearGradient id="pillar-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f2ebd9"/>
+                        <stop offset="30%" stop-color="#ffffff"/>
+                        <stop offset="70%" stop-color="#decfa9"/>
+                        <stop offset="100%" stop-color="#ab9c74"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- TEIL 1: Das Steinfundament (Kreypis) -->
+                <g class="build-part" id="part0">
+                    <rect x="80" y="195" width="240" height="15" fill="#7a7a7a" stroke="#444" stroke-width="1"/>
+                    <line x1="80" y1="202" x2="320" y2="202" stroke="#555" stroke-dasharray="10,5"/>
+                </g>
+
+                <!-- TEIL 2: Die Hauptwände (Atriumsmauern) -->
+                <g class="build-part" id="part1">
+                    <rect x="95" y="115" width="210" height="80" fill="url(#wall-grad)" stroke="#662222" stroke-width="1"/>
+                </g>
+
+                <!-- TEIL 3: Die schwere hölzerne Eingangstür (Ianua) -->
+                <g class="build-part" id="part2">
+                    <rect x="180" y="145" width="40" height="50" fill="#5c3a21" stroke="#2e1d11" stroke-width="2"/>
+                    <circle cx="188" cy="170" r="2" fill="#d4af37"/>
+                    <circle cx="212" cy="170" r="2" fill="#d4af37"/>
+                </g>
+
+                <!-- TEIL 4: Linke und rechte Prachtsäulen -->
+                <g class="build-part" id="part3">
+                    <!-- Linke Säule -->
+                    <rect x="110" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
+                    <rect x="107" y="112" width="20" height="4" fill="#ab9c74"/>
+                    <rect x="107" y="192" width="20" height="4" fill="#ab9c74"/>
+                    <!-- Rechte Säule -->
+                    <rect x="276" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
+                    <rect x="273" y="112" width="20" height="4" fill="#ab9c74"/>
+                    <rect x="273" y="192" width="20" height="4" fill="#ab9c74"/>
+                </g>
+
+                <!-- TEIL 5: Das große dreidimensionale Ziegeldach -->
+                <g class="build-part" id="part4">
+                    <polygon points="70,115 200,50 330,115" fill="url(#roof-grad)" stroke="#6e2116" stroke-width="2"/>
+                    <!-- Strukturstriche für Ziegel -->
+                    <line x1="135" y1="82" x2="155" y2="115" stroke="#822619" stroke-width="2"/>
+                    <line x1="200" y1="50" x2="200" y2="115" stroke="#822619" stroke-width="2"/>
+                    <line x1="265" y1="82" x2="245" y2="115" stroke="#822619" stroke-width="2"/>
+                </g>
+
+                <!-- TEIL 6: Zwei symmetrische Fenster im Obergeschoss -->
+                <g class="build-part" id="part5">
+                    <rect x="135" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
+                    <line x1="147" y1="130" x2="147" y2="160" stroke="#d4af37"/>
+                    <rect x="240" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
+                    <line x1="252" y1="130" x2="252" y2="160" stroke="#d4af37"/>
+                </g>
+
+                <!-- TEIL 7: Mediterrane Zypressen im Vorgarten -->
+                <g class="build-part" id="part6">
+                    <!-- Links -->
+                    <path d="M 40 210 Q 25 150 40 120 Q 55 150 40 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
+                    <rect x="38" y="210" width="4" height="10" fill="#5c3a21"/>
+                    <!-- Rechts -->
+                    <path d="M 360 210 Q 345 140 360 110 Q 375 140 360 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
+                    <rect x="358" y="210" width="4" height="10" fill="#5c3a21"/>
+                </g>
+
+                <!-- TEIL 8: Ein plätschernder Marmorspringbrunnen im Hof -->
+                <g class="build-part" id="part7">
+                    <ellipse cx="200" cy="215" rx="35" ry="10" fill="#7a7a7a" stroke="#444"/>
+                    <ellipse cx="200" cy="213" rx="30" ry="7" fill="#4fa4c4"/>
+                    <!-- Wasserfontäne -->
+                    <path d="M 200 213 Q 190 195 195 190 Q 200 185 200 213" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M 200 213 Q 210 195 205 190 Q 200 185 200 213" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Fragebereich -->
+        <div id="quiz-area">
+            <div class="question-box">
+                <div style="font-size: 0.8rem; color: var(--roman-gold); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;" id="q-category">Vokabeltest</div>
+                <div class="q-text" id="question-display">Lade Bauakten...</div>
+            </div>
+            <div class="options-grid">
+                <button class="build-btn" id="opt0" onclick="checkAnswer(0)">-</button>
+                <button class="build-btn" id="opt1" onclick="checkAnswer(1)">-</button>
+                <button class="build-btn" id="opt2" onclick="checkAnswer(2)">-</button>
+                <button class="build-btn" id="opt3" onclick="checkAnswer(3)">-</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Kleingeschriebener Vokabelstamm-Pool (Lektion 1-6)
+        const vocabularyPool = [
+            { latin: "pater", type: "noun", middle: "patris m.", meaning: "der Vater" },
+            { latin: "māter", type: "noun", middle: "mātris f.", meaning: "die Mutter" },
+            { latin: "fīlius", type: "noun", middle: "fīliī m.", meaning: "der Sohn" },
+            { latin: "fīlia", type: "noun", middle: "fīliae f.", meaning: "die Tochter" },
+            { latin: "avus", type: "noun", middle: "avī m.", meaning: "der Großvater" },
+            { latin: "servus", type: "noun", middle: "servī m.", meaning: "der Sklave" },
+            { latin: "serva", type: "noun", middle: "servae f.", meaning: "die Sklavin" },
+            { latin: "catella", type: "noun", middle: "catellae f.", meaning: "das Hündchen" },
+            { latin: "dominus", type: "noun", middle: "dominī m.", meaning: "der Herr, der Hausherr" },
+            { latin: "clāmat", type: "verb", middle: "clāmō", meaning: "er/sie/es ruft" },
+            { latin: "venit", type: "verb", middle: "veniō", meaning: "er/sie/es kommt" },
+            { latin: "domina", type: "noun", middle: "dominae f.", meaning: "die Hausherrin" },
+            { latin: "labōrat", type: "verb", middle: "labōrō", meaning: "er/sie/es arbeitet" },
+            { latin: "lūdit", type: "verb", middle: "lūdō", meaning: "er/sie/es spielt" },
+            { latin: "cantat", type: "verb", middle: "cantō", meaning: "er/sie/es singt" },
+            { latin: "gaudet", type: "verb", middle: "gaudeō", meaning: "er/sie/es freut sich" },
+            { latin: "currit", type: "verb", middle: "currō", meaning: "er/sie/es läuft" },
+            { latin: "familia", type: "noun", middle: "familiae f.", meaning: "die Familie, Hausgemeinschaft" },
+            { latin: "clāmor", type: "noun", middle: "clāmōris m.", meaning: "der Lärm, das Geschrei" },
+            { latin: "cōnsīdere", type: "verb", middle: "cōnsīdō", meaning: "sich hinsetzen" },
+            { latin: "vincere", type: "verb", middle: "vincō", meaning: "siegen, besiegen" },
+            { latin: "villa", type: "noun", middle: "villae f.", meaning: "das Landhaus" },
+            { latin: "spectātor", type: "noun", middle: "spectātōris m.", meaning: "der Zuschauer" },
+            { latin: "gaudium", type: "noun", middle: "gaudiī n.", meaning: "die Freude" }
+        ];
+
+        let builtPartsCount = 0;
+        let currentCorrectAnswer = "";
+
+        function initGame() {
+            builtPartsCount = 0;
+            document.getElementById('progress-text').innerText = "0";
+            document.getElementById('end-screen').style.display = 'none';
+            
+            // Alle Bauteile unsichtbar schalten
+            for(let i=0; i<8; i++) {
+                document.getElementById('part' + i).classList.remove('visible');
+            }
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            const item = vocabularyPool[Math.floor(Math.random() * vocabularyPool.length)];
+            // Wechselt zufällig zwischen Wortbedeutung (0) und grammatischer Form (1)
+            const qType = (item.type === "other") ? 0 : Math.floor(Math.random() * 2);
+
+            let categoryLabel = "";
+            let questionText = "";
+            let correctAnswer = "";
+            let wrongPool = [];
+
+            if (qType === 0) {
+                categoryLabel = "🏛️ Architekten-Prüfung: Vokabelbedeutung";
+                questionText = `Was bedeutet das Wort „${item.latin}“?`;
+                correctAnswer = item.meaning;
+                wrongPool = vocabularyPool.map(i => i.meaning).filter(m => m !== correctAnswer);
+            } else {
+                categoryLabel = "📜 Architekten-Prüfung: Grammatische Formen";
+                if (item.type === "noun") {
+                    questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
+                } else {
+                    questionText = `Wie lautet die 1. Person Singular von „${item.latin}“?`;
+                }
+                correctAnswer = item.middle;
+                wrongPool = vocabularyPool.map(i => i.middle).filter(m => m !== correctAnswer);
+            }
+
+            currentCorrectAnswer = correctAnswer;
+            wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+            const options = [correctAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+
+            document.getElementById('q-category').innerText = categoryLabel;
+            document.getElementById('question-display').innerText = questionText;
+
+            options.forEach((opt, idx) => {
+                const btn = document.getElementById('opt' + idx);
+                btn.innerText = opt;
+                btn.className = "build-btn";
+                btn.disabled = false;
+            });
+        }
+
+        function checkAnswer(selectedIdx) {
+            for(let i=0; i<4; i++) document.getElementById('opt' + i).disabled = true;
+
+            const selectedText = document.getElementById('opt' + selectedIdx).innerText;
+            const isCorrect = (selectedText === currentCorrectAnswer);
+
+            if (isCorrect) {
+                document.getElementById('opt' + selectedIdx).classList.add('correct');
+                
+                // Ein neues Bauteil einfliegen lassen
+                if (builtPartsCount < 8) {
+                    document.getElementById('part' + builtPartsCount).classList.add('visible');
+                    builtPartsCount++;
+                    document.getElementById('progress-text').innerText = builtPartsCount;
+                }
+            } else {
+                document.getElementById('opt' + selectedIdx).classList.add('wrong');
+                for(let i=0; i<4; i++) {
+                    if(document.getElementById('opt' + i).innerText === currentCorrectAnswer) {
+                        document.getElementById('opt' + i).classList.add('correct');
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                if (builtPartsCount >= 8) {
+                    document.getElementById('end-screen').style.display = 'flex';
+                } else {
+                    nextQuestion();
+                }
+            }, 1500);
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
