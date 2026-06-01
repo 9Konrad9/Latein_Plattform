@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Formen-Kastell - Die KNG-Abwehr</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            position: relative;
+        }
+
+        /* Kastell-Grafik-Simulation */
+        .castle-wall {
+            background: #555;
+            background-image: linear-gradient(90deg, #444 50%, #555 50%);
+            background-size: 40px 20px;
+            border: 4px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .health-bar-container {
+            width: 100%;
+            background: #cc0000;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #222;
+        }
+
+        .health-bar {
+            width: 100%;
+            background: #4CAF50;
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+
+        .attack-stone {
+            background: radial-gradient(circle at 30% 30%, #a0a0a0, #666);
+            border-radius: 50%;
+            display: inline-block;
+            padding: 15px 30px;
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            box-shadow: 3px 5px 10px rgba(0,0,0,0.5);
+            animation: bounce 2s infinite alternate;
+            margin: 10px 0;
+            border: 2px dashed #444;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        .gram-clue {
+            font-size: 0.9rem;
+            color: #ffcc00;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        /* Antwort-Optionen */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .shield-btn {
+            background: linear-gradient(#800000, #5a0000);
+            border: 3px solid var(--roman-gold);
+            color: var(--roman-marble);
+            padding: 22px 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            font-family: var(--font-display);
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: all 0.1s ease;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .shield-btn:not(:disabled):active {
+            transform: scale(0.97);
+        }
+
+        /* Didaktische Feedback-Box */
+        .feedback-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            z-index: 5;
+        }
+
+        .feedback-title {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .feedback-explanation {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            max-width: 500px;
+        }
+
+        .next-btn {
+            background: var(--roman-gold);
+            color: var(--roman-red);
+            font-family: var(--font-display);
+            font-weight: bold;
+            padding: 12px 35px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .correct { background: #4CAF50 !important; border-color: #fff !important; }
+        .wrong { background: #F44336 !important; border-color: #fff !important; }
+    </style>
+</head>
+<body>
+
+    <h1>Formen-Kastell: KNG-Abwehr</h1>
+
+    <div class="game-container">
+        <!-- Didaktisches Feedback -->
+        <div class="feedback-overlay" id="feedback-box">
+            <div class="feedback-title" id="fb-title">Mauer gehalten!</div>
+            <div class="feedback-explanation" id="fb-text">Erklärungstext...</div>
+            <button class="next-btn" onclick="loadNextWave()">Nächster Angriff</button>
+        </div>
+
+        <!-- Haupt-Spielfeld -->
+        <div id="combat-box">
+            <div class="castle-wall">
+                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; color: #aaa;">MAUERSTÄRKE DES KASTELLS</div>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="wall-health"></div>
+                </div>
+                <div style="font-size: 0.8rem; color: #ffcc00; text-transform: uppercase; font-weight: bold;">
+                    Welle <span id="wave-current">1</span> von 10
+                </div>
+                
+                <!-- Der fliegende Brocken -->
+                <div class="attack-stone" id="target-noun">---</div>
+                <div class="gram-clue" id="target-clue">Wortart-Info</div>
+            </div>
+
+            <div style="text-align: center; color: #ccc; font-size: 0.95rem; margin-bottom: 10px; font-style: italic;">
+                Wähle das Adjektiv mit der exakt passenden KNG-Form, um den Stein zu zerschmettern!
+            </div>
+
+            <div class="options-grid">
+                <button class="shield-btn" id="shield0" onclick="selectShield(0)">-</button>
+                <button class="shield-btn" id="shield1" onclick="selectShield(1)">-</button>
+                <button class="shield-btn" id="shield2" onclick="selectShield(2)">-</button>
+                <button class="shield-btn" id="shield3" onclick="selectShield(3)">-</button>
+            </div>
+        </div>
+
+        <!-- Endbildschirm -->
+        <div id="end-box" style="display: none; text-align: center; padding: 20px 10px;">
+            <h2 id="end-title" style="font-size: 2rem; color: var(--roman-gold); font-family: var(--font-display);">SIEG!</h2>
+            <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
+            <a href="index.html" class="next-btn" style="text-decoration: none; display: inline-block;">Zurück zur Übersicht</a>
+        </div>
+    </div>
+
+    <script>
+        // Präzise didaktische KNG-Herausforderungen (Reim-Fallen gezielt eingebaut!)
+        const kngWaves = [
+            {
+                noun: "patrem",
+                clue: "pater (Akkusativ Singular, maskulin)",
+                correct: "magnum",
+                options: ["magnum", "magnam", "magnem", "magnus"],
+                why_correct: "Richtig! Auch wenn 'patrem' auf -em endet, ist das Wort maskulin. Das Adjektiv muss der o-Deklination folgen: <strong>magnum</strong>. Falle abgewehrt!",
+                why_wrong: "Achtung! Du bist in die Reim-Falle getappt. 'pater' ist maskulin. Ein Adjektiv auf '-em' gibt es bei 'magnus' nicht. Richtig ist <strong>magnum</strong>."
+            },
+            {
+                noun: "mātrem",
+                clue: "māter (Akkusativ Singular, feminin)",
+                correct: "parvam",
+                options: ["parvam", "parvum", "parvem", "parvās"],
+                why_correct: "Exzellent! 'māter' ist weiblich. Der Akkusativ Singular dazu endet ganz klassisch auf <strong>-am</strong>.",
+                why_wrong: "Knapp vorbei! 'māter' ist biologisch und grammatikalisch weiblich (feminin). Daher verlangt der Akkusativ Singular die Endung <strong>-am</strong> (parvam)."
+            },
+            {
+                noun: "servōs",
+                clue: "servus (Akkusativ Plural, maskulin)",
+                correct: "malōs",
+                options: ["malōs", "malās", "malī", "malum"],
+                why_correct: "Perfekt! Hier stimmen die Endungen sogar überein: Akkusativ Plural maskulin ist klar <strong>-ōs</strong>.",
+                why_wrong: "Denk an den Numerus und Kasus! 'servōs' ist Akkusativ Plural maskulin. Das passende Gegenstück ist <strong>malōs</strong>."
+            },
+            {
+                noun: "puellae",
+                clue: "puella (Nominativ Plural, feminin)",
+                correct: "pulchrae",
+                options: ["pulchrae", "pulchrī", "pulchrās", "pulcher"],
+                why_correct: "Sehr gut! Der Nominativ Plural weiblich endet sauber auf <strong>-ae</strong>.",
+                why_wrong: "Halt! 'puellae' steht hier im Nominativ Plural. Die Endung für das weibliche Adjektiv muss ebenfalls <strong>-ae</strong> lauten (pulchrae)."
+            },
+            {
+                noun: "dōna",
+                clue: "dōnum (Akkusativ Plural, neutrum!)",
+                correct: "magnā",
+                options: ["magna", "magnī", "magnōs", "magnam"],
+                why_correct: "Großartig! Neutra im Plural enden im Nominativ und Akkusativ immer auf <strong>-a</strong>. Das gilt für das Nomen und das Adjektiv!",
+                why_wrong: "Vorsicht, Neutrum-Falle! 'dōnum' ist ein sächliches Wort (neutrum). Der Plural davon endet immer auf <strong>-a</strong> (magna). Nicht auf -ōs!"
+            },
+            {
+                noun: "homō",
+                clue: "homō (Nominativ Singular, maskulin)",
+                correct: "bonus",
+                options: ["bonus", "bona", "bonum", "bonī"],
+                why_correct: "Sauber gelöst! 'homō' gehört zur konsonantischen Deklination, ist aber maskulin. Der Nominativ Singular maskulin ist <strong>bonus</strong>.",
+                why_wrong: "Reim-Falle! Nur weil 'homō' auf -ō endet, ist es kein Neutrum oder Dativ. Es ist der Nominativ maskulin, verlangt also <strong>bonus</strong>."
+            },
+            {
+                noun: "clāmōrem",
+                clue: "clāmor (Akkusativ Singular, maskulin)",
+                correct: "miserum",
+                options: ["miserum", "miseram", "miser", "miserōs"],
+                why_correct: "Meisterhaft! 'clāmor' ist maskulin. Also Akkusativ Singular maskulin: <strong>miserum</strong>.",
+                why_wrong: "Uuups! 'clāmor' (der Lärm) ist im Lateinischen maskulin. Der Akkusativ Singular maskulin von miser heißt <strong>miserum</strong>."
+            },
+            {
+                noun: "tunicās",
+                clue: "tunica (Akkusativ Plural, feminin)",
+                correct: "aureās",
+                options: ["aureās", "aureōs", "aureī", "aurea"],
+                why_correct: "Sehr schön! Akkusativ Plural feminin: Nomen und Adjektiv reimen sich perfekt auf <strong>-ās</strong>.",
+                why_wrong: "Schau genau hin! 'tunica' ist feminin. Der Akkusativ Plural endet folglich auf <strong>-ās</strong> (aureās)."
+            },
+            {
+                noun: "monumenta",
+                clue: "monumentum (Nominativ Plural, neutrum!)",
+                correct: "praeclāra",
+                options: ["praeclāra", "praeclārī", "praeclārōs", "praeclāram"],
+                why_correct: "Korrekt! Das Neutrum-Gesetz schlägt wieder zu: Beide Wörter enden im Plural auf das sächliche <strong>-a</strong>.",
+                why_wrong: "Achtung! 'monumentum' ist sächlich (neutrum). Sächliche Wörter haben im Nominativ Plural immer die Endung <strong>-a</strong> (praeclāra)."
+            },
+            {
+                noun: "uxōrem",
+                clue: "uxor (Akkusativ Singular, feminin)",
+                correct: "tūtam",
+                options: ["tūtam", "tūtum", "tūtus", "tūtās"],
+                why_correct: "Triumph! 'uxor' ist die Ehefrau, also feminin. Akkusativ Singular feminin ist immer <strong>-am</strong>.",
+                why_wrong: "Fehler! Die 'uxor' ist weiblich. Der Akkusativ Singular des Adjektivs muss deshalb zwingend auf <strong>-am</strong> enden (tūtam)."
+            }
+        ];
+
+        let currentWaveIdx = 0;
+        let wallHealth = 100;
+        let shuffledWaves = [];
+
+        function startDefense() {
+            shuffledWaves = [...kngWaves].sort(() => Math.random() - 0.5);
+            currentWaveIdx = 0;
+            wallHealth = 100;
+            document.getElementById('wall-health').style.width = '100%';
+            document.getElementById('combat-box').style.display = 'block';
+            document.getElementById('end-box').style.display = 'none';
+            showWave();
+        }
+
+        function showWave() {
+            document.getElementById('feedback-box').style.display = 'none';
+            document.getElementById('wave-current').innerText = currentWaveIdx + 1;
+            
+            const wave = shuffledWaves[currentWaveIdx];
+            document.getElementById('target-noun').innerText = wave.noun;
+            document.getElementById('target-clue').innerText = `Hinweis: ${wave.clue}`;
+
+            // Optionen mischen
+            const shuffledOptions = [...wave.options].sort(() => Math.random() - 0.5);
+            for(let i=0; i<4; i++) {
+                const btn = document.getElementById('shield0' + i || 'shield' + i);
+                btn.innerText = shuffledOptions[i];
+                btn.className = 'shield-btn';
+                btn.disabled = false;
+            }
+        }
+
+        function selectShield(idx) {
+            for(let i=0; i<4; i++) document.getElementById('shield' + i).disabled = true;
+
+            const wave = shuffledWaves[currentWaveIdx];
+            const selectedText = document.getElementById('shield' + idx).innerText;
+            const isCorrect = (selectedText === wave.correct);
+
+            const fbBox = document.getElementById('feedback-box');
+            const fbTitle = document.getElementById('fb-title');
+            const fbText = document.getElementById('fb-text');
+
+            fbBox.style.display = 'flex';
+
+            if (isCorrect) {
+                document.getElementById('shield' + idx).classList.add('correct');
+                fbTitle.innerText = "🛡️ MAUER GEHALTEN!";
+                fbTitle.style.color = "#4CAF50";
+                fbText.innerHTML = wave.why_correct;
+            } else {
+                document.getElementById('shield' + idx).classList.add('wrong');
+                // Richtige anzeigen
+                for(let i=0; i<4; i++) {
+                    if(document.getElementById('shield'+i).innerText === wave.correct) {
+                        document.getElementById('shield'+i).classList.add('correct');
+                    }
+                }
+                
+                wallHealth -= 20;
+                if (wallHealth < 0) wallHealth = 0;
+                document.getElementById('wall-health').style.width = wallHealth + '%';
+
+                fbTitle.innerText = "💥 MAUER BESCHÄDIGT!";
+                fbTitle.style.color = "#F44336";
+                fbText.innerHTML = wave.why_wrong;
+            }
+        }
+
+        function loadNextWave() {
+            currentWaveIdx++;
+            if (wallHealth <= 0) {
+                endGame(false);
+            } else if (currentWaveIdx < shuffledWaves.length) {
+                showWave();
+            } else {
+                endGame(true);
+            }
+        }
+
+        function endGame(isVictory) {
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('feedback-box').style.display = 'none';
+            
+            const endBox = document.getElementById('end-box');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            
+            endBox.style.display = 'block';
+
+            if (isVictory) {
+                title.innerText = "🏛️ KASTELL VERTEIDIGT!";
+                title.style.color = "#4CAF50";
+                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die <strong>KNG-Kongruenz</strong> fehlerfrei. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
+            } else {
+                title.innerText = "🔥 DAS KASTELL IST GEFALLEN!";
+                title.style.color = "#F44336";
+                msg.innerHTML = `Die Katapultsteine waren zu stark für deine Schilde.<br>Die Reim-Fallen haben die Verteidigung durchbrochen. Trainiere deine Truppen und versuche es erneut!`;
+            }
+        }
+
+        window.onload = startDefense;
+    </script>
+</body>
+</html>
