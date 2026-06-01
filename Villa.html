@@ -17,7 +17,7 @@
             --font-body: 'Verdana', sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: no; }
 
         body {
             font-family: var(--font-body);
@@ -35,9 +35,18 @@
             font-family: var(--font-display);
             text-transform: uppercase;
             font-size: 1.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: center;
             letter-spacing: 2px;
+        }
+
+        .project-title {
+            font-family: var(--font-display);
+            color: var(--roman-marble);
+            font-size: 1.1rem;
+            font-style: italic;
+            margin-bottom: 15px;
+            text-align: center;
         }
 
         .game-container {
@@ -51,7 +60,6 @@
             position: relative;
         }
 
-        /* Das interaktive Grafik-Baufeld */
         .building-site {
             width: 100%;
             height: 260px;
@@ -63,32 +71,31 @@
             margin-bottom: 15px;
         }
 
-        /* Fortschrittsanzeige */
         .blueprint-status {
             position: absolute;
             top: 10px;
             left: 10px;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             padding: 5px 12px;
             border-radius: 15px;
             font-size: 0.85rem;
             color: var(--roman-gold);
             font-weight: bold;
             border: 1px solid var(--roman-bronze);
+            z-index: 5;
         }
 
-        /* Ausgeblendete Bauteile werden per JS aktiviert */
+        /* Schwebendes Einfliegen der Bauteile */
         .build-part {
             opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(-30px);
+            transition: all 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .build-part.visible {
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* Quiz-Bereich */
         .question-box {
             background: rgba(240, 230, 210, 0.08);
             border-left: 5px solid var(--roman-gold);
@@ -96,14 +103,14 @@
             border-radius: 4px;
             text-align: center;
             margin-bottom: 15px;
+            min-height: 85px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        .q-text {
-            font-family: var(--font-display);
-            font-size: 1.4rem;
-            color: var(--roman-marble);
-            font-weight: bold;
-        }
+        .q-type { font-size: 0.8rem; text-transform: uppercase; color: var(--roman-gold); font-weight: bold; margin-bottom: 4px; letter-spacing: 1px;}
+        .q-text { font-family: var(--font-body); font-size: 1.2rem; color: var(--roman-marble); }
 
         .options-grid {
             display: grid;
@@ -116,12 +123,12 @@
             border: 2px solid var(--roman-bronze);
             color: var(--text-light);
             padding: 18px 10px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.1s;
-            -webkit-tap-highlight-color: transparent;
             font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .build-btn:not(:disabled):active { background-color: #444; }
@@ -129,7 +136,6 @@
         .correct { background-color: #4CAF50 !important; border-color: white !important; }
         .wrong { background-color: #F44336 !important; border-color: white !important; }
 
-        /* Endbildschirm-Overlay */
         .completion-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -155,107 +161,137 @@
 <body>
 
     <h1>Aedificium Rōmānum</h1>
+    <div class="project-title" id="current-project">Bauprojekt: Römische Architektur</div>
 
     <div class="game-container">
         <!-- End-Bildschirm -->
         <div class="completion-overlay" id="end-screen">
-            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2rem;">VILLA FERTIGGESTELLT!</h2>
-            <p style="font-size: 1.2rem; margin: 15px 0; max-width: 500px; line-height: 1.5;">
-                Magnifice! Durch dein exzellentes Lateinwissen hast du eine meisterhafte römische Landvilla errichtet. Die Architekten Roms ziehen ihren Hut vor dir!
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2rem;">MONUMENT VOLLENDET!</h2>
+            <p style="font-size: 1.2rem; margin: 15px 0; max-width: 500px; line-height: 1.5;" id="end-message">
+                Magnifice! Durch dein Meisterwissen steht das Gebäude prachtvoll am Bestimmungsort.
             </p>
-            <button class="nav-btn" onclick="resetGame()">Ein neues Haus bauen</button>
+            <button class="nav-btn" onclick="resetGame()">Nächstes Projekt starten</button>
             <br>
-            <a href="index.html" class="nav-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px;">Zurück zum Hauptmenü</a>
+            <a href="index.html" class="nav-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px;">Zurück zur Übersicht</a>
         </div>
 
-        <!-- Baufeld mit den geschichteten SVG-Elementen -->
+        <!-- Baufeld -->
         <div class="building-site">
-            <div class="blueprint-status">Baufortschritt: <span id="progress-text">0</span> / 8 Teilen</div>
+            <div class="blueprint-status">Fortschritt: <span id="progress-text">0</span> / 8 Teilen</div>
             
             <svg width="100%" height="100%" viewBox="0 0 400 250" style="position: absolute; bottom: 0; left: 0;">
                 <defs>
-                    <!-- Definitionen für 3D-Marmor-Verläufe -->
-                    <linearGradient id="wall-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#b85c5c"/>
-                        <stop offset="70%" stop-color="#cc7070"/>
-                        <stop offset="100%" stop-color="#994444"/>
+                    <!-- Farbverläufe für die Designs -->
+                    <linearGradient id="wall-rustica" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#b85c5c"/><stop offset="70%" stop-color="#cc7070"/><stop offset="100%" stop-color="#994444"/>
+                    </linearGradient>
+                    <linearGradient id="wall-urbana" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#debf68"/><stop offset="60%" stop-color="#edd593"/><stop offset="100%" stop-color="#bda04a"/>
                     </linearGradient>
                     <linearGradient id="roof-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#e05a47"/>
-                        <stop offset="100%" stop-color="#9e3424"/>
+                        <stop offset="0%" stop-color="#e05a47"/><stop offset="100%" stop-color="#9e3424"/>
                     </linearGradient>
                     <linearGradient id="pillar-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#f2ebd9"/>
-                        <stop offset="30%" stop-color="#ffffff"/>
-                        <stop offset="70%" stop-color="#decfa9"/>
-                        <stop offset="100%" stop-color="#ab9c74"/>
+                        <stop offset="0%" stop-color="#f2ebd9"/><stop offset="30%" stop-color="#ffffff"/><stop offset="70%" stop-color="#decfa9"/><stop offset="100%" stop-color="#ab9c74"/>
+                    </linearGradient>
+                    <linearGradient id="water-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#4fa4c4" stop-opacity="0.9"/><stop offset="100%" stop-color="#1b6380" stop-opacity="0.9"/>
                     </linearGradient>
                 </defs>
 
-                <!-- TEIL 1: Das Steinfundament (Kreypis) -->
-                <g class="build-part" id="part0">
-                    <rect x="80" y="195" width="240" height="15" fill="#7a7a7a" stroke="#444" stroke-width="1"/>
-                    <line x1="80" y1="202" x2="320" y2="202" stroke="#555" stroke-dasharray="10,5"/>
+                <!-- ================= DESIGN 0: VILLA RUSTICA ================= -->
+                <g id="design-0">
+                    <g class="build-part" id="d0-part0">
+                        <rect x="80" y="195" width="240" height="15" fill="#7a7a7a" stroke="#444"/>
+                    </g>
+                    <g class="build-part" id="d0-part1">
+                        <rect x="95" y="115" width="210" height="80" fill="url(#wall-rustica)" stroke="#662222"/>
+                    </g>
+                    <g class="build-part" id="d0-part2">
+                        <rect x="180" y="145" width="40" height="50" fill="#5c3a21" stroke="#2e1d11" stroke-width="2"/>
+                        <circle cx="188" cy="170" r="2" fill="#d4af37"/><circle cx="212" cy="170" r="2" fill="#d4af37"/>
+                    </g>
+                    <g class="build-part" id="d0-part3">
+                        <rect x="110" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
+                        <rect x="107" y="112" width="20" height="4" fill="#ab9c74"/>
+                        <rect x="107" y="192" width="20" height="4" fill="#ab9c74"/>
+                        <rect x="276" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
+                        <rect x="273" y="112" width="20" height="4" fill="#ab9c74"/>
+                        <rect x="273" y="192" width="20" height="4" fill="#ab9c74"/>
+                    </g>
+                    <g class="build-part" id="d0-part4">
+                        <polygon points="70,115 200,50 330,115" fill="url(#roof-grad)" stroke="#6e2116" stroke-width="2"/>
+                    </g>
+                    <g class="build-part" id="d0-part5">
+                        <rect x="135" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
+                        <line x1="147" y1="130" x2="147" y2="160" stroke="#d4af37"/>
+                        <rect x="240" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
+                        <line x1="252" y1="130" x2="252" y2="160" stroke="#d4af37"/>
+                    </g>
+                    <g class="build-part" id="d0-part6">
+                        <path d="M 40 210 Q 25 150 40 120 Q 55 150 40 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
+                        <path d="M 360 210 Q 345 140 360 110 Q 375 140 360 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
+                    </g>
+                    <g class="build-part" id="d0-part7">
+                        <ellipse cx="200" cy="215" rx="35" ry="10" fill="#7a7a7a" stroke="#444"/>
+                        <ellipse cx="200" cy="213" rx="30" ry="7" fill="#4fa4c4"/>
+                        <path d="M 200 213 Q 190 195 195 190 Q 200 185 200 213" fill="none" stroke="#fff" stroke-width="2"/>
+                    </g>
                 </g>
 
-                <!-- TEIL 2: Die Hauptwände (Atriumsmauern) -->
-                <g class="build-part" id="part1">
-                    <rect x="95" y="115" width="210" height="80" fill="url(#wall-grad)" stroke="#662222" stroke-width="1"/>
-                </g>
-
-                <!-- TEIL 3: Die schwere hölzerne Eingangstür (Ianua) -->
-                <g class="build-part" id="part2">
-                    <rect x="180" y="145" width="40" height="50" fill="#5c3a21" stroke="#2e1d11" stroke-width="2"/>
-                    <circle cx="188" cy="170" r="2" fill="#d4af37"/>
-                    <circle cx="212" cy="170" r="2" fill="#d4af37"/>
-                </g>
-
-                <!-- TEIL 4: Linke und rechte Prachtsäulen -->
-                <g class="build-part" id="part3">
-                    <!-- Linke Säule -->
-                    <rect x="110" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
-                    <rect x="107" y="112" width="20" height="4" fill="#ab9c74"/>
-                    <rect x="107" y="192" width="20" height="4" fill="#ab9c74"/>
-                    <!-- Rechte Säule -->
-                    <rect x="276" y="115" width="14" height="80" fill="url(#pillar-grad)"/>
-                    <rect x="273" y="112" width="20" height="4" fill="#ab9c74"/>
-                    <rect x="273" y="192" width="20" height="4" fill="#ab9c74"/>
-                </g>
-
-                <!-- TEIL 5: Das große dreidimensionale Ziegeldach -->
-                <g class="build-part" id="part4">
-                    <polygon points="70,115 200,50 330,115" fill="url(#roof-grad)" stroke="#6e2116" stroke-width="2"/>
-                    <!-- Strukturstriche für Ziegel -->
-                    <line x1="135" y1="82" x2="155" y2="115" stroke="#822619" stroke-width="2"/>
-                    <line x1="200" y1="50" x2="200" y2="115" stroke="#822619" stroke-width="2"/>
-                    <line x1="265" y1="82" x2="245" y2="115" stroke="#822619" stroke-width="2"/>
-                </g>
-
-                <!-- TEIL 6: Zwei symmetrische Fenster im Obergeschoss -->
-                <g class="build-part" id="part5">
-                    <rect x="135" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
-                    <line x1="147" y1="130" x2="147" y2="160" stroke="#d4af37"/>
-                    <rect x="240" y="130" width="25" height="30" fill="#2a4454" stroke="#d4af37" stroke-width="1.5"/>
-                    <line x1="252" y1="130" x2="252" y2="160" stroke="#d4af37"/>
-                </g>
-
-                <!-- TEIL 7: Mediterrane Zypressen im Vorgarten -->
-                <g class="build-part" id="part6">
-                    <!-- Links -->
-                    <path d="M 40 210 Q 25 150 40 120 Q 55 150 40 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
-                    <rect x="38" y="210" width="4" height="10" fill="#5c3a21"/>
-                    <!-- Rechts -->
-                    <path d="M 360 210 Q 345 140 360 110 Q 375 140 360 210 Z" fill="#2e5c1e" stroke="#1d3b13"/>
-                    <rect x="358" y="210" width="4" height="10" fill="#5c3a21"/>
-                </g>
-
-                <!-- TEIL 8: Ein plätschernder Marmorspringbrunnen im Hof -->
-                <g class="build-part" id="part7">
-                    <ellipse cx="200" cy="215" rx="35" ry="10" fill="#7a7a7a" stroke="#444"/>
-                    <ellipse cx="200" cy="213" rx="30" ry="7" fill="#4fa4c4"/>
-                    <!-- Wasserfontäne -->
-                    <path d="M 200 213 Q 190 195 195 190 Q 200 185 200 213" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M 200 213 Q 210 195 205 190 Q 200 185 200 213" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                <!-- ================= DESIGN 1: VILLA URBANA (NEU!) ================= -->
+                <g id="design-1" style="display:none;">
+                    <!-- Part 0: Weißes Marmor-Podium -->
+                    <g class="build-part" id="d1-part0">
+                        <rect x="50" y="195" width="300" height="15" fill="#e8e8e8" stroke="#999" stroke-width="1.5"/>
+                        <line x1="50" y1="200" x2="350" y2="200" stroke="#bbb"/>
+                    </g>
+                    <!-- Part 1: Edle pompejanisch-gelbe Palastmauern -->
+                    <g class="build-part" id="d1-part1">
+                        <rect x="70" y="105" width="260" height="90" fill="url(#wall-urbana)" stroke="#8a6d20"/>
+                    </g>
+                    <!-- Part 2: Vergoldetes zweiflügeliges Portal -->
+                    <g class="build-part" id="d1-part2">
+                        <rect x="175" y="135" width="50" height="60" fill="#a62411" stroke="#d4af37" stroke-width="2.5"/>
+                        <line x1="200" y1="135" x2="200" y2="195" stroke="#d4af37" stroke-width="1.5"/>
+                        <circle cx="192" cy="165" r="3" fill="#d4af37"/><circle cx="208" cy="165" r="3" fill="#d4af37"/>
+                    </g>
+                    <!-- Part 3: Vier majestätische ionische Säulen vor der Front -->
+                    <g class="build-part" id="d1-part3">
+                        <!-- Säule 1 -->
+                        <rect x="85" y="105" width="14" height="90" fill="url(#pillar-grad)"/><rect x="81" y="101" width="22" height="4" fill="#ab9c74"/>
+                        <!-- Säule 2 -->
+                        <rect x="140" y="105" width="14" height="90" fill="url(#pillar-grad)"/><rect x="136" y="101" width="22" height="4" fill="#ab9c74"/>
+                        <!-- Säule 3 -->
+                        <rect x="246" y="105" width="14" height="90" fill="url(#pillar-grad)"/><rect x="242" y="101" width="22" height="4" fill="#ab9c74"/>
+                        <!-- Säule 4 -->
+                        <rect x="301" y="105" width="14" height="90" fill="url(#pillar-grad)"/><rect x="297" y="101" width="22" height="4" fill="#ab9c74"/>
+                    </g>
+                    <!-- Part 4: Klassischer Dreiecksgiebel mit Goldornament -->
+                    <g class="build-part" id="d1-part4">
+                        <polygon points="40,105 200,35 360,105" fill="url(#roof-grad)" stroke="#6e2116" stroke-width="2"/>
+                        <polygon points="65,105 200,48 335,105" fill="#f5f0e1" stroke="#ab9c74"/>
+                        <circle cx="200" cy="80" r="10" fill="#d4af37" stroke="#8a6d20"/>
+                    </g>
+                    <!-- Part 5: Vornehme Statuennischen in den Zwischenräumen -->
+                    <g class="build-part" id="d1-part5">
+                        <rect x="110" y="130" width="18" height="35" rx="9" fill="#444"/>
+                        <path d="M115,160 Q119,142 123,160 Z" fill="#d5d5d5"/>
+                        <rect x="272" y="130" width="18" height="35" rx="9" fill="#444"/>
+                        <path d="M277,160 Q281,142 285,160 Z" fill="#d5d5d5"/>
+                    </g>
+                    <!-- Part 6: Römische Edellorbeeren in Terrakottatöpfen -->
+                    <g class="build-part" id="d1-part6">
+                        <rect x="15" y="190" width="16" height="15" fill="#ab5132"/>
+                        <circle cx="23" cy="172" r="18" fill="#1c4715"/>
+                        <rect x="369" y="190" width="16" height="15" fill="#ab5132"/>
+                        <circle cx="377" cy="172" r="18" fill="#1c4715"/>
+                    </g>
+                    <!-- Part 7: Großes, edles Wasserbecken (Impluvium) im Hof -->
+                    <g class="build-part" id="d1-part7">
+                        <polygon points="100,210 300,210 330,248 70,248" fill="url(#water-grad)" stroke="#aaa" stroke-width="1.5"/>
+                        <line x1="85" y1="228" x2="315" y2="228" stroke="#ffffff" stroke-opacity="0.4"/>
+                    </g>
                 </g>
             </svg>
         </div>
@@ -263,8 +299,8 @@
         <!-- Fragebereich -->
         <div id="quiz-area">
             <div class="question-box">
-                <div style="font-size: 0.8rem; color: var(--roman-gold); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;" id="q-category">Vokabeltest</div>
-                <div class="q-text" id="question-display">Lade Bauakten...</div>
+                <div class="q-type" id="q-category">Lade Bauakten...</div>
+                <div class="q-text" id="question-display">---</div>
             </div>
             <div class="options-grid">
                 <button class="build-btn" id="opt0" onclick="checkAnswer(0)">-</button>
@@ -276,80 +312,178 @@
     </div>
 
     <script>
-        // Kleingeschriebener Vokabelstamm-Pool (Lektion 1-6)
+        // DER IDENTISCHE MASTER-POOL AUS DEN ANDEREN SPIELEN
         const vocabularyPool = [
-            { latin: "pater", type: "noun", middle: "patris m.", meaning: "der Vater" },
-            { latin: "māter", type: "noun", middle: "mātris f.", meaning: "die Mutter" },
-            { latin: "fīlius", type: "noun", middle: "fīliī m.", meaning: "der Sohn" },
-            { latin: "fīlia", type: "noun", middle: "fīliae f.", meaning: "die Tochter" },
-            { latin: "avus", type: "noun", middle: "avī m.", meaning: "der Großvater" },
-            { latin: "servus", type: "noun", middle: "servī m.", meaning: "der Sklave" },
-            { latin: "serva", type: "noun", middle: "servae f.", meaning: "die Sklavin" },
-            { latin: "catella", type: "noun", middle: "catellae f.", meaning: "das Hündchen" },
-            { latin: "dominus", type: "noun", middle: "dominī m.", meaning: "der Herr, der Hausherr" },
-            { latin: "clāmat", type: "verb", middle: "clāmō", meaning: "er/sie/es ruft" },
-            { latin: "venit", type: "verb", middle: "veniō", meaning: "er/sie/es kommt" },
-            { latin: "domina", type: "noun", middle: "dominae f.", meaning: "die Hausherrin" },
-            { latin: "labōrat", type: "verb", middle: "labōrō", meaning: "er/sie/es arbeitet" },
-            { latin: "lūdit", type: "verb", middle: "lūdō", meaning: "er/sie/es spielt" },
-            { latin: "cantat", type: "verb", middle: "cantō", meaning: "er/sie/es singt" },
-            { latin: "gaudet", type: "verb", middle: "gaudeō", meaning: "er/sie/es freut sich" },
-            { latin: "currit", type: "verb", middle: "currō", meaning: "er/sie/es läuft" },
-            { latin: "familia", type: "noun", middle: "familiae f.", meaning: "die Familie, Hausgemeinschaft" },
-            { latin: "clāmor", type: "noun", middle: "clāmōris m.", meaning: "der Lärm, das Geschrei" },
-            { latin: "cōnsīdere", type: "verb", middle: "cōnsīdō", meaning: "sich hinsetzen" },
-            { latin: "vincere", type: "verb", middle: "vincō", meaning: "siegen, besiegen" },
-            { latin: "villa", type: "noun", middle: "villae f.", meaning: "das Landhaus" },
-            { latin: "spectātor", type: "noun", middle: "spectātōris m.", meaning: "der Zuschauer" },
-            { latin: "gaudium", type: "noun", middle: "gaudiī n.", meaning: "die Freude" }
+            { latin: "salvē!", type: "other", middle: "Ausruf", gram_clue: "", gram_class: "", meaning: "Sei begrüßt!" },
+            { latin: "pater", type: "noun", middle: "patris m.", gram_clue: "Genitiv: patris, m.", gram_class: "konsonantische Deklination", meaning: "der Vater" },
+            { latin: "māter", type: "noun", middle: "mātris f.", gram_clue: "Genitiv: mātris, f.", gram_class: "konsonantische Deklination", meaning: "die Mutter" },
+            { latin: "fīlius", type: "noun", middle: "fīliī m.", gram_clue: "Genitiv: fīliī, m.", gram_class: "o-Deklination", meaning: "der Sohn" },
+            { latin: "fīlia", type: "noun", middle: "fīliae f.", gram_clue: "Genitiv: fīliae, f.", gram_class: "a-Deklination", meaning: "die Tochter" },
+            { latin: "avus", type: "noun", middle: "avī m.", gram_clue: "Genitiv: avī, m.", gram_class: "o-Deklination", meaning: "der Großvater" },
+            { latin: "servus", type: "noun", middle: "servī m.", gram_clue: "Genitiv: servī, m.", gram_class: "o-Deklination", meaning: "der Sklave" },
+            { latin: "serva", type: "noun", middle: "servae f.", gram_clue: "Genitiv: servae, f.", gram_class: "a-Deklination", meaning: "die Sklavin" },
+            { latin: "catella", type: "noun", middle: "catellae f.", gram_clue: "Genitiv: catellae, f.", gram_class: "a-Deklination", meaning: "das Hündchen" },
+            { latin: "hic", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "hier" },
+            { latin: "est", type: "verb", middle: "sum", gram_clue: "1. Pers. Sg.: sum", gram_class: "unregelmäßiges Verb", meaning: "er/sie/es ist; es gibt" },
+            { latin: "dominus", type: "noun", middle: "dominī m.", gram_clue: "Genitiv: dominī, m.", gram_class: "o-Deklination", meaning: "der Herr, der Hausherr" },
+            { latin: "clāmat", type: "verb", middle: "clāmō", gram_clue: "1. Pers. Sg.: clāmō", gram_class: "a-Konjugation", meaning: "er/sie/es ruft" },
+            { latin: "venit", type: "verb", middle: "veniō", gram_clue: "1. Pers. Sg.: veniō", gram_class: "i-Konjugation", meaning: "er/sie/es kommt" },
+            { latin: "domina", type: "noun", middle: "dominae f.", gram_clue: "Genitiv: dominae, f.", gram_class: "a-Deklination", meaning: "die Hausherrin" },
+            { latin: "labōrat", type: "verb", middle: "labōrō", gram_clue: "1. Pers. Sg.: labōrō", gram_class: "a-Konjugation", meaning: "er/sie/es arbeitet" },
+            { latin: "lūdit", type: "verb", middle: "lūdō", gram_clue: "1. Pers. Sg.: lūdō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es spielt" },
+            { latin: "cantat", type: "verb", middle: "cantō", gram_clue: "1. Pers. Sg.: cantō", gram_class: "a-Konjugation", meaning: "er/sie/es singt" },
+            { latin: "et", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "und" },
+            { latin: "gaudet", type: "verb", middle: "gaudeō", gram_clue: "1. Pers. Sg.: gaudeō", gram_class: "e-Konjugation", meaning: "er/sie/es freut sich" },
+            { latin: "currit", type: "verb", middle: "currō", gram_clue: "1. Pers. Sg.: currō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es läuft" },
+            { latin: "nam", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "denn" },
+            { latin: "hodiē", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "heute" },
+            { latin: "familia", type: "noun", middle: "familiae f.", gram_clue: "Genitiv: familiae, f.", gram_class: "a-Deklination", meaning: "die Familie, Hausgemeinschaft" },
+            { latin: "exspectat", type: "verb", middle: "exspectō", gram_clue: "1. Pers. Sg.: exspectō", gram_class: "a-Konjugation", meaning: "er/sie/es erwartet" },
+            { latin: "subitō", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "plötzlich" },
+            { latin: "clāmor", type: "noun", middle: "clāmōris m.", gram_clue: "Genitiv: clāmōris, m.", gram_class: "konsonantische Deklination", meaning: "der Lärm, das Geschrei" },
+            { latin: "audit", type: "verb", middle: "audiō", gram_clue: "1. Pers. Sg.: audiō", gram_class: "i-Konjugation", meaning: "er/sie/es hört (zu)" },
+            { latin: "rogat", type: "verb", middle: "rogō", gram_clue: "1. Pers. Sg.: rogō", gram_class: "a-Konjugation", meaning: "er/sie/es fragt" },
+            { latin: "quid?", type: "other", middle: "Pronomen", gram_clue: "", gram_class: "", meaning: "was?" },
+            { latin: "quaerit", type: "verb", middle: "quaerō", gram_clue: "1. Pers. Sg.: quaerō", gram_class: "konsonantische Konjugation", meaning: "er/sie/es sucht" },
+            { latin: "nōn", type: "other", middle: "Negation", gram_clue: "", gram_class: "", meaning: "nicht" },
+            { latin: "videt", type: "verb", middle: "videō", gram_clue: "1. Pers. Sg.: videō", gram_class: "e-Konjugation", meaning: "er/sie/es sieht" },
+            { latin: "sed", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "aber, sondern" },
+            { latin: "ubi?", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "wo?" },
+            { latin: "ecce!", type: "other", middle: "Ausruf", gram_clue: "", gram_class: "", meaning: "sieh(e) da!" },
+            { latin: "intrat", type: "verb", middle: "intrō", gram_clue: "1. Pers. Sg.: intrō", gram_class: "a-Konjugation", meaning: "er/sie/es betritt" },
+            { latin: "tum", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "dann, darauf" },
+            { latin: "ibi", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "dort" },
+            { latin: "nunc", type: "other", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "nun, jetzt" },
+            { latin: "etiam", type: "other", middle: "Konj.", gram_clue: "", gram_class: "", meaning: "auch" },
+            { latin: "rīdet", type: "verb", middle: "rīdeō", gram_clue: "1. Pers. Sg.: rīdeō", gram_class: "e-Konjugation", meaning: "er/sie/es lacht" },
+            { latin: "tenet", type: "verb", middle: "teneō", gram_clue: "1. Pers. Sg.: teneō", gram_class: "e-Konjugation", meaning: "er/sie/es hält" },
+            { latin: "cōnsīdere", type: "verb", middle: "cōnsīdō", gram_clue: "1. Pers. Sg.: cōnsīdō", gram_class: "konsonantische Konjugation", meaning: "sich hinsetzen" },
+            { latin: "vincere", type: "verb", middle: "vincō", gram_clue: "1. Pers. Sg.: vincō", gram_class: "konsonantische Konjugation", meaning: "siegen, besiegen" }
         ];
 
         let builtPartsCount = 0;
         let currentCorrectAnswer = "";
+        let activeDesign = 0; // 0 = Villa Rustica, 1 = Villa Urbana
+
+        const designNames = [
+            "Villa Rūstica (römisches Landgut)",
+            "Villa Urbāna (vornehmer Stadtpalast)"
+        ];
+
+        const designMessages = [
+            "Magnifice! Durch dein exzellentes Lateinwissen hast du eine meisterhafte römische Landvilla errichtet. Die Gutsverwalter danken dir!",
+            "Sublīmis! Ein prachtvoller, goldglänzender Stadtpalast steht vollendet da. Du bist der unangefochtene Meisterarchitekt Roms!"
+        ];
 
         function initGame() {
             builtPartsCount = 0;
             document.getElementById('progress-text').innerText = "0";
             document.getElementById('end-screen').style.display = 'none';
             
-            // Alle Bauteile unsichtbar schalten
-            for(let i=0; i<8; i++) {
-                document.getElementById('part' + i).classList.remove('visible');
+            // Zufälliges Design auswählen (0 oder 1)
+            activeDesign = Math.floor(Math.random() * 2);
+            document.getElementById('current-project').innerText = `Bauprojekt: ${designNames[activeDesign]}`;
+
+            // Grafik-Zweige umschalten
+            if (activeDesign === 0) {
+                document.getElementById('design-0').style.display = "block";
+                document.getElementById('design-1').style.display = "none";
+            } else {
+                document.getElementById('design-0').style.display = "none";
+                document.getElementById('design-1').style.display = "block";
+            }
+
+            // Alle Bauteile beider Häuser zurücksetzen
+            for(let d=0; d<2; d++) {
+                for(let i=0; i<8; i++) {
+                    document.getElementById(`d${d}-part${i}`).classList.remove('visible');
+                }
             }
             nextQuestion();
         }
 
+        function getSmartWrongMiddles(item) {
+            let wrongs = [];
+            if (item.type === 'noun') {
+                let parts = item.middle.split(' ');
+                let form = parts[0]; 
+                let genus = parts[1] || 'm.';
+                let oppGenus = (genus === 'm.') ? 'f.' : (genus === 'f.' ? 'm.' : 'n.');
+                
+                wrongs.push(`${form} ${oppGenus}`);
+                let base = form.replace(/(is|ī|ae|iī|is|um|īs)$/, '');
+                if (base.length < 2) base = form; 
+                
+                wrongs.push(`${base}ī ${genus}`);
+                wrongs.push(`${base}ae ${genus}`);
+                wrongs.push(`${base}is ${oppGenus}`);
+            } else if (item.type === 'verb') {
+                let form = item.middle;
+                let base = form.replace(/(ō|iō|eō|ō)$/, '');
+                if (base.length < 2) base = form;
+                
+                wrongs.push(`${base}it`);
+                wrongs.push(`${base}at`);
+                wrongs.push(`${base}et`);
+                wrongs.push(`${base}unt`);
+            }
+            return [...new Set(wrongs)].filter(w => w !== item.middle && w !== "");
+        }
+
         function nextQuestion() {
             const item = vocabularyPool[Math.floor(Math.random() * vocabularyPool.length)];
-            // Wechselt zufällig zwischen Wortbedeutung (0) und grammatischer Form (1)
-            const qType = (item.type === "other") ? 0 : Math.floor(Math.random() * 2);
+            let qType = Math.floor(Math.random() * 3);
+            
+            if (item.type === "other" && qType > 0) qType = 0;
 
-            let categoryLabel = "";
+            let categoryText = "";
             let questionText = "";
             let correctAnswer = "";
             let wrongPool = [];
 
             if (qType === 0) {
-                categoryLabel = "🏛️ Architekten-Prüfung: Vokabelbedeutung";
+                categoryText = "🔮 Vokabel-Bedeutung";
                 questionText = `Was bedeutet das Wort „${item.latin}“?`;
                 correctAnswer = item.meaning;
                 wrongPool = vocabularyPool.map(i => i.meaning).filter(m => m !== correctAnswer);
-            } else {
-                categoryLabel = "📜 Architekten-Prüfung: Grammatische Formen";
+            } 
+            else if (qType === 1) {
                 if (item.type === "noun") {
+                    categoryText = "🏛️ Genitiv & Geschlecht";
                     questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
-                } else {
+                } else if (item.type === "verb") {
+                    categoryText = "⚡ Verb-Formen";
                     questionText = `Wie lautet die 1. Person Singular von „${item.latin}“?`;
                 }
                 correctAnswer = item.middle;
-                wrongPool = vocabularyPool.map(i => i.middle).filter(m => m !== correctAnswer);
+                
+                wrongPool = getSmartWrongMiddles(item);
+                if (wrongPool.length < 3) {
+                    let backupPool = vocabularyPool.filter(i => i.type === item.type).map(i => i.middle).filter(m => m !== correctAnswer);
+                    wrongPool = [...wrongPool, ...backupPool];
+                }
+            } 
+            else if (qType === 2) {
+                if (item.type === "noun") {
+                    categoryText = "⚔️ Arena der Deklinationen";
+                    questionText = `Zu welcher Deklination gehört „${item.latin}“ (${item.gram_clue})?`;
+                    correctAnswer = item.gram_class;
+                    wrongPool = ["a-Deklination", "o-Deklination", "konsonantische Deklination"].filter(c => c !== correctAnswer);
+                } else if (item.type === "verb") {
+                    categoryText = "🔥 Arena der Konjugationen";
+                    questionText = `Zu welcher Konjugation gehört „${item.latin}“ (${item.gram_clue})?`;
+                    correctAnswer = item.gram_class;
+                    wrongPool = ["a-Konjugation", "e-Konjugation", "i-Konjugation", "konsonantische Konjugation"].filter(c => c !== correctAnswer);
+                }
             }
 
             currentCorrectAnswer = correctAnswer;
             wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+            while(wrongPool.length < 3) wrongPool.push("---");
+
             const options = [correctAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
 
-            document.getElementById('q-category').innerText = categoryLabel;
+            document.getElementById('q-category').innerText = categoryText;
             document.getElementById('question-display').innerText = questionText;
 
             options.forEach((opt, idx) => {
@@ -369,9 +503,9 @@
             if (isCorrect) {
                 document.getElementById('opt' + selectedIdx).classList.add('correct');
                 
-                // Ein neues Bauteil einfliegen lassen
+                // Exakt das Teil des aktuell aktiven Designs einfliegen lassen
                 if (builtPartsCount < 8) {
-                    document.getElementById('part' + builtPartsCount).classList.add('visible');
+                    document.getElementById(`d${activeDesign}-part${builtPartsCount}`).classList.add('visible');
                     builtPartsCount++;
                     document.getElementById('progress-text').innerText = builtPartsCount;
                 }
@@ -386,6 +520,7 @@
 
             setTimeout(() => {
                 if (builtPartsCount >= 8) {
+                    document.getElementById('end-message').innerText = designMessages[activeDesign];
                     document.getElementById('end-screen').style.display = 'flex';
                 } else {
                     nextQuestion();
