@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Formen-Kastell - Die KNG-Abwehr</title>
+    <title>Formen-Kastell - Die Verb-Abwehr</title>
+    <!-- Zentrale Vokabeldatenbank einbinden -->
+    <script src="vocabulary.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -35,7 +37,7 @@
             font-family: var(--font-display);
             text-transform: uppercase;
             font-size: 1.8rem;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             text-align: center;
             letter-spacing: 2px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
@@ -50,14 +52,12 @@
             padding: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.7);
             position: relative;
-            min-height: 400px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Start-Bildschirm / Anleitung */
-        .start-screen {
-            text-align: center;
-            padding: 10px;
-        }
+        .start-screen { text-align: center; padding: 10px; }
 
         .notice-box {
             background: rgba(212, 175, 55, 0.1);
@@ -74,12 +74,8 @@
             font-family: var(--font-display);
             margin-bottom: 10px;
             text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
-        /* Visuelles Schlachtfeld mit Katapult und Mauer */
         .battlefield {
             display: flex;
             justify-content: space-between;
@@ -95,12 +91,7 @@
             margin-bottom: 15px;
         }
 
-        .catapult-wrapper {
-            width: 80px;
-            height: 70px;
-            position: relative;
-            margin-bottom: 10px;
-        }
+        .catapult-wrapper { width: 80px; height: 70px; position: relative; margin-bottom: 10px; }
 
         .castle-wall-graphics {
             width: 120px;
@@ -115,40 +106,28 @@
         }
 
         .merlon {
-            width: 30px;
-            height: 20px;
-            background: #444;
-            border: 2px solid #222;
-            border-top: none;
-            position: absolute;
-            top: -20px;
+            width: 30px; height: 20px; background: #444;
+            border: 2px solid #222; border-top: none; position: absolute; top: -20px;
         }
-        .m1 { left: 5px; }
-        .m2 { left: 45px; }
-        .m3 { left: 85px; }
+        .m1 { left: 5px; } .m2 { left: 45px; } .m3 { left: 85px; }
 
         .stone-path {
-            position: absolute;
-            left: 90px;
-            bottom: 60px;
+            position: absolute; left: 90px; bottom: 60px;
             width: calc(100% - 220px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .attack-stone {
             background: radial-gradient(circle at 30% 30%, #999, #444);
             border-radius: 50%;
-            padding: 15px 20px;
+            padding: 15px 25px;
             font-family: var(--font-display);
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: bold;
             color: #fff;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
             box-shadow: 4px 6px 12px rgba(0,0,0,0.6);
             text-align: center;
-            min-width: 120px;
             border: 2px dashed rgba(255,255,255,0.2);
             animation: flyAnimation 1.5s ease-out;
         }
@@ -159,77 +138,45 @@
         }
 
         .health-bar-container {
-            width: 100%;
-            background: #cc0000;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            border: 1px solid #222;
+            width: 100%; background: #cc0000; height: 12px;
+            border-radius: 6px; overflow: hidden; margin-bottom: 15px; border: 1px solid #222;
         }
-
         .health-bar {
-            width: 100%;
-            background: #4CAF50;
-            height: 100%;
-            transition: width 0.4s ease;
+            width: 100%; background: #4CAF50; height: 100%; transition: width 0.4s ease;
         }
 
         .gram-clue {
-            text-align: center;
-            font-size: 1rem;
-            color: #ffcc00;
-            font-style: italic;
-            margin-bottom: 15px;
-            font-weight: bold;
+            text-align: center; font-size: 1.1rem; color: #ffcc00; margin-bottom: 15px; font-weight: bold;
         }
 
         .options-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-grow: 1;
         }
 
         .shield-btn {
             background: linear-gradient(#800000, #5a0000);
-            border: 3px solid var(--roman-gold);
-            color: var(--roman-marble);
-            padding: 20px 10px;
-            font-size: 1.25rem;
-            font-weight: bold;
-            font-family: var(--font-display);
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            transition: all 0.1s ease;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            text-align: center;
+            border: 3px solid var(--roman-gold); color: var(--roman-marble);
+            padding: 15px 5px; font-size: 1.1rem; font-weight: bold; font-family: var(--font-body);
+            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: background 0.1s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            text-align: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
-
-        .shield-btn:not(:disabled):active { transform: scale(0.97); }
+        .shield-btn:not(:disabled):active { background: #4a0000; }
 
         .feedback-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 20, 20, 0.95);
-            border-radius: 12px;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.95); border-radius: 12px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; z-index: 10;
         }
-
-        .feedback-title { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 10px; }
-        .feedback-explanation { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; max-width: 500px; }
+        .feedback-title { font-family: var(--font-display); font-size: 2rem; margin-bottom: 10px; }
+        .feedback-explanation { font-size: 1.2rem; line-height: 1.5; margin-bottom: 25px; max-width: 500px; }
         
         .start-btn {
             background: var(--roman-gold); color: var(--roman-red);
             font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
             border: none; border-radius: 30px; font-size: 1.3rem; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
         }
 
         .correct { background: #4CAF50 !important; border-color: #fff !important; }
@@ -238,28 +185,34 @@
 </head>
 <body>
 
-    <h1>Formen-Kastell: KNG-Abwehr</h1>
+    <h1>Formen-Kastell</h1>
+    <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
+        Mission: Die Verb-Abwehr
+    </div>
 
     <div class="game-container">
         
+        <!-- ANLEITUNG VOR DEM SPIELSTART -->
         <div id="start-screen" class="start-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
             <div class="notice-box">
                 <h3>📜 Wichtiger Taktik-Befehl:</h3>
-                <p>Bei dieser Verteidigung geht es <strong>rein um die grammatikalische KNG-Kongruenz</strong> (Übereinstimmung von Kasus, Numerus und Genus).</p>
-                <p style="margin-top: 10px;">Da die Wörter völlig zufällig kombiniert werden, entstehen Paare, die übersetzt <strong>keinen logischen Sinn ergeben</strong> (wie zum Beispiel <em>„ein goldener Vater“</em> oder <em>„eine schlechte Freizeit“</em>).</p>
-                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Lass dich davon nicht verwirren! Solange die Grammatikform exakt übereinstimmt, hält dein Schild den Stein auf!</p>
+                <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
+                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern (z.B. <em>vidēmus</em>). Du musst die Form blitzschnell analysieren und den Schild mit der korrekten Bestimmung (z.B. <em>1. Person Plural</em>) aktivieren.</p>
+                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Achte genau auf die Endungen (-ō, -s, -t, -mus, -tis, -nt), um das Kastell zu schützen!</p>
             </div>
-            <button class="start-btn" onclick="startGame()">Verteidigung starten!</button>
+            <button class="start-btn" id="btn-start-game">Verteidigung starten!</button>
         </div>
 
+        <!-- Didaktische Feedbackbox -->
         <div class="feedback-overlay" id="feedback-box">
             <div class="feedback-title" id="fb-title">Abgewehrt!</div>
             <div class="feedback-explanation" id="fb-text">Erklärung...</div>
-            <button class="start-btn" style="font-size:1.1rem; padding:10px 30px;" onclick="loadNextWave()">Nächster Angriff</button>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 30px;" id="btn-next-wave">Nächster Angriff</button>
         </div>
 
-        <div id="combat-box" style="display: none;">
+        <!-- Haupt-Spielfeld -->
+        <div id="combat-box" style="display: none; flex-grow: 1; flex-direction: column;">
             <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #aaa; text-align: center;">MAUERSTÄRKE DES KASTELLS</div>
             <div class="health-bar-container">
                 <div class="health-bar" id="wall-health"></div>
@@ -275,114 +228,134 @@
                         <circle cx="28" cy="18" r="7" fill="#666"/>
                     </svg>
                 </div>
-
                 <div class="stone-path">
-                    <div class="attack-stone" id="target-noun">---</div>
+                    <div class="attack-stone" id="target-verb">---</div>
                 </div>
-
                 <div class="castle-wall-graphics">
-                    <div class="merlon m1"></div>
-                    <div class="merlon m2"></div>
-                    <div class="merlon m3"></div>
+                    <div class="merlon m1"></div><div class="merlon m2"></div><div class="merlon m3"></div>
                 </div>
             </div>
 
             <div class="gram-clue" id="target-clue">Welle 1 von 10</div>
 
             <div class="options-grid">
-                <button class="shield-btn" id="shield0" onclick="selectShield(0)">-</button>
-                <button class="shield-btn" id="shield1" onclick="selectShield(1)">-</button>
-                <button class="shield-btn" id="shield2" onclick="selectShield(2)">-</button>
-                <button class="shield-btn" id="shield3" onclick="selectShield(3)">-</button>
+                <button class="shield-btn" id="shield0">-</button>
+                <button class="shield-btn" id="shield1">-</button>
+                <button class="shield-btn" id="shield2">-</button>
+                <button class="shield-btn" id="shield3">-</button>
             </div>
         </div>
 
-        <div id="end-box" style="display: none; text-align: center; padding: 20px 10px;">
-            <h2 id="end-title" style="font-size: 2rem; color: var(--roman-gold); font-family: var(--font-display);">SIEG!</h2>
+        <!-- Endbildschirm -->
+        <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
+            <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 20px;">SIEG!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
-            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1.1rem;">Zurück zur Übersicht</a>
+            <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Kohorte abwehren</button>
+            <br>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
         </div>
     </div>
 
     <script>
-        // Datenbank der Substantive mit KNG-Vorgaben (Adjektiv-Agnostisch formuliert!)
-        const nounPool = [
-            { noun: "patrem", clue: "pater (akkusativ singular, maskulin)", ending: "um", why_correct: "Richtig! Auch wenn 'patrem' auf -em endet, ist das Wort maskulin. Das passende Eigenschaftswort folgt der o-Deklination und muss auf <strong>-um</strong> enden. KNG-Kongruenz perfekt erfüllt!", why_wrong: "Falle erwischt! Du bist in die Reim-Falle getappt. 'pater' ist maskulin, verlangt im Akkusativ Singular beim Adjektiv also zwingend die maskuline Endung <strong>-um</strong> (und eben nicht -em)." },
-            { noun: "mātrem", clue: "māter (akkusativ singular, feminin)", ending: "am", why_correct: "Klasse! 'māter' ist weiblich. Der Akkusativ Singular dazu endet beim Adjektiv ganz klassisch auf <strong>-am</strong> (a-Deklination).", why_wrong: "Falsch! 'māter' ist weiblich (feminin). Daher verlangt der Akkusativ Singular im Adjektiv die Endung <strong>-am</strong>, nicht die konsonantische Endung -em." },
-            { noun: "servōs", clue: "servus (akkusativ plural, maskulin)", ending: "ōs", why_correct: "Perfekt! Hier stimmen die Endungen überein: Akkusativ Plural maskulin verlangt bei Nomen und Adjektiv die Endung <strong>-ōs</strong>.", why_wrong: "Fehler! 'servōs' ist Akkusativ Plural maskulin. Das passende Adjektiv muss ebenfalls auf <strong>-ōs</strong> enden." },
-            { noun: "puellae", clue: "puella (nominativ plural, feminin)", ending: "ae", why_correct: "Sehr gut! Der Nominativ Plural weiblich endet beim Adjektiv sauber auf <strong>-ae</strong>.", why_wrong: "Nein! 'puellae' steht hier im Nominativ Plural feminin. Das passende Adjektiv verlangt im Plural die Endung <strong>-ae</strong>." },
-            { noun: "dōna", clue: "dōnum (akkusativ plural, neutrum!)", ending: "a", why_correct: "Großartig! Neutra im Plural enden im Nominativ und Akkusativ immer auf <strong>-a</strong>. Das gilt unumstößlich für das Nomen UND das Adjektiv!", why_wrong: "Vorsicht, Neutrum-Falle! 'dōnum' ist sächlich. Der Plural davon endet beim Adjektiv immer auf <strong>-a</strong>, niemals auf -ōs!" },
-            { noun: "homō", clue: "homō (nominativ singular, maskulin)", ending: "us", why_correct: "Sauber! 'homō' gehört zur konsonantischen Deklination, ist aber biologisch und grammatikalisch maskulin. Der Nominativ Singular maskulin lautet im Adjektiv daher <strong>-us</strong>.", why_wrong: "Reim-Falle! Nur weil 'homō' auf -ō endet, ist es kein Neutrum. Es ist Nominativ maskulin und braucht ein Adjektiv auf <strong>-us</strong>." },
-            { noun: "clāmōrem", clue: "clāmor (akkusativ singular, maskulin)", ending: "um", why_correct: "Meisterhaft! 'clāmor' ist maskulin. Also Akkusativ Singular maskulin: Das Adjektiv benötigt die Endung <strong>-um</strong>.", why_wrong: "Uuups! 'clāmor' (der Lärm) ist im Lateinischen maskulin. Der Akkusativ Singular maskulin eines Adjektivs endet auf <strong>-um</strong>." },
-            { noun: "tunicās", clue: "tunica (akkusativ plural, feminin)", ending: "ās", why_correct: "Schön! Akkusativ Plural feminin: Nomen und Adjektiv reimen sich hier perfekt auf die Endung <strong>-ās</strong>.", why_wrong: "Schau genau hin! 'tunica' ist feminin. Der Akkusativ Plural des Adjektivs endet folglich auf <strong>-ās</strong>." },
-            { noun: "monumenta", clue: "monumentum (nominativ plural, neutrum!)", ending: "a", why_correct: "Korrekt! Das Neutrum-Gesetz schlägt wieder zu: Das sächliche Adjektiv endet im Plural immer auf <strong>-a</strong>.", why_wrong: "Achtung! 'monumentum' ist sächlich (neutrum). Sächliche Wörter haben im Nominativ Plural beim Adjektiv immer die Endung <strong>-a</strong>." },
-            { noun: "uxōrem", clue: "uxor (akkusativ singular, feminin)", ending: "am", why_correct: "Triumph! 'uxor' ist die Ehefrau, also feminin. Akkusativ Singular feminin beim Adjektiv endet verlässlich auf <strong>-am</strong>.", why_wrong: "Fehler! Die 'uxor' ist weiblich. Der Akkusativ Singular des Adjektivs muss deshalb auf <strong>-am</strong> enden, nicht auf -em." }
+        const persons = [
+            "1. Person Singular", "2. Person Singular", "3. Person Singular",
+            "1. Person Plural", "2. Person Plural", "3. Person Plural"
         ];
 
-        const adjPool = [
-            { base: "magn", us: "magnus", am: "magnam", um: "magnum", ae: "magnae", ōs: "magnōs", ās: "magnās", a: "magna" },
-            { base: "parv", us: "parvus", am: "parvam", um: "parvum", ae: "parvae", ōs: "parvōs", ās: "parvās", a: "parva" },
-            { base: "bon",  us: "bonus",  am: "bonam",  um: "bonum",  ae: "bonae",  ōs: "bonōs",  ās: "bonās",  a: "bona" },
-            { base: "mal",  us: "malus",  am: "malam",  um: "malum",  ae: "malae",  ōs: "malōs",  ās: "malās",  a: "mala" },
-            { base: "aure", us: "aureus", am: "auream", um: "aureum", ae: "aureae", ōs: "aureōs", ās: "aureās", a: "aurea" },
-            { base: "tūt",  us: "tūtus",  am: "tūtam",  um: "tūtum",  ae: "tūtae",  ōs: "tūtōs",  ās: "tūtās",  a: "tūta" },
-            { base: "rēct", us: "rēctus", am: "rēctam", um: "rēctum", ae: "rēctae", ōs: "rēctōs", ās: "rēctās", a: "rēcta" }
-        ];
-
-        const genericFakes = ["magnem", "parvem", "bonem", "malem", "magnīs", "parvīs", "bonī", "malī", "pulcher", "miser"];
-
-        let currentWaveIdx = 0;
         let wallHealth = 100;
-        let shuffledWaves = [];
-        let currentCorrectText = "";
+        let currentWaveIdx = 0;
+        const totalWaves = 10;
+        let currentCorrectAnswer = "";
+        let currentVerbObj = null;
+        let currentPersonIdx = 0;
+        let roundLocked = false;
+        
+        let verbPool = [];
 
-        function startGame() {
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('combat-box').style.display = 'block';
-            startDefense();
+        window.onload = function() {
+            // Ausfallsicheres Event-Binding für iOS
+            document.getElementById('btn-start-game').addEventListener('click', startDefense);
+            document.getElementById('btn-next-wave').addEventListener('click', loadNextWave);
+            document.getElementById('btn-restart').addEventListener('click', startDefense);
+            
+            for(let i=0; i<4; i++) {
+                document.getElementById('shield' + i).addEventListener('click', function() {
+                    selectShield(i);
+                });
+            }
+        };
+
+        // Die KI-Engine des Spiels: Konjugiert Verben vollautomatisch!
+        function conjugateVerb(verbObj) {
+            if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
+            if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
+            
+            let inf = verbObj.latin;
+            let firstSg = verbObj.middle;
+            let cClass = verbObj.gram_class;
+            
+            // Den Stamm sauber extrahieren (z.B. amāre -> am, currere -> curr)
+            // Die .slice() Methode umgeht elegant auch Besonderheiten wie das kurze e in cōnsīdere
+            let stem = inf.slice(0, -3); 
+
+            if (cClass.includes("a-Konjugation")) {
+                return [firstSg, stem+"ās", stem+"at", stem+"āmus", stem+"ātis", stem+"ant"];
+            } else if (cClass.includes("e-Konjugation")) {
+                return [firstSg, stem+"ēs", stem+"et", stem+"ēmus", stem+"ētis", stem+"ent"];
+            } else if (cClass.includes("i-Konjugation")) {
+                return [firstSg, stem+"īs", stem+"it", stem+"īmus", stem+"ītis", stem+"iunt"];
+            } else if (cClass.includes("gemischte")) {
+                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"iunt"];
+            } else { 
+                // Konsonantische Konjugation (z.B. currere -> curris, currit)
+                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"unt"];
+            }
         }
 
         function startDefense() {
-            shuffledWaves = [...nounPool].sort(() => Math.random() - 0.5);
+            if (typeof globalVocabularyPool === 'undefined') {
+                alert("Fehler: vocabulary.js nicht gefunden!"); return;
+            }
+            
+            // Wir filtern nur die Verben heraus
+            verbPool = globalVocabularyPool.filter(v => v.type === 'verb');
+
             currentWaveIdx = 0;
             wallHealth = 100;
             document.getElementById('wall-health').style.width = '100%';
-            document.getElementById('combat-box').style.display = 'block';
+            
+            document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+            
             showWave();
         }
 
         function showWave() {
+            roundLocked = false;
             document.getElementById('feedback-box').style.display = 'none';
             
-            const wave = shuffledWaves[currentWaveIdx];
+            // Zufälliges Verb und zufällige Person auswählen
+            currentVerbObj = verbPool[Math.floor(Math.random() * verbPool.length)];
+            const forms = conjugateVerb(currentVerbObj);
+            currentPersonIdx = Math.floor(Math.random() * 6);
             
-            const stone = document.getElementById('target-noun');
-            stone.innerText = wave.noun;
+            const targetWord = forms[currentPersonIdx];
+            currentCorrectAnswer = persons[currentPersonIdx];
+
+            // Stein fliegen lassen
+            const stone = document.getElementById('target-verb');
+            stone.innerText = targetWord;
             const newStone = stone.cloneNode(true);
             stone.parentNode.replaceChild(newStone, stone);
 
-            document.getElementById('target-clue').innerText = `Welle ${currentWaveIdx + 1} von 10 — Hinweis: ${wave.clue}`;
+            document.getElementById('target-clue').innerText = `Welle ${currentWaveIdx + 1} von ${totalWaves} — Infinitiv: ${currentVerbObj.latin}`;
 
-            const randomAdj = adjPool[Math.floor(Math.random() * adjPool.length)];
-            currentCorrectText = randomAdj[wave.ending];
-
-            let distractorSet = new Set();
+            // Falsche Antworten (Distraktoren) generieren (andere Personen)
+            let wrongPool = persons.filter(p => p !== currentCorrectAnswer);
+            wrongPool = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
             
-            const endings = ["us", "am", "um", "ae", "ōs", "ās", "a"];
-            endings.forEach(e => distractorSet.add(randomAdj[e]));
-
-            adjPool.forEach(adj => {
-                distractorSet.add(adj[wave.ending === 'um' ? 'am' : 'um']); 
-                distractorSet.add(adj['ōs']);
-                distractorSet.add(adj['ās']);
-            });
-
-            genericFakes.forEach(f => distractorSet.add(f));
-            distractorSet.delete(currentCorrectText);
-
-            let wrongOptions = Array.from(distractorSet).sort(() => Math.random() - 0.5).slice(0, 3);
-            const finalOptions = [currentCorrectText, ...wrongOptions].sort(() => Math.random() - 0.5);
+            const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
 
             for(let i = 0; i < 4; i++) {
                 const btn = document.getElementById('shield' + i);
@@ -393,11 +366,14 @@
         }
 
         function selectShield(idx) {
+            if (roundLocked) return;
+            roundLocked = true;
+
             for(let i = 0; i < 4; i++) document.getElementById('shield' + i).disabled = true;
 
-            const wave = shuffledWaves[currentWaveIdx];
-            const selectedText = document.getElementById('shield' + idx).innerText;
-            const isCorrect = (selectedText === currentCorrectText);
+            const selectedBtn = document.getElementById('shield' + idx);
+            const selectedText = selectedBtn.innerText;
+            const isCorrect = (selectedText === currentCorrectAnswer);
 
             const fbBox = document.getElementById('feedback-box');
             const fbTitle = document.getElementById('fb-title');
@@ -406,14 +382,14 @@
             fbBox.style.display = 'flex';
 
             if (isCorrect) {
-                document.getElementById('shield' + idx).classList.add('correct');
+                selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `${wave.why_correct}<br><br>Grammatisches Paar: <strong>${wave.noun}</strong> + <strong>${currentCorrectText}</strong>.`;
+                fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
             } else {
-                document.getElementById('shield' + idx).classList.add('wrong');
+                selectedBtn.classList.add('wrong');
                 for(let i = 0; i < 4; i++) {
-                    if(document.getElementById('shield' + i).innerText === currentCorrectText) {
+                    if(document.getElementById('shield' + i).innerText === currentCorrectAnswer) {
                         document.getElementById('shield' + i).classList.add('correct');
                     }
                 }
@@ -424,7 +400,7 @@
 
                 fbTitle.innerText = "💥 TREFFER!";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = `${wave.why_wrong}<br><br>Gesucht war: <strong>${wave.noun}</strong> + <strong>${currentCorrectText}</strong>.`;
+                fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> des Verbs <strong>${currentVerbObj.latin}</strong>.`;
             }
         }
 
@@ -432,7 +408,7 @@
             currentWaveIdx++;
             if (wallHealth <= 0) {
                 endGame(false);
-            } else if (currentWaveIdx < shuffledWaves.length) {
+            } else if (currentWaveIdx < totalWaves) {
                 showWave(); 
             } else {
                 endGame(true);
@@ -452,11 +428,11 @@
             if (isVictory) {
                 title.innerText = "🏛️ KASTELL VERTEIDIGT!";
                 title.style.color = "#4CAF50";
-                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die KNG-Kongruenz absolut sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
+                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die Verbendungen absolut sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
             } else {
                 title.innerText = "🔥 KASTELL ZERSTÖRT!";
                 title.style.color = "#F44336";
-                msg.innerHTML = `Die Reim-Fallen haben deine Verteidigungsmauern komplett zertrümmert.<br>Trainiere deine Truppen noch einmal und starte einen neuen Versuch!`;
+                msg.innerHTML = `Die feindlichen Verben haben deine Verteidigungsmauern komplett zertrümmert.<br>Schau dir die Personalendungen noch einmal genau an und starte einen neuen Versuch!`;
             }
         }
     </script>
