@@ -54,7 +54,6 @@
             position: relative;
         }
 
-        /* Realistische Dashboard-Anzeige */
         .dashboard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -72,63 +71,41 @@
         .timer-crit { color: #ff3333 !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.4; } }
 
-        /* Realistischer Circus-Maximus-Rennplatz */
-        .circus-track {
-            background: #d2b48c; /* Sandfarbe */
-            background-image: radial-gradient(rgba(0,0,0,0.05) 15%, transparent 16%);
-            background-size: 6px 6px;
-            border: 4px solid #5a3d28;
-            border-radius: 10px;
-            height: 150px;
+        /* Das ovale Circus-Maximus-Stadion */
+        .circus-stadium {
+            width: 100%;
+            height: 240px;
+            background: #222;
+            border: 3px solid var(--roman-bronze);
+            border-radius: 120px; /* Macht das Spielfeld außen oval */
             position: relative;
             margin-bottom: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
         }
 
-        /* Die Spina - Römische Mittelwand */
-        .spina {
+        .svg-track-layer {
             position: absolute;
-            top: 50%; left: 5%; width: 90%; height: 12px;
-            background: linear-gradient(#b0b0b0, #7a7a7a);
-            transform: translateY(-50%);
-            border-radius: 6px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
         }
 
-        /* Ziellinie */
-        .finish-line {
+        /* Chariot-Container für absolute Pixel-Positionierung */
+        .chariot-container {
             position: absolute;
-            right: 12%; top: 0; width: 6px; height: 100%;
-            background-color: #fff;
-            background-image: linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%);
-            background-size: 6px 6px;
-            opacity: 0.7;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 5;
+            pointer-events: none;
         }
 
-        /* Die Spuren */
-        .lane {
+        .chariot-sprite {
             position: absolute;
-            width: 100%;
-            height: 65px;
-        }
-        .lane-player { top: 0; border-bottom: 1px dashed rgba(0,0,0,0.15); }
-        .lane-ai { bottom: 0; }
-
-        /* Die stilisierte Wagen-Grafik */
-        .chariot {
-            position: absolute;
-            left: 5%;
-            width: 65px;
-            height: 40px;
-            top: 12px;
-            transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .chariot-label {
-            position: absolute;
-            top: -12px; left: 0; font-size: 0.7rem; font-weight: bold;
-            text-transform: uppercase; background: rgba(0,0,0,0.6); padding: 1px 4px; border-radius: 3px;
+            width: 50px;
+            height: 30px;
+            margin-left: -25px; /* Zentrierung des Drehpunkts */
+            margin-top: -15px;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-origin: center center;
         }
 
         /* Frage-Struktur */
@@ -172,7 +149,6 @@
         .correct { background-color: #4CAF50 !important; border-color: white !important; }
         .wrong { background-color: #F44336 !important; border-color: white !important; }
 
-        /* Endbildschirm */
         .end-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -200,15 +176,15 @@
 
     <h1>Circus Maximus: Lūdī Rōmānī</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 12px; text-align: center;">
-        Besiege die rote Fraktion in 5 Minuten!
+        Fahre im Uhrzeigersinn um die Spina! Zeitlimit: 5 Minuten.
     </div>
 
     <div class="game-container">
         
         <div class="end-overlay" id="end-screen">
-            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2.2rem; margin-bottom: 10px;" id="end-title">ALEA IACTA EST!</h2>
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2.2rem; margin-bottom: 10px;" id="end-title">CIRCUS MAXIMUS</h2>
             <p style="font-size: 1.2rem; margin: 15px 0; max-width: 520px; line-height: 1.6;" id="end-msg">
-                Bist du bereit, die Pferde anzutreiben? Du steuerst die blaue Fraktion. Richtig gelöste Aufgaben bringen dich dem Rundenziel näher. Fehler lassen die rote KI aufholen!
+                Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten durch das Stadion. Doch Vorsicht: Die rote KI (Factio Russata) schläft nicht und nutzt jeden deiner Fehler eiskalt aus!
             </p>
             <button class="nav-btn" id="start-action-btn" onclick="startRace()">Rennen starten!</button>
             <br>
@@ -216,19 +192,30 @@
         </div>
 
         <div class="dashboard">
-            <div style="color: #63b8ff;">Blau (Du): <span id="p-laps">0</span> R.</div>
+            <div style="color: #63b8ff;">Blau (Tu): <span id="p-laps">0</span> R.</div>
             <div id="timer-display" style="color: var(--roman-gold); font-size: 1.2rem;">05:00</div>
             <div style="color: #ff4500;">Rot (KI): <span id="ai-laps">0</span> R.</div>
         </div>
 
-        <div class="circus-track">
-            <div class="finish-line"></div>
-            <div class="spina"></div>
+        <div class="circus-stadium">
+            <svg class="svg-track-layer" viewBox="0 0 700 240" width="100%" height="100%">
+                <rect x="0" y="0" width="700" height="240" fill="#dfb784"/>
+                <rect x="30" y="30" width="640" height="180" rx="90" fill="none" stroke="#ca9e6a" stroke-width="3"/>
+                
+                <rect x="180" y="112" width="340" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
+                <rect x="190" y="115" width="320" height="10" rx="5" fill="#c0c0c0"/>
+                
+                <circle cx="172" cy="120" r="10" fill="#8c7853"/>
+                <circle cx="172" cy="120" r="4" fill="#d4af37"/>
+                <circle cx="528" cy="120" r="10" fill="#8c7853"/>
+                <circle cx="528" cy="120" r="4" fill="#d4af37"/>
 
-            <div class="lane lane-player">
-                <div class="chariot" id="chariot-player">
-                    <span class="chariot-label" style="color: #63b8ff;">Tu (Blau)</span>
-                    <svg width="100%" height="100%" viewBox="0 0 64 48">
+                <line x1="220" y1="0" x2="220" y2="112" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
+            </svg>
+
+            <div class="chariot-container">
+                <div class="chariot-sprite" id="chariot-player">
+                    <svg width="50" height="30" viewBox="0 0 64 48">
                         <rect x="35" y="8" width="22" height="10" fill="#8b5a2b" rx="2"/>
                         <rect x="35" y="22" width="22" height="10" fill="#a0522d" rx="2"/>
                         <line x1="20" y1="13" x2="35" y2="13" stroke="#d4af37" stroke-width="1.5"/>
@@ -236,15 +223,11 @@
                         <path d="M4 10 L20 8 L22 32 L4 30 Z" fill="var(--roman-blue)" stroke="#d4af37" stroke-width="1"/>
                         <circle cx="11" cy="8" r="5" fill="#111" stroke="#d4af37"/>
                         <circle cx="11" cy="32" r="5" fill="#111" stroke="#d4af37"/>
-                        <circle cx="13" cy="20" r="3.5" fill="#f0e6d2"/>
                     </svg>
                 </div>
-            </div>
 
-            <div class="lane lane-ai">
-                <div class="chariot" id="chariot-ai" style="top: 12px;">
-                    <span class="chariot-label" style="color: #ff4500;">Russata (Rot)</span>
-                    <svg width="100%" height="100%" viewBox="0 0 64 48">
+                <div class="chariot-sprite" id="chariot-ai">
+                    <svg width="50" height="30" viewBox="0 0 64 48">
                         <rect x="35" y="8" width="22" height="10" fill="#cd853f" rx="2"/>
                         <rect x="35" y="22" width="22" height="10" fill="#8b4513" rx="2"/>
                         <line x1="20" y1="13" x2="35" y2="13" stroke="#d4af37" stroke-width="1.5"/>
@@ -252,7 +235,6 @@
                         <path d="M4 10 L20 8 L22 32 L4 30 Z" fill="var(--roman-red)" stroke="#d4af37" stroke-width="1"/>
                         <circle cx="11" cy="8" r="5" fill="#111" stroke="#d4af37"/>
                         <circle cx="11" cy="32" r="5" fill="#111" stroke="#d4af37"/>
-                        <circle cx="13" cy="20" r="3.5" fill="#f0e6d2"/>
                     </svg>
                 </div>
             </div>
@@ -261,7 +243,7 @@
         <div id="quiz-area">
             <div class="question-box">
                 <div class="q-category" id="category-display">WORTARTEN-PRÜFUNG</div>
-                <div class="q-text" id="question-display">Drücke unten auf Start, um das Rennen zu eröffnen!</div>
+                <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
             <div class="options-grid">
                 <button class="race-btn" id="opt0" disabled>-</button>
@@ -274,26 +256,32 @@
 
     <script>
         let timerInterval = null;
-        let timeLeft = 300; // 5 Minuten in Sekunden
-        let playerProgress = 0; // 0 bis 100 innerhalb einer Runde
+        let timeLeft = 300; 
+        let playerProgress = 0; 
         let aiProgress = 0;
         let playerLaps = 0;
         let aiLaps = 0;
         let currentCorrectAnswer = "";
+        let roundLocked = true;
+
+        // Fehlerfreie Initialisierung beim Laden der Seite
+        function initRace() {
+            document.getElementById('end-screen').style.display = 'flex';
+            updatePositions();
+        }
 
         function startRace() {
-            // Verifizierung der externen Vokabeldatei
             if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
                 alert("Kritischer Fehler: 'vocabulary.js' wurde nicht gefunden oder ist leer!");
                 return;
             }
 
-            // Werte zurücksetzen
             timeLeft = 300;
             playerProgress = 0;
             aiProgress = 0;
             playerLaps = 0;
             aiLaps = 0;
+            roundLocked = false;
 
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('back-menu-btn').style.display = 'inline-block';
@@ -301,7 +289,6 @@
             updateDashboard();
             updatePositions();
             
-            // Timer starten
             if(timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(tickTimer, 1000);
 
@@ -311,7 +298,6 @@
         function tickTimer() {
             timeLeft--;
             updateDashboard();
-
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 endGame();
@@ -326,8 +312,8 @@
             const timerEl = document.getElementById('timer-display');
             timerEl.innerText = displayString;
 
-            // Kritische Warnfarbe in der letzten Minute
             if (timeLeft <= 60) {
+                timerEl.boxClassName = "";
                 timerEl.classList.add('timer-crit');
             } else {
                 timerEl.classList.remove('timer-crit');
@@ -337,19 +323,63 @@
             document.getElementById('ai-laps').innerText = aiLaps;
         }
 
-        function updatePositions() {
-            // Chariots auf Basis des Fortschritts von 5% bis 78% verschieben (vor der Ziellinie)
-            let pLeft = 5 + (playerProgress * 0.73);
-            let aiLeft = 5 + (aiProgress * 0.73);
+        // MATHEMATISCH KORREKTE OVAL-STEUERUNG (Uhrzeigersinn um die Spina)
+        function getChariotCoords(progress, radius) {
+            let x = 0, y = 0, angle = 0;
+            const centerXLeft = 220;  // Wendepunkt Links
+            const centerXRight = 480; // Wendepunkt Rechts
+            const centerY = 120;      // Mittehöhe des Stadions
 
-            document.getElementById('chariot-player').style.left = pLeft + "%";
-            document.getElementById('chariot-ai').style.left = aiLeft + "%";
+            if (progress >= 0 && progress < 35) {
+                // 1. OBERE GERADE (Nach Rechts fliegend)
+                let t = progress / 35;
+                x = centerXLeft + t * (centerXRight - centerXLeft);
+                y = centerY - radius;
+                angle = 0;
+            } 
+            else if (progress >= 35 && progress < 50) {
+                // 2. RECHTE WENDUNG (Meta Orientis)
+                let t = (progress - 35) / 15;
+                let alpha = -Math.PI / 2 + (t * Math.PI);
+                x = centerXRight + radius * Math.cos(alpha);
+                y = centerY + radius * Math.sin(alpha);
+                angle = 90 + (t * 180);
+            } 
+            else if (progress >= 50 && progress < 85) {
+                // 3. UNTERE GEGENGERADE (Nach Links fliegend)
+                let t = (progress - 50) / 35;
+                x = centerXRight - t * (centerXRight - centerXLeft);
+                y = centerY + radius;
+                angle = 180;
+            } 
+            else if (progress >= 85 && progress <= 100) {
+                // 4. LINKE WENDUNG (Meta Occidentis)
+                let t = (progress - 85) / 15;
+                let alpha = Math.PI / 2 + (t * Math.PI);
+                x = centerXLeft + radius * Math.cos(alpha);
+                y = centerY + radius * Math.sin(alpha);
+                angle = 270 + (t * 180);
+            }
+
+            return { x: x, y: y, angle: angle };
+        }
+
+        function updatePositions() {
+            // Spieler fährt innen (R=48), KI fährt außen (R=78)
+            let pCoords = getChariotCoords(playerProgress, 48);
+            let aiCoords = getChariotCoords(aiProgress, 78);
+
+            document.getElementById('chariot-player').style.transform = `translate3d(${pCoords.x}px, ${pCoords.y}px, 0) rotate(${pCoords.angle}deg)`;
+            document.getElementById('chariot-ai').style.transform = `translate3d(${aiCoords.x}px, ${aiCoords.y}px, 0) rotate(${aiCoords.angle}deg)`;
         }
 
         function nextQuestion() {
+            if(timeLeft <= 0) return;
+            roundLocked = false;
+
             const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
             
-            let allowedTypes = [0]; // Bedeutung ist immer zulässig
+            let allowedTypes = [0]; 
             if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
             if (item.type === "adjective") allowedTypes.push(2);
 
@@ -358,18 +388,15 @@
             let questionText = "";
             let wrongPool = [];
 
-            // FRAGETYP 0: BEDEUTUNG
             if (qType === 0) {
-                categoryText = `🔮 Vokabel-Bedeutung — Typ: ${translateType(item.type)}`;
-                questionText = `Was bedeutet das Wort „${item.latin}“?`;
+                categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
+                questionText = `Was bedeutet „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
 
-                // Wortart-Filter: Nur Bedeutungen derselben Wortart zulassen!
                 wrongPool = globalVocabularyPool
                     .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
                     .map(i => i.meaning);
             }
-            // FRAGETYP 1: STAMMFORMEN / GENITIV
             else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
@@ -384,7 +411,6 @@
                     .filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.")
                     .map(i => i.middle);
             }
-            // FRAGETYP 2: DEKLINATIONS- / KONJUGATIONSKLASSE
             else if (qType === 2) {
                 if (item.type === "noun") {
                     categoryText = "⚔️ Deklinationsklassen";
@@ -404,12 +430,9 @@
                 }
             }
 
-            // Sicherung, falls der Pool für diese Wortart zu klein war
             wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
             while (wrongPool.length < 3) {
-                let fallbackItem = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
-                let fallbackVal = qType === 0 ? fallbackItem.meaning : fallbackItem.middle;
-                if(fallbackVal && fallbackVal !== currentCorrectAnswer) wrongPool.push(fallbackVal);
+                wrongPool.push("---");
             }
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
@@ -426,6 +449,9 @@
         }
 
         function checkAnswer(selectedIdx) {
+            if(roundLocked) return;
+            roundLocked = true;
+
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
             const selectedText = document.getElementById('opt' + selectedIdx).innerText;
@@ -433,7 +459,7 @@
 
             if (isCorrect) {
                 document.getElementById('opt' + selectedIdx).classList.add('correct');
-                playerProgress += 20; // 5 richtige Antworten = 1 Runde
+                playerProgress += 14; // Ca. 7 richtige Antworten für eine komplette Stadionrunde
                 
                 if (playerProgress >= 100) {
                     playerLaps++;
@@ -447,8 +473,7 @@
                     }
                 }
                 
-                // KI rückt bei Fehlern des Schülers gnadenlos vor!
-                aiProgress += 25; 
+                aiProgress += 20; // Rote KI prescht unaufhaltsam vorwärts!
                 if (aiProgress >= 100) {
                     aiLaps++;
                     aiProgress = 0;
@@ -462,7 +487,7 @@
                 if (timeLeft > 0) {
                     nextQuestion();
                 }
-            }, 1300);
+            }, 1400);
         }
 
         function translateType(type) {
@@ -481,20 +506,22 @@
             const actionBtn = document.getElementById('start-action-btn');
 
             overlay.style.display = 'flex';
-            actionBtn.innerText = "Erneut versuchen";
+            actionBtn.innerText = "Erneut antreten";
             title.innerText = "⏱️ FINIS SPATIĪ!";
             
             if (playerLaps > aiLaps) {
-                msg.innerHTML = `<strong>Glorreicher Sieg!</strong><br>Die 5 Minuten sind abgelaufen. Du hast die Arena erzittern lassen und die rote Fraktion geschlagen!<br><br>🏁 Dein Ergebnis: <strong>${playerLaps} Runden</strong><br>🐎 Rote KI: <strong>${aiLaps} Runden</strong>`;
+                msg.innerHTML = `<strong>Glorreicher Triumph!</strong><br>Die Sanduhr ist abgelaufen. Du hast dein Gespann meisterhaft gesteuert und die feindliche Fraktion im Staub zurückgelassen!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
                 title.style.color = "var(--roman-gold)";
             } else if (playerLaps < aiLaps) {
-                msg.innerHTML = `<strong>Niederlage im Sand!</strong><br>Die rote Fraktion hat dich mit ihren schnellen Pferden überholt. Nutze das nächste Training!<br><br>🏁 Dein Ergebnis: <strong>${playerLaps} Runden</strong><br>🐎 Rote KI: <strong>${aiLaps} Runden</strong>`;
+                msg.innerHTML = `<strong>Niederlage im Circus!</strong><br>Der rote Wagen hat dich auf den letzten Metern niedergerungen. Bessere deine Vokabel-Abwehr aus!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
                 title.style.color = "#ff3333";
             } else {
-                msg.innerHTML = `<strong>Ein unentschiedenes Duell!</strong><br>Ein unfassbares Kopf-an-Kopf-Rennen bis zur letzten Sekunde!<br><br>🏁 Gleichstand: Beide Fraktionen schaffen <strong>${playerLaps} Runden</strong>!`;
+                msg.innerHTML = `<strong>Ex aequo - Gleichstand!</strong><br>Ein dramatisches Finale! Beide Wagen überqueren zeitgleich die Ziellinie.<br><br>🏁 Ihr beide schafft hervorragende <strong>${playerLaps} Runden</strong>!`;
                 title.style.color = "var(--roman-marble)";
             }
         }
+
+        window.onload = initRace;
     </script>
 </body>
 </html>
