@@ -50,6 +50,33 @@
             padding: 20px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.7);
             position: relative;
+            min-height: 400px;
+        }
+
+        /* Start-Bildschirm / Anleitung */
+        .start-screen {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .notice-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid var(--roman-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .notice-box h3 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* Visuelles Schlachtfeld mit Katapult und Mauer */
@@ -68,7 +95,6 @@
             margin-bottom: 15px;
         }
 
-        /* Das römische Katapult (Links) */
         .catapult-wrapper {
             width: 80px;
             height: 70px;
@@ -76,7 +102,6 @@
             margin-bottom: 10px;
         }
 
-        /* Die Kastellmauer mit Zinnen (Rechts) */
         .castle-wall-graphics {
             width: 120px;
             height: 100%;
@@ -89,7 +114,6 @@
             justify-content: space-between;
         }
 
-        /* Die Zinnen auf der Mauer */
         .merlon {
             width: 30px;
             height: 20px;
@@ -103,7 +127,6 @@
         .m2 { left: 45px; }
         .m3 { left: 85px; }
 
-        /* Der fliegende Katapultstein */
         .stone-path {
             position: absolute;
             left: 90px;
@@ -135,7 +158,6 @@
             100% { transform: translate(0, 0) scale(1); }
         }
 
-        /* Lebensbalken */
         .health-bar-container {
             width: 100%;
             background: #cc0000;
@@ -162,7 +184,6 @@
             font-weight: bold;
         }
 
-        /* Antwort-Knöpfe */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -187,7 +208,6 @@
 
         .shield-btn:not(:disabled):active { transform: scale(0.97); }
 
-        /* Feedback-Anzeige */
         .feedback-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -204,10 +224,12 @@
 
         .feedback-title { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 10px; }
         .feedback-explanation { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; max-width: 500px; }
-        .next-btn {
+        
+        .start-btn {
             background: var(--roman-gold); color: var(--roman-red);
-            font-family: var(--font-display); font-weight: bold; padding: 12px 35px;
-            border: none; border-radius: 20px; font-size: 1.1rem; cursor: pointer; text-transform: uppercase;
+            font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
+            border: none; border-radius: 30px; font-size: 1.3rem; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
         }
 
         .correct { background: #4CAF50 !important; border-color: #fff !important; }
@@ -219,23 +241,31 @@
     <h1>Formen-Kastell: KNG-Abwehr</h1>
 
     <div class="game-container">
-        <!-- Didaktische Feedbackbox -->
+        
+        <div id="start-screen" class="start-screen">
+            <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
+            <div class="notice-box">
+                <h3>📜 Wichtiger Taktik-Befehl:</h3>
+                <p>Bei dieser Verteidigung geht es <strong>rein um die grammatikalische KNG-Kongruenz</strong> (Übereinstimmung von Kasus, Numerus und Genus).</p>
+                <p style="margin-top: 10px;">Da die Wörter völlig zufällig kombiniert werden, entstehen Paare, die übersetzt <strong>keinen logischen Sinn ergeben</strong> (wie zum Beispiel <em>„ein goldener Vater“</em> oder <em>„eine schlechte Freizeit“</em>).</p>
+                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Lass dich davon nicht verwirren! Solange die Grammatikform exakt übereinstimmt, hält dein Schild den Stein auf!</p>
+            </div>
+            <button class="start-btn" onclick="startGame()">Verteidigung starten!</button>
+        </div>
+
         <div class="feedback-overlay" id="feedback-box">
             <div class="feedback-title" id="fb-title">Abgewehrt!</div>
             <div class="feedback-explanation" id="fb-text">Erklärung...</div>
-            <button class="next-btn" onclick="loadNextWave()">Nächster Angriff</button>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 30px;" onclick="loadNextWave()">Nächster Angriff</button>
         </div>
 
-        <!-- Haupt-Spielfeld -->
-        <div id="combat-box">
+        <div id="combat-box" style="display: none;">
             <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #aaa; text-align: center;">MAUERSTÄRKE DES KASTELLS</div>
             <div class="health-bar-container">
                 <div class="health-bar" id="wall-health"></div>
             </div>
 
-            <!-- Visuelles Kampffeld -->
             <div class="battlefield">
-                <!-- Links: Das Katapult stilisierte Grafik aus SVG -->
                 <div class="catapult-wrapper">
                     <svg width="80" height="70" viewBox="0 0 80 70">
                         <rect x="10" y="55" width="60" height="8" fill="#8b5a2b" rx="2"/>
@@ -246,12 +276,10 @@
                     </svg>
                 </div>
 
-                <!-- Mitte: Flugbahn des Brockens -->
                 <div class="stone-path">
                     <div class="attack-stone" id="target-noun">---</div>
                 </div>
 
-                <!-- Rechts: Die Kastellmauer -->
                 <div class="castle-wall-graphics">
                     <div class="merlon m1"></div>
                     <div class="merlon m2"></div>
@@ -269,30 +297,28 @@
             </div>
         </div>
 
-        <!-- Endbildschirm -->
         <div id="end-box" style="display: none; text-align: center; padding: 20px 10px;">
             <h2 id="end-title" style="font-size: 2rem; color: var(--roman-gold); font-family: var(--font-display);">SIEG!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
-            <a href="index.html" class="next-btn" style="text-decoration: none; display: inline-block;">Zurück zur Übersicht</a>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1.1rem;">Zurück zur Übersicht</a>
         </div>
     </div>
 
     <script>
-        // Datenbank der Substantive mit KNG-Vorgaben
+        // Datenbank der Substantive mit KNG-Vorgaben (Adjektiv-Agnostisch formuliert!)
         const nounPool = [
-            { noun: "patrem", clue: "pater (akkusativ singular, maskulin)", ending: "um", why_correct: "Richtig! Auch wenn 'patrem' auf -em endet, ist das Wort maskulin. Das Adjektiv folgt der o-Deklination: <strong>-um</strong>.", why_wrong: "Falle erwischt! Du bist in die Reim-Falle getappt. 'pater' ist maskulin, verlangt im Akkusativ Singular also ein Adjektiv auf <strong>-um</strong>." },
-            { noun: "mātrem", clue: "māter (akkusativ singular, feminin)", ending: "am", why_correct: "Klasse! 'māter' ist weiblich. Der Akkusativ Singular dazu endet beim Adjektiv ganz klassisch auf <strong>-am</strong>.", why_wrong: "Falsch! 'māter' ist weiblich (feminin). Daher verlangt der Akkusativ Singular im Adjektiv die Endung <strong>-am</strong>." },
-            { noun: "servōs", clue: "servus (akkusativ plural, maskulin)", ending: "ōs", why_correct: "Perfekt! Hier stimmen die Endungen überein: Akkusativ Plural maskulin ist klar <strong>-ōs</strong>.", why_wrong: "Fehler! 'servōs' ist Akkusativ Plural maskulin. Das passende Adjektiv muss auf <strong>-ōs</strong> enden." },
-            { noun: "puellae", clue: "puella (nominativ plural, feminin)", ending: "ae", why_correct: "Sehr gut! Der Nominativ Plural weiblich endet beim Adjektiv sauber auf <strong>-ae</strong>.", why_wrong: "Nein! 'puellae' steht hier im Nominativ Plural feminin. Das passende Adjektiv verlangt die Endung <strong>-ae</strong>." },
-            { noun: "dōna", clue: "dōnum (akkusativ plural, neutrum!)", ending: "a", why_correct: "Großartig! Neutra im Plural enden im Nominativ und Akkusativ immer auf <strong>-a</strong>. Das gilt auch für das Adjektiv!", why_wrong: "Vorsicht, Neutrum-Falle! 'dōnum' ist sächlich. Der Plural davon endet beim Adjektiv immer auf <strong>-a</strong>, nicht auf -ōs!" },
-            { noun: "homō", clue: "homō (nominativ singular, maskulin)", ending: "us", why_correct: "Sauber! 'homō' gehört zur konsonantischen Deklination, ist aber maskulin. Der Nominativ Singular maskulin ist <strong>-us</strong> (oder -er).", why_wrong: "Reim-Falle! Nur weil 'homō' auf -ō endet, ist es kein Neutrum. Es ist Nominativ maskulin und braucht ein Adjektiv auf <strong>-us</strong>." },
-            { noun: "clāmōrem", clue: "clāmor (akkusativ singular, maskulin)", ending: "um", why_correct: "Meisterhaft! 'clāmor' ist maskulin. Also Akkusativ Singular maskulin: Adjektiv-Endung <strong>-um</strong>.", why_wrong: "Uuups! 'clāmor' ist im Lateinischen maskulin. Der Akkusativ Singular maskulin eines Adjektivs endet auf <strong>-um</strong>." },
-            { noun: "tunicās", clue: "tunica (akkusativ plural, feminin)", ending: "ās", why_correct: "Schön! Akkusativ Plural feminin: Nomen und Adjektiv enden beide perfekt auf <strong>-ās</strong>.", why_wrong: "Schau genau hin! 'tunica' ist feminin. Der Akkusativ Plural des Adjektivs endet folglich auf <strong>-ās</strong>." },
-            { noun: "monumenta", clue: "monumentum (nominativ plural, neutrum!)", ending: "a", why_correct: "Korrekt! Das Neutrum-Gesetz schlägt zu: Das sächliche Adjektiv endet im Plural auf <strong>-a</strong>.", why_wrong: "Achtung! 'monumentum' ist sächlich (neutrum). Sächliche Wörter haben im Nominativ Plural immer die Adjektiv-Endung <strong>-a</strong>." },
-            { noun: "uxōrem", clue: "uxor (akkusativ singular, feminin)", ending: "am", why_correct: "Triumph! 'uxor' ist die Ehefrau, also feminin. Akkusativ Singular feminin beim Adjektiv endet auf <strong>-am</strong>.", why_wrong: "Fehler! Die 'uxor' ist weiblich. Der Akkusativ Singular des Adjektivs muss deshalb auf <strong>-am</strong> enden." }
+            { noun: "patrem", clue: "pater (akkusativ singular, maskulin)", ending: "um", why_correct: "Richtig! Auch wenn 'patrem' auf -em endet, ist das Wort maskulin. Das passende Eigenschaftswort folgt der o-Deklination und muss auf <strong>-um</strong> enden. KNG-Kongruenz perfekt erfüllt!", why_wrong: "Falle erwischt! Du bist in die Reim-Falle getappt. 'pater' ist maskulin, verlangt im Akkusativ Singular beim Adjektiv also zwingend die maskuline Endung <strong>-um</strong> (und eben nicht -em)." },
+            { noun: "mātrem", clue: "māter (akkusativ singular, feminin)", ending: "am", why_correct: "Klasse! 'māter' ist weiblich. Der Akkusativ Singular dazu endet beim Adjektiv ganz klassisch auf <strong>-am</strong> (a-Deklination).", why_wrong: "Falsch! 'māter' ist weiblich (feminin). Daher verlangt der Akkusativ Singular im Adjektiv die Endung <strong>-am</strong>, nicht die konsonantische Endung -em." },
+            { noun: "servōs", clue: "servus (akkusativ plural, maskulin)", ending: "ōs", why_correct: "Perfekt! Hier stimmen die Endungen überein: Akkusativ Plural maskulin verlangt bei Nomen und Adjektiv die Endung <strong>-ōs</strong>.", why_wrong: "Fehler! 'servōs' ist Akkusativ Plural maskulin. Das passende Adjektiv muss ebenfalls auf <strong>-ōs</strong> enden." },
+            { noun: "puellae", clue: "puella (nominativ plural, feminin)", ending: "ae", why_correct: "Sehr gut! Der Nominativ Plural weiblich endet beim Adjektiv sauber auf <strong>-ae</strong>.", why_wrong: "Nein! 'puellae' steht hier im Nominativ Plural feminin. Das passende Adjektiv verlangt im Plural die Endung <strong>-ae</strong>." },
+            { noun: "dōna", clue: "dōnum (akkusativ plural, neutrum!)", ending: "a", why_correct: "Großartig! Neutra im Plural enden im Nominativ und Akkusativ immer auf <strong>-a</strong>. Das gilt unumstößlich für das Nomen UND das Adjektiv!", why_wrong: "Vorsicht, Neutrum-Falle! 'dōnum' ist sächlich. Der Plural davon endet beim Adjektiv immer auf <strong>-a</strong>, niemals auf -ōs!" },
+            { noun: "homō", clue: "homō (nominativ singular, maskulin)", ending: "us", why_correct: "Sauber! 'homō' gehört zur konsonantischen Deklination, ist aber biologisch und grammatikalisch maskulin. Der Nominativ Singular maskulin lautet im Adjektiv daher <strong>-us</strong>.", why_wrong: "Reim-Falle! Nur weil 'homō' auf -ō endet, ist es kein Neutrum. Es ist Nominativ maskulin und braucht ein Adjektiv auf <strong>-us</strong>." },
+            { noun: "clāmōrem", clue: "clāmor (akkusativ singular, maskulin)", ending: "um", why_correct: "Meisterhaft! 'clāmor' ist maskulin. Also Akkusativ Singular maskulin: Das Adjektiv benötigt die Endung <strong>-um</strong>.", why_wrong: "Uuups! 'clāmor' (der Lärm) ist im Lateinischen maskulin. Der Akkusativ Singular maskulin eines Adjektivs endet auf <strong>-um</strong>." },
+            { noun: "tunicās", clue: "tunica (akkusativ plural, feminin)", ending: "ās", why_correct: "Schön! Akkusativ Plural feminin: Nomen und Adjektiv reimen sich hier perfekt auf die Endung <strong>-ās</strong>.", why_wrong: "Schau genau hin! 'tunica' ist feminin. Der Akkusativ Plural des Adjektivs endet folglich auf <strong>-ās</strong>." },
+            { noun: "monumenta", clue: "monumentum (nominativ plural, neutrum!)", ending: "a", why_correct: "Korrekt! Das Neutrum-Gesetz schlägt wieder zu: Das sächliche Adjektiv endet im Plural immer auf <strong>-a</strong>.", why_wrong: "Achtung! 'monumentum' ist sächlich (neutrum). Sächliche Wörter haben im Nominativ Plural beim Adjektiv immer die Endung <strong>-a</strong>." },
+            { noun: "uxōrem", clue: "uxor (akkusativ singular, feminin)", ending: "am", why_correct: "Triumph! 'uxor' ist die Ehefrau, also feminin. Akkusativ Singular feminin beim Adjektiv endet verlässlich auf <strong>-am</strong>.", why_wrong: "Fehler! Die 'uxor' ist weiblich. Der Akkusativ Singular des Adjektivs muss deshalb auf <strong>-am</strong> enden, nicht auf -em." }
         ];
 
-        // Der komplette Adjektiv-Stamm-Pool aus euren 6 Lektionen zur dynamischen Generierung
         const adjPool = [
             { base: "magn", us: "magnus", am: "magnam", um: "magnum", ae: "magnae", ōs: "magnōs", ās: "magnās", a: "magna" },
             { base: "parv", us: "parvus", am: "parvam", um: "parvum", ae: "parvae", ōs: "parvōs", ās: "parvās", a: "parva" },
@@ -303,13 +329,18 @@
             { base: "rēct", us: "rēctus", am: "rēctam", um: "rēctum", ae: "rēctae", ōs: "rēctōs", ās: "rēctās", a: "rēcta" }
         ];
 
-        // Alle theoretisch denkbaren falschen Endungen als globaler Distraktoren-Pool
         const genericFakes = ["magnem", "parvem", "bonem", "malem", "magnīs", "parvīs", "bonī", "malī", "pulcher", "miser"];
 
         let currentWaveIdx = 0;
         let wallHealth = 100;
         let shuffledWaves = [];
         let currentCorrectText = "";
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'block';
+            startDefense();
+        }
 
         function startDefense() {
             shuffledWaves = [...nounPool].sort(() => Math.random() - 0.5);
@@ -326,7 +357,6 @@
             
             const wave = shuffledWaves[currentWaveIdx];
             
-            // Animation des Steins triggern durch Klonen
             const stone = document.getElementById('target-noun');
             stone.innerText = wave.noun;
             const newStone = stone.cloneNode(true);
@@ -334,37 +364,26 @@
 
             document.getElementById('target-clue').innerText = `Welle ${currentWaveIdx + 1} von 10 — Hinweis: ${wave.clue}`;
 
-            // 1. Richtigen Stamm und richtige Form auswürfeln
             const randomAdj = adjPool[Math.floor(Math.random() * adjPool.length)];
             currentCorrectText = randomAdj[wave.ending];
 
-            // 2. Distraktoren aus dem gesamten Pool zusammenstellen
             let distractorSet = new Set();
             
-            // Füge andere Formen desselben Adjektivs hinzu (Formen-Falle)
             const endings = ["us", "am", "um", "ae", "ōs", "ās", "a"];
             endings.forEach(e => distractorSet.add(randomAdj[e]));
 
-            // Füge Formen von anderen Adjektiven hinzu
             adjPool.forEach(adj => {
-                distractorSet.add(adj[wave.ending === 'um' ? 'am' : 'um']); // vertauschte Geschlechter
+                distractorSet.add(adj[wave.ending === 'um' ? 'am' : 'um']); 
                 distractorSet.add(adj['ōs']);
                 distractorSet.add(adj['ās']);
             });
 
-            // Fantasie-Endungen einspeisen (-em Formen)
             genericFakes.forEach(f => distractorSet.add(f));
-
-            // Korrekte Antwort entfernen, damit sie nicht doppelt vorkommt
             distractorSet.delete(currentCorrectText);
 
-            // In Array umwandeln, mischen und 3 Stück ziehen
             let wrongOptions = Array.from(distractorSet).sort(() => Math.random() - 0.5).slice(0, 3);
-
-            // Finale Optionen zusammenstellen (1x Richtig, 3x Falsch)
             const finalOptions = [currentCorrectText, ...wrongOptions].sort(() => Math.random() - 0.5);
 
-            // Buttons befüllen und BUG BEHOBEN (id lautet shield0, shield1, ...)
             for(let i = 0; i < 4; i++) {
                 const btn = document.getElementById('shield' + i);
                 btn.innerText = finalOptions[i];
@@ -390,10 +409,9 @@
                 document.getElementById('shield' + idx).classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `${wave.why_correct}<br><br>Passung: <strong>${wave.noun}</strong> + <strong>${currentCorrectText}</strong>.`;
+                fbText.innerHTML = `${wave.why_correct}<br><br>Grammatisches Paar: <strong>${wave.noun}</strong> + <strong>${currentCorrectText}</strong>.`;
             } else {
                 document.getElementById('shield' + idx).classList.add('wrong');
-                // Richtige Antwort grün aufblinken lassen
                 for(let i = 0; i < 4; i++) {
                     if(document.getElementById('shield' + i).innerText === currentCorrectText) {
                         document.getElementById('shield' + i).classList.add('correct');
@@ -415,7 +433,7 @@
             if (wallHealth <= 0) {
                 endGame(false);
             } else if (currentWaveIdx < shuffledWaves.length) {
-                showWave(); // Läuft jetzt dank reparierter IDs flüssig weiter!
+                showWave(); 
             } else {
                 endGame(true);
             }
@@ -434,15 +452,13 @@
             if (isVictory) {
                 title.innerText = "🏛️ KASTELL VERTEIDIGT!";
                 title.style.color = "#4CAF50";
-                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die KNG-Kongruenz sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
+                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die KNG-Kongruenz absolut sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
             } else {
                 title.innerText = "🔥 KASTELL ZERSTÖRT!";
                 title.style.color = "#F44336";
-                msg.innerHTML = `Die Reim-Fallen haben deine Verteidigungsmauern komplett zertrümmert.<br>Trainiere deine Truppen noch einmal im KNG-Lager und starte einen neuen Versuch!`;
+                msg.innerHTML = `Die Reim-Fallen haben deine Verteidigungsmauern komplett zertrümmert.<br>Trainiere deine Truppen noch einmal und starte einen neuen Versuch!`;
             }
         }
-
-        window.onload = startDefense;
     </script>
 </body>
 </html>
