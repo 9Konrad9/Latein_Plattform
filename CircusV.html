@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Circus Maximus - Das adaptive Wagenrennen</title>
+    <!-- Einbindung der zentralen Vokabeldatenbank -->
     <script src="vocabulary.js"></script>
     <style>
         :root {
@@ -147,6 +148,8 @@
             font-family: var(--font-display); font-weight: bold; padding: 14px 40px;
             border: none; border-radius: 25px; font-size: 1.2rem; cursor: pointer;
             text-transform: uppercase; text-decoration: none; margin-top: 15px; display: inline-block;
+            touch-action: manipulation; /* iPad Klick-Sicherung */
+            -webkit-tap-highlight-color: transparent;
         }
     </style>
 </head>
@@ -159,22 +162,26 @@
 
     <div class="game-container">
         
+        <!-- Start- & Endbildschirm -->
         <div class="end-overlay" id="end-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2.2rem; margin-bottom: 10px;" id="end-title">CIRCUS MAXIMUS</h2>
             <p style="font-size: 1.2rem; margin: 15px 0; max-width: 520px; line-height: 1.6;" id="end-msg">
                 Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten um die Arena. Doch Vorsicht: Die rote KI (Factio Russata) nutzt jeden Fehler aus, um an dir vorbeizuziehen!
             </p>
-            <button class="nav-btn" id="start-action-btn" onclick="startRace()">Rennen starten!</button>
+            <!-- onclick entfernt, wird via JavaScript sicher gebunden -->
+            <button class="nav-btn" id="start-action-btn">Rennen starten!</button>
             <br>
             <a href="index.html" class="nav-btn" id="back-menu-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 8px 20px; display:none;">Zurück zum Menü</a>
         </div>
 
+        <!-- Dashboard -->
         <div class="dashboard">
             <div style="color: #63b8ff;">Blau (Tu): <span id="p-laps">0</span> R.</div>
             <div id="timer-display" style="color: var(--roman-gold); font-size: 1.2rem;">05:00</div>
             <div style="color: #ff4500;">Rot (KI): <span id="ai-laps">0</span> R.</div>
         </div>
 
+        <!-- Arena -->
         <div class="circus-stadium">
             <svg class="svg-arena" viewBox="0 0 700 240">
                 <rect x="0" y="0" width="700" height="240" fill="#dfb784"/>
@@ -183,6 +190,7 @@
                 <rect x="200" y="112" width="300" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
                 <rect x="210" y="115" width="280" height="10" rx="5" fill="#c0c0c0"/>
                 
+                <!-- METAE -->
                 <g transform="translate(190, 120)">
                     <circle cx="0" cy="0" r="12" fill="#5a5a5a"/>
                     <circle cx="-5" cy="-4" r="4" fill="#d4af37"/>
@@ -198,6 +206,7 @@
 
                 <line x1="240" y1="15" x2="240" y2="112" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
 
+                <!-- SPIELER WAGEN -->
                 <g id="svg-player">
                     <g transform="translate(-20, -13)">
                         <rect x="26" y="2" width="18" height="7" fill="#8b5a2b" rx="1"/>
@@ -210,6 +219,7 @@
                     </g>
                 </g>
 
+                <!-- GEGNER WAGEN -->
                 <g id="svg-ai">
                     <g transform="translate(-20, -13)">
                         <rect x="26" y="2" width="18" height="7" fill="#cd853f" rx="1"/>
@@ -224,16 +234,18 @@
             </svg>
         </div>
 
+        <!-- Quiz Sektor -->
         <div id="quiz-area">
             <div class="question-box">
                 <div class="q-category" id="category-display">WORTARTEN-PRÜFUNG</div>
                 <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
             <div class="options-grid">
-                <button class="race-btn" id="opt0" onclick="checkAnswer(0)" disabled>-</button>
-                <button class="race-btn" id="opt1" onclick="checkAnswer(1)" disabled>-</button>
-                <button class="race-btn" id="opt2" onclick="checkAnswer(2)" disabled>-</button>
-                <button class="race-btn" id="opt3" onclick="checkAnswer(3)" disabled>-</button>
+                <!-- onclick entfernt, wird via JavaScript sicher gebunden -->
+                <button class="race-btn" id="opt0" disabled>-</button>
+                <button class="race-btn" id="opt1" disabled>-</button>
+                <button class="race-btn" id="opt2" disabled>-</button>
+                <button class="race-btn" id="opt3" disabled>-</button>
             </div>
         </div>
     </div>
@@ -246,6 +258,21 @@
         let playerLaps = 0;
         let aiLaps = 0;
         let currentCorrectAnswer = "";
+
+        // Zentrale, ausfallsichere Event-Bindung beim Laden der Seite
+        window.onload = function() {
+            // Start-Button ankoppeln
+            document.getElementById('start-action-btn').addEventListener('click', startRace);
+            
+            // Antwort-Buttons ankoppeln
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('opt' + i).addEventListener('click', function() {
+                    checkAnswer(i);
+                });
+            }
+            
+            initRace();
+        };
 
         function initRace() {
             document.getElementById('end-screen').style.display = 'flex';
@@ -336,4 +363,200 @@
                 angle = 180 + (t * 180);
             }
 
-            return { x
+            return { x: x, y: y, angle: angle };
+        }
+
+        function updatePositions() {
+            let pCoords = getChariotCoords(playerProgress, 35);
+            let aiCoords = getChariotCoords(aiProgress, 65);
+
+            document.getElementById('svg-player').setAttribute('transform', `translate(${pCoords.x}, ${pCoords.y}) rotate(${pCoords.angle})`);
+            document.getElementById('svg-ai').setAttribute('transform', `translate(${aiCoords.x}, ${aiCoords.y}) rotate(${aiCoords.angle})`);
+        }
+
+        function nextQuestion() {
+            if(timeLeft <= 0) return;
+
+            const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+            
+            let allowedTypes = [0]; 
+            if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
+            if (item.type === "adjective") allowedTypes.push(2);
+
+            const qType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+            let categoryText = "";
+            let questionText = "";
+            let wrongPool = [];
+
+            if (qType === 0) {
+                categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
+                questionText = `Was bedeutet das Wort „${item.latin}“?`;
+                currentCorrectAnswer = item.meaning;
+
+                wrongPool = globalVocabularyPool
+                    .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
+                    .map(i => i.meaning);
+                
+                wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+                while (wrongPool.length < 3) {
+                    let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                    if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
+                }
+            }
+            else if (qType === 1) {
+                currentCorrectAnswer = item.middle;
+
+                if (item.type === "noun") {
+                    categoryText = "🏛️ Genitiv & Geschlecht (Exakte Formanalyse)";
+                    questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
+                    
+                    let gen = item.middle.split(" ")[0];
+                    let gended = item.middle.split(" ")[1] || "m.";
+                    let base = gen;
+                    if (gen.endsWith("ae")) base = gen.slice(0, -2);
+                    else if (gen.endsWith("iī")) base = gen.slice(0, -2);
+                    else if (gen.endsWith("ī")) base = gen.slice(0, -1);
+                    else if (gen.endsWith("is")) base = gen.slice(0, -2);
+
+                    if (item.gram_class.includes("a-Deklination")) {
+                        wrongPool = [base + "ī m.", base + "is f.", base + "ae m."];
+                    } else if (item.gram_class.includes("o-Deklination")) {
+                        let altG = gended === "m." ? "f." : "m.";
+                        wrongPool = [base + "ae f.", base + "is " + gended, base + (gen.endsWith("iī") ? "iī " : "ī ") + altG];
+                    } else if (item.gram_class.includes("konsonantische")) {
+                        let altG = gended === "m." ? "f." : "m.";
+                        wrongPool = [item.latin + "ī " + gended, base + "is " + altG, base + "ae f."];
+                    } else {
+                        wrongPool = [base + "ī m.", base + "ae f.", base + "is n."];
+                    }
+                } 
+                else { 
+                    categoryText = "⚡ Konjugations-Formen (Präzise Endungsanalyse)";
+                    questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
+                    
+                    if (item.latin === "esse") {
+                        wrongPool = ["esō", "fui", "sim"];
+                    } else {
+                        let stem = item.latin.replace(/āre|ēre|īre|ere/, "");
+                        if (item.gram_class.includes("a-Konjugation")) {
+                            wrongPool = [stem + "eō", stem + "iō", stem + "ōr"];
+                        } else if (item.gram_class.includes("e-Konjugation")) {
+                            wrongPool = [stem + "ō", stem + "iō", stem + "or"];
+                        } else if (item.gram_class.includes("i-Konjugation") || item.gram_class.includes("gemischte")) {
+                            wrongPool = [stem + "ō", stem + "eō", stem + "or"];
+                        } else if (item.gram_class.includes("konsonantische")) {
+                            wrongPool = [stem + "eō", stem + "iō", stem + "is"];
+                        } else {
+                            wrongPool = [stem + "ō", stem + "eō", stem + "iō"];
+                        }
+                    }
+                }
+            }
+            else if (qType === 2) {
+                if (item.type === "noun") {
+                    categoryText = "⚔️ Deklinationsklassen";
+                    questionText = `Zu welcher Deklination gehört „${item.latin}“ (${item.gram_clue})?`;
+                    currentCorrectAnswer = item.gram_class;
+                    wrongPool = ["a-Deklination", "o-Deklination", "konsonantische Deklination", "u-Deklination", "e-Deklination"].filter(c => c !== currentCorrectAnswer);
+                } else if (item.type === "verb") {
+                    categoryText = "🔥 Konjugationsklassen";
+                    questionText = `Zu welcher Konjugation gehört der Infinitiv „${item.latin}“?`;
+                    currentCorrectAnswer = item.gram_class;
+                    wrongPool = ["a-Konjugation", "e-Konjugation", "i-Konjugation", "konsonantische Konjugation", "gemischte Konjugation"].filter(c => c !== currentCorrectAnswer);
+                } else if (item.type === "adjective") {
+                    categoryText = "🎨 Adjektiv-Klassen";
+                    questionText = `Welcher Deklinationsklasse folgt das Adjektiv „${item.latin}“?`;
+                    currentCorrectAnswer = item.gram_class;
+                    wrongPool = ["a-/o-Deklination", "konsonantische Deklination", "u-Deklination", "e-Deklination"].filter(c => c !== currentCorrectAnswer);
+                }
+                wrongPool = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+            }
+
+            const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+
+            document.getElementById('category-display').innerText = categoryText;
+            document.getElementById('question-display').innerText = questionText;
+
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById('opt' + i);
+                btn.textContent = finalOptions[i];
+                btn.className = "race-btn";
+                btn.disabled = false; 
+            }
+        }
+
+        function checkAnswer(selectedIdx) {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('opt' + i).disabled = true;
+            }
+
+            const selectedButton = document.getElementById('opt' + selectedIdx);
+            const selectedText = selectedButton.textContent.trim();
+            const targetAnswer = currentCorrectAnswer.trim();
+            const isCorrect = (selectedText === targetAnswer);
+
+            if (isCorrect) {
+                selectedButton.classList.add('correct');
+                playerProgress += 10; 
+                if (playerProgress >= 100) {
+                    playerLaps++;
+                    playerProgress -= 100;
+                }
+            } else {
+                selectedButton.classList.add('wrong');
+                for (let i = 0; i < 4; i++) {
+                    if (document.getElementById('opt' + i).textContent.trim() === targetAnswer) {
+                        document.getElementById('opt' + i).classList.add('correct');
+                    }
+                }
+                
+                aiProgress += 15; 
+                if (aiProgress >= 100) {
+                    aiLaps++;
+                    aiProgress -= 100;
+                }
+            }
+
+            updateDashboard();
+            updatePositions();
+
+            setTimeout(() => {
+                if (timeLeft > 0) {
+                    nextQuestion();
+                }
+            }, 1200);
+        }
+
+        function translateType(type) {
+            const types = {
+                noun: "Substantiv", verb: "Verb", adjective: "Adjektiv",
+                adverb: "Adverb", preposition: "Präposition", pronoun: "Pronomen",
+                conjunction: "Konjunktion", other: "Partikel"
+            };
+            return types[type] || type;
+        }
+
+        function endGame() {
+            const overlay = document.getElementById('end-screen');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            const actionBtn = document.getElementById('start-action-btn');
+
+            overlay.style.display = 'flex';
+            actionBtn.innerText = "Erneut antreten";
+            title.innerText = "⏱️ FINIS SPATIĪ!";
+            
+            if (playerLaps > aiLaps) {
+                msg.innerHTML = `<strong>Glorreicher Triumph!</strong><br>Die Sanduhr ist abgelaufen. Du hast dein Gespann meisterhaft gesteuert und die feindliche Fraktion im Staub zurückgelassen!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
+                title.style.color = "var(--roman-gold)";
+            } else if (playerLaps < aiLaps) {
+                msg.innerHTML = `<strong>Niederlage im Circus!</strong><br>Der rote Wagen hat dich auf den letzten Metern niedergerungen. Bessere deine Vokabel-Abwehr aus!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
+                title.style.color = "#ff3333";
+            } else {
+                msg.innerHTML = `<strong>Ex aequo - Gleichstand!</strong><br>Ein dramatisches Finale! Beide Wagen überqueren zeitgleich die Ziellinie.<br><br>🏁 Ihr beide schafft hervorragende <strong>${playerLaps} Runden</strong>!`;
+                title.style.color = "var(--roman-marble)";
+            }
+        }
+    </script>
+</body>
+</html>
