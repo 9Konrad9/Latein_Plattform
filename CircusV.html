@@ -74,38 +74,19 @@
         /* Das ovale Circus-Maximus-Stadion */
         .circus-stadium {
             width: 100%;
-            height: 240px;
             background: #222;
             border: 3px solid var(--roman-bronze);
-            border-radius: 120px; /* Macht das Spielfeld außen oval */
+            border-radius: 20px;
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
             box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
         }
 
-        .svg-track-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
-        }
-
-        /* Chariot-Container für absolute Pixel-Positionierung */
-        .chariot-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 5;
-            pointer-events: none;
-        }
-
-        .chariot-sprite {
-            position: absolute;
-            width: 50px;
-            height: 30px;
-            margin-left: -25px; /* Zentrierung des Drehpunkts */
-            margin-top: -15px;
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            transform-origin: center center;
+        .svg-arena {
+            display: block;
+            width: 100%;
+            height: auto;
         }
 
         /* Frage-Struktur */
@@ -184,7 +165,7 @@
         <div class="end-overlay" id="end-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-gold); font-size: 2.2rem; margin-bottom: 10px;" id="end-title">CIRCUS MAXIMUS</h2>
             <p style="font-size: 1.2rem; margin: 15px 0; max-width: 520px; line-height: 1.6;" id="end-msg">
-                Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten durch das Stadion. Doch Vorsicht: Die rote KI (Factio Russata) schläft nicht und nutzt jeden deiner Fehler eiskalt aus!
+                Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten um die Arena. Doch Vorsicht: Die rote KI (Factio Russata) nutzt jeden Fehler aus, um an dir vorbeizuziehen!
             </p>
             <button class="nav-btn" id="start-action-btn" onclick="startRace()">Rennen starten!</button>
             <br>
@@ -198,46 +179,54 @@
         </div>
 
         <div class="circus-stadium">
-            <svg class="svg-track-layer" viewBox="0 0 700 240" width="100%" height="100%">
+            <svg class="svg-arena" viewBox="0 0 700 240">
                 <rect x="0" y="0" width="700" height="240" fill="#dfb784"/>
-                <rect x="30" y="30" width="640" height="180" rx="90" fill="none" stroke="#ca9e6a" stroke-width="3"/>
                 
-                <rect x="180" y="112" width="340" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
-                <rect x="190" y="115" width="320" height="10" rx="5" fill="#c0c0c0"/>
+                <rect x="15" y="15" width="670" height="210" rx="105" fill="none" stroke="#aa7a44" stroke-width="6"/>
+                <rect x="45" y="45" width="610" height="150" rx="75" fill="none" stroke="#ca9e6a" stroke-width="3"/>
                 
-                <circle cx="172" cy="120" r="10" fill="#8c7853"/>
-                <circle cx="172" cy="120" r="4" fill="#d4af37"/>
-                <circle cx="528" cy="120" r="10" fill="#8c7853"/>
-                <circle cx="528" cy="120" r="4" fill="#d4af37"/>
+                <rect x="200" y="112" width="300" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
+                <rect x="210" y="115" width="280" height="10" rx="5" fill="#c0c0c0"/>
+                
+                <g transform="translate(190, 120)">
+                    <circle cx="0" cy="0" r="12" fill="#5a5a5a"/>
+                    <circle cx="-5" cy="-4" r="4" fill="#d4af37"/>
+                    <circle cx="5" cy="0" r="4" fill="#d4af37"/>
+                    <circle cx="-5" cy="4" r="4" fill="#d4af37"/>
+                </g>
+                <g transform="translate(510, 120)">
+                    <circle cx="0" cy="0" r="12" fill="#5a5a5a"/>
+                    <circle cx="-5" cy="0" r="4" fill="#d4af37"/>
+                    <circle cx="5" cy="-4" r="4" fill="#d4af37"/>
+                    <circle cx="5" cy="4" r="4" fill="#d4af37"/>
+                </g>
 
-                <line x1="220" y1="0" x2="220" y2="112" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
+                <line x1="240" y1="15" x2="240" y2="112" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
+
+                <g id="svg-player">
+                    <g transform="translate(-20, -13)">
+                        <rect x="26" y="2" width="18" height="7" fill="#8b5a2b" rx="1"/>
+                        <rect x="26" y="15" width="18" height="7" fill="#a0522d" rx="1"/>
+                        <line x1="12" y1="5" x2="26" y2="5" stroke="#d4af37" stroke-width="1"/>
+                        <line x1="12" y1="19" x2="26" y2="19" stroke="#d4af37" stroke-width="1"/>
+                        <path d="M2 4 L14 3 L16 23 L2 22 Z" fill="#104e8b" stroke="#d4af37" stroke-width="1"/>
+                        <circle cx="6" cy="2" r="3" fill="#111" stroke="#d4af37"/>
+                        <circle cx="6" cy="24" r="3" fill="#111" stroke="#d4af37"/>
+                    </g>
+                </g>
+
+                <g id="svg-ai">
+                    <g transform="translate(-20, -13)">
+                        <rect x="26" y="2" width="18" height="7" fill="#cd853f" rx="1"/>
+                        <rect x="26" y="15" width="18" height="7" fill="#8b4513" rx="1"/>
+                        <line x1="12" y1="5" x2="26" y2="5" stroke="#d4af37" stroke-width="1"/>
+                        <line x1="12" y1="19" x2="26" y2="19" stroke="#d4af37" stroke-width="1"/>
+                        <path d="M2 4 L14 3 L16 23 L2 22 Z" fill="#800000" stroke="#d4af37" stroke-width="1"/>
+                        <circle cx="6" cy="2" r="3" fill="#111" stroke="#d4af37"/>
+                        <circle cx="6" cy="24" r="3" fill="#111" stroke="#d4af37"/>
+                    </g>
+                </g>
             </svg>
-
-            <div class="chariot-container">
-                <div class="chariot-sprite" id="chariot-player">
-                    <svg width="50" height="30" viewBox="0 0 64 48">
-                        <rect x="35" y="8" width="22" height="10" fill="#8b5a2b" rx="2"/>
-                        <rect x="35" y="22" width="22" height="10" fill="#a0522d" rx="2"/>
-                        <line x1="20" y1="13" x2="35" y2="13" stroke="#d4af37" stroke-width="1.5"/>
-                        <line x1="20" y1="27" x2="35" y2="27" stroke="#d4af37" stroke-width="1.5"/>
-                        <path d="M4 10 L20 8 L22 32 L4 30 Z" fill="var(--roman-blue)" stroke="#d4af37" stroke-width="1"/>
-                        <circle cx="11" cy="8" r="5" fill="#111" stroke="#d4af37"/>
-                        <circle cx="11" cy="32" r="5" fill="#111" stroke="#d4af37"/>
-                    </svg>
-                </div>
-
-                <div class="chariot-sprite" id="chariot-ai">
-                    <svg width="50" height="30" viewBox="0 0 64 48">
-                        <rect x="35" y="8" width="22" height="10" fill="#cd853f" rx="2"/>
-                        <rect x="35" y="22" width="22" height="10" fill="#8b4513" rx="2"/>
-                        <line x1="20" y1="13" x2="35" y2="13" stroke="#d4af37" stroke-width="1.5"/>
-                        <line x1="20" y1="27" x2="35" y2="27" stroke="#d4af37" stroke-width="1.5"/>
-                        <path d="M4 10 L20 8 L22 32 L4 30 Z" fill="var(--roman-red)" stroke="#d4af37" stroke-width="1"/>
-                        <circle cx="11" cy="8" r="5" fill="#111" stroke="#d4af37"/>
-                        <circle cx="11" cy="32" r="5" fill="#111" stroke="#d4af37"/>
-                    </svg>
-                </div>
-            </div>
         </div>
 
         <div id="quiz-area">
@@ -264,7 +253,6 @@
         let currentCorrectAnswer = "";
         let roundLocked = true;
 
-        // Fehlerfreie Initialisierung beim Laden der Seite
         function initRace() {
             document.getElementById('end-screen').style.display = 'flex';
             updatePositions();
@@ -272,7 +260,7 @@
 
         function startRace() {
             if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
-                alert("Kritischer Fehler: 'vocabulary.js' wurde nicht gefunden oder ist leer!");
+                alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
                 return;
             }
 
@@ -313,7 +301,6 @@
             timerEl.innerText = displayString;
 
             if (timeLeft <= 60) {
-                timerEl.boxClassName = "";
                 timerEl.classList.add('timer-crit');
             } else {
                 timerEl.classList.remove('timer-crit');
@@ -323,59 +310,59 @@
             document.getElementById('ai-laps').innerText = aiLaps;
         }
 
-        // MATHEMATISCH KORREKTE OVAL-STEUERUNG (Uhrzeigersinn um die Spina)
+        // MATHEMATISCH PRÄZISE OVAL-BAHN-STEUERUNG (Native SVG-Koordinaten)
         function getChariotCoords(progress, radius) {
             let x = 0, y = 0, angle = 0;
-            const centerXLeft = 220;  // Wendepunkt Links
-            const centerXRight = 480; // Wendepunkt Rechts
-            const centerY = 120;      // Mittehöhe des Stadions
+            const centerXLeft = 210;  // Linker Scheitelpunkt der Spina
+            const centerXRight = 490; // Rechter Scheitelpunkt der Spina
+            const centerY = 120;      // Die absolute Mittelachse des Stadions
 
             if (progress >= 0 && progress < 35) {
-                // 1. OBERE GERADE (Nach Rechts fliegend)
+                // 1. OBERE GERADE (Von links nach rechts)
                 let t = progress / 35;
                 x = centerXLeft + t * (centerXRight - centerXLeft);
                 y = centerY - radius;
                 angle = 0;
             } 
             else if (progress >= 35 && progress < 50) {
-                // 2. RECHTE WENDUNG (Meta Orientis)
+                // 2. RECHTE WENDUNG (Um die östliche Meta)
                 let t = (progress - 35) / 15;
                 let alpha = -Math.PI / 2 + (t * Math.PI);
                 x = centerXRight + radius * Math.cos(alpha);
                 y = centerY + radius * Math.sin(alpha);
-                angle = 90 + (t * 180);
+                angle = t * 180;
             } 
             else if (progress >= 50 && progress < 85) {
-                // 3. UNTERE GEGENGERADE (Nach Links fliegend)
+                // 3. UNTERE GEGENGERADE (Zurück von rechts nach links)
                 let t = (progress - 50) / 35;
                 x = centerXRight - t * (centerXRight - centerXLeft);
                 y = centerY + radius;
                 angle = 180;
             } 
             else if (progress >= 85 && progress <= 100) {
-                // 4. LINKE WENDUNG (Meta Occidentis)
+                // 4. LINKE WENDUNG (Um die westliche Meta zurück zur Ziellinie)
                 let t = (progress - 85) / 15;
                 let alpha = Math.PI / 2 + (t * Math.PI);
                 x = centerXLeft + radius * Math.cos(alpha);
                 y = centerY + radius * Math.sin(alpha);
-                angle = 270 + (t * 180);
+                angle = 180 + (t * 180);
             }
 
             return { x: x, y: y, angle: angle };
         }
 
         function updatePositions() {
-            // Spieler fährt innen (R=48), KI fährt außen (R=78)
-            let pCoords = getChariotCoords(playerProgress, 48);
-            let aiCoords = getChariotCoords(aiProgress, 78);
+            // Spieler fährt auf der idealen Innenbahn (R=35), KI weicht nach außen aus (R=65)
+            let pCoords = getChariotCoords(playerProgress, 35);
+            let aiCoords = getChariotCoords(aiProgress, 65);
 
-            document.getElementById('chariot-player').style.transform = `translate3d(${pCoords.x}px, ${pCoords.y}px, 0) rotate(${pCoords.angle}deg)`;
-            document.getElementById('chariot-ai').style.transform = `translate3d(${aiCoords.x}px, ${aiCoords.y}px, 0) rotate(${aiCoords.angle}deg)`;
+            document.getElementById('svg-player').setAttribute('transform', `translate(${pCoords.x}, ${pCoords.y}) rotate(${pCoords.angle})`);
+            document.getElementById('svg-ai').setAttribute('transform', `translate(${aiCoords.x}, ${aiCoords.y}) rotate(${aiCoords.angle})`);
         }
 
         function nextQuestion() {
             if(timeLeft <= 0) return;
-            roundLocked = false;
+            roundLocked = false; // Schaltet die Klick-Sperre frei
 
             const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
             
@@ -390,7 +377,7 @@
 
             if (qType === 0) {
                 categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
-                questionText = `Was bedeutet „${item.latin}“?`;
+                questionText = `Was bedeutet das Wort „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
 
                 wrongPool = globalVocabularyPool
@@ -430,9 +417,14 @@
                 }
             }
 
+            // Pool absichern und zufällig mischen
             wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
             while (wrongPool.length < 3) {
-                wrongPool.push("---");
+                let fallbackItem = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                let fallbackVal = qType === 0 ? fallbackItem.meaning : fallbackItem.middle;
+                if(fallbackVal && fallbackVal !== currentCorrectAnswer && !wrongPool.includes(fallbackVal)) {
+                    wrongPool.push(fallbackVal);
+                }
             }
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
@@ -450,7 +442,7 @@
 
         function checkAnswer(selectedIdx) {
             if(roundLocked) return;
-            roundLocked = true;
+            roundLocked = true; // Sperrt sofort Mehrfach-Klicks
 
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
@@ -459,11 +451,11 @@
 
             if (isCorrect) {
                 document.getElementById('opt' + selectedIdx).classList.add('correct');
-                playerProgress += 14; // Ca. 7 richtige Antworten für eine komplette Stadionrunde
+                playerProgress += 10; // 10 richtige Antworten = 1 komplette Stadionrunde
                 
                 if (playerProgress >= 100) {
                     playerLaps++;
-                    playerProgress = 0;
+                    playerProgress -= 100;
                 }
             } else {
                 document.getElementById('opt' + selectedIdx).classList.add('wrong');
@@ -473,10 +465,10 @@
                     }
                 }
                 
-                aiProgress += 20; // Rote KI prescht unaufhaltsam vorwärts!
+                aiProgress += 15; // Rote KI zieht bei Fehlern dynamisch vorüber
                 if (aiProgress >= 100) {
                     aiLaps++;
-                    aiProgress = 0;
+                    aiProgress -= 100;
                 }
             }
 
@@ -487,7 +479,7 @@
                 if (timeLeft > 0) {
                     nextQuestion();
                 }
-            }, 1400);
+            }, 1200);
         }
 
         function translateType(type) {
