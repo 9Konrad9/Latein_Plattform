@@ -235,10 +235,10 @@
                 <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
             <div class="options-grid">
-                <button class="race-btn" id="opt0" onclick="checkAnswer(0)" disabled>-</button>
-                <button class="race-btn" id="opt1" onclick="checkAnswer(1)" disabled>-</button>
-                <button class="race-btn" id="opt2" onclick="checkAnswer(2)" disabled>-</button>
-                <button class="race-btn" id="opt3" onclick="checkAnswer(3)" disabled>-</button>
+                <button class="race-btn" id="opt0" disabled>-</button>
+                <button class="race-btn" id="opt1" disabled>-</button>
+                <button class="race-btn" id="opt2" disabled>-</button>
+                <button class="race-btn" id="opt3" disabled>-</button>
             </div>
         </div>
     </div>
@@ -253,8 +253,17 @@
         let currentCorrectAnswer = "";
         let roundLocked = true;
 
+        // Ausfallsichere Klick-Bindung beim Laden der Seite
         function initRace() {
             document.getElementById('end-screen').style.display = 'flex';
+            
+            // Programmatische Bindung der Buttons schließt iOS-Skriptfehler vollständig aus
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById('opt' + i);
+                btn.addEventListener('click', function() {
+                    checkAnswer(i);
+                });
+            }
             updatePositions();
         }
 
@@ -369,6 +378,7 @@
             let questionText = "";
             let wrongPool = [];
 
+            // FRAGETYP 0: BEDEUTUNGEN (Strikter Wortart-Filter)
             if (qType === 0) {
                 categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
                 questionText = `Was bedeutet das Wort „${item.latin}“?`;
@@ -377,7 +387,14 @@
                 wrongPool = globalVocabularyPool
                     .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
                     .map(i => i.meaning);
+                
+                wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+                while (wrongPool.length < 3) {
+                    let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                    if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
+                }
             }
+            // FRAGETYP 1: GRAMMATISCHE STAMMFORMEN
             else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
@@ -391,13 +408,20 @@
                 wrongPool = globalVocabularyPool
                     .filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.")
                     .map(i => i.middle);
+                
+                wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+                while (wrongPool.length < 3) {
+                    let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                    if (fb.middle && fb.middle !== currentCorrectAnswer && !wrongPool.includes(fb.middle)) wrongPool.push(fb.middle);
+                }
             }
+            // FRAGETYP 2: DEKLINATIONS- / KONJUGATIONSKLASSE (Didaktisch bereinigte Distraktoren)
             else if (qType === 2) {
                 if (item.type === "noun") {
                     categoryText = "⚔️ Deklinationsklassen";
                     questionText = `Zu welcher Deklination gehört „${item.latin}“ (${item.gram_clue})?`;
                     currentCorrectAnswer = item.gram_class;
-                    wrongPool = ["a-Deklination", "o-Deklination", "konsonantische Deklination"].filter(c => c !== currentCorrectAnswer);
+                    wrongPool = ["a-Deklination", "o-Deklination", "konsonantische Deklination", "u-Deklination", "e-Deklination"].filter(c => c !== currentCorrectAnswer);
                 } else if (item.type === "verb") {
                     categoryText = "🔥 Konjugationsklassen";
                     questionText = `Zu welcher Konjugation gehört der Infinitiv „${item.latin}“?`;
@@ -407,17 +431,9 @@
                     categoryText = "🎨 Adjektiv-Klassen";
                     questionText = `Welcher Deklinationsklasse folgt das Adjektiv „${item.latin}“?`;
                     currentCorrectAnswer = item.gram_class;
-                    wrongPool = ["konsonantische Deklination", "u-Deklination", "e-Deklination"].filter(c => c !== currentCorrectAnswer);
+                    wrongPool = ["a-/o-Deklination", "konsonantische Deklination", "u-Deklination", "e-Deklination"].filter(c => c !== currentCorrectAnswer);
                 }
-            }
-
-            wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
-            while (wrongPool.length < 3) {
-                let fallbackItem = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
-                let fallbackVal = qType === 0 ? fallbackItem.meaning : fallbackItem.middle;
-                if(fallbackVal && fallbackVal !== currentCorrectAnswer && !wrongPool.includes(fallbackVal)) {
-                    wrongPool.push(fallbackVal);
-                }
+                wrongPool = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
             }
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
@@ -471,42 +487,3 @@
             setTimeout(() => {
                 if (timeLeft > 0) {
                     nextQuestion();
-                }
-            }, 1200);
-        }
-
-        function translateType(type) {
-            const types = {
-                noun: "Substantiv", verb: "Verb", adjective: "Adjektiv",
-                adverb: "Adverb", preposition: "Präposition", pronoun: "Pronomen",
-                conjunction: "Konjunktion", other: "Partikel"
-            };
-            return types[type] || type;
-        }
-
-        function endGame() {
-            const overlay = document.getElementById('end-screen');
-            const title = document.getElementById('end-title');
-            const msg = document.getElementById('end-msg');
-            const actionBtn = document.getElementById('start-action-btn');
-
-            overlay.style.display = 'flex';
-            actionBtn.innerText = "Erneut antreten";
-            title.innerText = "⏱️ FINIS SPATIĪ!";
-            
-            if (playerLaps > aiLaps) {
-                msg.innerHTML = `<strong>Glorreicher Triumph!</strong><br>Die Sanduhr ist abgelaufen. Du hast dein Gespann meisterhaft gesteuert und die feindliche Fraktion im Staub zurückgelassen!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
-                title.style.color = "var(--roman-gold)";
-            } else if (playerLaps < aiLaps) {
-                msg.innerHTML = `<strong>Niederlage im Circus!</strong><br>Der rote Wagen hat dich auf den letzten Metern niedergerungen. Bessere deine Vokabel-Abwehr aus!<br><br>🏁 Dein Rekord: <strong>${playerLaps} Runden</strong><br>🐎 Factio Russata (Rot): <strong>${aiLaps} Runden</strong>`;
-                title.style.color = "#ff3333";
-            } else {
-                msg.innerHTML = `<strong>Ex aequo - Gleichstand!</strong><br>Ein dramatisches Finale! Beide Wagen überqueren zeitgleich die Ziellinie.<br><br>🏁 Ihr beide schafft hervorragende <strong>${playerLaps} Runden</strong>!`;
-                title.style.color = "var(--roman-marble)";
-            }
-        }
-
-        window.onload = initRace;
-    </script>
-</body>
-</html>
