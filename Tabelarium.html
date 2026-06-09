@@ -7,88 +7,300 @@
     <style>
         :root {
             --roman-gold: #d4af37;
-            --roman-bronze: #8c7853;
-            --roman-marble: #f0e6d2;
-            --roman-red: #800000;
-            --bg-dark: #1a1510;
-            --card-bg: #2b231c;
-            --papyrus: #e8dcc4;
-            --text-dark: #3a2e24;
-            --font-display: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'Verdana', sans-serif;
+            --wood-dark: #2d1e16;
+            --leather: #3e2723;
+            --bronze: #8c7853;
+            --papyrus: #eaddc5;
+            --ink: #3e2723;
+            --seal-red: #a82721;
+            --chalkboard: #2f3640;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
         body {
-            font-family: var(--font-body); background-color: var(--bg-dark);
-            color: var(--roman-marble); display: flex; flex-direction: column;
-            align-items: center; min-height: 100dvh; padding: 20px;
+            font-family: 'Verdana', sans-serif;
+            background-color: var(--wood-dark);
+            background-image: radial-gradient(circle at center, #3d2a1e 0%, #1e130e 100%);
+            color: #f0e6d2;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            overflow: hidden;
         }
 
-        h1 {
-            color: var(--roman-gold); font-family: var(--font-display);
-            text-transform: uppercase; font-size: 1.8rem; margin-bottom: 5px;
-            letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        /* Fortschrittsanzeige */
+        .header-area { width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .title { font-family: 'Georgia', serif; font-size: 1.5rem; color: var(--roman-gold); text-transform: uppercase; letter-spacing: 2px; }
+        .progress-box { font-size: 0.9rem; color: #ccc; }
+        .progress-bar-container { width: 150px; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid var(--bronze); margin-top: 5px; }
+        .progress-bar { width: 0%; height: 100%; background: var(--roman-gold); transition: width 0.3s; }
+
+        /* Die Urkunde (Papyrus) */
+        .scroll-container {
+            width: 100%; max-width: 700px;
+            background: var(--papyrus);
+            border-radius: 4px;
+            border: 2px solid #c2a17a;
+            box-shadow: inset 0 0 20px rgba(139, 105, 20, 0.2), 0 10px 20px rgba(0,0,0,0.6);
+            min-height: 140px;
+            display: flex; justify-content: center; align-items: center;
+            position: relative; margin-bottom: 25px;
+        }
+
+        .latin-text {
+            font-family: 'Georgia', serif;
+            font-size: 2.2rem;
+            color: var(--ink);
+            font-weight: bold;
+            /* Erzwingt konsequente Kleinschreibung */
+            text-transform: lowercase; 
+            letter-spacing: 1px;
             text-align: center;
+            padding: 20px;
         }
 
-        .game-container {
-            width: 100%; max-width: 650px; background: var(--card-bg);
-            border: 4px solid var(--roman-bronze); border-radius: 8px;
-            padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);
-            display: flex; flex-direction: column; flex-grow: 1; margin-bottom: 10px;
+        /* Das Wachs-Siegel */
+        .wax-seal {
+            position: absolute;
+            right: 20px; bottom: -20px;
+            width: 60px; height: 60px;
+            background: var(--seal-red);
+            border-radius: 50%;
+            border: 3px solid #731713;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center;
+            font-family: 'Georgia', serif; color: #ffcccc; font-size: 1.5rem; font-weight: bold;
+            transform-origin: center;
         }
-
-        /* Die Urkunde (Aufgabe) */
-        .papyrus-scroll {
-            background: var(--papyrus); border-radius: 4px; padding: 30px 20px;
-            text-align: center; color: var(--text-dark); position: relative;
-            box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2), 0 5px 15px rgba(0,0,0,0.5);
-            margin-bottom: 25px; border-top: 8px solid #8b4513; border-bottom: 8px solid #8b4513;
-        }
-
-        .scroll-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #8b4513; font-weight: bold; margin-bottom: 10px; }
         
-        .latin-phrase {
-            font-family: var(--font-display); font-size: 2.2rem; font-weight: bold;
-            color: #4a0000; letter-spacing: 1px;
+        @keyframes stamp {
+            0% { transform: scale(3) rotate(15deg); opacity: 0; }
+            50% { transform: scale(0.9) rotate(-5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .seal-active { display: flex !important; animation: stamp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Antwort-Buttons (2x2 Grid) */
+        .options-grid {
+            width: 100%; max-width: 700px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; flex-grow: 1;
         }
 
-        /* Antwort-Buttons */
-        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-
-        .answer-btn {
-            background: #3a2e24; border: 2px solid var(--roman-bronze);
-            color: var(--roman-marble); padding: 18px 15px; font-size: 1.1rem;
-            border-radius: 6px; cursor: pointer; text-align: center; font-family: var(--font-display);
-            transition: background 0.1s; touch-action: manipulation;
+        .btn-translate {
+            background: var(--leather); border: 2px solid var(--bronze); color: #f0e6d2;
+            font-size: 1.1rem; padding: 15px 10px; border-radius: 8px; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); text-align: center; line-height: 1.3;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background 0.1s;
         }
-        .answer-btn:not(:disabled):active { background: #5c4a3d; }
-        
-        .correct { background: #2e5c31 !important; border-color: #4CAF50 !important; color: white; }
-        .wrong { background: #7a2626 !important; border-color: #F44336 !important; color: white; }
+        .btn-translate:not(:disabled):active { background: #5a3c36; transform: translateY(2px); }
 
-        /* Feedback Pop-Up */
-        .feedback-overlay {
+        /* Der Archivar (Feedback Modal) */
+        .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 50; padding: 20px;
+            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100;
         }
-        
-        .feedback-box {
-            background: var(--papyrus); padding: 25px; border-radius: 8px;
-            border: 4px solid var(--roman-red); color: var(--text-dark);
-            text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,1);
+        .feedback-board {
+            background: var(--chalkboard); width: 90%; max-width: 450px;
+            border: 6px solid var(--bronze); border-radius: 8px; padding: 25px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        
-        .feedback-title { font-family: var(--font-display); font-size: 1.5rem; color: var(--roman-red); margin-bottom: 10px; font-weight: bold; }
-        .feedback-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; }
-        
-        .btn-continue {
-            background: var(--roman-red); color: white; padding: 12px 25px;
-            border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; text-transform: uppercase;
+        .feedback-title { color: #ffcc00; font-family: 'Georgia', serif; font-size: 1.5rem; margin-bottom: 15px; }
+        .feedback-text { font-size: 1.1rem; line-height: 1.5; color: #f5f6fa; margin-bottom: 25px; }
+        .btn-close {
+            background: var(--roman-gold); color: var(--leather); border: none; padding: 12px 30px;
+            font-size: 1.1rem; font-weight: bold; border-radius: 20px; cursor: pointer;
         }
+
+        /* Endbildschirm */
+        .end-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--wood-dark); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center;
+        }
+        .btn-main { background: var(--roman-gold); color: var(--leather); border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 30px; cursor: pointer; text-decoration: none; margin-top: 20px; text-transform: uppercase; }
     </style>
 </head>
+<body>
+
+    <div class="header-area">
+        <div class="title">Tabulārium</div>
+        <div class="progress-box">
+            Urkunden: <span id="prog-text">0 / 10</span>
+            <div class="progress-bar-container"><div class="progress-bar" id="prog-bar"></div></div>
+        </div>
+    </div>
+
+    <div class="scroll-container">
+        <div class="latin-text" id="latin-display">lade urkunde...</div>
+        <div class="wax-seal" id="seal">V</div>
+    </div>
+
+    <div class="options-grid">
+        <button class="btn-translate" id="opt0">-</button>
+        <button class="btn-translate" id="opt1">-</button>
+        <button class="btn-translate" id="opt2">-</button>
+        <button class="btn-translate" id="opt3">-</button>
+    </div>
+
+    <div class="modal-overlay" id="feedback-modal">
+        <div class="feedback-board">
+            <div class="feedback-title">Notiz des Archivars</div>
+            <div class="feedback-text" id="feedback-text">Fehlertext</div>
+            <button class="btn-close" onclick="closeModal()">Verstanden</button>
+        </div>
+    </div>
+
+    <div class="end-screen" id="end-screen">
+        <h1 style="color: var(--roman-gold); font-size: 2.5rem; margin-bottom: 20px; font-family: 'Georgia', serif;">Archiv sortiert!</h1>
+        <p style="font-size: 1.2rem; max-width: 500px; line-height: 1.5; margin-bottom: 30px;">Hervorragend! Du hast alle Besitzurkunden fehlerfrei zugeordnet. Der Herr der Villa ist zufrieden.</p>
+        <button class="btn-main" onclick="location.reload()">Neuer Stapel</button>
+        <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem;">Zurück zum Menü</a>
+    </div>
+
+    <script>
+        // --- INTERNES MAPPING (Besitz & Besitzer) ---
+        const possessions = [
+            { latSg: "equus", latPl: "equī", deSg: "das Pferd", dePl: "die Pferde", deBaseSg: "Pferd", deBasePl: "Pferde", gen: "m", deGenSg: "des Pferdes", deGenPl: "der Pferde" },
+            { latSg: "canis", latPl: "canēs", deSg: "der Hund", dePl: "die Hunde", deBaseSg: "Hund", deBasePl: "Hunde", gen: "m", deGenSg: "des Hundes", deGenPl: "der Hunde" },
+            { latSg: "tunica", latPl: "tunicae", deSg: "die Tunika", dePl: "die Tuniken", deBaseSg: "Tunika", deBasePl: "Tuniken", gen: "f", deGenSg: "der Tunika", deGenPl: "der Tuniken" },
+            { latSg: "tabula", latPl: "tabulae", deSg: "das Wachstäfelchen", dePl: "die Wachstäfelchen", deBaseSg: "Wachstäfelchen", deBasePl: "Wachstäfelchen", gen: "f", deGenSg: "des Wachstäfelchens", deGenPl: "der Wachstäfelchen" },
+            { latSg: "dōnum", latPl: "dōna", deSg: "das Geschenk", dePl: "die Geschenke", deBaseSg: "Geschenk", deBasePl: "Geschenke", gen: "n", deGenSg: "des Geschenks", deGenPl: "der Geschenke" }
+        ];
+
+        const owners = [
+            { latGenSg: "patris", latGenPl: "patrum", deGenSg: "des Vaters", deGenPl: "der Väter", latNomSg: "pater", latNomPl: "patrēs", deNomSg: "der Vater", deNomPl: "die Väter", hasPl: true },
+            { latGenSg: "mātris", latGenPl: "mātrum", deGenSg: "der Mutter", deGenPl: "der Mütter", latNomSg: "māter", latNomPl: "mātrēs", deNomSg: "die Mutter", deNomPl: "die Mütter", hasPl: true },
+            { latGenSg: "servī", latGenPl: "servōrum", deGenSg: "des Sklaven", deGenPl: "der Sklaven", latNomSg: "servus", latNomPl: "servī", deNomSg: "der Sklave", deNomPl: "die Sklaven", hasPl: true },
+            { latGenSg: "puellae", latGenPl: "puellārum", deGenSg: "des Mädchens", deGenPl: "der Mädchen", latNomSg: "puella", latNomPl: "puellae", deNomSg: "das Mädchen", deNomPl: "die Mädchen", hasPl: true },
+            { latGenSg: "aulī", latGenPl: "", deGenSg: "des Aulus", deGenPl: "", latNomSg: "aulus", latNomPl: "", deNomSg: "der Aulus", deNomPl: "", hasPl: false }
+        ];
+
+        const pronouns = [
+            { id: "meus", lat: {m: ["meus","meī"], f: ["mea","meae"], n: ["meum","mea"]}, de: {m:"mein", f:"meine", n:"mein", pl:"meine"} },
+            { id: "tuus", lat: {m: ["tuus","tuī"], f: ["tua","tuae"], n: ["tuum","tua"]}, de: {m:"dein", f:"deine", n:"dein", pl:"deine"} },
+            { id: "suus", lat: {m: ["suus","suī"], f: ["sua","suae"], n: ["suum","sua"]}, de: {m:"sein/ihr", f:"seine/ihre", n:"sein/ihr", pl:"seine/ihre"} },
+            { id: "noster", lat: {m: ["noster","nostrī"], f: ["nostra","nostrae"], n: ["nostrum","nostra"]}, de: {m:"unser", f:"unsere", n:"unser", pl:"unsere"} },
+            { id: "vester", lat: {m: ["vester","vestrī"], f: ["vestra","vestrae"], n: ["vestrum","vestra"]}, de: {m:"euer", f:"eure", n:"euer", pl:"eure"} }
+        ];
+
+        // --- HILFSFUNKTIONEN ---
+        function randomEl(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+        function shuffleOptions(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+        // --- SPIELLOGIK ---
+        let currentProgress = 0;
+        const maxProgress = 10;
+        let roundLocked = false;
+        let currentCorrectOpt = null;
+
+        window.onload = function() { nextRound(); };
+
+        function nextRound() {
+            roundLocked = false;
+            document.getElementById('seal').classList.remove('seal-active');
+            
+            // Zufällig zwischen Typ 1 (Attribut) und Typ 2 (Pronomen) wechseln
+            let questionData = Math.random() > 0.5 ? generateType1() : generateType2();
+            
+            // Garantiert Kleinschreibung für die Urkunde
+            document.getElementById('latin-display').innerText = questionData.question.toLowerCase();
+            
+            const btns = document.querySelectorAll('.btn-translate');
+            questionData.options.forEach((opt, idx) => {
+                btns[idx].innerText = opt.t;
+                btns[idx].disabled = false;
+                btns[idx].onclick = () => checkAnswer(opt);
+            });
+        }
+
+        // --- GENERATOR TYP 1: Genitiv-Attribut ---
+        function generateType1() {
+            let p = randomEl(possessions);
+            let o = randomEl(owners);
+            let pPlural = Math.random() > 0.5;
+            let oPlural = o.hasPl && Math.random() > 0.5;
+
+            let latP = pPlural ? p.latPl : p.latSg;
+            let latO = oPlural ? o.latGenPl : o.latGenSg;
+            let question = `${latP} ${latO}`;
+
+            let deP = pPlural ? p.dePl : p.deSg;
+            let deO = oPlural ? o.deGenPl : o.deGenSg;
+            let correct = capitalize(`${deP} ${deO}`);
+
+            // Falle 1: Falscher Numerus beim Besitz
+            let deP_wrongNum = pPlural ? p.deSg : p.dePl;
+            let d1 = capitalize(`${deP_wrongNum} ${deO}`);
+            let f1 = "Achtung! Schau dir den Gegenstand (Nominativ) ganz genau an. Steht diese Endung wirklich im " + (pPlural ? "Singular?" : "Plural?");
+
+            // Falle 2: Falscher Numerus beim Besitzer
+            let deO_wrongNum = "";
+            if (o.hasPl) {
+                deO_wrongNum = oPlural ? o.deGenSg : o.deGenPl;
+            } else {
+                // Notlösung für Eigennamen wie Aulus
+                let otherOwner = randomEl(owners.filter(x => x.hasPl));
+                deO_wrongNum = pPlural ? otherOwner.deGenPl : otherOwner.deGenSg; 
+            }
+            let d2 = capitalize(`${deP} ${deO_wrongNum}`);
+            let f2 = "Fast! Aber überprüfe den Besitzer (Genitiv). Steht diese Form im Singular oder im Plural?";
+
+            // Falle 3: Rollentausch (Besitz wird Genitiv, Besitzer wird Nominativ)
+            let deO_Nom = oPlural ? o.deNomPl : o.deNomSg;
+            let deP_Gen = pPlural ? p.deGenPl : p.deGenSg;
+            let d3 = capitalize(`${deO_Nom} ${deP_Gen}`);
+            let f3 = "Halt! Du hast Täter und Besitz vertauscht. Wer steht im lateinischen Satz im Nominativ (wer/was?) und wer im Genitiv (wessen?)?";
+
+            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
+        }
+
+        // --- GENERATOR TYP 2: Possessiv-Pronomen ---
+        function generateType2() {
+            let p = randomEl(possessions);
+            let pron = randomEl(pronouns);
+            let pPlural = Math.random() > 0.5;
+
+            let latP = pPlural ? p.latPl : p.latSg;
+            let latPron = pron.lat[p.gen][pPlural ? 1 : 0];
+            let question = `${latP} ${latPron}`;
+
+            let pronDe = pPlural ? pron.de.pl : pron.de[p.gen];
+            let pDe = pPlural ? p.deBasePl : p.deBaseSg;
+            let correct = capitalize(`${pronDe} ${pDe}`);
+
+            // Falle 1: Falscher Numerus (Sg/Pl vertauscht)
+            let pronDe_wrongNum = pPlural ? pron.de[p.gen] : pron.de.pl;
+            let pDe_wrongNum = pPlural ? p.deBaseSg : p.deBasePl;
+            let d1 = capitalize(`${pronDe_wrongNum} ${pDe_wrongNum}`);
+            let f1 = "Schau auf die Endung des Nomens! Steht das im Singular oder im Plural?";
+
+            // Falle 2: Falsche Person (z.B. unser statt euer)
+            let otherPron1 = randomEl(pronouns.filter(x => x.id !== pron.id));
+            let otherPron1De = pPlural ? otherPron1.de.pl : otherPron1.de[p.gen];
+            let d2 = capitalize(`${otherPron1De} ${pDe}`);
+            let f2 = "Achtung bei der Person! Übersetze das Pronomen ganz genau: Wem gehört es?";
+
+            // Falle 3: Falsches Pronomen UND falscher Numerus
+            let otherPron2 = randomEl(pronouns.filter(x => x.id !== pron.id && x.id !== otherPron1.id));
+            let otherPron2De_wrongNum = pPlural ? otherPron2.de[p.gen] : otherPron2.de.pl;
+            let d3 = capitalize(`${otherPron2De_wrongNum} ${pDe_wrongNum}`);
+            let f3 = "Falsches Pronomen und falscher Numerus (Sg/Pl)! Schau dir beide Wörter noch einmal in Ruhe an.";
+
+            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
+        }
+
+        // --- PRÜFUNG & FEEDBACK ---
+        function checkAnswer(opt) {
+            if(roundLocked) return;
+            
+            if(opt.c) {
+                roundLocked = true;
+                document.querySelectorAll('.btn-translate').forEach(b => b.disabled = true);
+                document.getElementById('seal').classList.add('seal-active');
+                
+                currentProgress++;
+                document.getElementById('prog-text').innerText = `${currentProgress} / ${maxProgress}`;
+                document.getElementById('prog-bar').style.width = `${(currentProgress/maxProgress)*100
