@@ -1,6 +1,3 @@
-// Daten-Pool für das römische Alltags-Quiz
-// Basierend auf den Sachinfos des Lehrbuchs
-
 const quizQuestions = [
     {
         category: "Wohnen im alten Rom",
@@ -261,4 +258,5 @@ const quizQuestions = [
             "Sie streuten heimlich Glasscherben auf die Rennstrecke der Arena.",
             "Sie mischten Schlafpulver in das Futter der feindlichen Pferde."
         ]
-    };
+    }
+];
