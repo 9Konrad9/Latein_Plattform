@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tabulārium - Das Archiv</title>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #1a1510;
+            --card-bg: #2b231c;
+            --papyrus: #e8dcc4;
+            --text-dark: #3a2e24;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body); background-color: var(--bg-dark);
+            color: var(--roman-marble); display: flex; flex-direction: column;
+            align-items: center; min-height: 100dvh; padding: 20px;
+        }
+
+        h1 {
+            color: var(--roman-gold); font-family: var(--font-display);
+            text-transform: uppercase; font-size: 1.8rem; margin-bottom: 5px;
+            letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        .game-container {
+            width: 100%; max-width: 650px; background: var(--card-bg);
+            border: 4px solid var(--roman-bronze); border-radius: 8px;
+            padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.9);
+            display: flex; flex-direction: column; flex-grow: 1; margin-bottom: 10px;
+        }
+
+        /* Die Urkunde (Aufgabe) */
+        .papyrus-scroll {
+            background: var(--papyrus); border-radius: 4px; padding: 30px 20px;
+            text-align: center; color: var(--text-dark); position: relative;
+            box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.2), 0 5px 15px rgba(0,0,0,0.5);
+            margin-bottom: 25px; border-top: 8px solid #8b4513; border-bottom: 8px solid #8b4513;
+        }
+
+        .scroll-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #8b4513; font-weight: bold; margin-bottom: 10px; }
+        
+        .latin-phrase {
+            font-family: var(--font-display); font-size: 2.2rem; font-weight: bold;
+            color: #4a0000; letter-spacing: 1px;
+        }
+
+        /* Antwort-Buttons */
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+        .answer-btn {
+            background: #3a2e24; border: 2px solid var(--roman-bronze);
+            color: var(--roman-marble); padding: 18px 15px; font-size: 1.1rem;
+            border-radius: 6px; cursor: pointer; text-align: center; font-family: var(--font-display);
+            transition: background 0.1s; touch-action: manipulation;
+        }
+        .answer-btn:not(:disabled):active { background: #5c4a3d; }
+        
+        .correct { background: #2e5c31 !important; border-color: #4CAF50 !important; color: white; }
+        .wrong { background: #7a2626 !important; border-color: #F44336 !important; color: white; }
+
+        /* Feedback Pop-Up */
+        .feedback-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 50; padding: 20px;
+        }
+        
+        .feedback-box {
+            background: var(--papyrus); padding: 25px; border-radius: 8px;
+            border: 4px solid var(--roman-red); color: var(--text-dark);
+            text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,1);
+        }
+        
+        .feedback-title { font-family: var(--font-display); font-size: 1.5rem; color: var(--roman-red); margin-bottom: 10px; font-weight: bold; }
+        .feedback-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; }
+        
+        .btn-continue {
+            background: var(--roman-red); color: white; padding: 12px 25px;
+            border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; text-transform: uppercase;
+        }
+    </style>
+</head>
