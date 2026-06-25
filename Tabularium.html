@@ -23,9 +23,7 @@
             background-color: var(--wood-dark);
             background-image: radial-gradient(circle at center, #3d2a1e 0%, #1e130e 100%);
             color: #f0e6d2;
-            /* Fallback für ältere iOS-Versionen: */
             height: 100vh; 
-            /* Moderne dynamische Höhe: */
             height: 100dvh; 
             display: flex;
             flex-direction: column;
@@ -34,14 +32,12 @@
             overflow: hidden;
         }
 
-        /* Fortschrittsanzeige */
         .header-area { width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .title { font-family: 'Georgia', serif; font-size: 1.5rem; color: var(--roman-gold); text-transform: uppercase; letter-spacing: 2px; }
         .progress-box { font-size: 0.9rem; color: #ccc; }
         .progress-bar-container { width: 150px; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid var(--bronze); margin-top: 5px; }
         .progress-bar { width: 0%; height: 100%; background: var(--roman-gold); transition: width 0.3s; }
 
-        /* Die Urkunde (Papyrus) */
         .scroll-container {
             width: 100%; max-width: 700px;
             background: var(--papyrus);
@@ -58,14 +54,12 @@
             font-size: 2.2rem;
             color: var(--ink);
             font-weight: bold;
-            /* Erzwingt konsequente Kleinschreibung */
             text-transform: lowercase; 
             letter-spacing: 1px;
             text-align: center;
             padding: 20px;
         }
 
-        /* Das Wachs-Siegel */
         .wax-seal {
             position: absolute;
             right: 20px; bottom: -20px;
@@ -86,7 +80,6 @@
         }
         .seal-active { display: flex !important; animation: stamp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
-        /* Antwort-Buttons (2x2 Grid) */
         .options-grid {
             width: 100%; max-width: 700px;
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-grow: 1;
@@ -100,7 +93,6 @@
         }
         .btn-translate:not(:disabled):active { background: #5a3c36; transform: translateY(2px); }
 
-        /* Der Archivar (Feedback Modal) */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100;
@@ -117,7 +109,6 @@
             font-size: 1.1rem; font-weight: bold; border-radius: 20px; cursor: pointer;
         }
 
-        /* Endbildschirm */
         .end-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--wood-dark); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center;
@@ -164,7 +155,6 @@
     </div>
 
     <script>
-        // --- INTERNES MAPPING (Besitz & Besitzer) ---
         const possessions = [
             { latSg: "equus", latPl: "equī", deSg: "das Pferd", dePl: "die Pferde", deBaseSg: "Pferd", deBasePl: "Pferde", gen: "m", deGenSg: "des Pferdes", deGenPl: "der Pferde" },
             { latSg: "canis", latPl: "canēs", deSg: "der Hund", dePl: "die Hunde", deBaseSg: "Hund", deBasePl: "Hunde", gen: "m", deGenSg: "des Hundes", deGenPl: "der Hunde" },
@@ -189,26 +179,20 @@
             { id: "vester", lat: {m: ["vester","vestrī"], f: ["vestra","vestrae"], n: ["vestrum","vestra"]}, de: {m:"euer", f:"eure", n:"euer", pl:"eure"} }
         ];
 
-        // --- HILFSFUNKTIONEN ---
         function randomEl(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
         function shuffleOptions(arr) { return arr.sort(() => Math.random() - 0.5); }
 
-        // --- SPIELLOGIK ---
         let currentProgress = 0;
         const maxProgress = 10;
         let roundLocked = false;
-
-        window.onload = function() { nextRound(); };
 
         function nextRound() {
             roundLocked = false;
             document.getElementById('seal').classList.remove('seal-active');
             
-            // Zufällig zwischen Typ 1 (Attribut) und Typ 2 (Pronomen) wechseln
             let questionData = Math.random() > 0.5 ? generateType1() : generateType2();
             
-            // Garantiert Kleinschreibung für die Urkunde
             document.getElementById('latin-display').innerText = questionData.question.toLowerCase();
             
             const btns = document.querySelectorAll('.btn-translate');
@@ -219,7 +203,6 @@
             });
         }
 
-        // --- GENERATOR TYP 1: Genitiv-Attribut ---
         function generateType1() {
             let p = randomEl(possessions);
             let o = randomEl(owners);
@@ -234,24 +217,100 @@
             let deO = oPlural ? o.deGenPl : o.deGenSg;
             let correct = capitalize(`${deP} ${deO}`);
 
-            // Falle 1: Falscher Numerus beim Besitz
             let deP_wrongNum = pPlural ? p.deSg : p.dePl;
             let d1 = capitalize(`${deP_wrongNum} ${deO}`);
             let f1 = "Achtung! Schau dir den Gegenstand (Nominativ) ganz genau an. Steht diese Endung im " + (pPlural ? "Singular?" : "Plural?");
 
-            // Falle 2: Falscher Numerus beim Besitzer (oder andere Falle bei Eigennamen)
             let deO_wrongNum = "";
             if (o.hasPl) {
                 deO_wrongNum = oPlural ? o.deGenSg : o.deGenPl;
             } else {
-                // Notlösung für Eigennamen wie Aulus (da Plural hier keinen Sinn ergibt)
-                deO_wrongNum = "dem Aulus"; // Bewusste Dativ-Falle
+                deO_wrongNum = "dem Aulus";
             }
             let d2 = capitalize(`${deP} ${deO_wrongNum}`);
             let f2 = o.hasPl ? "Fast! Aber überprüfe den Besitzer (Genitiv). Steht diese Form im Singular oder im Plural?" : "Vorsicht bei der Übersetzung von Aulus! Steht das im Dativ oder im Genitiv?";
 
-            // Falle 3: Rollentausch (Besitz wird Genitiv, Besitzer wird Nominativ)
             let deO_Nom = oPlural ? o.deNomPl : o.deNomSg;
             let deP_Gen = pPlural ? p.deGenPl : p.deGenSg;
             let d3 = capitalize(`${deO_Nom} ${deP_Gen}`);
-            let f3 = "Halt! Du hast Täter und Besitz vertauscht. Wer
+            let f3 = "Halt! Du hast Täter und Besitz vertauscht. Wer steht im lateinischen Satz im Nominativ (wer/was?) und wer im Genitiv (wessen?)?";
+
+            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
+        }
+
+        function generateType2() {
+            let p = randomEl(possessions);
+            let pron = randomEl(pronouns);
+            let pPlural = Math.random() > 0.5;
+
+            let latP = pPlural ? p.latPl : p.latSg;
+            let latPron = pron.lat[p.gen][pPlural ? 1 : 0];
+            let question = `${latP} ${latPron}`;
+
+            let pronDe = pPlural ? pron.de.pl : pron.de[p.gen];
+            let pDe = pPlural ? p.deBasePl : p.deBaseSg;
+            let correct = capitalize(`${pronDe} ${pDe}`);
+
+            let pronDe_wrongNum = pPlural ? pron.de[p.gen] : pron.de.pl;
+            let pDe_wrongNum = pPlural ? p.deBaseSg : p.deBasePl;
+            let d1 = capitalize(`${pronDe_wrongNum} ${pDe_wrongNum}`);
+            let f1 = "Schau auf die Endung des Nomens! Steht das im Singular oder im Plural?";
+
+            let otherPron1 = randomEl(pronouns.filter(x => x.id !== pron.id));
+            let otherPron1De = pPlural ? otherPron1.de.pl : otherPron1.de[p.gen];
+            let d2 = capitalize(`${otherPron1De} ${pDe}`);
+            let f2 = "Achtung bei der Person! Übersetze das Pronomen ganz genau: Wem gehört es?";
+
+            let otherPron2 = randomEl(pronouns.filter(x => x.id !== pron.id && x.id !== otherPron1.id));
+            let otherPron2De_wrongNum = pPlural ? otherPron2.de[p.gen] : otherPron2.de.pl;
+            let d3 = capitalize(`${otherPron2De_wrongNum} ${pDe_wrongNum}`);
+            let f3 = "Falsches Pronomen und falscher Numerus (Sg/Pl)! Schau dir beide Wörter noch einmal in Ruhe an.";
+
+            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
+        }
+
+        function checkAnswer(opt) {
+            if(roundLocked) return;
+            
+            if(opt.c) {
+                roundLocked = true;
+                document.querySelectorAll('.btn-translate').forEach(b => b.disabled = true);
+                document.getElementById('seal').classList.add('seal-active');
+                
+                currentProgress++;
+                document.getElementById('prog-text').innerText = `${currentProgress} / ${maxProgress}`;
+                document.getElementById('prog-bar').style.width = `${(currentProgress/maxProgress)*100}%`;
+
+                setTimeout(() => {
+                    if(currentProgress >= maxProgress) {
+                        document.getElementById('end-screen').style.display = 'flex';
+                    } else {
+                        nextRound();
+                    }
+                }, 1300);
+            } else {
+                showModal(opt.f);
+            }
+        }
+
+        function showModal(text) {
+            document.getElementById('feedback-text').innerText = text;
+            document.getElementById('feedback-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('feedback-modal').style.display = 'none';
+        }
+
+        // DIREKTER START & ERROR-CATCHER
+        try {
+            nextRound();
+        } catch (error) {
+            let errorDisplay = document.getElementById('latin-display');
+            errorDisplay.innerText = "System-Fehler: " + error.message;
+            errorDisplay.style.color = "var(--seal-red)";
+            errorDisplay.style.fontSize = "1.2rem";
+        }
+    </script>
+</body>
+</html>
