@@ -23,11 +23,14 @@
             background-color: var(--wood-dark);
             background-image: radial-gradient(circle at center, #3d2a1e 0%, #1e130e 100%);
             color: #f0e6d2;
-            height: 100dvh;
+            /* Fallback für ältere iOS-Versionen: */
+            height: 100vh; 
+            /* Moderne dynamische Höhe: */
+            height: 100dvh; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
+            padding: 10px 15px;
             overflow: hidden;
         }
 
@@ -45,9 +48,9 @@
             border-radius: 4px;
             border: 2px solid #c2a17a;
             box-shadow: inset 0 0 20px rgba(139, 105, 20, 0.2), 0 10px 20px rgba(0,0,0,0.6);
-            min-height: 140px;
+            min-height: 130px;
             display: flex; justify-content: center; align-items: center;
-            position: relative; margin-bottom: 25px;
+            position: relative; margin-bottom: 20px;
         }
 
         .latin-text {
@@ -86,12 +89,12 @@
         /* Antwort-Buttons (2x2 Grid) */
         .options-grid {
             width: 100%; max-width: 700px;
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; flex-grow: 1;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex-grow: 1;
         }
 
         .btn-translate {
             background: var(--leather); border: 2px solid var(--bronze); color: #f0e6d2;
-            font-size: 1.1rem; padding: 15px 10px; border-radius: 8px; cursor: pointer;
+            font-size: 1.1rem; padding: 12px 8px; border-radius: 8px; cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.4); text-align: center; line-height: 1.3;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background 0.1s;
         }
@@ -154,9 +157,10 @@
 
     <div class="end-screen" id="end-screen">
         <h1 style="color: var(--roman-gold); font-size: 2.5rem; margin-bottom: 20px; font-family: 'Georgia', serif;">Archiv sortiert!</h1>
-        <p style="font-size: 1.2rem; max-width: 500px; line-height: 1.5; margin-bottom: 30px;">Hervorragend! Du hast alle Besitzurkunden fehlerfrei zugeordnet. Der Herr der Villa ist zufrieden.</p>
+        <p style="font-size: 1.2rem; max-width: 500px; line-height: 1.5; margin-bottom: 30px; padding: 0 15px;">Hervorragend! Du hast alle Besitzurkunden fehlerfrei zugeordnet. Der Herr der Villa ist zufrieden.</p>
         <button class="btn-main" onclick="location.reload()">Neuer Stapel</button>
-        <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem;">Zurück zum Menü</a>
+        <br>
+        <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem; padding: 10px 25px;">Zurück zum Menü</a>
     </div>
 
     <script>
@@ -194,7 +198,6 @@
         let currentProgress = 0;
         const maxProgress = 10;
         let roundLocked = false;
-        let currentCorrectOpt = null;
 
         window.onload = function() { nextRound(); };
 
@@ -234,73 +237,21 @@
             // Falle 1: Falscher Numerus beim Besitz
             let deP_wrongNum = pPlural ? p.deSg : p.dePl;
             let d1 = capitalize(`${deP_wrongNum} ${deO}`);
-            let f1 = "Achtung! Schau dir den Gegenstand (Nominativ) ganz genau an. Steht diese Endung wirklich im " + (pPlural ? "Singular?" : "Plural?");
+            let f1 = "Achtung! Schau dir den Gegenstand (Nominativ) ganz genau an. Steht diese Endung im " + (pPlural ? "Singular?" : "Plural?");
 
-            // Falle 2: Falscher Numerus beim Besitzer
+            // Falle 2: Falscher Numerus beim Besitzer (oder andere Falle bei Eigennamen)
             let deO_wrongNum = "";
             if (o.hasPl) {
                 deO_wrongNum = oPlural ? o.deGenSg : o.deGenPl;
             } else {
-                // Notlösung für Eigennamen wie Aulus
-                let otherOwner = randomEl(owners.filter(x => x.hasPl));
-                deO_wrongNum = pPlural ? otherOwner.deGenPl : otherOwner.deGenSg; 
+                // Notlösung für Eigennamen wie Aulus (da Plural hier keinen Sinn ergibt)
+                deO_wrongNum = "dem Aulus"; // Bewusste Dativ-Falle
             }
             let d2 = capitalize(`${deP} ${deO_wrongNum}`);
-            let f2 = "Fast! Aber überprüfe den Besitzer (Genitiv). Steht diese Form im Singular oder im Plural?";
+            let f2 = o.hasPl ? "Fast! Aber überprüfe den Besitzer (Genitiv). Steht diese Form im Singular oder im Plural?" : "Vorsicht bei der Übersetzung von Aulus! Steht das im Dativ oder im Genitiv?";
 
             // Falle 3: Rollentausch (Besitz wird Genitiv, Besitzer wird Nominativ)
             let deO_Nom = oPlural ? o.deNomPl : o.deNomSg;
             let deP_Gen = pPlural ? p.deGenPl : p.deGenSg;
             let d3 = capitalize(`${deO_Nom} ${deP_Gen}`);
-            let f3 = "Halt! Du hast Täter und Besitz vertauscht. Wer steht im lateinischen Satz im Nominativ (wer/was?) und wer im Genitiv (wessen?)?";
-
-            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
-        }
-
-        // --- GENERATOR TYP 2: Possessiv-Pronomen ---
-        function generateType2() {
-            let p = randomEl(possessions);
-            let pron = randomEl(pronouns);
-            let pPlural = Math.random() > 0.5;
-
-            let latP = pPlural ? p.latPl : p.latSg;
-            let latPron = pron.lat[p.gen][pPlural ? 1 : 0];
-            let question = `${latP} ${latPron}`;
-
-            let pronDe = pPlural ? pron.de.pl : pron.de[p.gen];
-            let pDe = pPlural ? p.deBasePl : p.deBaseSg;
-            let correct = capitalize(`${pronDe} ${pDe}`);
-
-            // Falle 1: Falscher Numerus (Sg/Pl vertauscht)
-            let pronDe_wrongNum = pPlural ? pron.de[p.gen] : pron.de.pl;
-            let pDe_wrongNum = pPlural ? p.deBaseSg : p.deBasePl;
-            let d1 = capitalize(`${pronDe_wrongNum} ${pDe_wrongNum}`);
-            let f1 = "Schau auf die Endung des Nomens! Steht das im Singular oder im Plural?";
-
-            // Falle 2: Falsche Person (z.B. unser statt euer)
-            let otherPron1 = randomEl(pronouns.filter(x => x.id !== pron.id));
-            let otherPron1De = pPlural ? otherPron1.de.pl : otherPron1.de[p.gen];
-            let d2 = capitalize(`${otherPron1De} ${pDe}`);
-            let f2 = "Achtung bei der Person! Übersetze das Pronomen ganz genau: Wem gehört es?";
-
-            // Falle 3: Falsches Pronomen UND falscher Numerus
-            let otherPron2 = randomEl(pronouns.filter(x => x.id !== pron.id && x.id !== otherPron1.id));
-            let otherPron2De_wrongNum = pPlural ? otherPron2.de[p.gen] : otherPron2.de.pl;
-            let d3 = capitalize(`${otherPron2De_wrongNum} ${pDe_wrongNum}`);
-            let f3 = "Falsches Pronomen und falscher Numerus (Sg/Pl)! Schau dir beide Wörter noch einmal in Ruhe an.";
-
-            return { question: question, options: shuffleOptions([{t:correct, c:true}, {t:d1, c:false, f:f1}, {t:d2, c:false, f:f2}, {t:d3, c:false, f:f3}]) };
-        }
-
-        // --- PRÜFUNG & FEEDBACK ---
-        function checkAnswer(opt) {
-            if(roundLocked) return;
-            
-            if(opt.c) {
-                roundLocked = true;
-                document.querySelectorAll('.btn-translate').forEach(b => b.disabled = true);
-                document.getElementById('seal').classList.add('seal-active');
-                
-                currentProgress++;
-                document.getElementById('prog-text').innerText = `${currentProgress} / ${maxProgress}`;
-                document.getElementById('prog-bar').style.width = `${(currentProgress/maxProgress)*100
+            let f3 = "Halt! Du hast Täter und Besitz vertauscht. Wer
