@@ -171,6 +171,17 @@
             <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
         </div>
 
+        <div class="game-card" data-game="bollwerk">
+            <div class="game-icon">🛡️</div>
+            <div class="game-title">Kasus-Bollwerk</div>
+            <div class="game-focus">Schwerpunkt: Deklinations-Drill</div>
+            <div class="game-desc">
+                Verteidige die Mauern gegen Katapultsteine, indem du Kasus und Numerus der lateinischen Nomen bestimmst.
+            </div>
+            <div class="progress-badge"></div>
+            <a href="Bollwerk.html" class="play-btn">Bollwerk verteidigen</a>
+        </div>
+
         <div class="game-card" data-game="duell">
             <div class="game-icon">⚔️</div>
             <div class="game-title">Gladiatoren-Duell</div>
@@ -247,7 +258,11 @@
 
             if (progress) {
                 badge.classList.add('has-score');
-                badge.innerText = `🏆 Bestleistung: ${progress.bestScore} / ${progress.maxScore}`;
+                if (progress.maxScore === null || progress.maxScore === undefined) {
+                    badge.innerText = `🏆 Bestleistung: ${progress.bestScore} Runden`;
+                } else {
+                    badge.innerText = `🏆 Bestleistung: ${progress.bestScore} / ${progress.maxScore}`;
+                }
             } else {
                 badge.innerText = 'Noch nicht gespielt';
             }

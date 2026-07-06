@@ -130,7 +130,7 @@ const globalVocabularyPool = [
     { latin: "imperātor", lesson: 6, type: "noun", middle: "imperātōris m.", gram_clue: "Genitiv: imperātōris, m.", gram_class: "konsonantische Deklination", meaning: "der Kaiser" },
     { latin: "tuba", lesson: 6, type: "noun", middle: "tubae f.", gram_clue: "Genitiv: tubae, f.", gram_class: "a-Deklination", meaning: "die Trompete" },
     { latin: "pecūnia", lesson: 6, type: "noun", middle: "pecūniae f.", gram_clue: "Genitiv: pecūniae, f.", gram_class: "a-Deklination", meaning: "das Geld" },
-    { latin: "audītōr", lesson: 6, type: "noun", middle: "audītōris m.", gram_clue: "Genitiv: audītōris, m.", gram_class: "konsonantische Deklination", meaning: "der Zuhörer" },
+    { latin: "audītor", lesson: 6, type: "noun", middle: "audītōris m.", gram_clue: "Genitiv: audītōris, m.", gram_class: "konsonantische Deklination", meaning: "der Zuhörer" },
     { latin: "victor", lesson: 6, type: "noun", middle: "victōris m.", gram_clue: "Genitiv: victōris, m.", gram_class: "konsonantische Deklination", meaning: "der Sieger" },
 
     // ================= ADJEKTIVE =================
