@@ -6,6 +6,7 @@
     <title>Römisches Alltags-Quiz</title>
     <!-- Zuerst die Daten, dann die Logik -->
     <script src="quizData.js"></script>
+    <script src="progress.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -35,6 +36,7 @@
 
     <script>
         let currentQ = 0;
+        let score = 0;
         let pool = quizQuestions.sort(() => Math.random() - 0.5);
 
         function loadQuestion() {
@@ -56,6 +58,7 @@
             
             if(selected === correct) {
                 btn.classList.add('correct');
+                score++;
             } else {
                 btn.classList.add('wrong');
                 btns.forEach(b => {
@@ -66,7 +69,16 @@
             setTimeout(() => {
                 currentQ++;
                 if(currentQ < pool.length) loadQuestion();
-                else document.getElementById('quiz-box').innerHTML = "<h2>Quiz beendet!</h2><a href='index.html'>Zurück zur Arena</a>";
+                else {
+                    LudiProgress.saveGameResult('quiz', score, pool.length);
+                    const best = LudiProgress.getGameProgress('quiz').bestScore;
+                    document.getElementById('quiz-box').innerHTML = `
+                        <h2>Quiz beendet!</h2>
+                        <p style="margin-top:15px;">Du hast <strong>${score} von ${pool.length}</strong> Fragen richtig beantwortet.</p>
+                        <p style="opacity:0.7; margin-top:5px;">Bestleistung bisher: ${best} von ${pool.length}</p>
+                        <a href="index.html" style="display:inline-block; margin-top:20px; color: var(--roman-gold);">Zurück zur Arena</a>
+                    `;
+                }
             }, 1500);
         }
 

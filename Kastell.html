@@ -6,6 +6,7 @@
     <title>Formen-Kastell - Die Verb-Abwehr</title>
     <!-- Zentrale Vokabeldatenbank einbinden -->
     <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -381,6 +382,8 @@
 
             fbBox.style.display = 'flex';
 
+            LudiProgress.recordVocabAttempt(currentVerbObj.latin, isCorrect);
+
             if (isCorrect) {
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
@@ -424,6 +427,8 @@
             const msg = document.getElementById('end-msg');
             
             endBox.style.display = 'block';
+
+            LudiProgress.saveGameResult('kastell', wallHealth, 100);
 
             if (isVictory) {
                 title.innerText = "🏛️ KASTELL VERTEIDIGT!";

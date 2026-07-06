@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Lūdī Rōmānī - Lernspiele</title>
+    <script src="progress.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -122,6 +123,21 @@
         }
 
         .play-btn:active { background: #5a0000; }
+
+        .progress-badge {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: #aaa;
+        }
+
+        .progress-badge.has-score {
+            color: var(--roman-gold);
+            background: rgba(212, 175, 55, 0.08);
+        }
     </style>
 </head>
 <body>
@@ -133,87 +149,110 @@
 
     <div class="games-grid">
         
-        <div class="game-card">
+        <div class="game-card" data-game="circus">
             <div class="game-icon">🐎</div>
             <div class="game-title">Circus Maximus</div>
             <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
             <div class="game-desc">
                 Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen.
             </div>
+            <div class="progress-badge"></div>
             <a href="CircusV.html" class="play-btn">Arena betreten</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="kastell">
             <div class="game-icon">🏰</div>
             <div class="game-title">Formen-Kastell</div>
             <div class="game-focus">Schwerpunkt: Verb-Drill</div>
             <div class="game-desc">
                 Verteidige die Mauern gegen Katapultsteine, indem du die Personalendungen der lateinischen Verben bestimmst.
             </div>
+            <div class="progress-badge"></div>
             <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="duell">
             <div class="game-icon">⚔️</div>
             <div class="game-title">Gladiatoren-Duell</div>
             <div class="game-focus">Schwerpunkt: Multiplayer-Duell</div>
             <div class="game-desc">
                 1-gegen-1 am iPad. Wer Vokabeln, Deklinationen und Konjugationen schneller erkennt, gewinnt den Kampf!
             </div>
+            <div class="progress-badge"></div>
             <a href="Duell.html" class="play-btn">Duell starten</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="villa">
             <div class="game-icon">🏛️</div>
             <div class="game-title">Aedificium Rōmānum</div>
             <div class="game-focus">Schwerpunkt: KNG-Kongruenz</div>
             <div class="game-desc">
                 Erbaue eine prächtige Villa! Baumaterial gewinnst du durch das richtige Anpassen von Adjektiven an Substantive.
             </div>
+            <div class="progress-badge"></div>
             <a href="Villa.html" class="play-btn">Villa bauen</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="adventura">
             <div class="game-icon">📜</div>
             <div class="game-title">Mysterium Villae</div>
             <div class="game-focus">Schwerpunkt: Syntax & Übersetzung</div>
             <div class="game-desc">
                 Ein Textabenteuer: Übersetze Sätze korrekt, um den Großvater und den weißen Spitz Issa zu finden.
             </div>
+            <div class="progress-badge"></div>
             <a href="Adventura.html" class="play-btn">Erkundung starten</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="quiz">
             <div class="game-icon">🏺</div>
             <div class="game-title">Alltags-Quiz</div>
             <div class="game-focus">Schwerpunkt: Römische Kultur</div>
             <div class="game-desc">
                 Teste dein Wissen über das Leben im alten Rom – von der Schule bis zum Forum Romanum.
             </div>
+            <div class="progress-badge"></div>
             <a href="Quiz.html" class="play-btn">Quiz starten</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="tabularium">
             <div class="game-icon">🗄️</div>
             <div class="game-title">Tabulārium</div>
             <div class="game-focus">Schwerpunkt: Genitiv & Pronomen</div>
             <div class="game-desc">
                 Ordne im Archiv der Villa die verlorenen Gegenstände ihren rechtmäßigen Besitzern zu.
             </div>
+            <div class="progress-badge"></div>
             <a href="Tabularium.html" class="play-btn">Archiv betreten</a>
         </div>
 
-        <div class="game-card">
+        <div class="game-card" data-game="viaromana">
             <div class="game-icon">🛣️</div>
             <div class="game-title">Via Rōmāna</div>
             <div class="game-focus">Schwerpunkt: Satzteil-Bestimmung</div>
             <div class="game-desc">
                 Bringe den Reisewagen nach Rom! Bestimme Subjekte, Prädikate und Objekte, um Meilensteine voranzukommen.
             </div>
+            <div class="progress-badge"></div>
             <a href="ViaRomana.html" class="play-btn">Reise starten</a>
         </div>
 
     </div>
+
+    <script>
+        document.querySelectorAll('.game-card[data-game]').forEach(card => {
+            const gameId = card.getAttribute('data-game');
+            const badge = card.querySelector('.progress-badge');
+            const progress = LudiProgress.getGameProgress(gameId);
+
+            if (progress) {
+                badge.classList.add('has-score');
+                badge.innerText = `🏆 Bestleistung: ${progress.bestScore} / ${progress.maxScore}`;
+            } else {
+                badge.innerText = 'Noch nicht gespielt';
+            }
+        });
+    </script>
 
 </body>
 </html>
