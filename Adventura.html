@@ -137,6 +137,7 @@
 
     </div>
 
+    <script src="progress.js"></script>
     <script>
         // --- TEXT-ADVENTURE DATENBANK ---
         const rooms = [
@@ -235,6 +236,7 @@
         let currentRoom = 0;
         let roundLocked = false;
         let correctAnswer = "";
+        let mistakes = 0;
 
         window.onload = function() {
             document.getElementById('btn-start').addEventListener('click', startGame);
@@ -289,12 +291,14 @@
                 setTimeout(() => {
                     currentRoom++;
                     if(currentRoom >= rooms.length) {
+                        LudiProgress.saveGameResult('adventura', Math.max(0, rooms.length - mistakes), rooms.length);
                         document.getElementById('end-screen').style.display = 'flex';
                     } else {
                         loadRoom();
                     }
                 }, 1200);
             } else {
+                mistakes++;
                 selectedBtn.classList.add('wrong');
                 for(let i=0; i<4; i++) {
                     if(document.getElementById('opt' + i).innerText === correctAnswer) {

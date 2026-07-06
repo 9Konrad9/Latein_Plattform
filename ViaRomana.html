@@ -200,6 +200,7 @@
         <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem;">Zurück zur Übersicht</a>
     </div>
 
+    <script src="progress.js"></script>
     <script>
         // --- SYNTAX SPEZIFISCHES ENGINEMAPPING ---
         const poolSubjekts = [
@@ -338,6 +339,7 @@
                 score++;
                 updateWagon();
                 if (score >= targetScore) {
+                    LudiProgress.saveGameResult('viaromana', score, targetScore);
                     document.getElementById('end-screen').style.display = 'flex';
                 } else {
                     nextQuestion();

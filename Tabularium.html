@@ -154,6 +154,7 @@
         <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem; padding: 10px 25px;">Zurück zum Menü</a>
     </div>
 
+    <script src="progress.js"></script>
     <script>
         const possessions = [
             { latSg: "equus", latPl: "equī", deSg: "das Pferd", dePl: "die Pferde", deBaseSg: "Pferd", deBasePl: "Pferde", gen: "m", deGenSg: "des Pferdes", deGenPl: "der Pferde" },
@@ -186,6 +187,7 @@
         let currentProgress = 0;
         const maxProgress = 10;
         let roundLocked = false;
+        let mistakes = 0;
 
         function nextRound() {
             roundLocked = false;
@@ -283,12 +285,14 @@
 
                 setTimeout(() => {
                     if(currentProgress >= maxProgress) {
+                        LudiProgress.saveGameResult('tabularium', Math.max(0, maxProgress - mistakes), maxProgress);
                         document.getElementById('end-screen').style.display = 'flex';
                     } else {
                         nextRound();
                     }
                 }, 1300);
             } else {
+                mistakes++;
                 showModal(opt.f);
             }
         }

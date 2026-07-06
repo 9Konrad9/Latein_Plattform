@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Aedificium Rōmānum - Villa</title>
     <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -303,6 +304,7 @@
 
         // --- SPIELLOGIK ---
         let currentStage = 0;
+        let currentVillaAdj = null;
         const totalStages = 6;
         let currentCorrectAnswer = "";
         let roundLocked = false;
@@ -357,6 +359,7 @@
 
             let noun = nounPool[Math.floor(Math.random() * nounPool.length)];
             let adj = adjPool[Math.floor(Math.random() * adjPool.length)];
+            currentVillaAdj = adj;
 
             // Nur erlaubte Fälle (Nom, Gen, Akk) auswählen
             let caseIdx = allowedCases[Math.floor(Math.random() * allowedCases.length)];
@@ -402,6 +405,7 @@
 
             const selectedBtn = document.getElementById('opt' + idx);
             const isCorrect = (selectedBtn.textContent === currentCorrectAnswer);
+            LudiProgress.recordVocabAttempt(currentVillaAdj.latin, isCorrect);
 
             if (isCorrect) {
                 selectedBtn.classList.add('correct');
@@ -419,6 +423,7 @@
 
             setTimeout(() => {
                 if (currentStage >= totalStages) {
+                    LudiProgress.saveGameResult('villa', currentStage, totalStages);
                     document.getElementById('end-screen').style.display = 'flex';
                 } else {
                     nextQuestion();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Gladiatoren-Duell - Split-Screen</title>
     <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -184,6 +185,7 @@
     <script>
         let hp = { p1: 5, p2: 5 };
         let currentCorrectAnswer = "";
+        let currentDuelItem = null;
         let countdownInterval = null;
 
         window.onload = function() {
@@ -246,6 +248,7 @@
 
         function nextRound() {
             const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+            currentDuelItem = item;
             let allowedTypes = [0]; 
             if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
             if (item.type === "adjective") allowedTypes.push(2);
@@ -326,6 +329,7 @@
             lockAllButtons(true);
             const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
             const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
+            LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
             let winnerZone = playerNum === 1 ? "player1" : "player2";
 
             if (isCorrect) {
