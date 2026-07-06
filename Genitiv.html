@@ -149,9 +149,10 @@
             <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Baumeister, an die Arbeit!</h2>
             <div class="notice-box">
                 <h3>📜 Der Auftrag:</h3>
-                <p>Du bekommst zwei Wörter, z. B. <span class="example">canis</span> (Hund) und <span class="example">pater</span> (Vater).</p>
-                <p style="margin-top: 10px;">Verbinde sie zu einer Genitiv-Konstruktion – auf Deutsch: „der Hund <strong>des Vaters</strong>". Auf Lateinisch bleibt das erste Wort im Nominativ, das zweite Wort (der Besitzer) wandert in den Genitiv: <span class="example">canis patris</span>.</p>
-                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-red);">Achtung: In den Antwortmöglichkeiten schleichen sich falsche Fälle ein - genau hinschauen!</p>
+                <p>Du bekommst zwei Wörter, z. B. <span class="example">canis</span> (Hund) und <span class="example">pater</span> (Vater), sowie die Frage „Wessen Hund? → Vater".</p>
+                <p style="margin-top: 10px;">Das <strong>besessene Wort</strong> (hier: Hund) bleibt im Nominativ, das Wort für den <strong>Besitzer</strong> (hier: Vater) wandert in den Genitiv: <span class="example">canis patris</span>.</p>
+                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-red);">Achtung: Mal steht das linke, mal das rechte Wort für den Besitzer – und auch die Reihenfolge in den Antworten wechselt. Lies die Frage also genau, bevor du auswählst!</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Hinweis: Die Wortpaare werden zufällig aus dem Wortschatz kombiniert. Manche Kombinationen sind inhaltlich etwas kurios (z. B. „der Tod des Hundes") – die Grammatik-Aufgabe bleibt davon unberührt.</p>
             </div>
             <button class="start-btn" id="btn-start-game">Bauauftrag annehmen!</button>
         </div>
@@ -212,6 +213,8 @@
         let activePool = [];
         let currentWordA = null;
         let currentWordB = null;
+        let currentPossessedWord = null;
+        let currentOwnerWord = null;
         let currentCorrectPhrase = "";
 
         function promptLessonsAndStart() {
@@ -308,23 +311,38 @@
             let idxB = Math.floor(Math.random() * nounPool.length);
             while (idxB === idxA) idxB = Math.floor(Math.random() * nounPool.length);
 
-            currentWordA = nounPool[idxA]; // das Besessene
-            currentWordB = nounPool[idxB]; // der Besitzer
+            currentWordA = nounPool[idxA];
+            currentWordB = nounPool[idxB];
 
             const declA = declineNoun(currentWordA);
             const declB = declineNoun(currentWordB);
 
-            currentCorrectPhrase = `${declA.forms[0]} ${declB.forms[1]}`; // NomSg A + GenSg B
+            // Zufällig entscheiden, welches der beiden angezeigten Wörter das Besessene
+            // und welches der Besitzer ist - unabhängig davon, ob es links oder rechts steht.
+            const aIsPossessed = Math.random() < 0.5;
+            const possessedForms = aIsPossessed ? declA.forms : declB.forms;
+            const ownerForms = aIsPossessed ? declB.forms : declA.forms;
+            currentPossessedWord = aIsPossessed ? currentWordA : currentWordB;
+            currentOwnerWord = aIsPossessed ? currentWordB : currentWordA;
+
+            // Zufällig die Wortstellung in der lateinischen Antwort festlegen
+            // (im Lateinischen sind beide Reihenfolgen korrekt).
+            const possessedFirst = Math.random() < 0.5;
+            function buildPhrase(possessedForm, ownerForm) {
+                return possessedFirst ? `${possessedForm} ${ownerForm}` : `${ownerForm} ${possessedForm}`;
+            }
+
+            currentCorrectPhrase = buildPhrase(possessedForms[0], ownerForms[1]);
 
             // Fallback-Kandidatenliste: Wir sammeln so lange gültige, eindeutige Distraktoren,
             // bis wir 3 haben. Das schützt auch vor Sonderfällen wie "canis", wo Nom.=Gen.Sg. ist.
             const candidates = [
-                `${declA.forms[0]} ${declB.forms[0]}`, // Besitzer fälschlich im Nominativ Singular
-                `${declA.forms[0]} ${declB.forms[2]}`, // Besitzer fälschlich im Akkusativ Singular
-                `${declA.forms[0]} ${declB.forms[4]}`, // Besitzer fälschlich im Genitiv Plural
-                `${declA.forms[1]} ${declB.forms[1]}`, // Besessenes fälschlich im Genitiv
-                `${declA.forms[2]} ${declB.forms[1]}`, // Besessenes fälschlich im Akkusativ
-                `${declA.forms[0]} ${declB.forms[3]}`  // Besitzer fälschlich im Nominativ Plural
+                buildPhrase(possessedForms[0], ownerForms[0]), // Besitzer fälschlich im Nominativ Singular
+                buildPhrase(possessedForms[0], ownerForms[2]), // Besitzer fälschlich im Akkusativ Singular
+                buildPhrase(possessedForms[0], ownerForms[4]), // Besitzer fälschlich im Genitiv Plural
+                buildPhrase(possessedForms[1], ownerForms[1]), // Besessenes fälschlich im Genitiv
+                buildPhrase(possessedForms[2], ownerForms[1]), // Besessenes fälschlich im Akkusativ
+                buildPhrase(possessedForms[0], ownerForms[3])  // Besitzer fälschlich im Nominativ Plural
             ];
             const wrongSet = new Set();
             for (const c of candidates) {
@@ -341,7 +359,7 @@
             document.getElementById('word-b-latin').innerText = currentWordB.latin;
             document.getElementById('word-b-german').innerText = germanGloss(currentWordB);
             document.getElementById('task-line').innerText =
-                `Wessen ${bareGerman(currentWordA)}? → ${germanGloss(currentWordB)}`;
+                `Wessen ${bareGerman(currentPossessedWord)}? → ${germanGloss(currentOwnerWord)}`;
 
             const finalOptions = [currentCorrectPhrase, ...wrongOptions].sort(() => Math.random() - 0.5);
             for (let i = 0; i < 4; i++) {
@@ -366,14 +384,14 @@
             const fbText = document.getElementById('fb-text');
             fbBox.style.display = 'flex';
 
-            LudiProgress.recordVocabAttempt(currentWordB.latin, isCorrect);
+            LudiProgress.recordVocabAttempt(currentOwnerWord.latin, isCorrect);
 
             if (isCorrect) {
                 correctCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🏛️ SAUBER GEBAUT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `<strong>${currentCorrectPhrase}</strong> ist korrekt: „${currentWordA.latin}" bleibt im Nominativ, „${currentWordB.latin}" steht im Genitiv (${germanGloss(currentWordB)} → des/der ...).`;
+                fbText.innerHTML = `<strong>${currentCorrectPhrase}</strong> ist korrekt: „${currentPossessedWord.latin}" (${germanGloss(currentPossessedWord)}) bleibt im Nominativ, „${currentOwnerWord.latin}" (${germanGloss(currentOwnerWord)}, der Besitzer) steht im Genitiv.`;
             } else {
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
@@ -383,7 +401,7 @@
                 }
                 fbTitle.innerText = "💥 EINSTURZGEFAHR!";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = `Richtig wäre <strong>${currentCorrectPhrase}</strong> gewesen: „${currentWordA.latin}" bleibt im Nominativ, nur „${currentWordB.latin}" (der Besitzer) wandert in den Genitiv.`;
+                fbText.innerHTML = `Richtig wäre <strong>${currentCorrectPhrase}</strong> gewesen: „${currentPossessedWord.latin}" (${germanGloss(currentPossessedWord)}) bleibt im Nominativ, nur „${currentOwnerWord.latin}" (${germanGloss(currentOwnerWord)}, der Besitzer) wandert in den Genitiv.`;
             }
         }
 
