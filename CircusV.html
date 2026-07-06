@@ -7,6 +7,7 @@
     <!-- Einbindung der zentralen Vokabeldatenbank -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -260,11 +261,21 @@
         let aiLaps = 0;
         let currentCorrectAnswer = "";
         let currentVocabItem = null;
+        let activePool = [];
 
         // Zentrale, ausfallsichere Event-Bindung beim Laden der Seite
         window.onload = function() {
-            // Start-Button ankoppeln
-            document.getElementById('start-action-btn').addEventListener('click', startRace);
+            // Start-Button ankoppeln: erst Lektionsauswahl, dann Rennen starten
+            document.getElementById('start-action-btn').addEventListener('click', function() {
+                if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
+                    alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
+                    return;
+                }
+                LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                    activePool = filteredPool;
+                    startRace();
+                });
+            });
             
             // Antwort-Buttons ankoppeln
             for (let i = 0; i < 4; i++) {
@@ -282,8 +293,8 @@
         }
 
         function startRace() {
-            if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
-                alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
+            if (activePool.length === 0) {
+                alert("Kritischer Fehler: Kein Vokabelpool ausgewählt!");
                 return;
             }
 
@@ -379,7 +390,7 @@
         function nextQuestion() {
             if(timeLeft <= 0) return;
 
-            const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+            const item = activePool[Math.floor(Math.random() * activePool.length)];
             currentVocabItem = item;
             
             let allowedTypes = [0]; 
@@ -396,13 +407,13 @@
                 questionText = `Was bedeutet das Wort „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
 
-                wrongPool = globalVocabularyPool
+                wrongPool = activePool
                     .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
                     .map(i => i.meaning);
                 
                 wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
                 while (wrongPool.length < 3) {
-                    let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                    let fb = activePool[Math.floor(Math.random() * activePool.length)];
                     if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
                 }
             }

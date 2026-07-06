@@ -6,6 +6,7 @@
     <title>Aedificium Rōmānum - Villa</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -311,10 +312,21 @@
         
         let nounPool = [];
         let adjPool = [];
+        let activePool = [];
+
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined') {
+                alert("Fehler: vocabulary.js fehlt!"); return;
+            }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                initGame();
+            });
+        }
 
         window.onload = function() {
-            document.getElementById('btn-start').addEventListener('click', initGame);
-            document.getElementById('btn-restart').addEventListener('click', initGame);
+            document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
             for(let i=0; i<4; i++) {
                 document.getElementById('opt' + i).addEventListener('click', function() { submitAnswer(i); });
             }
@@ -332,12 +344,17 @@
         }
 
         function initGame() {
-            if (typeof globalVocabularyPool === 'undefined') {
-                alert("Fehler: vocabulary.js fehlt!"); return;
+            if (activePool.length === 0) {
+                alert("Fehler: Kein Vokabelpool ausgewählt!"); return;
             }
 
-            nounPool = globalVocabularyPool.filter(v => v.type === "noun" && !v.middle.includes("Pl."));
-            adjPool = globalVocabularyPool.filter(v => v.type === "adjective");
+            nounPool = activePool.filter(v => v.type === "noun" && !v.middle.includes("Pl."));
+            adjPool = activePool.filter(v => v.type === "adjective");
+
+            if (nounPool.length === 0 || adjPool.length === 0) {
+                alert("In den ausgewählten Lektionen gibt es noch keine passenden Adjektive (die ersten Adjektive kommen erst ab Lektion 5 dazu). Bitte wähle mindestens Lektion 5 oder 6 mit aus.");
+                return;
+            }
 
             randomizeVillaDesign();
 

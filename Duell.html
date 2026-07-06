@@ -6,6 +6,7 @@
     <title>Gladiatoren-Duell - Split-Screen</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -187,21 +188,33 @@
         let currentCorrectAnswer = "";
         let currentDuelItem = null;
         let countdownInterval = null;
+        let activePool = [];
+
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
+                alert("Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
+                return;
+            }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                initArena();
+            });
+        }
 
         window.onload = function() {
-            document.getElementById('btn-restart').addEventListener('click', initArena);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
             for(let i=0; i<4; i++) {
                 document.getElementById(`p1-opt${i}`).addEventListener('click', function() { playerClick(1, i); });
             }
             for(let i=0; i<4; i++) {
                 document.getElementById(`p2-opt${i}`).addEventListener('click', function() { playerClick(2, i); });
             }
-            initArena();
+            promptLessonsAndStart();
         };
 
         function initArena() {
-            if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
-                alert("Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
+            if (activePool.length === 0) {
+                alert("Fehler: Kein Vokabelpool ausgewählt!");
                 return;
             }
             hp = { p1: 5, p2: 5 };
@@ -247,7 +260,7 @@
         }
 
         function nextRound() {
-            const item = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+            const item = activePool[Math.floor(Math.random() * activePool.length)];
             currentDuelItem = item;
             let allowedTypes = [0]; 
             if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
@@ -262,7 +275,7 @@
                 categoryText = `🔮 Bedeutung — ${translateType(item.type)}`;
                 questionText = `Was bedeutet „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
-                wrongPool = globalVocabularyPool.filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer).map(i => i.meaning);
+                wrongPool = activePool.filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer).map(i => i.meaning);
             } else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
@@ -272,7 +285,7 @@
                     questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
                 }
                 currentCorrectAnswer = item.middle;
-                wrongPool = globalVocabularyPool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
+                wrongPool = activePool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
             } else if (qType === 2) {
                 if (item.type === "noun") {
                     categoryText = "⚔️ Deklinationsklassen";
@@ -296,7 +309,7 @@
             let safety = 0;
             while (wrongPool.length < 3 && safety < 50) {
                 safety++;
-                let fb = globalVocabularyPool[Math.floor(Math.random() * globalVocabularyPool.length)];
+                let fb = activePool[Math.floor(Math.random() * activePool.length)];
                 let fbVal = qType === 0 ? fb.meaning : fb.middle;
                 if(fbVal && fbVal !== currentCorrectAnswer && !wrongPool.includes(fbVal)) {
                     wrongPool.push(fbVal);
