@@ -152,9 +152,10 @@
             <div class="notice-box">
                 <h3>📜 Der Fall:</h3>
                 <p>In jedem Satz kommen <strong>zwei Personen</strong> vor. Deine Aufgabe: Finde heraus, wem der markierte Gegenstand wirklich gehört!</p>
-                <p style="margin-top: 10px;">Gehört er der Person, die im Satz <strong>handelt</strong> (dem Subjekt)? Dann brauchst du <strong>suus, sua, suum</strong>.</p>
-                <p style="margin-top: 10px;">Gehört er der <strong>anderen</strong> Person? Dann brauchst du <strong>eius</strong> (bei einer Person) oder <strong>eōrum</strong> (bei mehreren Personen).</p>
+                <p style="margin-top: 10px;">Gehört er der Person, die im Satz <strong>handelt</strong> (dem Subjekt)? Dann brauchst du <strong>suus, sua, suum</strong>. Im Deutschen erkennst du das am Wort <strong>„EIGEN-"</strong>.</p>
+                <p style="margin-top: 10px;">Gehört er der <strong>anderen</strong> Person? Dann brauchst du <strong>eius</strong> (bei einer Person) oder <strong>eōrum</strong> (bei mehreren Personen). Im Deutschen erkennst du das an <strong>„DESSEN"/„DEREN"</strong>.</p>
                 <p style="margin-top: 10px; font-weight: bold; color: var(--roman-red);">Achtung: suus/sua/suum passt sich an das Geschlecht des BESESSENEN Wortes an - eius und eōrum bleiben dagegen immer gleich!</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Hinweis: „sein"/„ihr" allein wäre im Deutschen doppeldeutig (reflexiv oder nicht?) - deshalb steht hier immer „EIGEN-" oder „DESSEN"/„DEREN", damit die deutsche Übersetzung eindeutig ist.</p>
             </div>
             <button class="start-btn" id="btn-start-game">Ermittlung starten!</button>
         </div>
@@ -202,87 +203,87 @@
         const cases = [
             {
                 latin: "Puella frātrem et ___ canem videt.",
-                translation: "Das Mädchen sieht ihren Bruder und ___ Hund.",
+                translation: "Das Mädchen sieht ihren Bruder und ihren EIGENEN Hund.",
                 correct: "suum",
                 options: ["suum", "eius", "tuum", "nostrum"],
-                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „puella“ selbst zurück – es ist IHR EIGENER Hund."
+                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „puella“ selbst zurück – deshalb steht im Deutschen „EIGENEN“."
             },
             {
                 latin: "Aulus sorōrem et ___ amicam salūtat.",
-                translation: "Aulus grüßt seine Schwester und ___ Freundin.",
+                translation: "Aulus grüßt seine Schwester und DEREN Freundin.",
                 correct: "eius",
                 options: ["eius", "suam", "meam", "vestram"],
-                explanation: "<strong>eius</strong> bezieht sich NICHT auf das Subjekt Aulus, sondern auf „sorōrem“ – es ist die Freundin DER SCHWESTER."
+                explanation: "<strong>eius</strong> bezieht sich NICHT auf das Subjekt Aulus, sondern auf „sorōrem“ – deshalb steht im Deutschen „DEREN“ (= der Schwester ihre)."
             },
             {
                 latin: "Pater fīliōs et ___ magistrum exspectat.",
-                translation: "Der Vater erwartet die Söhne und ___ Lehrer.",
+                translation: "Der Vater erwartet die Söhne und DEREN Lehrer.",
                 correct: "eōrum",
                 options: ["eōrum", "suum", "vestrum", "tuum"],
-                explanation: "<strong>eōrum</strong> wird verwendet, weil sich der Bezug auf mehrere Personen (fīliōs) bezieht, nicht auf das Subjekt."
+                explanation: "<strong>eōrum</strong> wird verwendet, weil sich der Bezug auf mehrere Personen (fīliōs) bezieht – deshalb „DEREN“ (Plural), nicht auf das Subjekt."
             },
             {
                 latin: "Discipulus magistrum et ___ tabulam videt.",
-                translation: "Der Schüler sieht den Lehrer und ___ Wachstäfelchen.",
+                translation: "Der Schüler sieht den Lehrer und sein EIGENES Wachstäfelchen.",
                 correct: "suam",
                 options: ["suam", "eius", "tuam", "nostram"],
-                explanation: "<strong>suam</strong> bezieht sich auf „discipulus“ zurück – sein EIGENES Täfelchen. Die Form ist feminin, weil „tabula“ feminin ist."
+                explanation: "<strong>suam</strong> bezieht sich auf „discipulus“ zurück – deshalb „EIGENES“. Die Form ist feminin, weil „tabula“ feminin ist."
             },
             {
                 latin: "Serva dominum et ___ equum videt.",
-                translation: "Die Sklavin sieht den Herrn und ___ Pferd.",
+                translation: "Die Sklavin sieht den Herrn und DESSEN Pferd.",
                 correct: "eius",
                 options: ["eius", "suum", "tuum", "nostrum"],
-                explanation: "<strong>eius</strong> bezieht sich auf „dominum“, nicht auf das Subjekt „serva“ – es ist das Pferd DES HERRN."
+                explanation: "<strong>eius</strong> bezieht sich auf „dominum“, nicht auf das Subjekt „serva“ – deshalb „DESSEN“ (= des Herrn sein)."
             },
             {
                 latin: "Puer avum et ___ canem vocat.",
-                translation: "Der Junge ruft den Großvater und ___ Hund.",
+                translation: "Der Junge ruft den Großvater und seinen EIGENEN Hund.",
                 correct: "suum",
                 options: ["suum", "eius", "vestrum", "meum"],
-                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „puer“ zurück – es ist SEIN EIGENER Hund."
+                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „puer“ zurück – deshalb „EIGENEN“."
             },
             {
                 latin: "Fīlia mātrem et ___ tunicam videt.",
-                translation: "Die Tochter sieht die Mutter und ___ Tunika.",
+                translation: "Die Tochter sieht die Mutter und DEREN Tunika.",
                 correct: "eius",
                 options: ["eius", "suam", "tuam", "nostram"],
-                explanation: "<strong>eius</strong> bezieht sich auf „mātrem“, nicht auf das Subjekt „fīlia“ – es ist die Tunika DER MUTTER."
+                explanation: "<strong>eius</strong> bezieht sich auf „mātrem“, nicht auf das Subjekt „fīlia“ – deshalb „DEREN“ (= der Mutter ihre)."
             },
             {
                 latin: "Dominus servum et ___ pecūniam servat.",
-                translation: "Der Herr bewacht den Sklaven und ___ Geld.",
+                translation: "Der Herr bewacht den Sklaven und sein EIGENES Geld.",
                 correct: "suam",
                 options: ["suam", "eius", "tuam", "vestram"],
-                explanation: "<strong>suam</strong> bezieht sich auf das Subjekt „dominus“ zurück – es ist SEIN EIGENES Geld."
+                explanation: "<strong>suam</strong> bezieht sich auf das Subjekt „dominus“ zurück – deshalb „EIGENES“."
             },
             {
                 latin: "Vir fīliōs et ___ hortum spectat.",
-                translation: "Der Mann betrachtet die Söhne und ___ Garten.",
+                translation: "Der Mann betrachtet die Söhne und DEREN Garten.",
                 correct: "eōrum",
                 options: ["eōrum", "suum", "tuum", "nostrum"],
-                explanation: "<strong>eōrum</strong> wird verwendet, weil sich der Bezug auf die Söhne (Plural) bezieht, nicht auf das Subjekt."
+                explanation: "<strong>eōrum</strong> wird verwendet, weil sich der Bezug auf die Söhne (Plural) bezieht – deshalb „DEREN“, nicht auf das Subjekt."
             },
             {
                 latin: "Soror frātrem et ___ dōnum cōnspicit.",
-                translation: "Die Schwester erblickt den Bruder und ___ Geschenk.",
+                translation: "Die Schwester erblickt den Bruder und ihr EIGENES Geschenk.",
                 correct: "suum",
                 options: ["suum", "eius", "vestrum", "meum"],
-                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „soror“ zurück – ihr EIGENES Geschenk. (Bei Neutra wie „dōnum“ sehen Akkusativ Maskulinum und Neutrum gleich aus: suum.)"
+                explanation: "<strong>suum</strong> bezieht sich auf das Subjekt „soror“ zurück – deshalb „EIGENES“. (Bei Neutra wie „dōnum“ sehen Akkusativ Maskulinum und Neutrum gleich aus: suum.)"
             },
             {
                 latin: "Magister discipulōs et ___ tabulās videt.",
-                translation: "Der Lehrer sieht die Schüler und ___ Wachstäfelchen.",
+                translation: "Der Lehrer sieht die Schüler und DEREN Wachstäfelchen.",
                 correct: "eōrum",
                 options: ["eōrum", "suās", "tuās", "nostrās"],
-                explanation: "<strong>eōrum</strong> bezieht sich auf „discipulōs“ (Plural), nicht auf das Subjekt „magister“ – es sind die Täfelchen DER SCHÜLER."
+                explanation: "<strong>eōrum</strong> bezieht sich auf „discipulōs“ (Plural), nicht auf das Subjekt „magister“ – deshalb „DEREN“."
             },
             {
                 latin: "Amicus amicam et ___ villam videt.",
-                translation: "Der Freund sieht die Freundin und ___ Landhaus.",
+                translation: "Der Freund sieht die Freundin und DEREN Landhaus.",
                 correct: "eius",
                 options: ["eius", "suam", "tuam", "nostram"],
-                explanation: "<strong>eius</strong> bezieht sich auf „amicam“, nicht auf das Subjekt „amicus“ – es ist das Landhaus DER FREUNDIN."
+                explanation: "<strong>eius</strong> bezieht sich auf „amicam“, nicht auf das Subjekt „amicus“ – deshalb „DEREN“ (= der Freundin ihres)."
             }
         ];
 
@@ -322,7 +323,7 @@
             document.getElementById('progress-bar').style.width = (currentIdx / orderedCases.length * 100) + '%';
 
             document.getElementById('latin-sentence').innerHTML = c.latin.replace('___', '<span class="blank">___</span>');
-            document.getElementById('translation-hint').innerHTML = c.translation.replace('___', '<span class="blank">___</span>');
+            document.getElementById('translation-hint').innerHTML = c.translation.replace(/\b(EIGENEN|EIGENES|DESSEN|DEREN)\b/, '<span class="blank">$1</span>');
 
             const shuffledOptions = [...c.options].sort(() => Math.random() - 0.5);
             for (let i = 0; i < 4; i++) {
