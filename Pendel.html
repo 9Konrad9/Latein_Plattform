@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pendel! - Der Übersetzungstrainer</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .subtitle { font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center; }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            position: relative;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .start-screen { text-align: center; padding: 10px; }
+        .notice-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid var(--roman-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .notice-box h3 { color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 10px; text-transform: uppercase; }
+        .notice-box .step { display: inline-block; background: rgba(212,175,55,0.15); border-radius: 5px; padding: 2px 8px; font-weight: bold; color: var(--roman-gold); }
+
+        .start-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
+            border: none; border-radius: 30px; font-size: 1.2rem; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
+        }
+
+        .round-number { text-align: center; font-size: 0.9rem; color: #aaa; margin-bottom: 6px; letter-spacing: 1px; }
+        .progress-bar-container { width: 100%; background: #444; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+        .progress-bar { width: 0%; background: var(--roman-gold); height: 100%; transition: width 0.4s ease; }
+
+        .step-tracker { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .step-pill { font-size: 0.8rem; padding: 5px 12px; border-radius: 14px; border: 2px solid #555; color: #888; }
+        .step-pill.current { border-color: var(--roman-gold); color: var(--roman-gold); font-weight: bold; }
+        .step-pill.done { border-color: #4CAF50; color: #4CAF50; }
+
+        .sentence-box {
+            background: var(--roman-marble); color: #2a2a2a; border-radius: 8px;
+            padding: 25px 20px; margin-bottom: 15px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .latin-word {
+            font-family: var(--font-display); font-size: 1.4rem; font-weight: bold;
+            display: inline-block; margin: 4px 6px; padding: 4px 8px; border-radius: 6px;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+        }
+        .latin-word:hover { background: rgba(128,0,0,0.08); }
+        .latin-word.found-sub { background: #4CAF50; color: #fff; cursor: default; }
+        .latin-word.found-praed { background: #2980b9; color: #fff; cursor: default; }
+        .latin-word.found-obj { background: #8e44ad; color: #fff; cursor: default; }
+        .latin-word.adverbial { background: #e0e0e0; color: #666; cursor: default; font-style: italic; }
+        .latin-word.wrong-flash { background: #F44336; color: #fff; }
+
+        .instruction-line {
+            text-align: center; font-size: 1.15rem; font-weight: bold; color: var(--roman-gold);
+            margin-bottom: 14px; min-height: 1.6em;
+        }
+
+        .geruest-box {
+            background: rgba(212,175,55,0.08); border: 2px dashed var(--roman-gold); border-radius: 8px;
+            padding: 14px; margin-bottom: 15px; text-align: center; font-size: 1.05rem; min-height: 2.2em;
+        }
+        .geruest-box .tag { font-size: 0.7rem; color: #999; display: block; }
+
+        .adverbial-note {
+            background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 15px;
+            font-size: 0.95rem; color: #ccc; text-align: center; display: none;
+        }
+
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; flex-grow: 1; }
+        .opt-btn {
+            background: linear-gradient(#800000, #5a0000);
+            border: 3px solid var(--roman-gold); color: var(--roman-marble);
+            padding: 14px 12px; font-size: 1rem; font-weight: bold; font-family: var(--font-body);
+            border-radius: 8px; cursor: pointer; text-align: left; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .opt-btn:not(:disabled):active { background: #4a0000; }
+        .correct { background: #4CAF50 !important; border-color: #fff !important; }
+        .wrong { background: #F44336 !important; border-color: #fff !important; }
+
+        .feedback-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px; text-align: center; z-index: 10;
+        }
+        .feedback-title { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 15px; }
+        .feedback-explanation { font-size: 1.05rem; line-height: 1.5; margin-bottom: 25px; max-width: 500px; }
+
+        .end-treasury-grid { font-size: 1rem; color: #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>⚖️ Pendel!</h1>
+    <div class="subtitle">Der Übersetzungstrainer</div>
+
+    <div class="game-container">
+
+        <!-- START -->
+        <div id="start-screen" class="start-screen">
+            <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Die Pendelmethode üben</h2>
+            <div class="notice-box">
+                <h3>📜 So funktioniert's:</h3>
+                <p>Du bekommst einen vollständigen lateinischen Satz. In vier Schritten baust du dir daraus das Gerüst - genau wie in der Klassenarbeit:</p>
+                <p style="margin-top: 10px;"><span class="step">1</span> Finde zuerst das <strong>Subjekt</strong>.</p>
+                <p style="margin-top: 6px;"><span class="step">2</span> Von dort geht's nach hinten zum <strong>Prädikat</strong>.</p>
+                <p style="margin-top: 6px;"><span class="step">3</span> Und wieder zurück zum <strong>Objekt</strong>.</p>
+                <p style="margin-top: 6px;"><span class="step">4</span> Übrige Wörter (Adverbialien) werden dir erklärt - die musst du selbst einsortieren.</p>
+                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-red);">Zum Schluss wählst du aus vier deutschen Übersetzungen die richtige - manche vertauschen absichtlich Subjekt und Objekt, genau der Fehler, der in der Klassenarbeit am häufigsten passiert!</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Diese Übung nutzt bewusst einen kleinen, feststehenden Wortschatz (Familie/Alltag, Lektion 1-5), damit die Sätze wirklich Sinn ergeben - keine Lektionsauswahl nötig.</p>
+            </div>
+            <button class="start-btn" id="btn-start-game">Pendel starten!</button>
+        </div>
+
+        <!-- SPIELFELD -->
+        <div id="combat-box" style="display: none; flex-grow: 1; flex-direction: column;">
+            <div class="round-number" id="round-number">SATZ 1 VON 8</div>
+            <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+            <div class="step-tracker">
+                <div class="step-pill" id="pill-sub">1. Subjekt</div>
+                <div class="step-pill" id="pill-praed">2. Prädikat</div>
+                <div class="step-pill" id="pill-obj">3. Objekt</div>
+                <div class="step-pill" id="pill-trans">4. Übersetzung</div>
+            </div>
+
+            <div class="instruction-line" id="instruction-line">Finde das Subjekt!</div>
+
+            <div class="sentence-box" id="sentence-box"></div>
+
+            <div class="geruest-box" id="geruest-box">
+                <span class="tag">DEIN GERÜST</span>
+                <span id="geruest-text">...</span>
+            </div>
+
+            <div class="adverbial-note" id="adverbial-note"></div>
+
+            <div class="options-grid" id="options-grid"></div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="feedback-overlay" id="feedback-box">
+            <div class="feedback-title" id="fb-title">Richtig!</div>
+            <div class="feedback-explanation" id="fb-text"></div>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 30px;" id="btn-next">Weiter</button>
+        </div>
+
+        <!-- ENDE -->
+        <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
+            <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 15px;">GESCHAFFT!</h2>
+            <p id="end-msg" style="margin: 10px 0; font-size: 1.15rem; line-height: 1.6;"></p>
+            <p class="end-treasury-grid" id="box-summary"></p>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin: 15px 0 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <br>
+            <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Sätze</button>
+            <br>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
+        </div>
+    </div>
+
+    <script>
+        /* ============ SZENE: FAMILIA (Lektion 1-4) ============ */
+
+        // Personen (können Subjekt oder - bei personenfähigen Verben - Objekt sein)
+        const personLemmas = ["pater","māter","fīlius","fīlia","avus","dominus","domina","servus","serva","puer","puella","frāter","soror","vir","amicus","amica"];
+        // Dinge (nur als Objekt bei "Ding"-Verben)
+        const thingLemmas = ["canis","equus","tunica","dōnum","pecūnia","tabula","cēna"];
+
+        // Handverlesene, korrekte deutsche Formen (Nominativ/Akkusativ) - unabhängig von automatischer Ableitung geprüft.
+        const germanNounForms = {
+            "pater": ["der Vater", "den Vater"], "māter": ["die Mutter", "die Mutter"],
+            "fīlius": ["der Sohn", "den Sohn"], "fīlia": ["die Tochter", "die Tochter"],
+            "avus": ["der Großvater", "den Großvater"], "dominus": ["der Herr", "den Herrn"],
+            "domina": ["die Herrin", "die Herrin"], "servus": ["der Sklave", "den Sklaven"],
+            "serva": ["die Sklavin", "die Sklavin"], "puer": ["der Junge", "den Jungen"],
+            "puella": ["das Mädchen", "das Mädchen"], "frāter": ["der Bruder", "den Bruder"],
+            "soror": ["die Schwester", "die Schwester"], "vir": ["der Mann", "den Mann"],
+            "amicus": ["der Freund", "den Freund"], "amica": ["die Freundin", "die Freundin"],
+            "canis": ["der Hund", "den Hund"], "equus": ["das Pferd", "das Pferd"],
+            "tunica": ["die Tunika", "die Tunika"], "dōnum": ["das Geschenk", "das Geschenk"],
+            "pecūnia": ["das Geld", "das Geld"], "tabula": ["das Wachstäfelchen", "das Wachstäfelchen"],
+            "cēna": ["die Mahlzeit", "die Mahlzeit"]
+        };
+
+        // Verben: deutsche 3.-Person-Singular-Form + Objekt-Kategorie ("person", "thing" oder "either")
+        const sceneVerbs = [
+            { latin: "vocāre", de: "ruft", cat: "person" },
+            { latin: "vidēre", de: "sieht", cat: "either" },
+            { latin: "audīre", de: "hört", cat: "either" },
+            { latin: "docēre", de: "unterrichtet", cat: "person" },
+            { latin: "pūnīre", de: "bestraft", cat: "person" },
+            { latin: "monēre", de: "ermahnt", cat: "person" },
+            { latin: "salūtāre", de: "grüßt", cat: "person" },
+            { latin: "amāre", de: "liebt", cat: "person" },
+            { latin: "dūcere", de: "führt", cat: "person" },
+            { latin: "quaerere", de: "sucht", cat: "either" },
+            { latin: "portāre", de: "trägt", cat: "thing" },
+            { latin: "tenēre", de: "hält", cat: "either" },
+            { latin: "servāre", de: "bewacht", cat: "either" }
+        ];
+
+        // Adverbialien: Präpositionalphrasen (Akk.) und einfache Zeitadverbien
+        const prepPhrases = [
+            { prep: "ad", nounLemma: "forum", de: "zum Forum" },
+            { prep: "ad", nounLemma: "schola", de: "zur Schule" },
+            { prep: "in", nounLemma: "hortus", de: "in den Garten" },
+            { prep: "ante", nounLemma: "villa", de: "vor das Landhaus" }
+        ];
+        const simpleAdverbs = [
+            { latin: "nunc", de: "jetzt" }, { latin: "hodiē", de: "heute" },
+            { latin: "subitō", de: "plötzlich" }, { latin: "iam", de: "schon" },
+            { latin: "statim", de: "sofort" }, { latin: "tum", de: "dann" }
+        ];
+
+        function getVocabEntry(lemma) {
+            return globalVocabularyPool.find(v => v.latin === lemma);
+        }
+
+        // Deklinations-Engine (Nom./Akk. Sg. reichen für dieses Spiel)
+        function declineNounSg(lemma) {
+            const nounObj = getVocabEntry(lemma);
+            const nomSg = nounObj.latin;
+            const middle = nounObj.middle;
+            const genderMatch = middle.match(/\s(m|f|n)\.\s*$/);
+            const gender = genderMatch ? genderMatch[1] : 'm';
+            const genSg = middle.replace(/\s(m|f|n)\.\s*$/, '').trim();
+            const gramClass = nounObj.gram_class;
+            let stem, akkSg;
+            if (gramClass.includes("o-Deklination")) {
+                stem = genSg.slice(0, -1);
+                akkSg = (gender === 'n') ? nomSg : stem + "um";
+            } else if (gramClass.includes("a-Deklination")) {
+                stem = genSg.slice(0, -2);
+                akkSg = stem + "am";
+            } else {
+                stem = genSg.slice(0, -2);
+                akkSg = stem + "em";
+            }
+            return { nomSg, akkSg };
+        }
+
+        // Konjugations-Engine (nur 3. Pers. Sg. gebraucht)
+        function conjugate3Sg(lemma) {
+            const verbObj = getVocabEntry(lemma);
+            let inf = verbObj.latin;
+            let cClass = verbObj.gram_class;
+            let stem = inf.slice(0, -3);
+            if (cClass.includes("a-Konjugation")) return stem + "at";
+            if (cClass.includes("e-Konjugation")) return stem + "et";
+            if (cClass.includes("i-Konjugation")) return stem + "it";
+            return stem + "it";
+        }
+
+        function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // Baut einen vollständigen, semantisch sinnvollen Satz aus der Familia-Szene.
+        function buildRoundRaw() {
+            const subjectLemma = personLemmas[Math.floor(Math.random() * personLemmas.length)];
+            const verbData = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)];
+
+            let objectPool;
+            if (verbData.cat === 'person') objectPool = personLemmas.filter(l => l !== subjectLemma);
+            else if (verbData.cat === 'thing') objectPool = thingLemmas;
+            else objectPool = (Math.random() < 0.5 ? personLemmas.filter(l => l !== subjectLemma) : thingLemmas);
+            const objectLemma = objectPool[Math.floor(Math.random() * objectPool.length)];
+
+            const subjDecl = declineNounSg(subjectLemma);
+            const objDecl = declineNounSg(objectLemma);
+            const verbForm = conjugate3Sg(verbData.latin);
+
+            const subjGerman = germanNounForms[subjectLemma];
+            const objGerman = germanNounForms[objectLemma];
+
+            let adverbialTokens = [];
+            let adverbialGerman = null;
+            const advRoll = Math.random();
+            if (advRoll < 0.35) {
+                const p = prepPhrases[Math.floor(Math.random() * prepPhrases.length)];
+                const nDecl = declineNounSg(p.nounLemma);
+                adverbialTokens = [{ text: p.prep, role: 'adv', lemma: p.prep }, { text: nDecl.akkSg, role: 'adv', lemma: p.nounLemma }];
+                adverbialGerman = p.de;
+            } else if (advRoll < 0.7) {
+                const a = simpleAdverbs[Math.floor(Math.random() * simpleAdverbs.length)];
+                adverbialTokens = [{ text: a.latin, role: 'adv', lemma: a.latin }];
+                adverbialGerman = a.de;
+            }
+
+            const subToken = { text: subjDecl.nomSg, role: 'sub', lemma: subjectLemma };
+            const objToken = { text: objDecl.akkSg, role: 'obj', lemma: objectLemma };
+            const praedToken = { text: verbForm, role: 'praed', lemma: verbData.latin };
+
+            let chunks = [[subToken], [objToken]];
+            if (adverbialTokens.length > 0) chunks.push(adverbialTokens);
+            chunks.sort(() => Math.random() - 0.5);
+
+            let tokens = chunks.flat();
+            if (Math.random() < 0.7) {
+                tokens.push(praedToken);
+            } else {
+                const insertPos = Math.floor(Math.random() * (tokens.length + 1));
+                tokens.splice(insertPos, 0, praedToken);
+            }
+
+            const correctGerman = cap(subjGerman[0]) + ' ' + verbData.de + ' ' + objGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
+            const swapGerman = cap(objGerman[0]) + ' ' + verbData.de + ' ' + subjGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
+
+            let otherVerb;
+            do { otherVerb = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)]; } while (otherVerb.latin === verbData.latin);
+            const wrongVerbGerman = cap(subjGerman[0]) + ' ' + otherVerb.de + ' ' + objGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
+
+            let thirdDistractor;
+            if (adverbialGerman) {
+                const allAdvs = [...prepPhrases.map(p => p.de), ...simpleAdverbs.map(a => a.de)];
+                let otherAdvDe;
+                do { otherAdvDe = allAdvs[Math.floor(Math.random() * allAdvs.length)]; } while (otherAdvDe === adverbialGerman);
+                thirdDistractor = cap(subjGerman[0]) + ' ' + verbData.de + ' ' + objGerman[1] + ' ' + otherAdvDe + '.';
+            } else {
+                let otherVerb2;
+                do { otherVerb2 = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)]; } while (otherVerb2.latin === verbData.latin || otherVerb2.latin === otherVerb.latin);
+                thirdDistractor = cap(subjGerman[0]) + ' ' + otherVerb2.de + ' ' + objGerman[1] + '.';
+            }
+
+            return {
+                tokens, subjectLemma, objectLemma, verbLemma: verbData.latin,
+                correctGerman, distractors: [swapGerman, wrongVerbGerman, thirdDistractor],
+                adverbialGerman, hadAdverbial: adverbialTokens.length > 0
+            };
+        }
+
+        // Absicherung: falls durch Zufall zwei Optionen identisch würden, neu würfeln.
+        function buildRound() {
+            for (let attempt = 0; attempt < 10; attempt++) {
+                const round = buildRoundRaw();
+                const allOptions = [round.correctGerman, ...round.distractors];
+                if (new Set(allOptions).size === 4) return round;
+            }
+            return buildRoundRaw(); // Fallback, extrem unwahrscheinlich nötig
+        }
+
+        /* ============ SPIELSTEUERUNG ============ */
+
+        const totalRounds = 8;
+        let roundIdx = 0;
+        let correctCount = 0;
+        let currentRound = null;
+        let currentStep = 'sub';
+        let roundHadError = false;
+        let missedItems = [];
+        let isReviewMode = false;
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+
+        window.onload = function() {
+            document.getElementById('btn-start-game').addEventListener('click', startGame);
+            document.getElementById('btn-restart').addEventListener('click', startGame);
+            document.getElementById('btn-next').addEventListener('click', onNextClicked);
+            document.getElementById('btn-review').addEventListener('click', startReview);
+        };
+
+        function startGame() {
+            roundIdx = 0;
+            correctCount = 0;
+            missedItems = [];
+            isReviewMode = false;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+
+            showRound();
+        }
+
+        function showRound(forced) {
+            currentRound = forced || buildRound();
+            currentStep = 'sub';
+            roundHadError = false;
+
+            document.getElementById('round-number').innerText = isReviewMode
+                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+                : `SATZ ${roundIdx + 1} VON ${totalRounds}`;
+            document.getElementById('progress-bar').style.width = (roundIdx / totalRounds * 100) + '%';
+
+            document.getElementById('geruest-text').innerText = '...';
+            document.getElementById('adverbial-note').style.display = 'none';
+            document.getElementById('options-grid').innerHTML = '';
+
+            renderSentence();
+            updateStepPills();
+            updateInstruction();
+        }
+
+        function renderSentence() {
+            const box = document.getElementById('sentence-box');
+            box.innerHTML = '';
+            currentRound.tokens.forEach((token, idx) => {
+                const span = document.createElement('span');
+                span.className = 'latin-word';
+                span.innerText = token.text.toLowerCase();
+                span.dataset.idx = idx;
+                span.addEventListener('click', () => handleWordClick(idx));
+                box.appendChild(span);
+            });
+        }
+
+        function updateInstruction() {
+            const texts = {
+                sub: "Schritt 1: Finde das Subjekt!",
+                praed: "Schritt 2: Jetzt nach hinten zum Prädikat!",
+                obj: "Schritt 3: Und zurück zum Objekt!"
+            };
+            document.getElementById('instruction-line').innerText = texts[currentStep] || '';
+        }
+
+        function updateStepPills() {
+            const order = ['sub', 'praed', 'obj', 'trans'];
+            const currentPos = order.indexOf(currentStep);
+            order.forEach((role, i) => {
+                const pill = document.getElementById('pill-' + role);
+                pill.classList.remove('current', 'done');
+                if (i < currentPos) pill.classList.add('done');
+                else if (i === currentPos) pill.classList.add('current');
+            });
+        }
+
+        function handleWordClick(idx) {
+            if (currentStep === 'trans' || currentStep === 'done') return;
+            const token = currentRound.tokens[idx];
+            const span = document.querySelector(`.latin-word[data-idx="${idx}"]`);
+
+            if (token.role === currentStep) {
+                span.classList.add('found-' + currentStep);
+                span.style.cursor = 'default';
+                updateGeruestDisplay(currentStep, token.text);
+                advanceStep();
+            } else {
+                roundHadError = true;
+                span.classList.add('wrong-flash');
+                setTimeout(() => span.classList.remove('wrong-flash'), 400);
+            }
+        }
+
+        function updateGeruestDisplay(role, text) {
+            const labels = { sub: 'Subjekt', praed: 'Prädikat', obj: 'Objekt' };
+            const el = document.getElementById('geruest-text');
+            const current = el.innerText === '...' ? '' : el.innerText;
+            const addition = `${text.toLowerCase()} (${labels[role]})`;
+            el.innerText = current ? `${current}  →  ${addition}` : addition;
+        }
+
+        function advanceStep() {
+            if (currentStep === 'sub') {
+                currentStep = 'praed';
+                updateInstruction();
+                updateStepPills();
+            } else if (currentStep === 'praed') {
+                currentStep = 'obj';
+                updateInstruction();
+                updateStepPills();
+            } else if (currentStep === 'obj') {
+                revealAdverbialAndTranslation();
+            }
+        }
+
+        function revealAdverbialAndTranslation() {
+            currentStep = 'trans';
+            document.getElementById('instruction-line').innerText = 'Schritt 4: Wähle die richtige Übersetzung!';
+
+            // Übrige Wörter (Adverbialien) grau markieren
+            currentRound.tokens.forEach((token, idx) => {
+                if (token.role === 'adv') {
+                    const span = document.querySelector(`.latin-word[data-idx="${idx}"]`);
+                    span.classList.add('adverbial');
+                    span.style.cursor = 'default';
+                }
+            });
+
+            const advNote = document.getElementById('adverbial-note');
+            if (currentRound.hadAdverbial) {
+                advNote.innerText = `Übrig bleibt ein Adverbiale: „${currentRound.adverbialGerman}" - das sortierst du selbst in die Übersetzung ein.`;
+            } else {
+                advNote.innerText = `Dieser Satz hat kein Adverbiale - das Gerüst ist schon die ganze Übersetzung!`;
+            }
+            advNote.style.display = 'block';
+
+            updateStepPills();
+            showTranslationOptions();
+        }
+
+        function showTranslationOptions() {
+            const options = [currentRound.correctGerman, ...currentRound.distractors].sort(() => Math.random() - 0.5);
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = opt;
+                btn.addEventListener('click', () => handleTranslationClick(opt, btn));
+                grid.appendChild(btn);
+            });
+        }
+
+        function handleTranslationClick(chosenText, btnEl) {
+            document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+
+            const isCorrect = (chosenText === currentRound.correctGerman) && !roundHadError;
+            const translationCorrect = (chosenText === currentRound.correctGerman);
+
+            if (!translationCorrect) {
+                roundHadError = true;
+                btnEl.classList.add('wrong');
+                document.querySelectorAll('.opt-btn').forEach(b => {
+                    if (b.innerText === currentRound.correctGerman) b.classList.add('correct');
+                });
+            } else {
+                btnEl.classList.add('correct');
+            }
+
+            LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
+
+            const fbBox = document.getElementById('feedback-box');
+            const fbTitle = document.getElementById('fb-title');
+            const fbText = document.getElementById('fb-text');
+            fbBox.style.display = 'flex';
+
+            if (isCorrect) {
+                if (isReviewMode) reviewCorrectCount++;
+                else correctCount++;
+                fbTitle.innerText = "⚖️ SAUBER GEPENDELT!";
+                fbTitle.style.color = "#4CAF50";
+                fbText.innerHTML = `„${currentRound.correctGerman}" ist die richtige Übersetzung. Gerüst und Adverbiale passen zusammen.`;
+            } else {
+                if (!isReviewMode) missedItems.push(currentRound);
+                fbTitle.innerText = "🧭 NOCH NICHT GANZ...";
+                fbTitle.style.color = "#F44336";
+                fbText.innerHTML = translationCorrect
+                    ? `Die Übersetzung war richtig, aber beim Bestimmen der Satzglieder ist noch ein Fehler passiert. Schau dir die markierten Wörter nochmal genau an.`
+                    : `Richtig wäre „${currentRound.correctGerman}" gewesen. Achte besonders auf Subjekt und Objekt - die werden am häufigsten vertauscht!`;
+            }
+        }
+
+        function onNextClicked() {
+            document.getElementById('feedback-box').style.display = 'none';
+
+            if (isReviewMode) {
+                reviewIdx++;
+                if (reviewIdx < reviewQueue.length) {
+                    showRound(reviewQueue[reviewIdx]);
+                } else {
+                    endReview();
+                }
+                return;
+            }
+
+            roundIdx++;
+            if (roundIdx < totalRounds) {
+                showRound();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('combat-box').style.display = 'none';
+            const endBox = document.getElementById('end-box');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            endBox.style.display = 'block';
+
+            LudiProgress.saveGameResult('pendel', correctCount, totalRounds);
+
+            if (correctCount === totalRounds) {
+                title.innerText = "🏛️ MEISTER DER PENDELMETHODE!";
+                title.style.color = "#4CAF50";
+            } else if (correctCount >= totalRounds * 0.6) {
+                title.innerText = "⚖️ GUT GEPENDELT!";
+                title.style.color = "var(--roman-gold)";
+            } else {
+                title.innerText = "🧭 WEITER ÜBEN!";
+                title.style.color = "#F44336";
+            }
+            msg.innerHTML = `Du hast <strong>${correctCount} von ${totalRounds}</strong> Sätzen komplett fehlerfrei gependelt (alle Schritte UND die Übersetzung richtig).`;
+
+            const reviewBtn = document.getElementById('btn-review');
+            if (missedItems.length > 0) {
+                reviewBtn.style.display = 'inline-block';
+                reviewBtn.innerText = `📚 ${missedItems.length} Satz/Sätze wiederholen`;
+            } else {
+                reviewBtn.style.display = 'none';
+            }
+            document.getElementById('box-summary').innerText = '';
+        }
+
+        function startReview() {
+            reviewQueue = [...missedItems];
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+
+            showRound(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('end-box').style.display = 'block';
+            document.getElementById('btn-review').style.display = 'none';
+
+            document.getElementById('end-title').innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            document.getElementById('end-title').style.color = "var(--roman-gold)";
+            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor fehlerhaften Sätze nochmal gependelt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt fehlerfrei gelöst.`;
+        }
+
+    </script>
+</body>
+</html>
