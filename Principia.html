@@ -248,7 +248,74 @@
         let reviewCorrectCount = 0;
 
         function fullPoolNounsAndVerbs() {
-            return globalVocabularyPool.filter(v => v.type === 'noun' || v.type === 'verb');
+            return globalVocabularyPool.filter(v =>
+                (v.type === 'noun' || v.type === 'verb') &&
+                !v.latin.includes(' ') &&
+                !v.middle.includes('Pl.')
+            );
+        }
+
+        // Identische Konjugations-Engine wie im Formen-Kastell (für konsistente, garantiert korrekte Formen)
+        function conjugateVerb(verbObj) {
+            if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
+            if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
+
+            let inf = verbObj.latin;
+            let firstSg = verbObj.middle;
+            let cClass = verbObj.gram_class;
+            let stem = inf.slice(0, -3);
+
+            if (cClass.includes("a-Konjugation")) {
+                return [firstSg, stem+"ās", stem+"at", stem+"āmus", stem+"ātis", stem+"ant"];
+            } else if (cClass.includes("e-Konjugation")) {
+                return [firstSg, stem+"ēs", stem+"et", stem+"ēmus", stem+"ētis", stem+"ent"];
+            } else if (cClass.includes("i-Konjugation")) {
+                return [firstSg, stem+"īs", stem+"it", stem+"īmus", stem+"ītis", stem+"iunt"];
+            } else if (cClass.includes("gemischte")) {
+                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"iunt"];
+            } else {
+                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"unt"];
+            }
+        }
+
+        // Verb-Distraktoren: echte, aber falsche Personalformen DESSELBEN Verbs
+        // (gleiche Wurzel, nur die Personalendung ist falsch - kein Ausschlussverfahren mehr möglich)
+        function buildVerbDistractors(target) {
+            const forms = conjugateVerb(target); // [1.Sg, 2.Sg, 3.Sg, 1.Pl, 2.Pl, 3.Pl]
+            const otherForms = forms.slice(1); // alle außer der richtigen 1.Sg-Form
+            const shuffled = [...otherForms].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, 3);
+        }
+
+        // Nomen: Genitiv-Endung je Deklinationsklasse
+        const nounGenEndings = { "o-Deklination": "ī", "a-Deklination": "ae", "konsonantische Deklination": "is" };
+        const allGenders = ["m", "f", "n"];
+
+        function parseNounMiddle(middleStr) {
+            const m = middleStr.match(/^(.*?)\s*(m|f|n)\.\s*$/);
+            return { genitive: m ? m[1].trim() : middleStr, gender: m ? m[2] : "m" };
+        }
+
+        // Nomen-Distraktoren: dieselbe Wurzel wie die richtige Antwort, aber mit falscher
+        // Endung (aus einer ANDEREN Deklinationsklasse) oder falschem Genus - nie ein anderes Wort.
+        function buildNounDistractors(target) {
+            const { gender: correctGender } = parseNounMiddle(target.middle);
+            const correctEnding = nounGenEndings[target.gram_class];
+            const genitive = parseNounMiddle(target.middle).genitive;
+            const stem = genitive.slice(0, genitive.length - correctEnding.length);
+
+            const wrongEndings = Object.values(nounGenEndings).filter(e => e !== correctEnding);
+            const wrongGenders = allGenders.filter(g => g !== correctGender).sort(() => Math.random() - 0.5);
+
+            return [
+                `${stem}${wrongEndings[0]} ${correctGender}.`,
+                `${stem}${wrongEndings[1]} ${correctGender}.`,
+                `${stem}${correctEnding} ${wrongGenders[0]}.`
+            ];
+        }
+
+        function buildDistractors(target) {
+            return target.type === 'verb' ? buildVerbDistractors(target) : buildNounDistractors(target);
         }
 
         function updateOverallTreasuryDisplay() {
@@ -301,7 +368,11 @@
         }
 
         function startMinting() {
-            mintPool = activePool.filter(v => v.type === 'noun' || v.type === 'verb');
+            mintPool = activePool.filter(v =>
+                (v.type === 'noun' || v.type === 'verb') &&
+                !v.latin.includes(' ') &&
+                !v.middle.includes('Pl.')
+            );
 
             if (mintPool.length < 4) {
                 alert("In den ausgewählten Lektionen gibt es noch zu wenige Nomen/Verben für dieses Spiel. Bitte wähle weitere Lektionen mit aus.");
@@ -340,19 +411,11 @@
 
             renderTreasuryRow();
 
-            // Distraktoren aus dem VOLLEN Pool (nicht lektionsbeschränkt) desselben Typs ziehen,
-            // damit auch bei enger Lektionsauswahl immer genug plausible Falsch-Optionen da sind.
-            const sameTypeFullPool = fullPoolNounsAndVerbs().filter(v =>
-                v.type === currentTarget.type && v.latin !== currentTarget.latin && v.middle !== currentTarget.middle
-            );
-            const shuffled = [...sameTypeFullPool].sort(() => Math.random() - 0.5);
-            const distractorSet = new Set();
-            for (const item of shuffled) {
-                distractorSet.add(item.middle);
-                if (distractorSet.size === 3) break;
-            }
+            // Distraktoren teilen sich die Wurzel mit der richtigen Antwort -
+            // nur Endung/Genus (Nomen) bzw. Person (Verben) unterscheiden sich.
+            const distractors = buildDistractors(currentTarget);
 
-            const finalOptions = [currentTarget.middle, ...Array.from(distractorSet)].sort(() => Math.random() - 0.5);
+            const finalOptions = [currentTarget.middle, ...distractors].sort(() => Math.random() - 0.5);
             for (let i = 0; i < 4; i++) {
                 const btn = document.getElementById('opt' + i);
                 btn.innerText = finalOptions[i];
