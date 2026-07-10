@@ -291,15 +291,15 @@
 
         <div class="games-grid">
 
-            <div class="game-card" data-game="possessiv">
+            <div class="game-card" data-game="pronomina">
                 <div class="game-icon">🔍</div>
-                <div class="game-title">Cuius Est?</div>
-                <div class="game-focus">Schwerpunkt: suus vs. eius/eōrum</div>
+                <div class="game-title">Pronomina!</div>
+                <div class="game-focus">Schwerpunkt: Possessiv- & Personalpronomina</div>
                 <div class="game-desc">
-                    Löse Besitz-Fälle: Gehört der Gegenstand dem Subjekt selbst (suus) oder einer anderen Person (eius/eōrum)?
+                    Zwei Modi: Löse Besitz-Fälle (suus vs. eius/eōrum) oder bestimme Personalpronomina als Subjekt oder Objekt.
                 </div>
                 <div class="progress-badge"></div>
-                <a href="Possessiv.html" class="play-btn">Ermittlung starten</a>
+                <a href="Pronomina.html" class="play-btn">Ermittlung starten</a>
             </div>
 
             <div class="game-card" data-game="genitiv">
@@ -313,17 +313,6 @@
                 <a href="Genitiv.html" class="play-btn">Bauauftrag annehmen</a>
             </div>
 
-            <div class="game-card" data-game="tabularium">
-                <div class="game-icon">🗄️</div>
-                <div class="game-title">Tabulārium</div>
-                <div class="game-focus">Schwerpunkt: Genitiv-Konstruktion (La→De)</div>
-                <div class="game-desc">
-                    Ordne im Archiv der Villa die verlorenen Gegenstände ihren rechtmäßigen Besitzern zu.
-                </div>
-                <div class="progress-badge"></div>
-                <a href="Tabularium.html" class="play-btn">Archiv betreten</a>
-            </div>
-
             <div class="game-card" data-game="viaromana">
                 <div class="game-icon">🛣️</div>
                 <div class="game-title">Via Rōmāna</div>
@@ -333,17 +322,6 @@
                 </div>
                 <div class="progress-badge"></div>
                 <a href="ViaRomana.html" class="play-btn">Reise starten</a>
-            </div>
-
-            <div class="game-card" data-game="adventura">
-                <div class="game-icon">📜</div>
-                <div class="game-title">Mysterium Villae</div>
-                <div class="game-focus">Schwerpunkt: Satzübersetzung</div>
-                <div class="game-desc">
-                    Ein Textabenteuer: Übersetze Sätze korrekt, um den Großvater und den weißen Spitz Issa zu finden.
-                </div>
-                <div class="progress-badge"></div>
-                <a href="Adventura.html" class="play-btn">Erkundung starten</a>
             </div>
 
         </div>
@@ -377,6 +355,23 @@
         document.querySelectorAll('.game-card[data-game]').forEach(card => {
             const gameId = card.getAttribute('data-game');
             const badge = card.querySelector('.progress-badge');
+
+            // Sonderfall: Pronomina! hat zwei getrennte Modi mit eigenen Scores
+            if (gameId === 'pronomina') {
+                const pPossessiv = LudiProgress.getGameProgress('possessiv');
+                const pPersonal = LudiProgress.getGameProgress('personalpronomen');
+                const parts = [];
+                if (pPossessiv) parts.push(`Possessiv ${pPossessiv.bestScore}/${pPossessiv.maxScore}`);
+                if (pPersonal) parts.push(`Personal ${pPersonal.bestScore}/${pPersonal.maxScore}`);
+                if (parts.length) {
+                    badge.classList.add('has-score');
+                    badge.innerText = `🏆 ${parts.join(' · ')}`;
+                } else {
+                    badge.innerText = 'Noch nicht gespielt';
+                }
+                return;
+            }
+
             const progress = LudiProgress.getGameProgress(gameId);
 
             if (progress) {

@@ -147,13 +147,37 @@
             background: var(--bg-dark); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center;
         }
         .btn-main { background: var(--roman-gold); color: #000; border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 30px; cursor: pointer; text-decoration: none; margin-top: 20px; text-transform: uppercase; }
+
+        .notice-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid var(--roman-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: left;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+        .notice-box h3 { color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
+    <div class="end-screen" id="start-screen" style="display: flex; position: relative; height: auto; padding: 20px 15px;">
+        <h1 style="color: var(--roman-gold); font-size: 2.2rem; margin-bottom: 15px; font-family: 'Georgia', serif; text-transform: uppercase;">Via Rōmāna</h1>
+        <div class="notice-box">
+            <h3>📜 Der Auftrag:</h3>
+            <p>Du siehst einen lateinischen Satz. Ein Wort ist <span style="color: var(--highlight-cyan); font-weight: bold;">blau markiert</span> - bestimme, welches Satzglied es ist: <strong>Subjekt</strong>, <strong>Prädikat</strong>, <strong>Akkusativ-Objekt</strong> oder <strong>Genitiv-Attribut</strong>.</p>
+            <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Achtung: Die Satzglieder werden ab und zu durcheinandergewürfelt! Verlass dich auf die Endung, nicht auf die Position im Satz.</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch bestimmte Sätze direkt nochmal üben.</p>
+        </div>
+        <button class="btn-main" id="btn-start-game">Reise beginnen!</button>
+    </div>
+
+    <div id="game-area" style="display: none; width: 100%; flex-direction: column; align-items: center; height: 100%;">
     <div class="header-area">
         <div class="title">Via Rōmāna</div>
-        <div class="task-instruction">Bestimme das blau markierte Satzglied!</div>
+        <div class="task-instruction" id="task-instruction">Bestimme das blau markierte Satzglied!</div>
     </div>
 
     <div class="sentence-box">
@@ -184,185 +208,260 @@
             <div class="stone" id="st10"></div>
         </div>
     </div>
+    </div>
 
     <div class="modal-overlay" id="feedback-modal">
         <div class="feedback-box">
-            <div class="feedback-title">Wegweiser-Hinweis</div>
+            <div class="feedback-title" id="feedback-title">Wegweiser-Hinweis</div>
             <div class="feedback-text" id="feedback-text">Fehlermeldung...</div>
-            <button class="btn-close" onclick="closeModal()">Satz neu analysieren</button>
+            <button class="btn-close" onclick="closeModal()">Weiter</button>
         </div>
     </div>
 
     <div class="end-screen" id="end-screen">
-        <h1 style="color: var(--roman-gold); font-size: 3rem; margin-bottom: 20px; font-family: 'Georgia', serif;">Roma reached!</h1>
-        <p style="font-size: 1.3rem; max-width: 600px; line-height: 1.5; margin-bottom: 30px; padding: 0 20px;">Großartig! Du hast alle Meilensteine gemeistert und die Allee nach Rom fehlerfrei entschlüsselt. Die Strukturen sitzen!</p>
+        <h1 style="color: var(--roman-gold); font-size: 3rem; margin-bottom: 20px; font-family: 'Georgia', serif;" id="end-title">Roma erreicht!</h1>
+        <p style="font-size: 1.3rem; max-width: 600px; line-height: 1.5; margin-bottom: 15px; padding: 0 20px;" id="end-msg"></p>
+        <p id="box-summary" style="font-size: 1rem; color: #ccc; margin-bottom: 15px;"></p>
+        <button class="btn-main" id="btn-review" style="background: #c9302c; color: #fff; display: none;">📚 Fehler wiederholen</button>
         <button class="btn-main" onclick="location.reload()">Neue Reise starten</button>
         <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem;">Zurück zur Übersicht</a>
     </div>
 
+    <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
     <script>
-        // --- SYNTAX SPEZIFISCHES ENGINEMAPPING ---
-        const poolSubjekts = [
-            { sg: "servus", pl: "servī", type: "m" },
-            { sg: "puella", pl: "puellae", type: "f" },
-            { sg: "puer", pl: "puerī", type: "m" },
-            { sg: "dominus", pl: "dominī", type: "m" },
-            { sg: "domina", pl: "dominae", type: "f" },
-            { sg: "amicus", pl: "amicī", type: "m" },
-            { sg: "fīlius", pl: "fīliī", type: "m" },
-            { sg: "fīlia", pl: "fīliae", type: "f" }
+        // Verben, die kein sinnvolles Akkusativobjekt nehmen (intransitiv oder Dativ-Verben:
+        // sedēre, respondēre, placēre usw.) - für Satzpläne mit Objekt ausgeschlossen.
+        const intransitiveOrDative = [
+            "esse", "clāmāre", "venīre", "labōrāre", "lūdere", "gaudēre", "currere",
+            "respondēre", "placēre", "pergere", "properāre", "sedēre", "cōnsīdere",
+            "tacēre", "accēdere", "surgere", "crēscere"
         ];
 
-        const poolObjekts = [
-            { sg: "equum", pl: "equōs", base: "equus" },
-            { sg: "canem", pl: "canēs", base: "canis" },
-            { sg: "tunicam", pl: "tunicās", base: "tunica" },
-            { sg: "tabulam", pl: "tabulās", base: "tabula" },
-            { sg: "dōnum", pl: "dōna", base: "dōnum" }
-        ];
+        // Identische Konjugations-Engine wie im Formen-Kastell
+        function conjugateVerb(verbObj) {
+            if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
+            if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
+            let inf = verbObj.latin;
+            let firstSg = verbObj.middle;
+            let cClass = verbObj.gram_class;
+            let stem = inf.slice(0, -3);
+            if (cClass.includes("a-Konjugation")) return [firstSg, stem+"ās", stem+"at", stem+"āmus", stem+"ātis", stem+"ant"];
+            if (cClass.includes("e-Konjugation")) return [firstSg, stem+"ēs", stem+"et", stem+"ēmus", stem+"ētis", stem+"ent"];
+            if (cClass.includes("i-Konjugation")) return [firstSg, stem+"īs", stem+"it", stem+"īmus", stem+"ītis", stem+"iunt"];
+            if (cClass.includes("gemischte")) return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"iunt"];
+            return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"unt"];
+        }
 
-        const poolAttributes = [
-            { sg: "servī", pl: "servōrum" },
-            { sg: "puellae", pl: "puellārum" },
-            { sg: "dominī", pl: "dominōrum" },
-            { sg: "magistrī", pl: "magistrōrum" },
-            { sg: "aulī", pl: "aulī" } // Eigenname bleibt gleich
-        ];
+        // Identische Deklinations-Engine wie im Kasus-Bollwerk
+        const nounExceptions = { "bōs": { genPl: "boum" }, "mors": { genPl: "mortium" } };
+        function declineNoun(nounObj) {
+            const nomSg = nounObj.latin;
+            const middle = nounObj.middle;
+            const genderMatch = middle.match(/\s(m|f|n)\.\s*$/);
+            const gender = genderMatch ? genderMatch[1] : 'm';
+            const genSg = middle.replace(/\s(m|f|n)\.\s*$/, '').trim();
+            const gramClass = nounObj.gram_class;
+            let stem, akkSg, nomPl, genPl, akkPl;
+            if (gramClass.includes("o-Deklination")) {
+                stem = genSg.slice(0, -1);
+                if (gender === 'n') { akkSg = nomSg; nomPl = stem + "a"; genPl = stem + "ōrum"; akkPl = nomPl; }
+                else { akkSg = stem + "um"; nomPl = stem + "ī"; genPl = stem + "ōrum"; akkPl = stem + "ōs"; }
+            } else if (gramClass.includes("a-Deklination")) {
+                stem = genSg.slice(0, -2);
+                akkSg = stem + "am"; nomPl = stem + "ae"; genPl = stem + "ārum"; akkPl = stem + "ās";
+            } else {
+                stem = genSg.slice(0, -2);
+                akkSg = stem + "em"; nomPl = stem + "ēs"; genPl = stem + "um"; akkPl = stem + "ēs";
+            }
+            if (nounExceptions[nomSg] && nounExceptions[nomSg].genPl) genPl = nounExceptions[nomSg].genPl;
+            return { forms: [nomSg, genSg, akkSg, nomPl, genPl, akkPl], gender: gender };
+        }
 
-        const poolVerbs = [
-            { sg: "videt", pl: "vident" },
-            { sg: "audit", pl: "audiunt" },
-            { sg: "vocat", pl: "vocant" },
-            { sg: "salūtat", pl: "salūtant" },
-            { sg: "portat", pl: "portant" }
-        ];
-
-        let score = 0;
-        const targetScore = 10;
-        let currentTargetRole = ""; 
+        let correctCount = 0;
+        const totalRounds = 10;
+        let currentRoundIdx = 0;
+        let currentWords = [];
+        let currentTargetIdx = -1;
+        let currentTargetRole = "";
         let currentExplanation = "";
+        let currentTrackLemma = "";
+        let roundLocked = false;
+
+        let nounPool = [];
+        let verbPool = [];
+        let activePool = [];
+
+        let missedItems = [];
+        let isReviewMode = false;
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
 
         window.onload = function() {
-            setupButtons();
-            nextQuestion();
-        };
-
-        function setupButtons() {
+            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
             document.getElementById('btn-sub').onclick = () => checkAnswer("sub");
             document.getElementById('btn-praed').onclick = () => checkAnswer("praed");
             document.getElementById('btn-obj').onclick = () => checkAnswer("obj");
             document.getElementById('btn-attr').onclick = () => checkAnswer("attr");
+            document.getElementById('btn-review').addEventListener('click', startReview);
+        };
+
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined') {
+                alert("Fehler: vocabulary.js nicht gefunden!"); return;
+            }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                startGame();
+            });
         }
 
-        function nextQuestion() {
-            // Zufälligen Satzbauplan wählen (1, 2 oder 3)
-            let plan = Math.floor(Math.random() * 3) + 1;
-            let sub = poolSubjekts[Math.floor(Math.random() * poolSubjekts.length)];
-            let verb = poolVerbs[Math.floor(Math.random() * poolVerbs.length)];
-            
-            let subPlural = Math.random() > 0.5;
-            let verbForm = subPlural ? verb.pl : verb.sg;
-            let subForm = subPlural ? sub.pl : sub.sg;
+        function startGame() {
+            nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
+            verbPool = activePool.filter(v => v.type === 'verb');
 
-            let words = [];
-
-            if (plan === 1) {
-                // Plan 1: Subjekt + Objekt + Prädikat
-                let obj = poolObjekts[Math.floor(Math.random() * poolObjekts.length)];
-                let objPlural = Math.random() > 0.5;
-                let objForm = objPlural ? obj.pl : obj.sg;
-
-                words = [
-                    { w: subForm, role: "sub", exp: "Dieses Wort steht im Nominativ und bestimmt, wer oder was handelt. Es passt perfekt zum Prädikat!" },
-                    { w: objForm, role: "obj", exp: "Das Wort endet auf die Akkusativ-Endung (-um/-am/-ōs/-ās/-em). Es ist das direkte Ziel der Handlung (Wen-oder-Was-Frage)." },
-                    { w: verbForm, role: "praed", exp: "Das ist das Zeitwort (Verb) am Satzende. Die Endung (-t oder -nt) zeigt an, ob eine oder viele Personen handeln." }
-                ];
-            } else if (plan === 2) {
-                // Plan 2: Subjekt + Genitiv-Attribut + Prädikat
-                let attr = poolAttributes[Math.floor(Math.random() * poolAttributes.length)];
-                let attrPlural = Math.random() > 0.5 && attr.sg !== "aulī";
-                let attrForm = attrPlural ? attr.pl : attr.sg;
-
-                words = [
-                    { w: subForm, role: "sub", exp: "Nominativform. Lass dich nicht verwirren: Auch wenn das Attribut direkt daneben steht, ist das hier das Subjekt." },
-                    { w: attrForm, role: "attr", exp: "Das ist ein Genitiv (wessen?). Es beschreibt den Besitzer näher und hängt direkt als Attribut an einem anderen Substantiv." },
-                    { w: verbForm, role: "praed", exp: "Das Prädikat bestimmt die Person des Satzes. Schau immer zuerst nach dem Prädikat!" }
-                ];
-            } else {
-                // Plan 3: Subjekt + Genitiv-Attribut + Akkusativ-Objekt + Prädikat (Vollkomplex)
-                let attr = poolAttributes[Math.floor(Math.random() * poolAttributes.length)];
-                let attrPlural = Math.random() > 0.5 && attr.sg !== "aulī";
-                let attrForm = attrPlural ? attr.pl : attr.sg;
-
-                let obj = poolObjekts[Math.floor(Math.random() * poolObjekts.length)];
-                let objPlural = Math.random() > 0.5;
-                let objForm = objPlural ? obj.pl : obj.sg;
-
-                words = [
-                    { w: subForm, role: "sub", exp: "Das handelnde Subjekt im Nominativ." },
-                    { w: attrForm, role: "attr", exp: "Ein Genitiv-Attribut, das klärt, wessen Besitz oder Bezug gemeint ist." },
-                    { w: objForm, role: "obj", exp: "Das Akkusativ-Objekt des Satzes (Ziel der Handlung)." },
-                    { w: verbForm, role: "praed", exp: "Das Prädikat (Verb), das die gesamte Aktion steuert." }
-                ];
+            if (nounPool.length < 3 || verbPool.length < 1) {
+                alert("In den ausgewählten Lektionen gibt es noch zu wenige Nomen/Verben für dieses Spiel. Bitte wähle weitere Lektionen mit aus.");
+                return;
             }
 
-            // Für die zusätzliche Hürde: Die Satzglieder ab und zu durchmischen (Wortstellungs-Falle)
-            // Das Prädikat bleibt didaktisch sinnvoll meist hinten, aber Subjekt/Objekt/Attribut rotieren!
+            correctCount = 0;
+            currentRoundIdx = 0;
+            missedItems = [];
+            isReviewMode = false;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('game-area').style.display = 'flex';
+
+            resetWagon();
+            nextQuestion();
+        }
+
+        function resetWagon() {
+            document.getElementById('wagon').style.left = '0%';
+            for (let i = 0; i <= totalRounds; i++) {
+                const stone = document.getElementById(`st${i}`);
+                if (stone) stone.classList.toggle('active', i === 0);
+            }
+        }
+
+        // Baut einen Satz nach einem von drei Bauplänen aus echtem, lektionsgefiltertem Wortschatz.
+        function buildRound(forced) {
+            if (forced) return forced;
+
+            const transitiveVerbs = verbPool.filter(v => !intransitiveOrDative.includes(v.latin));
+            const shuffledNouns = [...nounPool].sort(() => Math.random() - 0.5);
+
+            let plan = Math.floor(Math.random() * 3) + 1;
+            // Plan 1 und 3 brauchen ein Akkusativ-Objekt -> nur transitive Verben.
+            // Plan 2 hat kein Objekt -> jedes Verb passt.
+            let verbSource = (plan === 2 || transitiveVerbs.length === 0) ? verbPool : transitiveVerbs;
+            const verb = LudiProgress.weightedPick(verbSource);
+
+            const subNoun = LudiProgress.weightedPick(shuffledNouns);
+            const subDecl = declineNoun(subNoun);
+            const subPlural = Math.random() > 0.5;
+            const subForm = subPlural ? subDecl.forms[3] : subDecl.forms[0];
+
+            const verbForms = conjugateVerb(verb);
+            const verbForm = subPlural ? verbForms[5] : verbForms[2];
+
+            let words = [
+                { w: subForm, role: "sub", lemma: subNoun.latin, exp: `„${subForm}“ steht im Nominativ und bestimmt, wer oder was handelt. Es passt zur Verbendung von „${verbForm}“.` }
+            ];
+
+            if (plan === 1 || plan === 3) {
+                let objNoun;
+                do { objNoun = shuffledNouns[Math.floor(Math.random() * shuffledNouns.length)]; } while (objNoun.latin === subNoun.latin && shuffledNouns.length > 1);
+                const objDecl = declineNoun(objNoun);
+                const objPlural = Math.random() > 0.5;
+                const objForm = objPlural ? objDecl.forms[5] : objDecl.forms[2];
+                words.push({ w: objForm, role: "obj", lemma: objNoun.latin, exp: `„${objForm}“ steht im Akkusativ (Wen-oder-was-Frage) - es ist das direkte Ziel der Handlung.` });
+            }
+
+            if (plan === 2 || plan === 3) {
+                let attrNoun;
+                do { attrNoun = shuffledNouns[Math.floor(Math.random() * shuffledNouns.length)]; } while ((attrNoun.latin === subNoun.latin || (words[1] && attrNoun.latin === words[1].lemma)) && shuffledNouns.length > 1);
+                const attrDecl = declineNoun(attrNoun);
+                const attrPlural = Math.random() > 0.5;
+                const attrForm = attrPlural ? attrDecl.forms[4] : attrDecl.forms[1];
+                words.push({ w: attrForm, role: "attr", lemma: attrNoun.latin, exp: `„${attrForm}“ ist ein Genitiv (wessen?) - es beschreibt einen Besitzer/Bezug näher, auch wenn es direkt neben dem Subjekt steht.` });
+            }
+
+            words.push({ w: verbForm, role: "praed", lemma: verb.latin, exp: `„${verbForm}“ ist das Prädikat (Verb). Die Endung zeigt an, ob eine oder mehrere Personen handeln.` });
+
+            // Wortstellungs-Falle: Satzglieder ab und zu durchmischen (Prädikat bleibt meist hinten)
             if (Math.random() > 0.5) {
                 let praedRef = words.pop();
                 words.sort(() => Math.random() - 0.5);
                 words.push(praedRef);
             }
 
-            // Zufällig ein Satzglied auswählen, das abgefragt werden soll
-            let targetIdx = Math.floor(Math.random() * words.length);
-            currentTargetRole = words[targetIdx].role;
-            currentExplanation = words[targetIdx].exp;
-
-            // HTML-String generieren (Garantiert komplett kleingeschrieben im Latein)
-            let htmlOutput = "";
-            words.forEach((item, idx) => {
-                let lowWord = item.w.toLowerCase();
-                if (idx === targetIdx) {
-                    htmlOutput += `<span class="highlight">${lowWord}</span> `;
-                } else {
-                    htmlOutput += `${lowWord} `;
-                }
-            });
-
-            document.getElementById('sentence-display').innerHTML = htmlOutput.trim() + ".";
+            const targetIdx = Math.floor(Math.random() * words.length);
+            return { words, targetIdx, role: words[targetIdx].role, explanation: words[targetIdx].exp, trackLemma: words[targetIdx].lemma };
         }
 
-        function checkAnswer(chosenRole) {
-            if (chosenRole === currentTargetRole) {
-                score++;
-                updateWagon();
-                if (score >= targetScore) {
-                    LudiProgress.saveGameResult('viaromana', score, targetScore);
-                    document.getElementById('end-screen').style.display = 'flex';
-                } else {
-                    nextQuestion();
-                }
-            } else {
-                let roleNames = { sub: "das Subjekt", praed: "das Prädikat", obj: "an ein Akkusativ-Objekt", attr: "an ein Genitiv-Attribut" };
-                showModal(`Halt! Das war nicht richtig. Hier ist ein Tipp für dieses Wort:\n\n${currentExplanation}`);
+        function nextQuestion(forced) {
+            roundLocked = false;
+            const round = buildRound(forced);
+            currentWords = round.words;
+            currentTargetIdx = round.targetIdx;
+            currentTargetRole = round.role;
+            currentExplanation = round.explanation;
+            currentTrackLemma = round.trackLemma;
+
+            document.getElementById('task-instruction').innerText = isReviewMode
+                ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
+                : `Satz ${currentRoundIdx + 1} von ${totalRounds} - bestimme das markierte Satzglied!`;
+
+            let htmlOutput = "";
+            currentWords.forEach((item, idx) => {
+                let lowWord = item.w.toLowerCase();
+                htmlOutput += (idx === currentTargetIdx) ? `<span class="highlight">${lowWord}</span> ` : `${lowWord} `;
+            });
+            document.getElementById('sentence-display').innerHTML = htmlOutput.trim() + ".";
+
+            for (const id of ['btn-sub', 'btn-praed', 'btn-obj', 'btn-attr']) {
+                document.getElementById(id).disabled = false;
             }
         }
 
-        function updateWagon() {
-            // Berechne die prozentuale Position für den Wagen auf der Strecke
-            let percentage = (score / targetScore) * 100;
-            document.getElementById('wagon').style.left = `${percentage}%`;
+        function checkAnswer(chosenRole) {
+            if (roundLocked) return;
+            roundLocked = true;
+            for (const id of ['btn-sub', 'btn-praed', 'btn-obj', 'btn-attr']) {
+                document.getElementById(id).disabled = true;
+            }
 
-            // Aktiviere den Meilenstein-Punkt optisch
-            for (let i = 0; i <= targetScore; i++) {
-                let stone = document.getElementById(`st${i}`);
-                if (i <= score) {
-                    stone.classList.add('active');
-                } else {
-                    stone.classList.remove('active');
-                }
+            const isCorrect = (chosenRole === currentTargetRole);
+            LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
+
+            if (isReviewMode) {
+                if (isCorrect) reviewCorrectCount++;
+            } else {
+                if (isCorrect) { correctCount++; updateWagon(); }
+                else { missedItems.push({ words: currentWords, targetIdx: currentTargetIdx, role: currentTargetRole, explanation: currentExplanation, trackLemma: currentTrackLemma }); }
+            }
+
+            const roleNames = { sub: "Subjekt", praed: "Prädikat", obj: "Akkusativ-Objekt", attr: "Genitiv-Attribut" };
+            const title = document.getElementById('feedback-title');
+            if (isCorrect) {
+                title.innerText = "✅ Richtig!";
+            } else {
+                title.innerText = "🧭 Nicht ganz...";
+            }
+            showModal(`Das war ${isCorrect ? "" : "nicht "}das ${roleNames[currentTargetRole]}.\n\n${currentExplanation}`);
+        }
+
+        function updateWagon() {
+            let percentage = (correctCount / totalRounds) * 100;
+            document.getElementById('wagon').style.left = `${percentage}%`;
+            for (let i = 0; i <= totalRounds; i++) {
+                const stone = document.getElementById(`st${i}`);
+                if (stone) stone.classList.toggle('active', i <= correctCount);
             }
         }
 
@@ -373,6 +472,68 @@
 
         function closeModal() {
             document.getElementById('feedback-modal').style.display = 'none';
+
+            if (isReviewMode) {
+                reviewIdx++;
+                if (reviewIdx < reviewQueue.length) {
+                    nextQuestion(reviewQueue[reviewIdx]);
+                } else {
+                    endReview();
+                }
+                return;
+            }
+
+            currentRoundIdx++;
+            if (currentRoundIdx < totalRounds) {
+                nextQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+
+            LudiProgress.saveGameResult('viaromana', correctCount, totalRounds);
+
+            document.getElementById('end-title').innerText = correctCount === totalRounds ? "Roma erreicht!" : "Reise unterbrochen";
+            document.getElementById('end-msg').innerHTML = `Du hast <strong>${correctCount} von ${totalRounds}</strong> Sätzen richtig analysiert.`;
+
+            const summary = LudiProgress.getBoxSummary([...nounPool, ...verbPool]);
+            document.getElementById('box-summary').innerText =
+                `Dein Vokabelkasten (${nounPool.length + verbPool.length} Wörter in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
+
+            const reviewBtn = document.getElementById('btn-review');
+            if (missedItems.length > 0) {
+                reviewBtn.style.display = 'inline-block';
+                reviewBtn.innerText = `📚 ${missedItems.length} falsche Antwort(en) wiederholen`;
+            } else {
+                reviewBtn.style.display = 'none';
+            }
+        }
+
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('game-area').style.display = 'flex';
+
+            nextQuestion(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'flex';
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('box-summary').innerText = '';
+
+            document.getElementById('end-title').innerText = "Wiederholung geschafft!";
+            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Sätze nochmal analysiert und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig bestimmt.`;
         }
     </script>
 </body>
