@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Prīncipia! - Die Münzprägerei</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle { font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center; }
+
+        .game-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            position: relative;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .start-screen { text-align: center; padding: 10px; }
+
+        .notice-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid var(--roman-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .notice-box h3 { color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 10px; text-transform: uppercase; }
+
+        .treasury-stat {
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px dashed var(--roman-gold);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: var(--roman-marble);
+        }
+
+        /* --- Münzen --- */
+        .coin {
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.25);
+            border: 3px solid #6b5510;
+            background: radial-gradient(circle at 35% 32%, #f6e29a, #d4af37 55%, #97771d);
+            font-family: var(--font-display);
+            font-weight: bold;
+            color: #4a3a0a;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+        .coin.silver { background: radial-gradient(circle at 35% 32%, #f2f2f2, #b7b7b7 55%, #7a7a7a); border-color: #555; color: #333; }
+        .coin.bronze { background: radial-gradient(circle at 35% 32%, #e0aa76, #a5652f 55%, #6e3d17); border-color: #4a2c10; color: #3a1f08; }
+        .coin.blank  { background: #3a3a3a; border-color: #222; color: #777; box-shadow: none; }
+        .coin.cracked { background: #5c2020; border-color: #300; color: #eee; }
+
+        .treasury-row {
+            display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 18px; min-height: 34px;
+        }
+        .treasury-row .coin { width: 28px; height: 28px; font-size: 0.7rem; }
+
+        .mint-card {
+            background: var(--roman-marble);
+            color: #2a2a2a;
+            border-radius: 8px;
+            padding: 22px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .type-badge {
+            display: inline-block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+            background: var(--roman-red); color: var(--roman-marble); padding: 3px 10px; border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .stamp-word {
+            font-family: var(--font-display); font-size: 2rem; font-weight: bold; color: var(--roman-red);
+        }
+        .stamp-hint { font-size: 0.9rem; color: #666; margin-top: 6px; }
+
+        .round-number { text-align: center; font-size: 0.9rem; color: #aaa; margin-bottom: 10px; letter-spacing: 1px; }
+
+        .options-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; flex-grow: 1;
+        }
+
+        .coin-btn {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 3px solid var(--roman-gold);
+            background: radial-gradient(circle at 35% 32%, #3a2f1a, #1c1710 70%);
+            color: var(--roman-gold);
+            font-family: var(--font-display); font-weight: bold; font-size: 1.05rem;
+            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            padding: 10px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .coin-btn:not(:disabled):active { background: radial-gradient(circle at 35% 32%, #4a3f2a, #2c2110 70%); }
+
+        .feedback-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px; text-align: center; z-index: 10;
+        }
+        .feedback-title { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 15px; }
+        .feedback-explanation { font-size: 1.1rem; line-height: 1.55; margin-bottom: 25px; max-width: 500px; }
+
+        .start-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
+            border: none; border-radius: 30px; font-size: 1.2rem; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
+        }
+
+        .correct { border-color: #4CAF50 !important; box-shadow: 0 0 0 3px #4CAF50 !important; }
+        .wrong { border-color: #F44336 !important; box-shadow: 0 0 0 3px #F44336 !important; }
+
+        .end-treasury-grid {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0 20px;
+        }
+        .end-treasury-grid .coin-wrap { text-align: center; width: 62px; }
+        .end-treasury-grid .coin { width: 44px; height: 44px; font-size: 0.85rem; margin: 0 auto; }
+        .end-treasury-grid .coin-label { font-size: 0.65rem; color: #ccc; margin-top: 3px; word-break: break-word; }
+    </style>
+</head>
+<body>
+
+    <h1>🪙 Prīncipia!</h1>
+    <div class="subtitle">Die Münzprägerei</div>
+
+    <div class="game-container">
+
+        <!-- START -->
+        <div id="start-screen" class="start-screen">
+            <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Willkommen in der Prägewerkstatt!</h2>
+            <div class="notice-box">
+                <h3>📜 Der Auftrag:</h3>
+                <p>Du siehst die <strong>Grundform</strong> eines Wortes (Nominativ bei Nomen, Infinitiv bei Verben). Präge die passende <strong>mittlere Wörterbuch-Spalte</strong> dazu: bei Nomen den Genitiv + Geschlecht (z. B. <em>patris, m.</em>), bei Verben die 1. Person Singular (z. B. <em>videō</em>).</p>
+                <p style="margin-top: 10px;">Jede richtige Zuordnung prägt eine Münze für deine Schatzkammer. Falsche Prägungen zerbrechen und werden ausgemustert.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch geprägte Münzen direkt nochmal prägen.</p>
+            </div>
+            <div class="treasury-stat" id="overall-treasury">Lade Schatzkammer...</div>
+            <button class="start-btn" id="btn-start-game">Prägerei eröffnen!</button>
+        </div>
+
+        <!-- SPIELFELD -->
+        <div id="combat-box" style="display: none; flex-grow: 1; flex-direction: column;">
+            <div class="round-number" id="round-number">MÜNZE 1 VON 10</div>
+            <div class="treasury-row" id="treasury-row"></div>
+
+            <div class="mint-card">
+                <div class="type-badge" id="type-badge">NOMEN</div>
+                <div class="stamp-word" id="stamp-word">-</div>
+                <div class="stamp-hint" id="stamp-hint">Wie lautet die mittlere Spalte?</div>
+            </div>
+
+            <div class="options-grid">
+                <button class="coin-btn" id="opt0">-</button>
+                <button class="coin-btn" id="opt1">-</button>
+                <button class="coin-btn" id="opt2">-</button>
+                <button class="coin-btn" id="opt3">-</button>
+            </div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="feedback-overlay" id="feedback-box">
+            <div class="feedback-title" id="fb-title">Geprägt!</div>
+            <div class="feedback-explanation" id="fb-text">Erklärung...</div>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 30px;" id="btn-next-round">Weiter</button>
+        </div>
+
+        <!-- ENDE -->
+        <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
+            <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 15px;">SCHATZKAMMER GEFÜLLT!</h2>
+            <p id="end-msg" style="margin: 10px 0; font-size: 1.1rem; line-height: 1.6;"></p>
+            <div class="end-treasury-grid" id="end-treasury-grid"></div>
+            <p id="box-summary" style="margin: 5px 0 20px; font-size: 1rem; color: #ccc;"></p>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <br>
+            <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Prägerunde</button>
+            <br>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
+        </div>
+    </div>
+
+    <script>
+        const totalRounds = 10;
+        let currentRoundIdx = 0;
+        let correctCount = 0;
+        let roundLocked = false;
+        let mintPool = [];
+        let activePool = [];
+        let currentTarget = null;
+
+        let sessionCoins = []; // { word, colorIdx } - für die Schatzkammer-Anzeige dieser Runde
+        let missedItems = [];  // für die Wiederholungsrunde
+        let isReviewMode = false;
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+
+        function fullPoolNounsAndVerbs() {
+            return globalVocabularyPool.filter(v => v.type === 'noun' || v.type === 'verb');
+        }
+
+        function updateOverallTreasuryDisplay() {
+            const pool = fullPoolNounsAndVerbs();
+            const summary = LudiProgress.getBoxSummary(pool);
+            document.getElementById('overall-treasury').innerHTML =
+                `🏛️ Deine Gesamt-Schatzkammer: <strong>${summary.green} von ${pool.length}</strong> Wörtern zu Gold geprägt (🟡 ${summary.yellow} unterwegs, 🔴 ${summary.red} noch offen)`;
+        }
+
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined') {
+                alert("Fehler: vocabulary.js nicht gefunden!"); return;
+            }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                startMinting();
+            });
+        }
+
+        window.onload = function() {
+            updateOverallTreasuryDisplay();
+            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-next-round').addEventListener('click', nextRound);
+            document.getElementById('btn-review').addEventListener('click', startReview);
+            for (let i = 0; i < 4; i++) {
+                document.getElementById('opt' + i).addEventListener('click', function() { selectCoin(i); });
+            }
+        };
+
+        function coinColorClass(colorIdx) {
+            return ['bronze', 'silver', ''][colorIdx]; // '' = Standard-Gold-Stil (grün/Stufe 4)
+        }
+
+        function renderTreasuryRow() {
+            const row = document.getElementById('treasury-row');
+            row.innerHTML = '';
+            sessionCoins.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'coin ' + coinColorClass(c.colorIdx);
+                div.innerText = '🪙';
+                row.appendChild(div);
+            });
+            // Leere Platzhalter für noch ausstehende Münzen dieser Runde
+            for (let i = sessionCoins.length; i < totalRounds; i++) {
+                const div = document.createElement('div');
+                div.className = 'coin blank';
+                row.appendChild(div);
+            }
+        }
+
+        function startMinting() {
+            mintPool = activePool.filter(v => v.type === 'noun' || v.type === 'verb');
+
+            if (mintPool.length < 4) {
+                alert("In den ausgewählten Lektionen gibt es noch zu wenige Nomen/Verben für dieses Spiel. Bitte wähle weitere Lektionen mit aus.");
+                return;
+            }
+
+            currentRoundIdx = 0;
+            correctCount = 0;
+            sessionCoins = [];
+            missedItems = [];
+            isReviewMode = false;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+
+            showRound();
+        }
+
+        function showRound(forced) {
+            roundLocked = false;
+            document.getElementById('feedback-box').style.display = 'none';
+
+            currentTarget = forced || LudiProgress.weightedPick(mintPool);
+
+            const isNoun = currentTarget.type === 'noun';
+            document.getElementById('type-badge').innerText = isNoun ? 'NOMEN' : 'VERB';
+            document.getElementById('stamp-word').innerText = currentTarget.latin;
+            document.getElementById('stamp-hint').innerText = isNoun
+                ? 'Wie lautet Genitiv + Geschlecht?'
+                : 'Wie lautet die 1. Person Singular?';
+
+            document.getElementById('round-number').innerText = isReviewMode
+                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+                : `MÜNZE ${currentRoundIdx + 1} VON ${totalRounds}`;
+
+            renderTreasuryRow();
+
+            // Distraktoren aus dem VOLLEN Pool (nicht lektionsbeschränkt) desselben Typs ziehen,
+            // damit auch bei enger Lektionsauswahl immer genug plausible Falsch-Optionen da sind.
+            const sameTypeFullPool = fullPoolNounsAndVerbs().filter(v =>
+                v.type === currentTarget.type && v.latin !== currentTarget.latin && v.middle !== currentTarget.middle
+            );
+            const shuffled = [...sameTypeFullPool].sort(() => Math.random() - 0.5);
+            const distractorSet = new Set();
+            for (const item of shuffled) {
+                distractorSet.add(item.middle);
+                if (distractorSet.size === 3) break;
+            }
+
+            const finalOptions = [currentTarget.middle, ...Array.from(distractorSet)].sort(() => Math.random() - 0.5);
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById('opt' + i);
+                btn.innerText = finalOptions[i];
+                btn.className = 'coin-btn';
+                btn.disabled = false;
+            }
+        }
+
+        function selectCoin(idx) {
+            if (roundLocked) return;
+            roundLocked = true;
+
+            for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
+
+            const selectedBtn = document.getElementById('opt' + idx);
+            const isCorrect = (selectedBtn.innerText === currentTarget.middle);
+
+            const fbBox = document.getElementById('feedback-box');
+            const fbTitle = document.getElementById('fb-title');
+            const fbText = document.getElementById('fb-text');
+            fbBox.style.display = 'flex';
+
+            LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
+            const colorIdx = LudiProgress.getBoxColor(currentTarget.latin);
+
+            if (isCorrect) {
+                if (isReviewMode) reviewCorrectCount++;
+                else { correctCount++; sessionCoins.push({ word: currentTarget.latin, colorIdx }); }
+                selectedBtn.classList.add('correct');
+                fbTitle.innerText = "🪙 MÜNZE GEPRÄGT!";
+                fbTitle.style.color = "#4CAF50";
+                fbText.innerHTML = `<strong>${currentTarget.latin}</strong> (${currentTarget.meaning}) → <strong>${currentTarget.middle}</strong> ist richtig geprägt!`;
+            } else {
+                if (!isReviewMode) {
+                    missedItems.push(currentTarget);
+                    sessionCoins.push({ word: currentTarget.latin, colorIdx });
+                }
+                selectedBtn.classList.add('wrong');
+                for (let i = 0; i < 4; i++) {
+                    if (document.getElementById('opt' + i).innerText === currentTarget.middle) {
+                        document.getElementById('opt' + i).classList.add('correct');
+                    }
+                }
+                fbTitle.innerText = "💥 FEHLPRÄGUNG!";
+                fbTitle.style.color = "#F44336";
+                fbText.innerHTML = `Richtig wäre <strong>${currentTarget.middle}</strong> gewesen für <strong>${currentTarget.latin}</strong> (${currentTarget.meaning}).`;
+            }
+
+            renderTreasuryRow();
+        }
+
+        function nextRound() {
+            if (isReviewMode) {
+                reviewIdx++;
+                if (reviewIdx < reviewQueue.length) {
+                    showRound(reviewQueue[reviewIdx]);
+                } else {
+                    endReview();
+                }
+                return;
+            }
+
+            currentRoundIdx++;
+            if (currentRoundIdx < totalRounds) {
+                showRound();
+            } else {
+                endMinting();
+            }
+        }
+
+        function renderEndTreasuryGrid() {
+            const grid = document.getElementById('end-treasury-grid');
+            grid.innerHTML = '';
+            sessionCoins.forEach(c => {
+                const wrap = document.createElement('div');
+                wrap.className = 'coin-wrap';
+                const coin = document.createElement('div');
+                coin.className = 'coin ' + coinColorClass(c.colorIdx);
+                coin.innerText = '🪙';
+                const label = document.createElement('div');
+                label.className = 'coin-label';
+                label.innerText = c.word;
+                wrap.appendChild(coin);
+                wrap.appendChild(label);
+                grid.appendChild(wrap);
+            });
+        }
+
+        function endMinting() {
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('feedback-box').style.display = 'none';
+
+            const endBox = document.getElementById('end-box');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            endBox.style.display = 'block';
+
+            LudiProgress.saveGameResult('principia', correctCount, totalRounds);
+
+            if (correctCount === totalRounds) {
+                title.innerText = "🏛️ MEISTER-MÜNZMEISTER!";
+                title.style.color = "#4CAF50";
+            } else if (correctCount >= totalRounds * 0.6) {
+                title.innerText = "🪙 GUTE PRÄGERUNDE!";
+                title.style.color = "var(--roman-gold)";
+            } else {
+                title.innerText = "🔨 WEITER ÜBEN!";
+                title.style.color = "#F44336";
+            }
+            msg.innerHTML = `Du hast <strong>${correctCount} von ${totalRounds}</strong> Münzen sauber geprägt.`;
+
+            renderEndTreasuryGrid();
+
+            const summary = LudiProgress.getBoxSummary(mintPool);
+            document.getElementById('box-summary').innerText =
+                `Dein Vokabelkasten (${mintPool.length} Wörter in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
+
+            const reviewBtn = document.getElementById('btn-review');
+            if (missedItems.length > 0) {
+                reviewBtn.style.display = 'inline-block';
+                reviewBtn.innerText = `📚 ${missedItems.length} Fehlprägung(en) wiederholen`;
+            } else {
+                reviewBtn.style.display = 'none';
+            }
+
+            updateOverallTreasuryDisplay();
+        }
+
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+
+            showRound(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('feedback-box').style.display = 'none';
+            isReviewMode = false;
+
+            const endBox = document.getElementById('end-box');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            endBox.style.display = 'block';
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('end-treasury-grid').innerHTML = '';
+            document.getElementById('box-summary').innerText = '';
+
+            title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            title.style.color = "var(--roman-gold)";
+            msg.innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> Fehlprägungen nochmal versucht und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig geprägt.`;
+
+            updateOverallTreasuryDisplay();
+        }
+    </script>
+</body>
+</html>
