@@ -89,9 +89,16 @@
 
         .sentence-box {
             background: var(--roman-marble); color: #2a2a2a; border-radius: 8px;
-            padding: 25px 20px; margin-bottom: 15px; text-align: center;
+            padding: 35px 20px 25px; margin-bottom: 15px; text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            position: relative;
         }
+        #pendulum-svg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: visible;
+        }
+        .pendulum-arrow { animation: arrowFadeIn 0.35s ease; }
+        @keyframes arrowFadeIn { from { opacity: 0; } to { opacity: 1; } }
         .latin-word {
             font-family: var(--font-display); font-size: 1.4rem; font-weight: bold;
             display: inline-block; margin: 4px 6px; padding: 4px 8px; border-radius: 6px;
@@ -181,7 +188,16 @@
 
             <div class="instruction-line" id="instruction-line">Finde das Subjekt!</div>
 
-            <div class="sentence-box" id="sentence-box"></div>
+            <div class="sentence-box">
+                <svg id="pendulum-svg">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                            <polygon points="0 0, 7 3, 0 6" fill="#b8860b" />
+                        </marker>
+                    </defs>
+                </svg>
+                <div id="sentence-words"></div>
+            </div>
 
             <div class="geruest-box" id="geruest-box">
                 <span class="tag">DEIN GERÜST</span>
@@ -259,7 +275,7 @@
             { prep: "ad", nounLemma: "forum", de: "zum Forum" },
             { prep: "ad", nounLemma: "schola", de: "zur Schule" },
             { prep: "in", nounLemma: "hortus", de: "in den Garten" },
-            { prep: "ante", nounLemma: "villa", de: "vor das Landhaus" }
+            { prep: "ante", nounLemma: "villa", de: "vor dem Landhaus" }
         ];
         const simpleAdverbs = [
             { latin: "nunc", de: "jetzt" }, { latin: "hodiē", de: "heute" },
@@ -398,6 +414,7 @@
         let roundIdx = 0;
         let correctCount = 0;
         let currentRound = null;
+        let foundSpanOrder = [];
         let currentStep = 'sub';
         let roundHadError = false;
         let missedItems = [];
@@ -446,7 +463,7 @@
         }
 
         function renderSentence() {
-            const box = document.getElementById('sentence-box');
+            const box = document.getElementById('sentence-words');
             box.innerHTML = '';
             currentRound.tokens.forEach((token, idx) => {
                 const span = document.createElement('span');
@@ -456,6 +473,39 @@
                 span.addEventListener('click', () => handleWordClick(idx));
                 box.appendChild(span);
             });
+            clearPendulumArrows();
+        }
+
+        function clearPendulumArrows() {
+            const svg = document.getElementById('pendulum-svg');
+            svg.querySelectorAll('path.pendulum-arrow').forEach(p => p.remove());
+            foundSpanOrder = [];
+        }
+
+        // Zeichnet einen gebogenen Pfeil zwischen zwei Wort-Elementen, relativ zur sentence-box positioniert.
+        function drawPendulumArrow(fromSpan, toSpan) {
+            const svg = document.getElementById('pendulum-svg');
+            const boxRect = document.querySelector('.sentence-box').getBoundingClientRect();
+            const fromRect = fromSpan.getBoundingClientRect();
+            const toRect = toSpan.getBoundingClientRect();
+
+            const x1 = fromRect.left + fromRect.width / 2 - boxRect.left;
+            const y1 = fromRect.top - boxRect.top;
+            const x2 = toRect.left + toRect.width / 2 - boxRect.left;
+            const y2 = toRect.top - boxRect.top;
+
+            const midX = (x1 + x2) / 2;
+            const arcY = Math.min(y1, y2) - 26;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('class', 'pendulum-arrow');
+            path.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${arcY} ${x2} ${y2}`);
+            path.setAttribute('stroke', '#b8860b');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('marker-end', 'url(#arrowhead)');
+            path.style.opacity = '1';
+            svg.appendChild(path);
         }
 
         function updateInstruction() {
@@ -487,6 +537,12 @@
                 span.classList.add('found-' + currentStep);
                 span.style.cursor = 'default';
                 updateGeruestDisplay(currentStep, token.text);
+
+                if (foundSpanOrder.length > 0) {
+                    drawPendulumArrow(foundSpanOrder[foundSpanOrder.length - 1], span);
+                }
+                foundSpanOrder.push(span);
+
                 advanceStep();
             } else {
                 roundHadError = true;
