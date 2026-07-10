@@ -16,6 +16,13 @@
             --text-light: #f5f5f5;
             --font-display: 'Georgia', 'Times New Roman', serif;
             --font-body: 'Verdana', sans-serif;
+
+            /* Eine Akzentfarbe pro Säule, damit man auch beim Scrollen sofort sieht,
+               in welchem Bereich man sich befindet. */
+            --pillar-wortschatz: #d4af37;
+            --pillar-formenlehre: #5b8ba0;
+            --pillar-syntax: #6b9c5a;
+            --pillar-kultur: #c1652f;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +38,7 @@
             padding: 30px 15px;
         }
 
-        .header-section { text-align: center; margin-bottom: 40px; }
+        .header-section { text-align: center; margin-bottom: 30px; }
 
         h1 {
             color: var(--roman-gold);
@@ -45,18 +52,46 @@
 
         .subtitle { color: var(--roman-marble); font-size: 1.1rem; font-style: italic; opacity: 0.8; }
 
+        .pillar-nav {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            margin: 20px 0 10px; width: 100%; max-width: 1000px;
+        }
+        .pillar-nav a {
+            text-decoration: none; font-family: var(--font-body); font-size: 0.85rem;
+            font-weight: bold; padding: 8px 16px; border-radius: 20px;
+            border: 2px solid var(--pillar-color, var(--roman-bronze));
+            color: var(--pillar-color, var(--roman-marble));
+            background: rgba(255,255,255,0.03);
+        }
+
+        .pillar-section { width: 100%; max-width: 1000px; margin-top: 45px; }
+        .pillar-section:first-of-type { margin-top: 20px; }
+
+        .pillar-header {
+            display: flex; align-items: baseline; gap: 14px;
+            border-bottom: 3px solid var(--pillar-color, var(--roman-bronze));
+            padding-bottom: 10px; margin-bottom: 8px;
+        }
+        .pillar-icon { font-size: 1.8rem; }
+        .pillar-title {
+            font-family: var(--font-display); font-size: 1.7rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--pillar-color, var(--roman-gold));
+        }
+        .pillar-desc {
+            font-size: 0.95rem; color: #aaa; margin-bottom: 22px; font-style: italic;
+        }
+
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             width: 100%;
-            max-width: 1000px;
         }
 
         .game-card {
             background: var(--card-bg);
             border: 2px solid var(--roman-bronze);
-            border-top: 5px solid var(--roman-red);
+            border-top: 5px solid var(--pillar-color, var(--roman-red));
             border-radius: 10px;
             padding: 25px 20px;
             display: flex;
@@ -68,7 +103,7 @@
         .game-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            border-color: var(--roman-gold);
+            border-color: var(--pillar-color, var(--roman-gold));
         }
 
         .game-icon { font-size: 3rem; margin-bottom: 15px; text-align: center; }
@@ -147,141 +182,196 @@
         <div class="subtitle">Wähle deine Trainingsarena</div>
     </div>
 
-    <div class="games-grid">
-        
-        <div class="game-card" data-game="circus">
-            <div class="game-icon">🐎</div>
-            <div class="game-title">Circus Maximus</div>
-            <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
-            <div class="game-desc">
-                Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen.
-            </div>
-            <div class="progress-badge"></div>
-            <a href="CircusV.html" class="play-btn">Arena betreten</a>
-        </div>
+    <nav class="pillar-nav">
+        <a href="#wortschatz" style="--pillar-color: var(--pillar-wortschatz);">🔤 Wortschatz</a>
+        <a href="#formenlehre" style="--pillar-color: var(--pillar-formenlehre);">📐 Formenlehre</a>
+        <a href="#syntax" style="--pillar-color: var(--pillar-syntax);">🔗 Syntax</a>
+        <a href="#kultur" style="--pillar-color: var(--pillar-kultur);">🏺 Römische Kultur</a>
+    </nav>
 
-        <div class="game-card" data-game="kastell">
-            <div class="game-icon">🏰</div>
-            <div class="game-title">Formen-Kastell</div>
-            <div class="game-focus">Schwerpunkt: Verb-Drill</div>
-            <div class="game-desc">
-                Verteidige die Mauern gegen Katapultsteine, indem du die Personalendungen der lateinischen Verben bestimmst.
-            </div>
-            <div class="progress-badge"></div>
-            <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
+    <!-- ============ SÄULE 1: WORTSCHATZ ============ -->
+    <section class="pillar-section" id="wortschatz" style="--pillar-color: var(--pillar-wortschatz);">
+        <div class="pillar-header">
+            <span class="pillar-icon">🔤</span>
+            <span class="pillar-title">Wortschatz</span>
         </div>
+        <div class="pillar-desc">Wörter kennen und ihre Bedeutung sicher abrufen.</div>
 
-        <div class="game-card" data-game="bollwerk">
-            <div class="game-icon">🛡️</div>
-            <div class="game-title">Kasus-Bollwerk</div>
-            <div class="game-focus">Schwerpunkt: Deklinations-Drill</div>
-            <div class="game-desc">
-                Verteidige die Mauern gegen Katapultsteine, indem du Kasus und Numerus der lateinischen Nomen bestimmst.
+        <div class="games-grid">
+
+            <div class="game-card" data-game="circus">
+                <div class="game-icon">🐎</div>
+                <div class="game-title">Circus Maximus</div>
+                <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
+                <div class="game-desc">
+                    Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="CircusV.html" class="play-btn">Arena betreten</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Bollwerk.html" class="play-btn">Bollwerk verteidigen</a>
-        </div>
 
-        <div class="game-card" data-game="possessiv">
-            <div class="game-icon">🔍</div>
-            <div class="game-title">Cuius Est?</div>
-            <div class="game-focus">Schwerpunkt: suus vs. eius/eōrum</div>
-            <div class="game-desc">
-                Löse Besitz-Fälle: Gehört der Gegenstand dem Subjekt selbst (suus) oder einer anderen Person (eius/eōrum)?
+            <div class="game-card" data-game="principia">
+                <div class="game-icon">🪙</div>
+                <div class="game-title">Prīncipia!</div>
+                <div class="game-focus">Schwerpunkt: Mittlere Wörterbuch-Spalte</div>
+                <div class="game-desc">
+                    Präge die richtige mittlere Spalte (Genitiv bei Nomen, 1. Person bei Verben) und fülle deine Schatzkammer mit Münzen.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Principia.html" class="play-btn">Prägerei eröffnen</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Possessiv.html" class="play-btn">Ermittlung starten</a>
-        </div>
 
-        <div class="game-card" data-game="genitiv">
-            <div class="game-icon">🔨</div>
-            <div class="game-title">Compone!</div>
-            <div class="game-focus">Schwerpunkt: Genitiv-Konstruktion</div>
-            <div class="game-desc">
-                Verbinde zwei Wörter zu einer korrekten Genitiv-Konstruktion und übe dabei aktiv das Bilden von Besitz-Ausdrücken.
+        </div>
+    </section>
+
+    <!-- ============ SÄULE 2: FORMENLEHRE ============ -->
+    <section class="pillar-section" id="formenlehre" style="--pillar-color: var(--pillar-formenlehre);">
+        <div class="pillar-header">
+            <span class="pillar-icon">📐</span>
+            <span class="pillar-title">Formenlehre</span>
+        </div>
+        <div class="pillar-desc">Die richtige Form bilden: Deklination, Konjugation, Kongruenz.</div>
+
+        <div class="games-grid">
+
+            <div class="game-card" data-game="kastell">
+                <div class="game-icon">🏰</div>
+                <div class="game-title">Formen-Kastell</div>
+                <div class="game-focus">Schwerpunkt: Verb-Drill</div>
+                <div class="game-desc">
+                    Verteidige die Mauern gegen Katapultsteine, indem du die Personalendungen der lateinischen Verben bestimmst.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Genitiv.html" class="play-btn">Bauauftrag annehmen</a>
-        </div>
 
-        <div class="game-card" data-game="principia">
-            <div class="game-icon">🪙</div>
-            <div class="game-title">Prīncipia!</div>
-            <div class="game-focus">Schwerpunkt: Mittlere Wörterbuch-Spalte</div>
-            <div class="game-desc">
-                Präge die richtige mittlere Spalte (Genitiv bei Nomen, 1. Person bei Verben) und fülle deine Schatzkammer mit Münzen.
+            <div class="game-card" data-game="bollwerk">
+                <div class="game-icon">🛡️</div>
+                <div class="game-title">Kasus-Bollwerk</div>
+                <div class="game-focus">Schwerpunkt: Deklinations-Drill</div>
+                <div class="game-desc">
+                    Verteidige die Mauern gegen Katapultsteine, indem du Kasus und Numerus der lateinischen Nomen bestimmst.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Bollwerk.html" class="play-btn">Bollwerk verteidigen</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Principia.html" class="play-btn">Prägerei eröffnen</a>
-        </div>
 
-        <div class="game-card" data-game="duell">
-            <div class="game-icon">⚔️</div>
-            <div class="game-title">Gladiatoren-Duell</div>
-            <div class="game-focus">Schwerpunkt: Multiplayer-Duell</div>
-            <div class="game-desc">
-                1-gegen-1 am iPad. Wer Vokabeln, Deklinationen und Konjugationen schneller erkennt, gewinnt den Kampf!
+            <div class="game-card" data-game="villa">
+                <div class="game-icon">🏛️</div>
+                <div class="game-title">Aedificium Rōmānum</div>
+                <div class="game-focus">Schwerpunkt: KNG-Kongruenz</div>
+                <div class="game-desc">
+                    Erbaue eine prächtige Villa! Baumaterial gewinnst du durch das richtige Anpassen von Adjektiven an Substantive.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Villa.html" class="play-btn">Villa bauen</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Duell.html" class="play-btn">Duell starten</a>
-        </div>
 
-        <div class="game-card" data-game="villa">
-            <div class="game-icon">🏛️</div>
-            <div class="game-title">Aedificium Rōmānum</div>
-            <div class="game-focus">Schwerpunkt: KNG-Kongruenz</div>
-            <div class="game-desc">
-                Erbaue eine prächtige Villa! Baumaterial gewinnst du durch das richtige Anpassen von Adjektiven an Substantive.
+            <div class="game-card" data-game="duell">
+                <div class="game-icon">⚔️</div>
+                <div class="game-title">Gladiatoren-Duell</div>
+                <div class="game-focus">Schwerpunkt: Multiplayer-Formen-Duell</div>
+                <div class="game-desc">
+                    1-gegen-1 am iPad. Wer Deklinationen und Konjugationen schneller erkennt, gewinnt den Kampf!
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Duell.html" class="play-btn">Duell starten</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Villa.html" class="play-btn">Villa bauen</a>
-        </div>
 
-        <div class="game-card" data-game="adventura">
-            <div class="game-icon">📜</div>
-            <div class="game-title">Mysterium Villae</div>
-            <div class="game-focus">Schwerpunkt: Syntax & Übersetzung</div>
-            <div class="game-desc">
-                Ein Textabenteuer: Übersetze Sätze korrekt, um den Großvater und den weißen Spitz Issa zu finden.
+        </div>
+    </section>
+
+    <!-- ============ SÄULE 3: SYNTAX ============ -->
+    <section class="pillar-section" id="syntax" style="--pillar-color: var(--pillar-syntax);">
+        <div class="pillar-header">
+            <span class="pillar-icon">🔗</span>
+            <span class="pillar-title">Syntax</span>
+        </div>
+        <div class="pillar-desc">Wörter im Satz richtig verbinden und verstehen.</div>
+
+        <div class="games-grid">
+
+            <div class="game-card" data-game="possessiv">
+                <div class="game-icon">🔍</div>
+                <div class="game-title">Cuius Est?</div>
+                <div class="game-focus">Schwerpunkt: suus vs. eius/eōrum</div>
+                <div class="game-desc">
+                    Löse Besitz-Fälle: Gehört der Gegenstand dem Subjekt selbst (suus) oder einer anderen Person (eius/eōrum)?
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Possessiv.html" class="play-btn">Ermittlung starten</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Adventura.html" class="play-btn">Erkundung starten</a>
-        </div>
 
-        <div class="game-card" data-game="quiz">
-            <div class="game-icon">🏺</div>
-            <div class="game-title">Alltags-Quiz</div>
-            <div class="game-focus">Schwerpunkt: Römische Kultur</div>
-            <div class="game-desc">
-                Teste dein Wissen über das Leben im alten Rom – von der Schule bis zum Forum Romanum.
+            <div class="game-card" data-game="genitiv">
+                <div class="game-icon">🔨</div>
+                <div class="game-title">Compone!</div>
+                <div class="game-focus">Schwerpunkt: Genitiv-Konstruktion (De→La)</div>
+                <div class="game-desc">
+                    Verbinde zwei Wörter zu einer korrekten Genitiv-Konstruktion und übe dabei aktiv das Bilden von Besitz-Ausdrücken.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Genitiv.html" class="play-btn">Bauauftrag annehmen</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Quiz.html" class="play-btn">Quiz starten</a>
-        </div>
 
-        <div class="game-card" data-game="tabularium">
-            <div class="game-icon">🗄️</div>
-            <div class="game-title">Tabulārium</div>
-            <div class="game-focus">Schwerpunkt: Genitiv & Pronomen</div>
-            <div class="game-desc">
-                Ordne im Archiv der Villa die verlorenen Gegenstände ihren rechtmäßigen Besitzern zu.
+            <div class="game-card" data-game="tabularium">
+                <div class="game-icon">🗄️</div>
+                <div class="game-title">Tabulārium</div>
+                <div class="game-focus">Schwerpunkt: Genitiv-Konstruktion (La→De)</div>
+                <div class="game-desc">
+                    Ordne im Archiv der Villa die verlorenen Gegenstände ihren rechtmäßigen Besitzern zu.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Tabularium.html" class="play-btn">Archiv betreten</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="Tabularium.html" class="play-btn">Archiv betreten</a>
-        </div>
 
-        <div class="game-card" data-game="viaromana">
-            <div class="game-icon">🛣️</div>
-            <div class="game-title">Via Rōmāna</div>
-            <div class="game-focus">Schwerpunkt: Satzteil-Bestimmung</div>
-            <div class="game-desc">
-                Bringe den Reisewagen nach Rom! Bestimme Subjekte, Prädikate und Objekte, um Meilensteine voranzukommen.
+            <div class="game-card" data-game="viaromana">
+                <div class="game-icon">🛣️</div>
+                <div class="game-title">Via Rōmāna</div>
+                <div class="game-focus">Schwerpunkt: Satzteil-Bestimmung</div>
+                <div class="game-desc">
+                    Bringe den Reisewagen nach Rom! Bestimme Subjekte, Prädikate und Objekte, um Meilensteine voranzukommen.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="ViaRomana.html" class="play-btn">Reise starten</a>
             </div>
-            <div class="progress-badge"></div>
-            <a href="ViaRomana.html" class="play-btn">Reise starten</a>
-        </div>
 
-    </div>
+            <div class="game-card" data-game="adventura">
+                <div class="game-icon">📜</div>
+                <div class="game-title">Mysterium Villae</div>
+                <div class="game-focus">Schwerpunkt: Satzübersetzung</div>
+                <div class="game-desc">
+                    Ein Textabenteuer: Übersetze Sätze korrekt, um den Großvater und den weißen Spitz Issa zu finden.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Adventura.html" class="play-btn">Erkundung starten</a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ============ SÄULE 4: RÖMISCHE KULTUR ============ -->
+    <section class="pillar-section" id="kultur" style="--pillar-color: var(--pillar-kultur);">
+        <div class="pillar-header">
+            <span class="pillar-icon">🏺</span>
+            <span class="pillar-title">Römische Kultur</span>
+        </div>
+        <div class="pillar-desc">Wissen über das Leben im alten Rom - keine Sprachkompetenz, sondern Sachwissen.</div>
+
+        <div class="games-grid">
+
+            <div class="game-card" data-game="quiz">
+                <div class="game-icon">🏺</div>
+                <div class="game-title">Alltags-Quiz</div>
+                <div class="game-focus">Schwerpunkt: Römische Kultur</div>
+                <div class="game-desc">
+                    Teste dein Wissen über das Leben im alten Rom – von der Schule bis zum Forum Romanum.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="Quiz.html" class="play-btn">Quiz starten</a>
+            </div>
+
+        </div>
+    </section>
 
     <script>
         document.querySelectorAll('.game-card[data-game]').forEach(card => {
