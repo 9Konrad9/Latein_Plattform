@@ -182,6 +182,19 @@
         <div class="subtitle">Wähle deine Trainingsarena</div>
     </div>
 
+    <div style="width: 100%; max-width: 1000px; margin-bottom: 10px;">
+        <div class="game-card" data-game="lektionscheck" style="border-top-color: var(--roman-gold); background: linear-gradient(135deg, #2d2d2d, #241f0f);">
+            <div class="game-icon">🏛️</div>
+            <div class="game-title">Lectiō Fīnīta! — Der Lektions-Check</div>
+            <div class="game-focus">Generalprobe über alle drei Säulen: Wortschatz, Formenlehre, Syntax</div>
+            <div class="game-desc">
+                Eine oder mehrere Lektionen wählen und in drei kurzen Phasen alles nochmal durchgehen - mit Auswertung pro Bereich am Ende.
+            </div>
+            <div class="progress-badge"></div>
+            <a href="LektionsCheck.html" class="play-btn">Check starten</a>
+        </div>
+    </div>
+
     <nav class="pillar-nav">
         <a href="#wortschatz" style="--pillar-color: var(--pillar-wortschatz);">🔤 Wortschatz</a>
         <a href="#formenlehre" style="--pillar-color: var(--pillar-formenlehre);">📐 Formenlehre</a>
@@ -219,6 +232,28 @@
                 </div>
                 <div class="progress-badge"></div>
                 <a href="Principia.html" class="play-btn">Prägerei eröffnen</a>
+            </div>
+
+            <div class="game-card" data-game="issajump">
+                <div class="game-icon">🐕</div>
+                <div class="game-title">Issa Springt!</div>
+                <div class="game-focus">Schwerpunkt: Vokabel-Bedeutung</div>
+                <div class="game-desc">
+                    Jump'n'Run: Lenke Issa frei nach oben und lande auf der Plattform mit der richtigen Bedeutung - falsche Landungen kosten ein Herz.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="IssaJump.html" class="play-btn">Losspringen</a>
+            </div>
+
+            <div class="game-card" data-game="issasalit">
+                <div class="game-icon">🐕</div>
+                <div class="game-title">Issa Salit!</div>
+                <div class="game-focus">Schwerpunkt: Vokabel-Bedeutung (Jump &amp; Run)</div>
+                <div class="game-desc">
+                    Lenke Issa von Plattform zu Plattform und spring auf die richtige deutsche Bedeutung des angezeigten Wortes.
+                </div>
+                <div class="progress-badge"></div>
+                <a href="IssaSalit.html" class="play-btn">Loslegen</a>
             </div>
 
         </div>
@@ -366,6 +401,14 @@
         document.querySelectorAll('.game-card[data-game]').forEach(card => {
             const gameId = card.getAttribute('data-game');
             const badge = card.querySelector('.progress-badge');
+
+            // Sonderfall: Issa Salit! hat einen Höhen-Score statt Runden-Score
+            if (gameId === 'issasalit') {
+                const p = LudiProgress.getGameProgress('issasalit');
+                if (p) { badge.classList.add('has-score'); badge.innerText = `🏆 Bestleistung: Höhe ${p.bestScore}`; }
+                else badge.innerText = 'Noch nicht gespielt';
+                return;
+            }
 
             // Sonderfall: Pronomina! hat zwei getrennte Modi mit eigenen Scores
             if (gameId === 'pronomina') {

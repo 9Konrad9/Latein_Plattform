@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Issa Springt! - Vokabel-Jump'n'Run</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37; --roman-bronze: #8c7853; --roman-marble: #f0e6d2; --roman-red: #800000;
+            --bg-dark: #0e1420; --font-display: 'Georgia', 'Times New Roman', serif; --font-body: 'Verdana', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        html, body {
+            height: 100vh; height: 100dvh; background: var(--bg-dark); color: #fff; font-family: var(--font-body);
+            display: flex; flex-direction: column; align-items: center; overflow: hidden; overscroll-behavior: none;
+            width: 100%;
+        }
+        h1 {
+            color: var(--roman-gold); font-family: var(--font-display); text-transform: uppercase;
+            font-size: 1.5rem; margin: 8px 0 2px; text-align: center; letter-spacing: 2px;
+            flex-shrink: 0;
+        }
+        .subtitle {
+            font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 8px;
+            text-align: center; font-size: 0.9rem; flex-shrink: 0;
+        }
+
+        /* Füllt den kompletten restlichen Platz im Flex-Layout - zuverlässiger als vh-Berechnungen,
+           die auf Mobilgeräten je nach Adressleiste/Browser stark schwanken. */
+        .stage-wrapper {
+            flex: 1 1 auto; min-height: 0; width: 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 12px 12px;
+        }
+        .stage {
+            position: relative;
+            width: 400px;
+            height: 650px;
+            aspect-ratio: 400/650;
+            background: #bcdcf0; border: 4px solid var(--roman-bronze); border-radius: 10px; overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+        }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(10, 15, 25, 0.94); padding: 20px; text-align: center; z-index: 20;
+            overflow-y: auto;
+        }
+        .overlay h2 { font-family: var(--font-display); color: var(--roman-gold); font-size: 1.5rem; margin-bottom: 12px; }
+        .overlay p { color: #ddd; line-height: 1.5; margin-bottom: 10px; font-size: 0.95rem; }
+        .overlay .example { color: var(--roman-gold); font-weight: bold; }
+        .start-btn {
+            background: var(--roman-gold); color: var(--roman-red); font-family: var(--font-display); font-weight: bold;
+            padding: 13px 34px; border: none; border-radius: 26px; font-size: 1.1rem; cursor: pointer;
+            text-transform: uppercase; box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); margin-top: 10px; touch-action: manipulation;
+        }
+        .small-btn {
+            background: #444; color: #fff; font-family: var(--font-body); font-weight: bold;
+            padding: 9px 20px; border: none; border-radius: 20px; font-size: 0.85rem; cursor: pointer; margin-top: 10px;
+            text-decoration: none; display: inline-block;
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 10px 12px; display: flex;
+            justify-content: space-between; align-items: flex-start; z-index: 10; pointer-events: none;
+        }
+        .hud-word {
+            background: rgba(0,0,0,0.55); border: 2px solid var(--roman-gold); border-radius: 8px;
+            padding: 6px 14px; font-family: var(--font-display); font-size: 1.2rem; font-weight: bold; color: var(--roman-gold);
+        }
+        .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .hud-hearts { font-size: 1.1rem; }
+        .hud-score { background: rgba(0,0,0,0.55); border-radius: 6px; padding: 3px 10px; font-size: 0.85rem; font-weight: bold; }
+
+        /* Touch-Steuerung */
+        .touch-controls {
+            position: absolute; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-between;
+            padding: 14px; z-index: 15; pointer-events: none;
+        }
+        .touch-btn {
+            width: 62px; height: 62px; border-radius: 50%; background: rgba(255,255,255,0.18);
+            border: 2px solid rgba(255,255,255,0.4); color: #fff; font-size: 1.6rem; display: flex;
+            align-items: center; justify-content: center; pointer-events: auto; touch-action: manipulation;
+        }
+        .touch-btn:active { background: rgba(255,255,255,0.35); }
+
+        .feedback-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 12;
+            opacity: 0; transition: opacity 0.15s ease;
+        }
+        .feedback-flash.show-wrong { opacity: 1; background: rgba(200, 40, 40, 0.35); }
+        .feedback-flash.show-correct { opacity: 1; background: rgba(60, 180, 90, 0.3); }
+    </style>
+</head>
+<body>
+
+    <h1>🐕 Issa Springt!</h1>
+    <div id="error-banner" style="display:none; background:#c0392b; color:#fff; padding:8px 14px; font-size:0.85rem; text-align:center; max-width:90%; border-radius:6px; margin-bottom:6px;"></div>
+    <div class="subtitle">Vokabel-Jump'n'Run</div>
+
+    <div class="stage-wrapper">
+    <div class="stage" id="stage">
+        <canvas id="game-canvas" width="400" height="650"></canvas>
+
+        <div class="hud" id="hud" style="display:none;">
+            <div class="hud-word" id="hud-word">-</div>
+            <div class="hud-right">
+                <div class="hud-hearts" id="hud-hearts">❤️❤️❤️</div>
+                <div class="hud-score" id="hud-score">Höhe: 0 m</div>
+            </div>
+        </div>
+
+        <div class="touch-controls" id="touch-controls" style="display:none;">
+            <div class="touch-btn" id="btn-left">◀</div>
+            <div class="touch-btn" id="btn-right">▶</div>
+        </div>
+
+        <div class="feedback-flash" id="feedback-flash"></div>
+
+        <!-- START -->
+        <div class="overlay" id="start-overlay">
+            <h2>Issa ist ausgebüxt!</h2>
+            <p>Hilf Issa, immer höher zu springen! Oben siehst du die aktuelle Vokabel, z. B. <span class="example">canis</span> - lenke Issa auf die Plattform mit der richtigen Bedeutung.</p>
+            <p><strong>Steuerung:</strong> Pfeiltasten/A+D am Computer, Tipp-Tasten am iPad. Issa springt automatisch.</p>
+            <p style="color:#ff6b5b; font-weight:bold;">Achtung: Eine falsche Plattform lässt Issa durchfallen und kostet ein Herz!</p>
+            <button class="start-btn" id="btn-start">Los geht's!</button>
+        </div>
+
+        <!-- GAME OVER -->
+        <div class="overlay" id="end-overlay" style="display:none;">
+            <h2 id="end-title">Issa ist gefallen!</h2>
+            <p id="end-stats"></p>
+            <button class="start-btn" id="btn-restart">Nochmal springen</button>
+            <br>
+            <a href="index.html" class="small-btn">Zurück zum Menü</a>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        window.addEventListener('error', function(e) {
+            const banner = document.getElementById('error-banner');
+            if (banner) {
+                banner.style.display = 'block';
+                banner.innerText = '⚠️ Fehler: ' + e.message + ' (Zeile ' + e.lineno + ')';
+            }
+        });
+
+        /* ============ KONSTANTEN ============ */
+        const CW = 400, CH = 650;
+        const GRAVITY = 0.4;
+        const BOUNCE_VELOCITY = -12.5;
+        const MOVE_ACCEL = 1.3;
+        const MOVE_MAX = 6.5;
+        const FRICTION = 0.92;
+        const ISSA_W = 34, ISSA_H = 30;
+        const NEUTRAL_W = 66;
+        const ANSWER_W = 88;
+        const ROW_GAP_MIN = 95, ROW_GAP_MAX = 130;
+        const START_LIVES = 3;
+        const INVULN_FRAMES = 70;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        /* ============ STAGE-GRÖSSE (per JS statt reinem CSS - zuverlässiger über alle Browser hinweg) ============ */
+        function resizeStage() {
+            const wrapper = document.querySelector('.stage-wrapper');
+            const stage = document.getElementById('stage');
+            const availW = Math.max(100, wrapper.clientWidth - 24);
+            const availH = Math.max(100, wrapper.clientHeight - 12);
+            const ratio = 400 / 650;
+
+            let w = Math.min(availW, 500);
+            let h = w / ratio;
+            if (h > availH) { h = availH; w = h * ratio; }
+
+            stage.style.width = Math.round(w) + 'px';
+            stage.style.height = Math.round(h) + 'px';
+        }
+        window.addEventListener('resize', resizeStage);
+        window.addEventListener('orientationchange', () => setTimeout(resizeStage, 100));
+
+        /* ============ ASSETS ============ */
+        const ASSET_PATH = 'assets/issajump/';
+        const ASSET_FILES = {
+            idle: 'issa_idle.png', jump: 'issa_jump.png', falling: 'issa_falling.png', startled: 'issa_startled.png',
+            bg: 'background.png', heartFull: 'heart_full.png', heartEmpty: 'heart_empty.png',
+            platformNeutral: 'platform_neutral.png', platformAnswer: 'platform_answer.png'
+        };
+        const images = {};
+        let assetsReady = false;
+
+        function loadAssets(onDone) {
+            const keys = Object.keys(ASSET_FILES);
+            let loaded = 0;
+            keys.forEach(key => {
+                const img = new Image();
+                img.onload = img.onerror = () => { loaded++; if (loaded === keys.length) { assetsReady = true; onDone(); } };
+                img.src = ASSET_PATH + ASSET_FILES[key];
+                images[key] = img;
+            });
+        }
+        function imgReady(key) { return images[key] && images[key].complete && images[key].naturalWidth > 0; }
+
+        /* ============ VOKABEL-LOGIK ============ */
+        let activePool = [];
+
+        function germanGloss(entry) { return entry.meaning.split(',')[0].trim(); }
+
+        function buildAnswerSet(target) {
+            const correct = germanGloss(target);
+            const others = activePool.filter(v => v.latin !== target.latin);
+            const shuffled = [...others].sort(() => Math.random() - 0.5);
+            const distractorSet = new Set();
+            for (const item of shuffled) {
+                const gloss = germanGloss(item);
+                if (gloss !== correct) distractorSet.add(gloss);
+                if (distractorSet.size === 3) break;
+            }
+            const options = [correct, ...Array.from(distractorSet)].sort(() => Math.random() - 0.5);
+            return { correct, options };
+        }
+
+        /* ============ SPIELZUSTAND ============ */
+        let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
+
+        function resetGame() {
+            issa = { x: CW / 2 - ISSA_W / 2, y: CH - 120, vx: 0, vy: BOUNCE_VELOCITY, facing: 1, animT: 0 };
+            platforms = [];
+            score = 0;
+            lives = START_LIVES;
+            invulnFrames = 0;
+            keys = {};
+            touchDir = 0;
+            running = true;
+            correctCount = 0;
+            wrongCount = 0;
+            currentHudLatin = '';
+            startledFrames = 0;
+
+            platforms.push({ x: CW / 2 - NEUTRAL_W / 2, y: CH - 80, w: NEUTRAL_W, type: 'neutral' });
+
+            nextSpawnY = CH - 180;
+            spawnCycle = 0;
+            while (nextSpawnY > -CH) { nextSpawnY = spawnRow(nextSpawnY, spawnCycle); spawnCycle++; }
+
+            updateHudWord();
+            updateHud();
+        }
+
+        // Erzeugt eine Plattform-Reihe bei Höhe y und gibt die nächste Spawn-Höhe zurück.
+        // Zyklus: 2x neutrale Einzelplattform, dann 1x Antwort-Cluster (4 Plattformen, ein Zielwort pro Cluster).
+        function spawnRow(y, cycle) {
+            const gap = ROW_GAP_MIN + Math.random() * (ROW_GAP_MAX - ROW_GAP_MIN);
+            if (cycle % 3 === 2) {
+                const target = LudiProgress.weightedPick(activePool);
+                const { correct, options } = buildAnswerSet(target);
+                const slotW = CW / 4;
+                for (let i = 0; i < 4; i++) {
+                    const px = i * slotW + (slotW - ANSWER_W) / 2 + (Math.random() * 10 - 5);
+                    platforms.push({
+                        x: Math.max(4, Math.min(CW - ANSWER_W - 4, px)), y: y, w: ANSWER_W, type: 'answer',
+                        text: options[i], isCorrect: options[i] === correct, targetLatin: target.latin
+                    });
+                }
+            } else {
+                const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
+                platforms.push({ x: px, y: y, w: NEUTRAL_W, type: 'neutral' });
+            }
+            return y - gap;
+        }
+
+        // Sucht das nächste noch nicht erreichte Antwort-Cluster (höchstes y-, also am wenigsten weit oben, das noch über Issa liegt) und zeigt dessen Wort in der HUD.
+        function updateHudWord() {
+            const upcoming = platforms.filter(p => p.type === 'answer' && p.y <= issa.y + 40);
+            if (upcoming.length === 0) return;
+            upcoming.sort((a, b) => b.y - a.y);
+            const latin = upcoming[0].targetLatin;
+            if (latin !== currentHudLatin) {
+                currentHudLatin = latin;
+                document.getElementById('hud-word').innerText = latin;
+            }
+        }
+
+        function updateHud() {
+            const heartsEl = document.getElementById('hud-hearts');
+            heartsEl.innerHTML = '';
+            const fullSrc = ASSET_PATH + ASSET_FILES.heartFull;
+            const emptySrc = ASSET_PATH + ASSET_FILES.heartEmpty;
+            for (let i = 0; i < START_LIVES; i++) {
+                const img = document.createElement('img');
+                img.src = i < lives ? fullSrc : emptySrc;
+                img.style.width = '22px';
+                img.style.height = '22px';
+                img.style.marginLeft = '3px';
+                img.style.verticalAlign = 'middle';
+                heartsEl.appendChild(img);
+            }
+            document.getElementById('hud-score').innerText = `Höhe: ${score} m`;
+        }
+
+        /* ============ PLATTFORM-NACHSCHUB ============ */
+        let cameraY = 0, spawnCycle = 0, nextSpawnY = 0;
+
+        function maintainPlatforms() {
+            platforms = platforms.filter(p => p.y < cameraY + CH + 150);
+            while (nextSpawnY > cameraY - 100) {
+                nextSpawnY = spawnRow(nextSpawnY, spawnCycle);
+                spawnCycle++;
+            }
+        }
+
+        /* ============ PHYSIK & KOLLISION ============ */
+        function updatePhysics() {
+            let dir = touchDir;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) dir = -1;
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) dir = 1;
+
+            if (dir !== 0) {
+                issa.vx += dir * MOVE_ACCEL;
+                if (issa.vx > MOVE_MAX) issa.vx = MOVE_MAX;
+                if (issa.vx < -MOVE_MAX) issa.vx = -MOVE_MAX;
+                issa.facing = dir;
+            } else {
+                issa.vx *= FRICTION;
+            }
+            issa.x += issa.vx;
+            if (issa.x + ISSA_W < 0) issa.x = CW;
+            if (issa.x > CW) issa.x = -ISSA_W;
+
+            issa.vy += GRAVITY;
+            issa.y += issa.vy;
+
+            if (invulnFrames > 0) invulnFrames--;
+            if (startledFrames > 0) startledFrames--;
+
+            if (issa.vy > 0) {
+                for (const p of platforms) {
+                    const issaBottom = issa.y + ISSA_H;
+                    const issaBottomPrev = issaBottom - issa.vy;
+                    if (issaBottomPrev <= p.y && issaBottom >= p.y &&
+                        issa.x + ISSA_W > p.x && issa.x < p.x + p.w) {
+                        handlePlatformLanding(p);
+                        break;
+                    }
+                }
+            }
+
+            cameraY = Math.min(cameraY, issa.y - CH * 0.45);
+            const heightScore = Math.max(0, Math.round(-cameraY / 10));
+            if (heightScore > score) { score = heightScore; updateHud(); }
+
+            maintainPlatforms();
+
+            if (issa.y > cameraY + CH + 100) loseLife();
+
+            updateHudWord();
+        }
+
+        function handlePlatformLanding(p) {
+            if (p.type === 'neutral') { issa.vy = BOUNCE_VELOCITY; return; }
+            if (invulnFrames > 0) { issa.vy = BOUNCE_VELOCITY; return; }
+            if (p.isCorrect) {
+                issa.vy = BOUNCE_VELOCITY;
+                correctCount++;
+                LudiProgress.recordVocabAttempt(p.targetLatin, true);
+                flashFeedback(true);
+            } else {
+                LudiProgress.recordVocabAttempt(p.targetLatin, false);
+                wrongCount++;
+                flashFeedback(false);
+                loseLife();
+            }
+        }
+
+        function flashFeedback(correct) {
+            const el = document.getElementById('feedback-flash');
+            el.classList.add(correct ? 'show-correct' : 'show-wrong');
+            setTimeout(() => el.classList.remove('show-correct', 'show-wrong'), 220);
+        }
+
+        function loseLife() {
+            lives--;
+            updateHud();
+            startledFrames = 30;
+            if (lives <= 0) { endGame(); return; }
+
+            const safeY = cameraY + CH - 90;
+            issa.x = CW / 2 - ISSA_W / 2;
+            issa.y = safeY - 20;
+            issa.vx = 0;
+            issa.vy = BOUNCE_VELOCITY;
+            invulnFrames = INVULN_FRAMES;
+
+            const hasNearby = platforms.some(p => Math.abs(p.y - safeY) < 20);
+            if (!hasNearby) platforms.push({ x: CW / 2 - NEUTRAL_W / 2, y: safeY, w: NEUTRAL_W, type: 'neutral' });
+        }
+
+        /* ============ RENDERING ============ */
+        function roundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+        function truncateText(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+
+        function drawPlatform(p) {
+            if (p.type === 'neutral') {
+                if (imgReady('platformNeutral')) {
+                    const img = images.platformNeutral;
+                    const h = p.w * (img.height / img.width);
+                    ctx.drawImage(img, p.x, p.y, p.w, h);
+                } else {
+                    ctx.fillStyle = '#8c6b4a';
+                    ctx.fillRect(p.x, p.y, p.w, 12);
+                }
+            } else {
+                const h = 26;
+                if (imgReady('platformAnswer')) {
+                    ctx.drawImage(images.platformAnswer, p.x, p.y, p.w, h);
+                } else {
+                    ctx.fillStyle = '#f0e6d2';
+                    ctx.strokeStyle = '#8c7853'; ctx.lineWidth = 2;
+                    roundRect(p.x, p.y, p.w, h, 6);
+                    ctx.fill(); ctx.stroke();
+                }
+                ctx.fillStyle = '#2a2a2a';
+                ctx.font = 'bold 11px Verdana';
+                ctx.textAlign = 'center';
+                ctx.fillText(truncateText(p.text, 13), p.x + p.w / 2, p.y + h / 2 + 4);
+            }
+        }
+
+        function getIssaPose() {
+            if (startledFrames > 0) return 'startled';
+            if (issa.vy < -1) return 'jump';
+            if (issa.vy > 1) return 'falling';
+            return 'idle';
+        }
+
+        function drawIssa() {
+            const pose = getIssaPose();
+            const key = pose; // 'idle' | 'jump' | 'falling' | 'startled'
+
+            ctx.save();
+            // Fußpunkt der Hitbox als Anker - das Sprite ist unten ausgerichtet, daher passt der Bounce-Punkt.
+            ctx.translate(issa.x + ISSA_W / 2, issa.y + ISSA_H);
+            if (issa.facing < 0) ctx.scale(-1, 1);
+            if (invulnFrames > 0 && Math.floor(invulnFrames / 6) % 2 === 0) ctx.globalAlpha = 0.4;
+
+            if (imgReady(key)) {
+                const img = images[key];
+                const drawW = 58;
+                const drawH = drawW * (img.height / img.width);
+                ctx.drawImage(img, -drawW / 2, -drawH, drawW, drawH);
+            } else {
+                // Fallback, falls ein Bild (noch) nicht geladen ist: einfacher Platzhalter
+                ctx.fillStyle = '#fefefe';
+                ctx.beginPath(); ctx.ellipse(0, -14, 16, 14, 0, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, CW, CH);
+            // Anschluss-Himmelfarbe (gemessen aus dem oberen Bildrand des Hintergrundbilds) -
+            // deckt alles ab, was über das Hintergrundbild hinaus nach oben gescrollt wird.
+            ctx.fillStyle = '#43c5fc';
+            ctx.fillRect(0, 0, CW, CH);
+
+            ctx.save();
+            ctx.translate(0, -cameraY);
+
+            if (imgReady('bg')) {
+                const img = images.bg;
+                const bgW = CW;
+                const bgH = bgW * (img.height / img.width);
+                const bgTopY = CH - bgH; // Bild ist am Boden der Welt (y=CH) verankert
+                ctx.drawImage(img, 0, bgTopY, bgW, bgH);
+            }
+
+            platforms.forEach(p => drawPlatform(p));
+            drawIssa();
+            ctx.restore();
+        }
+
+        /* ============ SPIELSCHLEIFE & STEUERUNG ============ */
+        let animFrameId = null;
+        function gameLoop() {
+            if (!running) return;
+            updatePhysics();
+            render();
+            animFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        window.addEventListener('keydown', e => { keys[e.key] = true; });
+        window.addEventListener('keyup', e => { keys[e.key] = false; });
+
+        function setupTouchControls() {
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            ['touchstart', 'mousedown'].forEach(evt => {
+                btnLeft.addEventListener(evt, e => { e.preventDefault(); touchDir = -1; });
+                btnRight.addEventListener(evt, e => { e.preventDefault(); touchDir = 1; });
+            });
+            ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(evt => {
+                btnLeft.addEventListener(evt, () => { if (touchDir === -1) touchDir = 0; });
+                btnRight.addEventListener(evt, () => { if (touchDir === 1) touchDir = 0; });
+            });
+        }
+
+        /* ============ START/ENDE ============ */
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
+            if (typeof LessonFilter === 'undefined') { alert("Fehler: lessonFilter.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
+            if (typeof LudiProgress === 'undefined') { alert("Fehler: progress.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool.filter(v => (v.type === 'noun' || v.type === 'verb') && !v.latin.includes(' '));
+                if (activePool.length < 8) {
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenig Wortschatz. Bitte mehr Lektionen wählen.");
+                    return;
+                }
+                beginRun();
+            });
+        }
+
+        function beginRun() {
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('end-overlay').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('touch-controls').style.display = 'flex';
+            cameraY = 0; spawnCycle = 0; nextSpawnY = 0;
+            resetGame();
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            gameLoop();
+        }
+
+        function endGame() {
+            running = false;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('touch-controls').style.display = 'none';
+
+            LudiProgress.saveGameResult('issajump', correctCount, correctCount + wrongCount);
+
+            document.getElementById('end-stats').innerHTML =
+                `Erreichte Höhe: <strong>${score} m</strong><br>Vokabeln richtig: <strong>${correctCount} von ${correctCount + wrongCount}</strong>`;
+            document.getElementById('end-overlay').style.display = 'flex';
+        }
+
+        window.onload = function() {
+            document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            setupTouchControls();
+            loadAssets(() => { /* Assets laufen im Hintergrund; das Spiel selbst startet erst nach Klick */ });
+            resizeStage();
+        };
+    </script>
+</body>
+</html>
