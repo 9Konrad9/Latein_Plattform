@@ -186,7 +186,7 @@
         <!-- Arena -->
         <div class="circus-stadium">
             <svg class="svg-arena" viewBox="0 0 700 240">
-                <rect x="0" y="0" width="700" height="240" fill="#dfb784"/>
+                <image href="assets/circus/background.png" x="0" y="0" width="700" height="240" preserveAspectRatio="xMidYMid slice"/>
                 <rect x="15" y="15" width="670" height="210" rx="105" fill="none" stroke="#aa7a44" stroke-width="6"/>
                 <rect x="45" y="45" width="610" height="150" rx="75" fill="none" stroke="#ca9e6a" stroke-width="3"/>
                 <rect x="200" y="112" width="300" height="16" rx="8" fill="#a8a8a8" stroke="#555" stroke-width="2"/>
@@ -208,30 +208,14 @@
 
                 <line x1="240" y1="15" x2="240" y2="112" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
 
-                <!-- SPIELER WAGEN -->
+                <!-- SPIELER WAGEN (Factio Veneta, blau) -->
                 <g id="svg-player">
-                    <g transform="translate(-20, -13)">
-                        <rect x="26" y="2" width="18" height="7" fill="#8b5a2b" rx="1"/>
-                        <rect x="26" y="15" width="18" height="7" fill="#a0522d" rx="1"/>
-                        <line x1="12" y1="5" x2="26" y2="5" stroke="#d4af37" stroke-width="1"/>
-                        <line x1="12" y1="19" x2="26" y2="19" stroke="#d4af37" stroke-width="1"/>
-                        <path d="M2 4 L14 3 L16 23 L2 22 Z" fill="#104e8b" stroke="#d4af37" stroke-width="1"/>
-                        <circle cx="6" cy="2" r="3" fill="#111" stroke="#d4af37"/>
-                        <circle cx="6" cy="24" r="3" fill="#111" stroke="#d4af37"/>
-                    </g>
+                    <image href="assets/circus/chariot_blue.png" x="-30" y="-16.7" width="60" height="33.4"/>
                 </g>
 
-                <!-- GEGNER WAGEN -->
+                <!-- GEGNER WAGEN (Factio Russata, rot) -->
                 <g id="svg-ai">
-                    <g transform="translate(-20, -13)">
-                        <rect x="26" y="2" width="18" height="7" fill="#cd853f" rx="1"/>
-                        <rect x="26" y="15" width="18" height="7" fill="#8b4513" rx="1"/>
-                        <line x1="12" y1="5" x2="26" y2="5" stroke="#d4af37" stroke-width="1"/>
-                        <line x1="12" y1="19" x2="26" y2="19" stroke="#d4af37" stroke-width="1"/>
-                        <path d="M2 4 L14 3 L16 23 L2 22 Z" fill="#800000" stroke="#d4af37" stroke-width="1"/>
-                        <circle cx="6" cy="2" r="3" fill="#111" stroke="#d4af37"/>
-                        <circle cx="6" cy="24" r="3" fill="#111" stroke="#d4af37"/>
-                    </g>
+                    <image href="assets/circus/chariot_red.png" x="-30" y="-15.6" width="60" height="31.2"/>
                 </g>
             </svg>
         </div>
