@@ -315,6 +315,7 @@
         function conjugateVerb(verbObj) {
             if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
             if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
+            if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
             let inf = verbObj.latin;
             let firstSg = verbObj.middle;
             let cClass = verbObj.gram_class;

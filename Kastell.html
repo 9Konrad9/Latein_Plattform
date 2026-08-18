@@ -202,6 +202,7 @@
                 <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
                 <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern (z.B. <em>vidēmus</em>). Du musst die Form blitzschnell analysieren und den Schild mit der korrekten Bestimmung (z.B. <em>1. Person Plural</em>) aktivieren.</p>
                 <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Achte genau auf die Endungen (-ō, -s, -t, -mus, -tis, -nt), um das Kastell zu schützen!</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Verb hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Verb sofort zurück auf Rot.</p>
             </div>
             <button class="start-btn" id="btn-start-game">Verteidigung starten!</button>
         </div>
@@ -252,6 +253,9 @@
         <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
             <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 20px;">SIEG!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
+            <p id="box-summary" style="margin: 10px 0 20px; font-size: 1rem; color: #ccc;"></p>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <br>
             <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Kohorte abwehren</button>
             <br>
             <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
@@ -275,6 +279,13 @@
         let verbPool = [];
         let activePool = [];
 
+        // Wiederholungsrunde für falsch beantwortete Fragen
+        let missedItems = [];
+        let isReviewMode = false;
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+
         function promptLessonsAndStart() {
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
@@ -290,6 +301,7 @@
             document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
             document.getElementById('btn-next-wave').addEventListener('click', loadNextWave);
             document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-review').addEventListener('click', startReview);
             
             for(let i=0; i<4; i++) {
                 document.getElementById('shield' + i).addEventListener('click', function() {
@@ -302,6 +314,7 @@
         function conjugateVerb(verbObj) {
             if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
             if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
+            if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
             
             let inf = verbObj.latin;
             let firstSg = verbObj.middle;
@@ -335,7 +348,10 @@
 
             currentWaveIdx = 0;
             wallHealth = 100;
+            missedItems = [];
+            isReviewMode = false;
             document.getElementById('wall-health').style.width = '100%';
+            document.getElementById('wall-health').parentElement.style.display = 'block';
             
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -344,15 +360,21 @@
             showWave();
         }
 
-        function showWave() {
+        function showWave(forced) {
             roundLocked = false;
             document.getElementById('feedback-box').style.display = 'none';
             
-            // Zufälliges Verb und zufällige Person auswählen
-            currentVerbObj = verbPool[Math.floor(Math.random() * verbPool.length)];
+            if (forced) {
+                // Wiederholungsmodus: exakt dieselbe Frage nochmal stellen
+                currentVerbObj = forced.verbObj;
+                currentPersonIdx = forced.personIdx;
+            } else {
+                // Normaler Modus: gewichtete Auswahl nach Ampel-Level (rote Verben häufiger)
+                currentVerbObj = LudiProgress.weightedPick(verbPool);
+                currentPersonIdx = Math.floor(Math.random() * 6);
+            }
+
             const forms = conjugateVerb(currentVerbObj);
-            currentPersonIdx = Math.floor(Math.random() * 6);
-            
             const targetWord = forms[currentPersonIdx];
             currentCorrectAnswer = persons[currentPersonIdx];
 
@@ -362,7 +384,13 @@
             const newStone = stone.cloneNode(true);
             stone.parentNode.replaceChild(newStone, stone);
 
-            document.getElementById('target-clue').innerText = `Welle ${currentWaveIdx + 1} von ${totalWaves} — Infinitiv: ${currentVerbObj.latin}`;
+            const ampelIcons = ['🔴', '🟡', '🟢'];
+            const colorIdx = LudiProgress.getBoxColor(currentVerbObj.latin);
+            const waveLabel = isReviewMode
+                ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
+                : `Welle ${currentWaveIdx + 1} von ${totalWaves}`;
+            document.getElementById('target-clue').innerText =
+                `${waveLabel} — Infinitiv: ${currentVerbObj.latin} ${ampelIcons[colorIdx]}`;
 
             // Falsche Antworten (Distraktoren) generieren (andere Personen)
             let wrongPool = persons.filter(p => p !== currentCorrectAnswer);
@@ -397,11 +425,15 @@
             LudiProgress.recordVocabAttempt(currentVerbObj.latin, isCorrect);
 
             if (isCorrect) {
+                if (isReviewMode) reviewCorrectCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
                 fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
             } else {
+                if (!isReviewMode) {
+                    missedItems.push({ verbObj: currentVerbObj, personIdx: currentPersonIdx });
+                }
                 selectedBtn.classList.add('wrong');
                 for(let i = 0; i < 4; i++) {
                     if(document.getElementById('shield' + i).innerText === currentCorrectAnswer) {
@@ -409,9 +441,11 @@
                     }
                 }
                 
-                wallHealth -= 20;
-                if (wallHealth < 0) wallHealth = 0;
-                document.getElementById('wall-health').style.width = wallHealth + '%';
+                if (!isReviewMode) {
+                    wallHealth -= 20;
+                    if (wallHealth < 0) wallHealth = 0;
+                    document.getElementById('wall-health').style.width = wallHealth + '%';
+                }
 
                 fbTitle.innerText = "💥 TREFFER!";
                 fbTitle.style.color = "#F44336";
@@ -420,6 +454,16 @@
         }
 
         function loadNextWave() {
+            if (isReviewMode) {
+                reviewIdx++;
+                if (reviewIdx < reviewQueue.length) {
+                    showWave(reviewQueue[reviewIdx]);
+                } else {
+                    endReview();
+                }
+                return;
+            }
+
             currentWaveIdx++;
             if (wallHealth <= 0) {
                 endGame(false);
@@ -428,6 +472,36 @@
             } else {
                 endGame(true);
             }
+        }
+
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+            document.getElementById('wall-health').parentElement.style.display = 'none'; // Mauerstärke spielt in der Wiederholung keine Rolle
+
+            showWave(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('feedback-box').style.display = 'none';
+            isReviewMode = false;
+
+            const endBox = document.getElementById('end-box');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+            endBox.style.display = 'block';
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('box-summary').innerText = '';
+
+            title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            title.style.color = "var(--roman-gold)";
+            msg.innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig beantwortet.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel automatisch häufiger dran.`;
         }
 
         function endGame(isVictory) {
@@ -450,6 +524,18 @@
                 title.innerText = "🔥 KASTELL ZERSTÖRT!";
                 title.style.color = "#F44336";
                 msg.innerHTML = `Die feindlichen Verben haben deine Verteidigungsmauern komplett zertrümmert.<br>Schau dir die Personalendungen noch einmal genau an und starte einen neuen Versuch!`;
+            }
+
+            const summary = LudiProgress.getBoxSummary(verbPool);
+            document.getElementById('box-summary').innerText =
+                `Dein Vokabelkasten (${verbPool.length} Verben in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
+
+            const reviewBtn = document.getElementById('btn-review');
+            if (missedItems.length > 0) {
+                reviewBtn.style.display = 'inline-block';
+                reviewBtn.innerText = `📚 ${missedItems.length} falsche Antwort(en) wiederholen`;
+            } else {
+                reviewBtn.style.display = 'none';
             }
         }
     </script>
