@@ -88,7 +88,7 @@
         .svg-arena {
             display: block;
             width: 100%;
-            height: auto;
+            height: 100%;
         }
 
         .question-box {
@@ -229,8 +229,32 @@
         let currentVocabItem = null;
         let activePool = [];
 
+        /* ============ ARENA-GRÖSSE (Breite UND Höhe berücksichtigen, wichtig im Querformat) ============ */
+        function resizeArena() {
+            const stadium = document.querySelector('.circus-stadium');
+            const container = document.querySelector('.game-container');
+            const quizArea = document.getElementById('quiz-area');
+            if (!stadium || !container || !quizArea) return;
+
+            const availW = container.clientWidth;
+            const stadiumTop = stadium.getBoundingClientRect().top;
+            const quizHeight = quizArea.getBoundingClientRect().height;
+            const availH = window.innerHeight - stadiumTop - quizHeight - 40;
+
+            const ratio = 240 / 700;
+            let w = Math.min(availW, 1400);
+            let h = w * ratio;
+            if (h > availH && availH > 100) { h = availH; w = h / ratio; }
+
+            stadium.style.width = Math.round(w) + 'px';
+            stadium.style.height = Math.round(h) + 'px';
+        }
+        window.addEventListener('resize', resizeArena);
+        window.addEventListener('orientationchange', function() { setTimeout(resizeArena, 150); });
+
         // Zentrale, ausfallsichere Event-Bindung beim Laden der Seite
         window.onload = function() {
+            resizeArena();
             // Start-Button ankoppeln: erst Lektionsauswahl, dann Rennen starten
             document.getElementById('start-action-btn').addEventListener('click', function() {
                 if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
@@ -240,6 +264,7 @@
                 LessonFilter.show(globalVocabularyPool, function(filteredPool) {
                     activePool = filteredPool;
                     startRace();
+                    setTimeout(resizeArena, 100);
                 });
             });
             
