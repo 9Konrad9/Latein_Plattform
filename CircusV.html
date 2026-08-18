@@ -192,8 +192,6 @@
 
                 <line x1="240" y1="55" x2="240" y2="185" stroke="#fff" stroke-width="4" stroke-dasharray="4,4"/>
 
-                <g id="path-preview"></g>
-
                 <!-- SPIELER WAGEN (Factio Veneta, blau) -->
                 <g id="svg-player">
                     <image href="assets/circus/chariot_blue.png" x="-11.65" y="-6.5" width="23.3" height="13"/>
@@ -204,24 +202,6 @@
                     <image href="assets/circus/chariot_red.png" x="-12.5" y="-6.5" width="25" height="13"/>
                 </g>
             </svg>
-        </div>
-
-        <!-- TEMPORÄRES KALIBRIERUNGS-TOOL - nach dem Feinjustieren wieder entfernen -->
-        <div style="background: rgba(212,175,55,0.12); border: 2px solid var(--roman-gold); border-radius: 10px; padding: 14px 18px; margin: 12px 0;">
-            <div style="color: var(--roman-gold); font-weight: bold; margin-bottom: 10px; text-align: center;">🔧 Bahn-Kalibrierung (nur zum Einstellen, kein echtes Spielelement)</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
-                <label>Mitte links (X): <span id="val-cxl">210</span><br>
-                    <input type="range" id="cal-cxl" min="100" max="350" value="210" style="width:100%;"></label>
-                <label>Mitte rechts (X): <span id="val-cxr">490</span><br>
-                    <input type="range" id="cal-cxr" min="350" max="600" value="490" style="width:100%;"></label>
-                <label>Bahn-Mitte (Y): <span id="val-cy">120</span><br>
-                    <input type="range" id="cal-cy" min="40" max="200" value="120" style="width:100%;"></label>
-                <label>Radius Spieler (innen): <span id="val-rp">38</span><br>
-                    <input type="range" id="cal-rp" min="10" max="100" value="38" style="width:100%;"></label>
-                <label>Radius KI (außen): <span id="val-ra">56</span><br>
-                    <input type="range" id="cal-ra" min="10" max="110" value="56" style="width:100%;"></label>
-            </div>
-            <div style="margin-top: 10px; text-align: center; font-size: 0.9rem; color: #ccc;">Blaue Punkte = Spieler-Spur, rote Punkte = KI-Spur. Regler bewegen, bis beide Punktreihen sauber auf dem Sand liegen, dann alle fünf Werte an Claude weitergeben.</div>
         </div>
 
         <!-- Quiz Sektor -->
@@ -275,49 +255,8 @@
         window.addEventListener('orientationchange', function() { setTimeout(resizeArena, 150); });
 
         // Zentrale, ausfallsichere Event-Bindung beim Laden der Seite
-        // Kalibrierungs-Tool: zeigt die komplette Bahn als Punktreihe, live anpassbar über fünf Regler.
-        function drawPathPreview() {
-            const group = document.getElementById('path-preview');
-            group.innerHTML = '';
-            const svgNS = 'http://www.w3.org/2000/svg';
-            for (let i = 0; i < 24; i++) {
-                const progress = i * (100 / 24);
-                const pP = getChariotCoords(progress, playerRadius);
-                const pA = getChariotCoords(progress, aiRadius);
-                const dotP = document.createElementNS(svgNS, 'circle');
-                dotP.setAttribute('cx', pP.x); dotP.setAttribute('cy', pP.y);
-                dotP.setAttribute('r', 2.5); dotP.setAttribute('fill', '#4dabf7');
-                group.appendChild(dotP);
-                const dotA = document.createElementNS(svgNS, 'circle');
-                dotA.setAttribute('cx', pA.x); dotA.setAttribute('cy', pA.y);
-                dotA.setAttribute('r', 2.5); dotA.setAttribute('fill', '#ff6b5b');
-                group.appendChild(dotA);
-            }
-        }
-
-        function setupCalibrationTool() {
-            const map = [
-                ['cal-cxl', 'val-cxl', v => trackCenterXLeft = v],
-                ['cal-cxr', 'val-cxr', v => trackCenterXRight = v],
-                ['cal-cy', 'val-cy', v => trackCenterY = v],
-                ['cal-rp', 'val-rp', v => playerRadius = v],
-                ['cal-ra', 'val-ra', v => aiRadius = v]
-            ];
-            map.forEach(([sliderId, readoutId, setter]) => {
-                document.getElementById(sliderId).addEventListener('input', function(e) {
-                    const v = Number(e.target.value);
-                    document.getElementById(readoutId).innerText = v;
-                    setter(v);
-                    drawPathPreview();
-                    updatePositions();
-                });
-            });
-            drawPathPreview();
-        }
-
         window.onload = function() {
             resizeArena();
-            setupCalibrationTool();
             // Start-Button ankoppeln: erst Lektionsauswahl, dann Rennen starten
             document.getElementById('start-action-btn').addEventListener('click', function() {
                 if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
@@ -397,11 +336,11 @@
             document.getElementById('ai-laps').innerText = aiLaps;
         }
 
-        let trackCenterXLeft = 210;
-        let trackCenterXRight = 490;
-        let trackCenterY = 120;
-        let playerRadius = 38;
-        let aiRadius = 56;
+        let trackCenterXLeft = 205;
+        let trackCenterXRight = 495;
+        let trackCenterY = 121;
+        let playerRadius = 22;
+        let aiRadius = 41;
 
         function getChariotCoords(progress, radius) {
             let x = 0, y = 0, angle = 0;
