@@ -194,21 +194,14 @@
 
                 <!-- SPIELER WAGEN (Factio Veneta, blau) -->
                 <g id="svg-player">
-                    <image id="chariot-blue-img" href="assets/circus/chariot_blue.png" x="-23.3" y="-13" width="46.7" height="26"/>
+                    <image href="assets/circus/chariot_blue.png" x="-11.65" y="-6.5" width="23.3" height="13"/>
                 </g>
 
                 <!-- GEGNER WAGEN (Factio Russata, rot) -->
                 <g id="svg-ai">
-                    <image id="chariot-red-img" href="assets/circus/chariot_red.png" x="-25" y="-13" width="50" height="26"/>
+                    <image href="assets/circus/chariot_red.png" x="-12.5" y="-6.5" width="25" height="13"/>
                 </g>
             </svg>
-        </div>
-
-        <!-- TEMPORÄRER KALIBRIERUNGS-REGLER - nach dem Feinjustieren wieder entfernen -->
-        <div style="background: rgba(212,175,55,0.12); border: 2px solid var(--roman-gold); border-radius: 10px; padding: 14px 18px; margin: 12px 0; text-align: center;">
-            <div style="color: var(--roman-gold); font-weight: bold; margin-bottom: 8px;">🔧 Wagengröße testen (nur zum Einstellen, kein echtes Spielelement)</div>
-            <input type="range" id="chariot-size-slider" min="10" max="60" value="26" style="width: 80%; max-width: 400px;">
-            <div style="margin-top: 6px; font-size: 1.1rem;">Aktueller Wert: <strong id="chariot-size-readout">26</strong> — diese Zahl bitte an Claude weitergeben</div>
         </div>
 
         <!-- Quiz Sektor -->
@@ -262,30 +255,6 @@
         window.addEventListener('orientationchange', function() { setTimeout(resizeArena, 150); });
 
         // Zentrale, ausfallsichere Event-Bindung beim Laden der Seite
-        // Kalibrierungs-Regler: passt Höhe/Breite/Zentrierung beider Wagenbilder live an,
-        // unter Beibehaltung ihres jeweils eigenen Seitenverhältnisses.
-        const CHARIOT_BLUE_RATIO = 795 / 443;
-        const CHARIOT_RED_RATIO = 880 / 458;
-        function applyChariotSize(h) {
-            const blueImg = document.getElementById('chariot-blue-img');
-            const redImg = document.getElementById('chariot-red-img');
-            const wBlue = h * CHARIOT_BLUE_RATIO;
-            const wRed = h * CHARIOT_RED_RATIO;
-            blueImg.setAttribute('width', wBlue);
-            blueImg.setAttribute('height', h);
-            blueImg.setAttribute('x', -wBlue / 2);
-            blueImg.setAttribute('y', -h / 2);
-            redImg.setAttribute('width', wRed);
-            redImg.setAttribute('height', h);
-            redImg.setAttribute('x', -wRed / 2);
-            redImg.setAttribute('y', -h / 2);
-        }
-        document.getElementById('chariot-size-slider').addEventListener('input', function(e) {
-            const h = Number(e.target.value);
-            document.getElementById('chariot-size-readout').innerText = h;
-            applyChariotSize(h);
-        });
-
         window.onload = function() {
             resizeArena();
             // Start-Button ankoppeln: erst Lektionsauswahl, dann Rennen starten
@@ -404,8 +373,8 @@
         }
 
         function updatePositions() {
-            let pCoords = getChariotCoords(playerProgress, 35);
-            let aiCoords = getChariotCoords(aiProgress, 65);
+            let pCoords = getChariotCoords(playerProgress, 38);
+            let aiCoords = getChariotCoords(aiProgress, 56);
 
             document.getElementById('svg-player').setAttribute('transform', `translate(${pCoords.x}, ${pCoords.y}) rotate(${pCoords.angle})`);
             document.getElementById('svg-ai').setAttribute('transform', `translate(${aiCoords.x}, ${aiCoords.y}) rotate(${aiCoords.angle})`);
