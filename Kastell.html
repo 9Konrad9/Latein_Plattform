@@ -312,9 +312,23 @@
 
         // Die KI-Engine des Spiels: Konjugiert Verben vollautomatisch!
         function conjugateVerb(verbObj) {
+            // Echte unregelmäßige (suppletive) Verben - eigener Stamm je Person/Zeitform
             if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
             if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
             if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
+            if (verbObj.latin === "adesse") return ["adsum", "ades", "adest", "adsumus", "adestis", "adsunt"];
+            if (verbObj.latin === "interesse") return ["intersum", "interes", "interest", "intersumus", "interestis", "intersunt"];
+            if (verbObj.latin === "abīre") return ["abeō", "abīs", "abit", "abīmus", "abītis", "abeunt"];
+            // "dare" ist KEIN unregelmäßiges Verb (bleibt a-Konjugation!) - nur die Vokallänge weicht ab
+            // (kurzes a in fast allen Formen: dō, dās, dat ... statt dās/dāt mit Länge). Deshalb hier als
+            // Formen-Tabelle hinterlegt, damit die Vokallängen korrekt bleiben, nicht weil es zu den echten
+            // Suppletiv-Verben gehört.
+            if (verbObj.latin === "dare") return ["dō", "dās", "dat", "damus", "datis", "dant"];
+            if (verbObj.latin === "adīre") return ["adeō", "adīs", "adit", "adīmus", "adītis", "adeunt"];
+            if (verbObj.latin === "perīre") return ["pereō", "perīs", "perit", "perīmus", "perītis", "pereunt"];
+            if (verbObj.latin === "exīre") return ["exeō", "exīs", "exit", "exīmus", "exītis", "exeunt"];
+            if (verbObj.latin === "subīre") return ["subeō", "subīs", "subit", "subīmus", "subītis", "subeunt"];
+            if (verbObj.latin === "redīre") return ["redeō", "redīs", "redit", "redīmus", "redītis", "redeunt"];
             
             let inf = verbObj.latin;
             let firstSg = verbObj.middle;
