@@ -186,6 +186,14 @@
     </style>
 </head>
 <body>
+<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" style="
+    position: fixed; top: 10px; left: 10px; z-index: 100000;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(20,15,10,0.85); border: 2px solid #d4af37; color: #d4af37;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    touch-action: manipulation;
+" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>Formen-Kastell</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
@@ -198,13 +206,20 @@
         <div id="start-screen" class="start-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
             <div class="notice-box">
-                <h3>📜 Wichtiger Taktik-Befehl:</h3>
+                <h3>📜 Modus 1: Formen bestimmen</h3>
                 <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
                 <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern (z.B. <em>vidēmus</em>). Du musst die Form blitzschnell analysieren und den Schild mit der korrekten Bestimmung (z.B. <em>1. Person Plural</em>) aktivieren.</p>
                 <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Achte genau auf die Endungen (-ō, -s, -t, -mus, -tis, -nt), um das Kastell zu schützen!</p>
                 <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Verb hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Verb sofort zurück auf Rot.</p>
             </div>
             <button class="start-btn" id="btn-start-game">Verteidigung starten!</button>
+
+            <div class="notice-box" style="margin-top: 25px;">
+                <h3>📜 Modus 2: Stammformen</h3>
+                <p>Hier wird das feindliche Katapult einen <strong>Infinitiv</strong> werfen (z. B. <em>amāre</em>). Du wählst den Schild mit den korrekten <strong>drei Stammformen</strong> (1. Pers. Präsens, 1. Pers. Perfekt, PPP) – z. B. <em>amō, amāvī, amātum</em>.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Nur Verben, die in dieser Lektionsauswahl bereits Perfekt UND PPP haben, kommen hier vor.</p>
+            </div>
+            <button class="start-btn" id="btn-start-stammformen">Stammformen üben</button>
         </div>
 
         <!-- Didaktische Feedbackbox -->
@@ -277,6 +292,7 @@
         let roundLocked = false;
         
         let verbPool = [];
+        let gameMode = 'forms'; // 'forms' | 'stammformen'
         let activePool = [];
 
         // Wiederholungsrunde für falsch beantwortete Fragen
@@ -286,7 +302,8 @@
         let reviewIdx = 0;
         let reviewCorrectCount = 0;
 
-        function promptLessonsAndStart() {
+        function promptLessonsAndStart(mode) {
+            if (mode) gameMode = mode;
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
@@ -298,9 +315,10 @@
 
         window.onload = function() {
             // Ausfallsicheres Event-Binding für iOS
-            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-start-game').addEventListener('click', function() { promptLessonsAndStart('forms'); });
+            document.getElementById('btn-start-stammformen').addEventListener('click', function() { promptLessonsAndStart('stammformen'); });
             document.getElementById('btn-next-wave').addEventListener('click', loadNextWave);
-            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-restart').addEventListener('click', function() { promptLessonsAndStart(); });
             document.getElementById('btn-review').addEventListener('click', startReview);
             
             for(let i=0; i<4; i++) {
@@ -352,13 +370,74 @@
             }
         }
 
+        /* ============ STAMMFORMEN-MODUS ============ */
+        function getVerbStem(verbObj) {
+            // Alle Infinitiv-Endungen (āre, ēre, īre, ere) sind genau 3 Zeichen lang
+            return verbObj.latin.slice(0, -3);
+        }
+        function getPresentPattern(gramClass) {
+            if (gramClass.includes("e-Konjugation")) return 'e';
+            if (gramClass.includes("i-Konjugation") || gramClass.includes("gemischte")) return 'i';
+            return 'none'; // a-Konjugation, konsonantische Konjugation
+        }
+        function classifyPerfectPattern(perfect) {
+            if (perfect.endsWith('vī')) return 'v';
+            if (perfect.endsWith('uī')) return 'u';
+            if (perfect.endsWith('sī') || perfect.endsWith('xī')) return 's';
+            return 'other';
+        }
+        function fakePerfect(pattern, stem) {
+            if (pattern === 'v') return stem + 'āvī';
+            if (pattern === 'u') return stem + 'uī';
+            return stem + 'sī'; // 's'
+        }
+        function fakePresent(pattern, stem) {
+            if (pattern === 'e') return stem + 'eō';
+            if (pattern === 'i') return stem + 'iō';
+            return stem + 'ō'; // 'none'
+        }
+
+        function buildStammformenRound(verbObj) {
+            const stem = getVerbStem(verbObj);
+            const realPerfectPattern = classifyPerfectPattern(verbObj.perfect);
+            const realPresentPattern = getPresentPattern(verbObj.gram_class);
+
+            const wrongPerfectPatterns = ['v', 'u', 's'].filter(p => p !== realPerfectPattern).slice(0, 2);
+            const fakePerfect1 = fakePerfect(wrongPerfectPatterns[0], stem);
+            const fakePerfect2 = fakePerfect(wrongPerfectPatterns[1], stem);
+
+            const wrongPresentPatterns = ['none', 'e', 'i'].filter(p => p !== realPresentPattern);
+            const chosenWrongPresent = wrongPresentPatterns[Math.floor(Math.random() * wrongPresentPatterns.length)];
+            const fakePres = fakePresent(chosenWrongPresent, stem);
+
+            const correct = `${verbObj.middle}, ${verbObj.perfect}, ${verbObj.ppp}`;
+            let distractors = [
+                `${verbObj.middle}, ${fakePerfect1}, ${verbObj.ppp}`,
+                `${verbObj.middle}, ${fakePerfect2}, ${verbObj.ppp}`,
+                `${fakePres}, ${verbObj.perfect}, ${verbObj.ppp}`
+            ];
+            // Sicherheitsnetz gegen die (sehr seltene) Kollision zweier Distraktoren
+            distractors = [...new Set(distractors)];
+            while (distractors.length < 3) distractors.push(distractors[0] + '\u200b'); // unsichtbares Trennzeichen im Notfall
+
+            return { correct: correct, options: [correct, ...distractors].sort(() => Math.random() - 0.5) };
+        }
+
+
         function startDefense() {
             if (activePool.length === 0) {
                 alert("Fehler: Kein Vokabelpool ausgewählt!"); return;
             }
-            
-            // Wir filtern nur die Verben heraus
-            verbPool = activePool.filter(v => v.type === 'verb');
+
+            if (gameMode === 'stammformen') {
+                verbPool = activePool.filter(v => v.type === 'verb' && v.perfect && v.ppp);
+                if (verbPool.length < 4) {
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenig Verben mit Perfekt UND PPP. Bitte mehr Lektionen wählen oder den anderen Modus nutzen.");
+                    return;
+                }
+            } else {
+                verbPool = activePool.filter(v => v.type === 'verb');
+            }
 
             currentWaveIdx = 0;
             wallHealth = 100;
@@ -377,7 +456,41 @@
         function showWave(forced) {
             roundLocked = false;
             document.getElementById('feedback-box').style.display = 'none';
-            
+            const ampelIcons = ['🔴', '🟡', '🟢'];
+
+            if (gameMode === 'stammformen') {
+                if (forced) {
+                    currentVerbObj = forced.verbObj;
+                } else {
+                    currentVerbObj = LudiProgress.weightedPick(verbPool);
+                }
+                currentPersonIdx = null;
+
+                const round = buildStammformenRound(currentVerbObj);
+                currentCorrectAnswer = round.correct;
+
+                const stone = document.getElementById('target-verb');
+                stone.innerText = currentVerbObj.latin;
+                const newStone = stone.cloneNode(true);
+                stone.parentNode.replaceChild(newStone, stone);
+
+                const colorIdx = LudiProgress.getBoxColor(currentVerbObj.latin);
+                const waveLabel = isReviewMode
+                    ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
+                    : `Welle ${currentWaveIdx + 1} von ${totalWaves}`;
+                document.getElementById('target-clue').innerText = `${waveLabel} — Stammformen gesucht ${ampelIcons[colorIdx]}`;
+
+                for (let i = 0; i < 4; i++) {
+                    const btn = document.getElementById('shield' + i);
+                    btn.innerText = round.options[i];
+                    btn.className = 'shield-btn';
+                    btn.style.fontSize = '0.9rem';
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            // ---- Standard-Modus: Formen bestimmen ----
             if (forced) {
                 // Wiederholungsmodus: exakt dieselbe Frage nochmal stellen
                 currentVerbObj = forced.verbObj;
@@ -398,7 +511,6 @@
             const newStone = stone.cloneNode(true);
             stone.parentNode.replaceChild(newStone, stone);
 
-            const ampelIcons = ['🔴', '🟡', '🟢'];
             const colorIdx = LudiProgress.getBoxColor(currentVerbObj.latin);
             const waveLabel = isReviewMode
                 ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
@@ -416,6 +528,7 @@
                 const btn = document.getElementById('shield' + i);
                 btn.innerText = finalOptions[i];
                 btn.className = 'shield-btn';
+                btn.style.fontSize = '';
                 btn.disabled = false;
             }
         }
@@ -443,7 +556,11 @@
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
+                if (gameMode === 'stammformen') {
+                    fbText.innerHTML = `Hervorragend! Die Stammformen von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}) lauten korrekt: <strong>${currentCorrectAnswer}</strong>.`;
+                } else {
+                    fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
+                }
             } else {
                 if (!isReviewMode) {
                     missedItems.push({ verbObj: currentVerbObj, personIdx: currentPersonIdx });
@@ -463,7 +580,11 @@
 
                 fbTitle.innerText = "💥 TREFFER!";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> des Verbs <strong>${currentVerbObj.latin}</strong>.`;
+                if (gameMode === 'stammformen') {
+                    fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Die richtigen Stammformen von <strong>${currentVerbObj.latin}</strong> lauten: <strong>${currentCorrectAnswer}</strong>.`;
+                } else {
+                    fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> des Verbs <strong>${currentVerbObj.latin}</strong>.`;
+                }
             }
         }
 

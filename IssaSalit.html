@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Issa Salit! - Der Sprung durchs Wortschatz</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37; --roman-bronze: #8c7853; --roman-marble: #f0e6d2; --roman-red: #800000;
+            --bg-dark: #121212; --card-bg: #2d2d2d; --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif; --font-body: 'Verdana', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        html, body {
+            font-family: var(--font-body); background: var(--bg-dark); color: var(--text-light);
+            width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none;
+        }
+        body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px; min-height: 100vh; }
+
+        h1 {
+            color: var(--roman-gold); font-family: var(--font-display); text-transform: uppercase;
+            font-size: 1.6rem; text-align: center; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 2px;
+        }
+        .subtitle { font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 8px; text-align: center; font-size: 0.9rem; }
+
+        .game-shell {
+            position: relative; width: 100%; max-width: 480px; aspect-ratio: 9 / 16; max-height: 78vh;
+            background: linear-gradient(#bcdff5 0%, #eaf6ff 60%, #fdf6e3 100%);
+            border: 4px solid var(--roman-bronze); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+        }
+        #gameCanvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+        .overlay-screen {
+            position: absolute; inset: 0; background: rgba(20,16,10,0.94); color: var(--text-light);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px; z-index: 20;
+        }
+        .overlay-screen h2 { font-family: var(--font-display); color: var(--roman-gold); font-size: 1.5rem; margin-bottom: 12px; }
+        .overlay-screen p { font-size: 0.95rem; line-height: 1.5; margin-bottom: 10px; max-width: 340px; }
+        .overlay-screen .example { color: var(--roman-gold); font-weight: bold; }
+        .start-btn {
+            background: var(--roman-gold); color: var(--roman-red); font-family: var(--font-display); font-weight: bold;
+            padding: 13px 32px; border: none; border-radius: 30px; font-size: 1.1rem; cursor: pointer;
+            text-transform: uppercase; margin-top: 12px; box-shadow: 0 5px 15px rgba(212,175,55,0.3); touch-action: manipulation;
+        }
+        .menu-btn {
+            display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #ccc; background: #444;
+            padding: 8px 18px; border-radius: 20px; text-decoration: none;
+        }
+
+        /* HUD */
+        .hud {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 10px 12px;
+            display: flex; flex-direction: column; align-items: center; pointer-events: none;
+        }
+        .hud-target {
+            background: rgba(20,16,10,0.82); border: 2px solid var(--roman-gold); border-radius: 10px;
+            padding: 7px 16px; font-family: var(--font-display); font-size: 1.3rem; font-weight: bold;
+            color: var(--roman-gold); text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .hud-target .hint { display: block; font-family: var(--font-body); font-size: 0.7rem; color: #ccc; font-weight: normal; }
+        .hud-stats {
+            display: flex; justify-content: space-between; width: 100%; margin-top: 6px; font-size: 0.8rem;
+            color: #fff; text-shadow: 1px 1px 2px #000;
+        }
+
+        .flash-msg {
+            position: absolute; left: 50%; top: 40%; transform: translate(-50%,-50%);
+            font-family: var(--font-display); font-size: 1.4rem; font-weight: bold; z-index: 15;
+            padding: 6px 18px; border-radius: 10px; opacity: 0; pointer-events: none;
+        }
+
+        .touch-zones { position: absolute; inset: 0; z-index: 8; display: flex; }
+        .touch-zones div { flex: 1; }
+    </style>
+</head>
+<body>
+<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" style="
+    position: fixed; top: 10px; left: 10px; z-index: 100000;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(20,15,10,0.85); border: 2px solid #d4af37; color: #d4af37;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    touch-action: manipulation;
+" title="Zurück zum Hauptmenü">🏠</a>
+
+    <h1>🐕 Issa Salit!</h1>
+    <div class="subtitle">Der Sprung durchs Wortschatz</div>
+
+    <div class="game-shell" id="game-shell">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="hud" id="hud" style="display:none;">
+            <div class="hud-target">
+                <span id="hud-latin">-</span>
+                <span class="hint">Spring auf die richtige Bedeutung!</span>
+            </div>
+            <div class="hud-stats">
+                <span id="hud-score">Höhe: 0</span>
+                <span id="hud-correct">✓ 0</span>
+            </div>
+        </div>
+
+        <div class="flash-msg" id="flash-msg"></div>
+
+        <div class="touch-zones" id="touch-zones" style="display:none;">
+            <div id="zone-left"></div>
+            <div id="zone-right"></div>
+        </div>
+
+        <!-- START -->
+        <div class="overlay-screen" id="start-screen">
+            <h2>Issa ist ausgebüxt!</h2>
+            <p>Hilf Issa, dem weißen Spitz der Familie, immer höher zu springen! Oben siehst du ein lateinisches Wort - lenke Issa auf die Plattform mit der <strong>richtigen deutschen Bedeutung</strong>.</p>
+            <p>Falsche Plattform? Kein Problem, Issa hüpft einfach weiter - nur wer <span class="example">unten herausfällt</span>, muss nochmal von vorne starten!</p>
+            <p style="font-size:0.85rem; color:#999;">Steuerung: Pfeiltasten/A-D auf dem Computer, Wischen/Antippen auf dem Tablet.</p>
+            <button class="start-btn" id="btn-start-game">Loslegen!</button>
+        </div>
+
+        <!-- GAME OVER -->
+        <div class="overlay-screen" id="gameover-screen" style="display:none;">
+            <h2 id="gameover-title">Autsch!</h2>
+            <p id="gameover-msg"></p>
+            <button class="start-btn" id="btn-restart">Nochmal springen!</button>
+            <a href="index.html" class="menu-btn">Zurück zum Menü</a>
+        </div>
+    </div>
+
+    <script>
+        /* ============ KONSTANTEN & GRUNDZUSTAND ============ */
+        const CANVAS_W = 360, CANVAS_H = 640;
+        const GRAVITY = 0.35, JUMP_VELOCITY = -11.2, ACCEL = 0.7, MAX_VX = 5.5, FRICTION = 0.88;
+        const PLATFORM_W = 76, PLATFORM_H = 16;
+
+        const canvas = document.getElementById('gameCanvas');
+        canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+        const ctx = canvas.getContext('2d');
+
+        let pool = [];
+        let platforms = [];
+        let clouds = [];
+        let character = { x: CANVAS_W/2, y: 480, vx: 0, vy: 0, w: 40, h: 34, facing: 1 };
+        let cameraY = 0;
+        let maxHeight = 0;
+        let score = 0;
+        let correctCount = 0;
+        let currentTarget = null;
+        let correctPlaceholderPlaced = false;
+        let running = false;
+        let keys = { left: false, right: false };
+
+        function germanGloss(entry) { return entry.meaning.split(',')[0].trim(); }
+
+        /* ============ SETUP / START ============ */
+        function promptLessonsAndStart() {
+            if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js nicht gefunden!"); return; }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                pool = filteredPool.filter(v => (v.type === 'noun' || v.type === 'verb') && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
+                if (pool.length < 8) {
+                    alert("In den ausgewählten Lektionen gibt es noch zu wenige Wörter. Bitte weitere Lektionen mit auswählen.");
+                    return;
+                }
+                startGame();
+            });
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('gameover-screen').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('touch-zones').style.display = 'flex';
+
+            character = { x: CANVAS_W/2, y: 480, vx: 0, vy: JUMP_VELOCITY * 0.6, w: 40, h: 34, facing: 1 };
+            cameraY = 0; maxHeight = 0; score = 0; correctCount = 0;
+            correctPlaceholderPlaced = false;
+            currentTarget = LudiProgress.weightedPick(pool);
+            document.getElementById('hud-latin').innerText = currentTarget.latin;
+            updateHud();
+
+            generateInitialPlatforms();
+            generateInitialClouds();
+
+            running = true;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateHud() {
+            document.getElementById('hud-score').innerText = `Höhe: ${Math.floor(maxHeight)}`;
+            document.getElementById('hud-correct').innerText = `✓ ${correctCount}`;
+        }
+
+        /* ============ PLATTFORM-GENERIERUNG ============ */
+        let highestGeneratedY = 0;
+
+        function addPlatformAt(y) {
+            const x = Math.random() * (CANVAS_W - PLATFORM_W);
+            const shouldLabel = Math.random() < 0.75;
+            let label = null, isCorrect = false, wordRef = null;
+            if (shouldLabel) {
+                if (!correctPlaceholderPlaced) {
+                    label = germanGloss(currentTarget); isCorrect = true; wordRef = currentTarget.latin;
+                    correctPlaceholderPlaced = true;
+                } else {
+                    let distractor;
+                    let tries = 0;
+                    do { distractor = pool[Math.floor(Math.random() * pool.length)]; tries++; }
+                    while (distractor.latin === currentTarget.latin && tries < 10);
+                    label = germanGloss(distractor); isCorrect = false; wordRef = distractor.latin;
+                }
+            }
+            platforms.push({ x, y, w: PLATFORM_W, h: PLATFORM_H, label, isCorrect, wordRef, resolved: false });
+        }
+
+        function generateInitialPlatforms() {
+            platforms = [];
+            platforms.push({ x: CANVAS_W/2 - PLATFORM_W/2, y: 550, w: PLATFORM_W, h: PLATFORM_H, label: null, isCorrect: false, wordRef: null, resolved: true });
+            let y = 550;
+            for (let i = 0; i < 10; i++) {
+                y -= 88 + Math.random() * 46;
+                addPlatformAt(y);
+            }
+            highestGeneratedY = y;
+        }
+
+        function maybeGenerateMore() {
+            while (highestGeneratedY > cameraY - 250) {
+                highestGeneratedY -= 88 + Math.random() * 46;
+                addPlatformAt(highestGeneratedY);
+            }
+            // Alte, längst verpasste Plattformen aufräumen (Performance)
+            platforms = platforms.filter(p => p.y < cameraY + CANVAS_H + 150);
+        }
+
+        function generateInitialClouds() {
+            clouds = [];
+            let y = 0;
+            for (let i = 0; i < 12; i++) {
+                y -= 120 + Math.random() * 160;
+                clouds.push({ x: Math.random() * CANVAS_W, y, r: 18 + Math.random() * 14 });
+            }
+        }
+        function maybeGenerateClouds() {
+            let highestCloudY = clouds.length ? Math.min(...clouds.map(c => c.y)) : 0;
+            while (highestCloudY > cameraY - 300) {
+                highestCloudY -= 120 + Math.random() * 160;
+                clouds.push({ x: Math.random() * CANVAS_W, y: highestCloudY, r: 18 + Math.random() * 14 });
+            }
+            clouds = clouds.filter(c => c.y < cameraY + CANVAS_H + 200);
+        }
+
+        /* ============ LANDUNG / FEEDBACK ============ */
+        function handleLanding(p) {
+            if (p.isCorrect) {
+                score++; correctCount++;
+                LudiProgress.recordVocabAttempt(currentTarget.latin, true);
+                showFlash('✓ Richtig!', '#4CAF50');
+                pickNewTarget();
+            } else {
+                LudiProgress.recordVocabAttempt(currentTarget.latin, false);
+                showFlash(`✗ „${p.label}" war es nicht`, '#F44336');
+            }
+            updateHud();
+        }
+
+        function pickNewTarget() {
+            currentTarget = LudiProgress.weightedPick(pool);
+            correctPlaceholderPlaced = false;
+            document.getElementById('hud-latin').innerText = currentTarget.latin;
+        }
+
+        let flashTimeout = null;
+        function showFlash(text, color) {
+            const el = document.getElementById('flash-msg');
+            el.innerText = text;
+            el.style.color = color;
+            el.style.textShadow = '2px 2px 4px rgba(0,0,0,0.6)';
+            el.style.opacity = '1';
+            clearTimeout(flashTimeout);
+            flashTimeout = setTimeout(() => { el.style.opacity = '0'; }, 700);
+        }
+
+        /* ============ PHYSIK & KOLLISION ============ */
+        function updatePhysics() {
+            if (keys.left) character.vx -= ACCEL;
+            if (keys.right) character.vx += ACCEL;
+            if (!keys.left && !keys.right) character.vx *= FRICTION;
+            character.vx = Math.max(-MAX_VX, Math.min(MAX_VX, character.vx));
+            if (character.vx > 0.3) character.facing = 1;
+            else if (character.vx < -0.3) character.facing = -1;
+            character.x += character.vx;
+
+            if (character.x < -character.w/2) character.x = CANVAS_W + character.w/2;
+            if (character.x > CANVAS_W + character.w/2) character.x = -character.w/2;
+
+            const prevBottom = character.y + character.h;
+            character.vy += GRAVITY;
+            character.y += character.vy;
+            const newBottom = character.y + character.h;
+
+            if (character.vy > 0) {
+                for (const p of platforms) {
+                    const withinX = character.x + character.w*0.32 > p.x && character.x - character.w*0.32 < p.x + p.w;
+                    if (withinX && prevBottom <= p.y + 2 && newBottom >= p.y) {
+                        character.vy = JUMP_VELOCITY;
+                        character.y = p.y - character.h;
+                        if (p.label && !p.resolved) { p.resolved = true; handleLanding(p); }
+                        break;
+                    }
+                }
+            }
+
+            // Kamera folgt Issa nach oben (nie zurück nach unten)
+            const followLine = cameraY + CANVAS_H * 0.42;
+            if (character.y < followLine) {
+                cameraY = character.y - CANVAS_H * 0.42;
+            }
+            maxHeight = Math.max(maxHeight, -cameraY);
+
+            maybeGenerateMore();
+            maybeGenerateClouds();
+
+            // Absturz-Check: unten aus dem sichtbaren Bereich gefallen
+            if (character.y - cameraY > CANVAS_H + 60) {
+                endGame();
+            }
+        }
+
+        /* ============ ZEICHNEN ============ */
+        function drawBackground() {
+            ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            clouds.forEach(c => {
+                const sy = c.y - cameraY * 0.6; // Parallax: Wolken bewegen sich langsamer
+                if (sy < -40 || sy > CANVAS_H + 40) return;
+                ctx.beginPath();
+                ctx.ellipse(c.x, sy, c.r, c.r * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawPlatforms() {
+            platforms.forEach(p => {
+                const sy = p.y - cameraY;
+                if (sy < -30 || sy > CANVAS_H + 30) return;
+                ctx.fillStyle = p.resolved && p.label ? (p.isCorrect ? '#5a8f4f' : '#8c7853') : '#a97d4f';
+                ctx.strokeStyle = '#5c4326';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(p.x, sy, p.w, p.h, 6);
+                ctx.fill(); ctx.stroke();
+
+                if (p.label) {
+                    ctx.fillStyle = '#fff8e8';
+                    ctx.font = 'bold 12px Verdana';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.label, p.x + p.w/2, sy - 6);
+                }
+            });
+        }
+
+        function drawIssa() {
+            const sx = character.x, sy = character.y - cameraY;
+            ctx.save();
+            ctx.translate(sx, sy);
+            if (character.facing < 0) ctx.scale(-1, 1);
+
+            const jumping = character.vy < 0;
+            const legOffset = jumping ? -2 : 3;
+
+            // Schwanz
+            ctx.fillStyle = '#f5f5f0';
+            ctx.beginPath();
+            ctx.ellipse(-16, -6, 7, 4, -0.6, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Körper
+            ctx.fillStyle = '#fdfdf8';
+            ctx.strokeStyle = '#cfcfc4';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 18, 13, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Beine
+            ctx.fillStyle = '#fdfdf8';
+            ctx.fillRect(-10, 8 + legOffset, 4, 9);
+            ctx.fillRect(6, 8 + legOffset, 4, 9);
+
+            // Kopf
+            ctx.beginPath();
+            ctx.ellipse(15, -6, 10, 9, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Ohren (Spitz-typisch aufrecht)
+            ctx.fillStyle = '#e8e4d8';
+            ctx.beginPath();
+            ctx.moveTo(10, -13); ctx.lineTo(8, -22); ctx.lineTo(15, -14); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(20, -13); ctx.lineTo(24, -21); ctx.lineTo(22, -12); ctx.closePath(); ctx.fill();
+
+            // Schnauze, Auge, Nase
+            ctx.fillStyle = '#fdfdf8';
+            ctx.beginPath(); ctx.ellipse(22, -3, 5, 4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#2a2a2a';
+            ctx.beginPath(); ctx.arc(26, -4, 1.6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(17, -8, 1.4, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+        }
+
+        /* ============ GAME LOOP ============ */
+        function gameLoop() {
+            if (!running) return;
+            updatePhysics();
+            drawBackground();
+            drawPlatforms();
+            drawIssa();
+            requestAnimationFrame(gameLoop);
+        }
+
+        /* ============ EINGABE ============ */
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+        });
+        window.addEventListener('keyup', function(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+        });
+        function bindTouchZone(id, dir) {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', function(e) { keys[dir] = true; e.preventDefault(); }, { passive: false });
+            el.addEventListener('touchend', function(e) { keys[dir] = false; e.preventDefault(); }, { passive: false });
+            el.addEventListener('touchcancel', function() { keys[dir] = false; });
+            el.addEventListener('mousedown', function() { keys[dir] = true; });
+            el.addEventListener('mouseup', function() { keys[dir] = false; });
+            el.addEventListener('mouseleave', function() { keys[dir] = false; });
+        }
+        bindTouchZone('zone-left', 'left');
+        bindTouchZone('zone-right', 'right');
+
+        /* ============ ENDE ============ */
+        function endGame() {
+            running = false;
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('touch-zones').style.display = 'none';
+            keys.left = false; keys.right = false;
+
+            LudiProgress.saveGameResult('issasalit', Math.floor(maxHeight), null);
+
+            const title = document.getElementById('gameover-title');
+            const msg = document.getElementById('gameover-msg');
+            if (correctCount >= 8) { title.innerText = '🏆 Fantastisch gesprungen!'; }
+            else if (correctCount >= 4) { title.innerText = '🐕 Gut gemacht!'; }
+            else { title.innerText = 'Autsch!'; }
+            msg.innerHTML = `Issa ist bis zur Höhe <strong>${Math.floor(maxHeight)}</strong> gesprungen und hat dabei <strong>${correctCount}</strong> Wörter richtig erkannt.`;
+            document.getElementById('gameover-screen').style.display = 'flex';
+        }
+
+        window.onload = function() {
+            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+        };
+    </script>
+</body>
+</html>
+</body>
+</html>
