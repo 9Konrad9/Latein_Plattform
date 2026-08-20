@@ -40,7 +40,8 @@ const LessonFilter = (() => {
         overlay.innerHTML = `
             <div style="background:#1a1410; border:2px solid #d4af37; border-radius:14px;
                         padding:30px; max-width:480px; width:100%; text-align:center;
-                        box-shadow: 0 0 40px rgba(212,175,55,0.2);">
+                        box-shadow: 0 0 40px rgba(212,175,55,0.2);
+                        max-height:90vh; overflow-y:auto; box-sizing:border-box;">
                 <h2 style="color:#d4af37; margin-top:0; font-size:1.4rem;">Welche Lektionen möchtest du üben?</h2>
 
                 <div style="display:flex; align-items:center; justify-content:center; gap:10px;
