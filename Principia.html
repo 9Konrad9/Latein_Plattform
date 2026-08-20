@@ -247,6 +247,8 @@
         let mintPool = [];
         let activePool = [];
         let currentTarget = null;
+        let currentCorrectAnswer = '';
+        let maxSelectedLesson = 0;
 
         let sessionCoins = []; // { word, colorIdx } - für die Schatzkammer-Anzeige dieser Runde
         let missedItems = [];  // für die Wiederholungsrunde
@@ -271,6 +273,15 @@
             if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
             if (verbObj.latin === "adesse") return ["adsum", "ades", "adest", "adsumus", "adestis", "adsunt"];
             if (verbObj.latin === "interesse") return ["intersum", "interes", "interest", "intersumus", "interestis", "intersunt"];
+            if (verbObj.latin === "abesse") return ["absum", "abes", "abest", "absumus", "abestis", "absunt"];
+            if (verbObj.latin === "velle") return ["volō", "vīs", "vult", "volumus", "vultis", "volunt"];
+            if (verbObj.latin === "nōlle") return ["nōlō", "nōn vīs", "nōn vult", "nōlumus", "nōn vultis", "nōlunt"];
+            if (verbObj.latin === "praeesse") return ["praesum", "praees", "praeest", "praesumus", "praeestis", "praesunt"];
+            if (verbObj.latin === "ferre") return ["ferō", "fers", "fert", "ferimus", "fertis", "ferunt"];
+            if (verbObj.latin === "sē cōnferre") return ["cōnferō", "cōnfers", "cōnfert", "cōnferimus", "cōnfertis", "cōnferunt"];
+            if (verbObj.latin === "afferre") return ["afferō", "affers", "affert", "afferimus", "affertis", "afferunt"];
+            if (verbObj.latin === "offerre") return ["offerō", "offers", "offert", "offerimus", "offertis", "offerunt"];
+            if (verbObj.latin === "īnferre") return ["īnferō", "īnfers", "īnfert", "īnferimus", "īnfertis", "īnferunt"];
             if (verbObj.latin === "abīre") return ["abeō", "abīs", "abit", "abīmus", "abītis", "abeunt"];
             // "dare" ist KEIN unregelmäßiges Verb (bleibt a-Konjugation!) - nur die Vokallänge weicht ab
             // (kurzes a in fast allen Formen: dō, dās, dat ... statt dās/dāt mit Länge). Deshalb hier als
@@ -301,13 +312,77 @@
             }
         }
 
-        // Verb-Distraktoren: echte, aber falsche Personalformen DESSELBEN Verbs
-        // (gleiche Wurzel, nur die Personalendung ist falsch - kein Ausschlussverfahren mehr möglich)
+        function getVerbStem(item) {
+            return item.latin.slice(0, -3);
+        }
+        function classifyPerfectPattern(perfect) {
+            if (perfect.endsWith('vī')) return 'v';
+            if (perfect.endsWith('uī')) return 'u';
+            if (perfect.endsWith('sī') || perfect.endsWith('xī')) return 's';
+            return 'other';
+        }
+        function fakePerfect(pattern, stem) {
+            if (pattern === 'v') return stem + 'āvī';
+            if (pattern === 'u') return stem + 'uī';
+            return stem + 'sī';
+        }
+
+        // Verb-Distraktoren: bei noch unbekanntem Perfekt wie bisher (falsche Personalformen
+        // DESSELBEN Verbs). Sobald Perfekt/PPP bekannt sind, progressive Stammformen-Frage
+        // wie im Formen-Kastell/Circus Maximus/Gladiatoren-Duell.
         function buildVerbDistractors(target) {
             const forms = conjugateVerb(target); // [1.Sg, 2.Sg, 3.Sg, 1.Pl, 2.Pl, 3.Pl]
             const otherForms = forms.slice(1); // alle außer der richtigen 1.Sg-Form
             const shuffled = [...otherForms].sort(() => Math.random() - 0.5);
             return shuffled.slice(0, 3);
+        }
+
+        function buildVerbRound(target) {
+            const perfectKnown = !!target.perfect && (target.perfectLesson || target.lesson) <= maxSelectedLesson;
+            const pppKnown = !!target.ppp && (target.pppLesson || target.lesson) <= maxSelectedLesson;
+
+            if (!perfectKnown) {
+                return {
+                    hint: 'Wie lautet die 1. Person Singular?',
+                    correct: target.middle,
+                    distractors: buildVerbDistractors(target)
+                };
+            }
+
+            const stem = getVerbStem(target);
+            const realPerfectPattern = classifyPerfectPattern(target.perfect);
+            const wrongPatterns = ['v', 'u', 's'].filter(p => p !== realPerfectPattern).slice(0, 2);
+            const fakePerfect1 = fakePerfect(wrongPatterns[0], stem);
+            const fakePerfect2 = fakePerfect(wrongPatterns[1], stem);
+
+            let stemForPresent = target.latin.replace(/āre|ēre|īre|ere/, "");
+            let fakePresentOptions;
+            if (target.gram_class.includes("a-Konjugation")) fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+            else if (target.gram_class.includes("e-Konjugation")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "iō"];
+            else if (target.gram_class.includes("i-Konjugation") || target.gram_class.includes("gemischte")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "eō"];
+            else fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+            const fakePresent = fakePresentOptions[Math.floor(Math.random() * fakePresentOptions.length)];
+
+            if (pppKnown) {
+                return {
+                    hint: 'Wie lauten die Stammformen?',
+                    correct: `${target.middle}, ${target.perfect}, ${target.ppp}`,
+                    distractors: [
+                        `${target.middle}, ${fakePerfect1}, ${target.ppp}`,
+                        `${target.middle}, ${fakePerfect2}, ${target.ppp}`,
+                        `${fakePresent}, ${target.perfect}, ${target.ppp}`
+                    ]
+                };
+            }
+            return {
+                hint: 'Wie lauten Präsens und Perfekt?',
+                correct: `${target.middle}, ${target.perfect}`,
+                distractors: [
+                    `${target.middle}, ${fakePerfect1}`,
+                    `${target.middle}, ${fakePerfect2}`,
+                    `${fakePresent}, ${target.perfect}`
+                ]
+            };
         }
 
         // Nomen: Genitiv-Endung je Deklinationsklasse
@@ -337,10 +412,6 @@
             ];
         }
 
-        function buildDistractors(target) {
-            return target.type === 'verb' ? buildVerbDistractors(target) : buildNounDistractors(target);
-        }
-
         function updateOverallTreasuryDisplay() {
             const pool = fullPoolNounsAndVerbs();
             const summary = LudiProgress.getBoxSummary(pool);
@@ -352,8 +423,9 @@
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
                 startMinting();
             });
         }
@@ -394,7 +466,9 @@
             mintPool = activePool.filter(v =>
                 (v.type === 'noun' || v.type === 'verb') &&
                 !v.latin.includes(' ') &&
-                !v.middle.includes('Pl.')
+                !v.middle.includes('Pl.') &&
+                v.gram_class !== 'Deponens' &&
+                v.gram_class !== 'unregelmäßig (Passiv von facere)'
             );
 
             if (mintPool.length < 4) {
@@ -424,9 +498,6 @@
             const isNoun = currentTarget.type === 'noun';
             document.getElementById('type-badge').innerText = isNoun ? 'NOMEN' : 'VERB';
             document.getElementById('stamp-word').innerText = currentTarget.latin;
-            document.getElementById('stamp-hint').innerText = isNoun
-                ? 'Wie lautet Genitiv + Geschlecht?'
-                : 'Wie lautet die 1. Person Singular?';
 
             document.getElementById('round-number').innerText = isReviewMode
                 ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
@@ -435,10 +506,20 @@
             renderTreasuryRow();
 
             // Distraktoren teilen sich die Wurzel mit der richtigen Antwort -
-            // nur Endung/Genus (Nomen) bzw. Person (Verben) unterscheiden sich.
-            const distractors = buildDistractors(currentTarget);
+            // nur Endung/Genus (Nomen) bzw. Stammform (Verben) unterscheiden sich.
+            let distractors;
+            if (isNoun) {
+                document.getElementById('stamp-hint').innerText = 'Wie lautet Genitiv + Geschlecht?';
+                currentCorrectAnswer = currentTarget.middle;
+                distractors = buildNounDistractors(currentTarget);
+            } else {
+                const round = buildVerbRound(currentTarget);
+                document.getElementById('stamp-hint').innerText = round.hint;
+                currentCorrectAnswer = round.correct;
+                distractors = round.distractors;
+            }
 
-            const finalOptions = [currentTarget.middle, ...distractors].sort(() => Math.random() - 0.5);
+            const finalOptions = [currentCorrectAnswer, ...distractors].sort(() => Math.random() - 0.5);
             for (let i = 0; i < 4; i++) {
                 const btn = document.getElementById('opt' + i);
                 btn.innerText = finalOptions[i];
@@ -454,7 +535,7 @@
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
             const selectedBtn = document.getElementById('opt' + idx);
-            const isCorrect = (selectedBtn.innerText === currentTarget.middle);
+            const isCorrect = (selectedBtn.innerText === currentCorrectAnswer);
 
             const fbBox = document.getElementById('feedback-box');
             const fbTitle = document.getElementById('fb-title');
@@ -470,7 +551,7 @@
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🪙 MÜNZE GEPRÄGT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `<strong>${currentTarget.latin}</strong> (${currentTarget.meaning}) → <strong>${currentTarget.middle}</strong> ist richtig geprägt!`;
+                fbText.innerHTML = `<strong>${currentTarget.latin}</strong> (${currentTarget.meaning}) → <strong>${currentCorrectAnswer}</strong> ist richtig geprägt!`;
             } else {
                 if (!isReviewMode) {
                     missedItems.push(currentTarget);
@@ -478,13 +559,13 @@
                 }
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
-                    if (document.getElementById('opt' + i).innerText === currentTarget.middle) {
+                    if (document.getElementById('opt' + i).innerText === currentCorrectAnswer) {
                         document.getElementById('opt' + i).classList.add('correct');
                     }
                 }
                 fbTitle.innerText = "💥 FEHLPRÄGUNG!";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = `Richtig wäre <strong>${currentTarget.middle}</strong> gewesen für <strong>${currentTarget.latin}</strong> (${currentTarget.meaning}).`;
+                fbText.innerHTML = `Richtig wäre <strong>${currentCorrectAnswer}</strong> gewesen für <strong>${currentTarget.latin}</strong> (${currentTarget.meaning}).`;
             }
 
             renderTreasuryRow();

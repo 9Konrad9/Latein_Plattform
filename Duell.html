@@ -197,14 +197,16 @@
         let currentDuelItem = null;
         let countdownInterval = null;
         let activePool = [];
+        let maxSelectedLesson = 0;
 
         function promptLessonsAndStart() {
             if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
                 alert("Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
                 return;
             }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
                 initArena();
             });
         }
@@ -219,6 +221,21 @@
             }
             promptLessonsAndStart();
         };
+
+        function getVerbStem(item) {
+            return item.latin.slice(0, -3);
+        }
+        function classifyPerfectPattern(perfect) {
+            if (perfect.endsWith('vī')) return 'v';
+            if (perfect.endsWith('uī')) return 'u';
+            if (perfect.endsWith('sī') || perfect.endsWith('xī')) return 's';
+            return 'other';
+        }
+        function fakePerfect(pattern, stem) {
+            if (pattern === 'v') return stem + 'āvī';
+            if (pattern === 'u') return stem + 'uī';
+            return stem + 'sī';
+        }
 
         function initArena() {
             if (activePool.length === 0) {
@@ -288,12 +305,53 @@
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
                     questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
+                    currentCorrectAnswer = item.middle;
+                    wrongPool = activePool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
                 } else {
-                    categoryText = "⚡ Konjugations-Formen";
-                    questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
+                    const perfectKnown = !!item.perfect && (item.perfectLesson || item.lesson) <= maxSelectedLesson;
+                    const pppKnown = !!item.ppp && (item.pppLesson || item.lesson) <= maxSelectedLesson;
+
+                    if (!perfectKnown) {
+                        categoryText = "⚡ Konjugations-Formen";
+                        questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
+                        currentCorrectAnswer = item.middle;
+                        wrongPool = activePool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
+                    } else {
+                        const stem = getVerbStem(item);
+                        const realPerfectPattern = classifyPerfectPattern(item.perfect);
+                        const wrongPatterns = ['v', 'u', 's'].filter(p => p !== realPerfectPattern).slice(0, 2);
+                        const fakePerfect1 = fakePerfect(wrongPatterns[0], stem);
+                        const fakePerfect2 = fakePerfect(wrongPatterns[1], stem);
+
+                        let stemForPresent = item.latin.replace(/āre|ēre|īre|ere/, "");
+                        let fakePresentOptions;
+                        if (item.gram_class.includes("a-Konjugation")) fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+                        else if (item.gram_class.includes("e-Konjugation")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "iō"];
+                        else if (item.gram_class.includes("i-Konjugation") || item.gram_class.includes("gemischte")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "eō"];
+                        else fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+                        const fakePresent = fakePresentOptions[Math.floor(Math.random() * fakePresentOptions.length)];
+
+                        if (pppKnown) {
+                            categoryText = "⚡ Stammformen";
+                            questionText = `Wie lauten die Stammformen von „${item.latin}“?`;
+                            currentCorrectAnswer = `${item.middle}, ${item.perfect}, ${item.ppp}`;
+                            wrongPool = [
+                                `${item.middle}, ${fakePerfect1}, ${item.ppp}`,
+                                `${item.middle}, ${fakePerfect2}, ${item.ppp}`,
+                                `${fakePresent}, ${item.perfect}, ${item.ppp}`
+                            ];
+                        } else {
+                            categoryText = "⚡ Stammformen (Präsens + Perfekt)";
+                            questionText = `Wie lauten Präsens und Perfekt von „${item.latin}“?`;
+                            currentCorrectAnswer = `${item.middle}, ${item.perfect}`;
+                            wrongPool = [
+                                `${item.middle}, ${fakePerfect1}`,
+                                `${item.middle}, ${fakePerfect2}`,
+                                `${fakePresent}, ${item.perfect}`
+                            ];
+                        }
+                    }
                 }
-                currentCorrectAnswer = item.middle;
-                wrongPool = activePool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
             } else if (qType === 2) {
                 if (item.type === "noun") {
                     categoryText = "⚔️ Deklinationsklassen";
