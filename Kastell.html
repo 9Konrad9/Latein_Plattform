@@ -216,7 +216,7 @@
 
             <div class="notice-box" style="margin-top: 25px;">
                 <h3>📜 Modus 2: Stammformen</h3>
-                <p>Hier wird das feindliche Katapult einen <strong>Infinitiv</strong> werfen (z. B. <em>amāre</em>). Du wählst den Schild mit den korrekten <strong>drei Stammformen</strong> (1. Pers. Präsens, 1. Pers. Perfekt, PPP) – z. B. <em>amō, amāvī, amātum</em>.</p>
+                <p>Hier wird das feindliche Katapult einen <strong>Infinitiv</strong> werfen (z. B. <em>amāre</em>). Du wählst den Schild mit den korrekten Stammformen – z. B. <em>amō, amāvī, amātum</em>. Ist das PPP für die gewählten Lektionen noch nicht bekannt, wird nur nach Präsens und Perfekt gefragt.</p>
                 <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Nur Verben, die in dieser Lektionsauswahl bereits Perfekt UND PPP haben, kommen hier vor.</p>
             </div>
             <button class="start-btn" id="btn-start-stammformen">Stammformen üben</button>
@@ -294,6 +294,7 @@
         let verbPool = [];
         let gameMode = 'forms'; // 'forms' | 'stammformen'
         let activePool = [];
+        let maxSelectedLesson = 0; // höchste gewählte Lektion, für die Perfekt-/PPP-Sperre im Stammformen-Modus
 
         // Wiederholungsrunde für falsch beantwortete Fragen
         let missedItems = [];
@@ -307,8 +308,9 @@
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
                 startDefense();
             });
         }
@@ -336,6 +338,15 @@
             if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
             if (verbObj.latin === "adesse") return ["adsum", "ades", "adest", "adsumus", "adestis", "adsunt"];
             if (verbObj.latin === "interesse") return ["intersum", "interes", "interest", "intersumus", "interestis", "intersunt"];
+            if (verbObj.latin === "abesse") return ["absum", "abes", "abest", "absumus", "abestis", "absunt"];
+            if (verbObj.latin === "velle") return ["volō", "vīs", "vult", "volumus", "vultis", "volunt"];
+            if (verbObj.latin === "nōlle") return ["nōlō", "nōn vīs", "nōn vult", "nōlumus", "nōn vultis", "nōlunt"];
+            if (verbObj.latin === "praeesse") return ["praesum", "praees", "praeest", "praesumus", "praeestis", "praesunt"];
+            if (verbObj.latin === "ferre") return ["ferō", "fers", "fert", "ferimus", "fertis", "ferunt"];
+            if (verbObj.latin === "sē cōnferre") return ["cōnferō", "cōnfers", "cōnfert", "cōnferimus", "cōnfertis", "cōnferunt"];
+            if (verbObj.latin === "afferre") return ["afferō", "affers", "affert", "afferimus", "affertis", "afferunt"];
+            if (verbObj.latin === "offerre") return ["offerō", "offers", "offert", "offerimus", "offertis", "offerunt"];
+            if (verbObj.latin === "īnferre") return ["īnferō", "īnfers", "īnfert", "īnferimus", "īnfertis", "īnferunt"];
             if (verbObj.latin === "abīre") return ["abeō", "abīs", "abit", "abīmus", "abītis", "abeunt"];
             // "dare" ist KEIN unregelmäßiges Verb (bleibt a-Konjugation!) - nur die Vokallänge weicht ab
             // (kurzes a in fast allen Formen: dō, dās, dat ... statt dās/dāt mit Länge). Deshalb hier als
@@ -410,12 +421,27 @@
             const chosenWrongPresent = wrongPresentPatterns[Math.floor(Math.random() * wrongPresentPatterns.length)];
             const fakePres = fakePresent(chosenWrongPresent, stem);
 
-            const correct = `${verbObj.middle}, ${verbObj.perfect}, ${verbObj.ppp}`;
-            let distractors = [
-                `${verbObj.middle}, ${fakePerfect1}, ${verbObj.ppp}`,
-                `${verbObj.middle}, ${fakePerfect2}, ${verbObj.ppp}`,
-                `${fakePres}, ${verbObj.perfect}, ${verbObj.ppp}`
-            ];
+            // PPP nur einbeziehen, wenn es sowohl existiert als auch in der gewählten Lektionsauswahl bekannt ist
+            const pppKnown = !!verbObj.ppp && (verbObj.pppLesson || verbObj.lesson) <= maxSelectedLesson;
+
+            let correct, distractors;
+            if (pppKnown) {
+                correct = `${verbObj.middle}, ${verbObj.perfect}, ${verbObj.ppp}`;
+                distractors = [
+                    `${verbObj.middle}, ${fakePerfect1}, ${verbObj.ppp}`,
+                    `${verbObj.middle}, ${fakePerfect2}, ${verbObj.ppp}`,
+                    `${fakePres}, ${verbObj.perfect}, ${verbObj.ppp}`
+                ];
+            } else {
+                // Zweiteilige Frage: nur Präsens + Perfekt, PPP noch nicht bekannt
+                correct = `${verbObj.middle}, ${verbObj.perfect}`;
+                distractors = [
+                    `${verbObj.middle}, ${fakePerfect1}`,
+                    `${verbObj.middle}, ${fakePerfect2}`,
+                    `${fakePres}, ${verbObj.perfect}`
+                ];
+            }
+
             // Sicherheitsnetz gegen die (sehr seltene) Kollision zweier Distraktoren
             distractors = [...new Set(distractors)];
             while (distractors.length < 3) distractors.push(distractors[0] + '\u200b'); // unsichtbares Trennzeichen im Notfall
@@ -430,13 +456,16 @@
             }
 
             if (gameMode === 'stammformen') {
-                verbPool = activePool.filter(v => v.type === 'verb' && v.perfect && v.ppp);
+                verbPool = activePool.filter(v =>
+                    v.type === 'verb' && v.perfect &&
+                    (v.perfectLesson || v.lesson) <= maxSelectedLesson
+                );
                 if (verbPool.length < 4) {
-                    alert("Für diese Lektionsauswahl gibt es noch zu wenig Verben mit Perfekt UND PPP. Bitte mehr Lektionen wählen oder den anderen Modus nutzen.");
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenig Verben mit bekanntem Perfekt. Bitte mehr Lektionen wählen oder den anderen Modus nutzen.");
                     return;
                 }
             } else {
-                verbPool = activePool.filter(v => v.type === 'verb');
+                verbPool = activePool.filter(v => v.type === 'verb' && v.gram_class !== 'Deponens' && v.gram_class !== 'unregelmäßig (Passiv von facere)');
             }
 
             currentWaveIdx = 0;

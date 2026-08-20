@@ -42,7 +42,20 @@ const LessonFilter = (() => {
                         padding:30px; max-width:480px; width:100%; text-align:center;
                         box-shadow: 0 0 40px rgba(212,175,55,0.2);">
                 <h2 style="color:#d4af37; margin-top:0; font-size:1.4rem;">Welche Lektionen möchtest du üben?</h2>
-                <p style="color:#ccc; font-size:0.9rem; margin-bottom:20px;">Wähle eine oder mehrere Lektionen aus.</p>
+
+                <div style="display:flex; align-items:center; justify-content:center; gap:10px;
+                            margin-bottom:20px; padding:14px; background:rgba(212,175,55,0.08);
+                            border-radius:8px; border:1px solid rgba(212,175,55,0.3);">
+                    <label for="lf-upto-input" style="color:#ccc; font-size:0.9rem;">Bis Lektion:</label>
+                    <input type="number" id="lf-upto-input" min="${lessons[0]}" max="${lessons[lessons.length-1]}"
+                           style="width:60px; padding:6px; border-radius:6px; border:1px solid #d4af37;
+                                  background:#0d0a07; color:#d4af37; font-size:1rem; text-align:center;">
+                    <button id="lf-upto-btn" style="padding:8px 16px; border-radius:6px; border:none;
+                                background:#d4af37; color:#1a1410; font-weight:bold; cursor:pointer;
+                                font-size:0.9rem;">Übernehmen</button>
+                </div>
+
+                <p style="color:#ccc; font-size:0.9rem; margin-bottom:12px;">... oder wähle einzelne Lektionen direkt aus:</p>
                 <div id="lf-tiles" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px,1fr));
                             gap:10px; margin-bottom:20px;">
                     ${tilesHtml}
@@ -96,12 +109,24 @@ const LessonFilter = (() => {
             });
         });
 
+        overlay.querySelector('#lf-upto-btn').addEventListener('click', () => {
+            const input = overlay.querySelector('#lf-upto-input');
+            const maxLesson = parseInt(input.value, 10);
+            if (isNaN(maxLesson)) return;
+            tiles.forEach(tile => {
+                const lesson = Number(tile.getAttribute('data-lesson'));
+                const shouldBeSelected = lesson <= maxLesson;
+                const isSelected = selected.has(tile.getAttribute('data-lesson'));
+                if (shouldBeSelected !== isSelected) toggleTile(tile);
+            });
+        });
+
         confirmBtn.addEventListener('click', () => {
             if (selected.size === 0) return;
-            const selectedNums = Array.from(selected).map(Number);
+            const selectedNums = Array.from(selected).map(Number).sort((a, b) => a - b);
             const filtered = pool.filter(v => selectedNums.includes(v.lesson));
             document.body.removeChild(overlay);
-            onConfirm(filtered);
+            onConfirm(filtered, selectedNums);
         });
     }
 
