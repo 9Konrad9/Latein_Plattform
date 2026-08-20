@@ -238,6 +238,7 @@
         let currentCorrectAnswer = "";
         let currentVocabItem = null;
         let activePool = [];
+        let maxSelectedLesson = 0;
 
         /* ============ ARENA-GRÖSSE (Breite UND Höhe berücksichtigen, wichtig im Querformat) ============ */
         function resizeArena() {
@@ -271,8 +272,9 @@
                     alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
                     return;
                 }
-                LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                     activePool = filteredPool;
+                    maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
                     startRace();
                     setTimeout(resizeArena, 100);
                 });
@@ -394,6 +396,22 @@
             document.getElementById('svg-ai').setAttribute('transform', `translate(${aiCoords.x}, ${aiCoords.y}) rotate(${aiCoords.angle})`);
         }
 
+        /* ============ STAMMFORMEN-DISTRAKTOREN (analog Formen-Kastell) ============ */
+        function getVerbStem(item) {
+            return item.latin.slice(0, -3); // āre/ēre/īre/ere sind immer 3 Zeichen lang
+        }
+        function classifyPerfectPattern(perfect) {
+            if (perfect.endsWith('vī')) return 'v';
+            if (perfect.endsWith('uī')) return 'u';
+            if (perfect.endsWith('sī') || perfect.endsWith('xī')) return 's';
+            return 'other';
+        }
+        function fakePerfect(pattern, stem) {
+            if (pattern === 'v') return stem + 'āvī';
+            if (pattern === 'u') return stem + 'uī';
+            return stem + 'sī';
+        }
+
         function nextQuestion() {
             if(timeLeft <= 0) return;
 
@@ -451,25 +469,65 @@
                         wrongPool = [base + "ī m.", base + "ae f.", base + "is n."];
                     }
                 } 
-                else { 
-                    categoryText = "⚡ Konjugations-Formen (Präzise Endungsanalyse)";
-                    questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
-                    
-                    if (item.latin === "esse") {
-                        wrongPool = ["esō", "fui", "sim"];
-                    } else {
-                        let stem = item.latin.replace(/āre|ēre|īre|ere/, "");
-                        if (item.gram_class.includes("a-Konjugation")) {
-                            wrongPool = [stem + "eō", stem + "iō", stem + "ōr"];
-                        } else if (item.gram_class.includes("e-Konjugation")) {
-                            wrongPool = [stem + "ō", stem + "iō", stem + "or"];
-                        } else if (item.gram_class.includes("i-Konjugation") || item.gram_class.includes("gemischte")) {
-                            wrongPool = [stem + "ō", stem + "eō", stem + "or"];
-                        } else if (item.gram_class.includes("konsonantische")) {
-                            wrongPool = [stem + "eō", stem + "iō", stem + "is"];
+                else {
+                    const perfectKnown = !!item.perfect && (item.perfectLesson || item.lesson) <= maxSelectedLesson;
+                    const pppKnown = !!item.ppp && (item.pppLesson || item.lesson) <= maxSelectedLesson;
+
+                    if (!perfectKnown) {
+                        // Wie bisher: nur 1. Person Singular Präsens
+                        categoryText = "⚡ Konjugations-Formen (Präzise Endungsanalyse)";
+                        questionText = `Wie lautet die 1. Person Singular Präsens von „${item.latin}“?`;
+
+                        if (item.latin === "esse") {
+                            wrongPool = ["esō", "fui", "sim"];
                         } else {
-                            wrongPool = [stem + "ō", stem + "eō", stem + "iō"];
+                            let stem = item.latin.replace(/āre|ēre|īre|ere/, "");
+                            if (item.gram_class.includes("a-Konjugation")) {
+                                wrongPool = [stem + "eō", stem + "iō", stem + "ōr"];
+                            } else if (item.gram_class.includes("e-Konjugation")) {
+                                wrongPool = [stem + "ō", stem + "iō", stem + "or"];
+                            } else if (item.gram_class.includes("i-Konjugation") || item.gram_class.includes("gemischte")) {
+                                wrongPool = [stem + "ō", stem + "eō", stem + "or"];
+                            } else if (item.gram_class.includes("konsonantische")) {
+                                wrongPool = [stem + "eō", stem + "iō", stem + "is"];
+                            } else {
+                                wrongPool = [stem + "ō", stem + "eō", stem + "iō"];
+                            }
                         }
+                    } else {
+                        // Perfekt bekannt (und ggf. auch PPP): Stammformen-Frage, analog Formen-Kastell
+                        const stem = getVerbStem(item);
+                        const realPerfectPattern = classifyPerfectPattern(item.perfect);
+                        const wrongPatterns = ['v', 'u', 's'].filter(p => p !== realPerfectPattern).slice(0, 2);
+                        const fakePerfect1 = fakePerfect(wrongPatterns[0], stem);
+                        const fakePerfect2 = fakePerfect(wrongPatterns[1], stem);
+
+                        if (pppKnown) {
+                            categoryText = "⚡ Stammformen";
+                            questionText = `Wie lauten die Stammformen von „${item.latin}“?`;
+                            currentCorrectAnswer = `${item.middle}, ${item.perfect}, ${item.ppp}`;
+                            wrongPool = [
+                                `${item.middle}, ${fakePerfect1}, ${item.ppp}`,
+                                `${item.middle}, ${fakePerfect2}, ${item.ppp}`
+                            ];
+                        } else {
+                            categoryText = "⚡ Stammformen (Präsens + Perfekt)";
+                            questionText = `Wie lauten Präsens und Perfekt von „${item.latin}“?`;
+                            currentCorrectAnswer = `${item.middle}, ${item.perfect}`;
+                            wrongPool = [
+                                `${item.middle}, ${fakePerfect1}`,
+                                `${item.middle}, ${fakePerfect2}`
+                            ];
+                        }
+                        // Dritten Distraktor über eine falsche Konjugationsklasse im Präsens erzeugen
+                        let stemForPresent = item.latin.replace(/āre|ēre|īre|ere/, "");
+                        let fakePresentOptions;
+                        if (item.gram_class.includes("a-Konjugation")) fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+                        else if (item.gram_class.includes("e-Konjugation")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "iō"];
+                        else if (item.gram_class.includes("i-Konjugation") || item.gram_class.includes("gemischte")) fakePresentOptions = [stemForPresent + "ō", stemForPresent + "eō"];
+                        else fakePresentOptions = [stemForPresent + "eō", stemForPresent + "iō"];
+                        const fakePresent = fakePresentOptions[Math.floor(Math.random() * fakePresentOptions.length)];
+                        wrongPool.push(pppKnown ? `${fakePresent}, ${item.perfect}, ${item.ppp}` : `${fakePresent}, ${item.perfect}`);
                     }
                 }
             }
