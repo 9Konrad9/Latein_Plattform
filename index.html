@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Lūdī Rōmānī - Lernspiele</title>
+    <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <style>
         :root {
@@ -83,8 +84,8 @@
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+            gap: 16px;
             width: 100%;
         }
 
@@ -93,7 +94,7 @@
             border: 2px solid var(--roman-bronze);
             border-top: 5px solid var(--pillar-color, var(--roman-red));
             border-radius: 10px;
-            padding: 25px 20px;
+            padding: 16px 14px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 6px 15px rgba(0,0,0,0.6);
@@ -106,37 +107,37 @@
             border-color: var(--pillar-color, var(--roman-gold));
         }
 
-        .game-icon { font-size: 3rem; margin-bottom: 15px; text-align: center; }
+        .game-icon { font-size: 2.2rem; margin-bottom: 8px; text-align: center; }
 
         .game-title {
             font-family: var(--font-display);
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             color: var(--roman-gold);
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             text-align: center;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .game-focus {
             background: rgba(212, 175, 55, 0.1);
             color: #ffcc00;
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: bold;
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 4px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             text-align: center;
             text-transform: uppercase;
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
 
         .game-desc {
-            font-size: 0.95rem;
-            line-height: 1.5;
+            font-size: 0.85rem;
+            line-height: 1.4;
             color: #ccc;
             flex-grow: 1;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             text-align: center;
         }
 
@@ -146,8 +147,8 @@
             text-decoration: none;
             font-family: var(--font-display);
             font-weight: bold;
-            font-size: 1.1rem;
-            padding: 12px;
+            font-size: 0.95rem;
+            padding: 10px;
             border-radius: 6px;
             text-align: center;
             text-transform: uppercase;
@@ -173,6 +174,19 @@
             color: var(--roman-gold);
             background: rgba(212, 175, 55, 0.08);
         }
+
+        .vocab-ampel {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 0.8rem; margin-bottom: 12px; padding: 5px 8px;
+            border-radius: 4px; background: rgba(255,255,255,0.06); color: #ccc;
+        }
+        .vocab-ampel .ampel-bar {
+            display: flex; height: 8px; width: 80px; border-radius: 4px; overflow: hidden;
+            background: #333;
+        }
+        .vocab-ampel .ampel-seg.red { background: #c0392b; }
+        .vocab-ampel .ampel-seg.yellow { background: #d4af37; }
+        .vocab-ampel .ampel-seg.green { background: #4CAF50; }
     </style>
 </head>
 <body>
@@ -215,10 +229,11 @@
             <div class="game-card" data-game="circus">
                 <div class="game-icon">🐎</div>
                 <div class="game-title">Circus Maximus</div>
-                <div class="game-focus">Schwerpunkt: Vokabel-Allrounder</div>
+                <div class="game-focus">Schwerpunkt: Bedeutung, schnell und viel</div>
                 <div class="game-desc">
-                    Der schnelle Alleskönner! Trainiere Bedeutungen, Wortarten und Stammformen im rasanten Wagenrennen.
+                    Das schnelle Wagenrennen: Trainiere reine Vokabelbedeutungen im rasanten Tempo gegen die Uhr.
                 </div>
+                <div class="vocab-ampel" id="circus-ampel"></div>
                 <div class="progress-badge"></div>
                 <a href="CircusV.html" class="play-btn">Arena betreten</a>
             </div>
@@ -226,9 +241,9 @@
             <div class="game-card" data-game="principia">
                 <div class="game-icon">🪙</div>
                 <div class="game-title">Prīncipia!</div>
-                <div class="game-focus">Schwerpunkt: Mittlere Wörterbuch-Spalte</div>
+                <div class="game-focus">Schwerpunkt: Wörterbuch-Grundformen</div>
                 <div class="game-desc">
-                    Präge die richtige mittlere Spalte (Genitiv bei Nomen, 1. Person bei Verben) und fülle deine Schatzkammer mit Münzen.
+                    Präge die richtige Grundform: Genitiv+Geschlecht bei Nomen, bei Verben wachsen die Stammformen mit deinem Wissensstand mit.
                 </div>
                 <div class="progress-badge"></div>
                 <a href="Principia.html" class="play-btn">Prägerei eröffnen</a>
@@ -274,7 +289,7 @@
                 <div class="game-title">Formen-Kastell</div>
                 <div class="game-focus">Schwerpunkt: Verb-Drill</div>
                 <div class="game-desc">
-                    Verteidige die Mauern gegen Katapultsteine, indem du die Personalendungen der lateinischen Verben bestimmst.
+                    Verteidige die Mauern gegen Katapultsteine! Zwei Modi: Personalendungen bestimmen oder vollständige Stammformen abfragen.
                 </div>
                 <div class="progress-badge"></div>
                 <a href="Kastell.html" class="play-btn">Kastell verteidigen</a>
@@ -387,17 +402,33 @@
     </section>
 
     <script>
+        // Gesamtfortschritt (Rot/Gelb/Grün nach Leitner-System) in der Circus-Maximus-Kachel anzeigen
+        if (typeof globalVocabularyPool !== 'undefined' && typeof LudiProgress !== 'undefined') {
+            const ampelEl = document.getElementById('circus-ampel');
+            if (ampelEl) {
+                const summary = LudiProgress.getBoxSummary(globalVocabularyPool);
+                const total = summary.red + summary.yellow + summary.green;
+                if (total > 0) {
+                    const pctRed = (summary.red / total * 100).toFixed(1);
+                    const pctYellow = (summary.yellow / total * 100).toFixed(1);
+                    const pctGreen = (summary.green / total * 100).toFixed(1);
+                    ampelEl.innerHTML = `
+                        <span>🔴 ${summary.red} · 🟡 ${summary.yellow} · 🟢 ${summary.green}</span>
+                        <div class="ampel-bar">
+                            <div class="ampel-seg red" style="width:${pctRed}%"></div>
+                            <div class="ampel-seg yellow" style="width:${pctYellow}%"></div>
+                            <div class="ampel-seg green" style="width:${pctGreen}%"></div>
+                        </div>
+                    `;
+                } else {
+                    ampelEl.innerText = 'Noch keine Vokabeln geübt';
+                }
+            }
+        }
+
         document.querySelectorAll('.game-card[data-game]').forEach(card => {
             const gameId = card.getAttribute('data-game');
             const badge = card.querySelector('.progress-badge');
-
-            // Sonderfall: Issa Salit! hat einen Höhen-Score statt Runden-Score
-            if (gameId === 'issasalit') {
-                const p = LudiProgress.getGameProgress('issasalit');
-                if (p) { badge.classList.add('has-score'); badge.innerText = `🏆 Bestleistung: Höhe ${p.bestScore}`; }
-                else badge.innerText = 'Noch nicht gespielt';
-                return;
-            }
 
             // Sonderfall: Pronomina! hat zwei getrennte Modi mit eigenen Scores
             if (gameId === 'pronomina') {
