@@ -67,7 +67,7 @@
             margin: 2px 0;
         }
 
-        .gladiator-svg { width: 45px; height: 45px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); }
+        .gladiator-img { height: 92px; width: auto; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); }
 
         .question-container {
             flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
@@ -134,13 +134,7 @@
             <div class="health-display" id="p1-health">❤️❤️❤️❤️❤️</div>
         </div>
         <div class="arena-visuals">
-            <svg class="gladiator-svg" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="30" fill="#333" stroke="#cc0000" stroke-width="2"/>
-                <path d="M22 18 Q32 2 42 18 Z" fill="#cc0000"/>
-                <rect x="24" y="18" width="16" height="20" fill="#d4af37" rx="3"/>
-                <rect x="28" y="24" width="8" height="6" fill="#111"/>
-                <path d="M12 28 L20 48 L12 48 Z" fill="#cc0000" stroke="#fff"/>
-            </svg>
+            <img class="gladiator-img" src="assets/duell/gladiator_red.png" alt="Gladiator Rot">
         </div>
         <div class="question-container">
             <div class="q-type" id="p1-qtype">Bereitmachen...</div>
@@ -163,13 +157,7 @@
             <div class="health-display" id="p2-health">❤️❤️❤️❤️❤️</div>
         </div>
         <div class="arena-visuals">
-            <svg class="gladiator-svg" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="30" fill="#333" stroke="#0000cc" stroke-width="2"/>
-                <path d="M22 18 Q32 2 42 18 Z" fill="#0000cc"/>
-                <rect x="24" y="18" width="16" height="20" fill="#d4af37" rx="3"/>
-                <rect x="28" y="24" width="8" height="6" fill="#111"/>
-                <path d="M52 28 L44 48 L52 48 Z" fill="#0000cc" stroke="#fff"/>
-            </svg>
+            <img class="gladiator-img" src="assets/duell/gladiator_blue.png" alt="Gladiator Blau">
         </div>
         <div class="question-container">
             <div class="q-type" id="p2-qtype">Bereitmachen...</div>
@@ -300,13 +288,41 @@
                 categoryText = `🔮 Bedeutung — ${translateType(item.type)}`;
                 questionText = `Was bedeutet „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
-                wrongPool = activePool.filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer).map(i => i.meaning);
+
+                wrongPool = activePool
+                    .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
+                    .map(i => i.meaning);
+
+                wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+                while (wrongPool.length < 3) {
+                    let fb = activePool[Math.floor(Math.random() * activePool.length)];
+                    if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
+                }
             } else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";
                     questionText = `Wie lauten Genitiv und Geschlecht von „${item.latin}“?`;
                     currentCorrectAnswer = item.middle;
-                    wrongPool = activePool.filter(i => i.type === item.type && i.middle !== currentCorrectAnswer && i.middle !== "Ausruf" && i.middle !== "Adv.").map(i => i.middle);
+
+                    let gen = item.middle.split(" ")[0];
+                    let gended = item.middle.split(" ")[1] || "m.";
+                    let base = gen;
+                    if (gen.endsWith("ae")) base = gen.slice(0, -2);
+                    else if (gen.endsWith("iī")) base = gen.slice(0, -2);
+                    else if (gen.endsWith("ī")) base = gen.slice(0, -1);
+                    else if (gen.endsWith("is")) base = gen.slice(0, -2);
+
+                    if (item.gram_class.includes("a-Deklination")) {
+                        wrongPool = [base + "ī m.", base + "is f.", base + "ae m."];
+                    } else if (item.gram_class.includes("o-Deklination")) {
+                        let altG = gended === "m." ? "f." : "m.";
+                        wrongPool = [base + "ae f.", base + "is " + gended, base + (gen.endsWith("iī") ? "iī " : "ī ") + altG];
+                    } else if (item.gram_class.includes("konsonantische")) {
+                        let altG = gended === "m." ? "f." : "m.";
+                        wrongPool = [item.latin + "ī " + gended, base + "is " + altG, base + "ae f."];
+                    } else {
+                        wrongPool = [base + "ī m.", base + "ae f.", base + "is n."];
+                    }
                 } else {
                     const perfectKnown = !!item.perfect && (item.perfectLesson || item.lesson) <= maxSelectedLesson;
                     const pppKnown = !!item.ppp && (item.pppLesson || item.lesson) <= maxSelectedLesson;
