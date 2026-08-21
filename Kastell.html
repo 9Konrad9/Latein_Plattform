@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Formen-Kastell - Die Verb-Abwehr</title>
-    <!-- Zentrale Vokabeldatenbank einbinden -->
+    <title>Formen-Kastell - Die Formen-Abwehr</title>
+    <!-- Zentrale Vokabeldatenbank und Engines einbinden -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="lessonFilter.js"></script>
+    <script src="nounEngine.js"></script>
+    <script src="verbEngine.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -197,7 +199,7 @@
 
     <h1>Formen-Kastell</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
-        Mission: Die Verb-Abwehr
+        Mission: Die Formen-Abwehr
     </div>
 
     <div class="game-container">
@@ -206,20 +208,20 @@
         <div id="start-screen" class="start-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
             <div class="notice-box">
-                <h3>📜 Modus 1: Formen bestimmen</h3>
-                <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
-                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern (z.B. <em>vidēmus</em>). Du musst die Form blitzschnell analysieren und den Schild mit der korrekten Bestimmung (z.B. <em>1. Person Plural</em>) aktivieren.</p>
-                <p style="margin-top: 10px; font-weight: bold; color: var(--roman-gold);">Achte genau auf die Endungen (-ō, -s, -t, -mus, -tis, -nt), um das Kastell zu schützen!</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Verb hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Verb sofort zurück auf Rot.</p>
+                <h3>📜 Modus 1: Nomen-Formen</h3>
+                <p>Bei dieser Verteidigung dreht sich alles um <strong>Nomen</strong>.</p>
+                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen deklinierte Nomenformen auf unsere Mauern (z. B. <em>rēgum</em>). Bestimme Kasus <strong>und</strong> Numerus (z. B. <em>Genitiv Plural</em>).</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Nomen hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Wort sofort zurück auf Rot.</p>
             </div>
-            <button class="start-btn" id="btn-start-game">Verteidigung starten!</button>
+            <button class="start-btn" id="btn-start-noun">Nomen-Formen üben</button>
 
             <div class="notice-box" style="margin-top: 25px;">
-                <h3>📜 Modus 2: Stammformen</h3>
-                <p>Hier wird das feindliche Katapult einen <strong>Infinitiv</strong> werfen (z. B. <em>amāre</em>). Du wählst den Schild mit den korrekten Stammformen – z. B. <em>amō, amāvī, amātum</em>. Ist das PPP für die gewählten Lektionen noch nicht bekannt, wird nur nach Präsens und Perfekt gefragt.</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Nur Verben, die in dieser Lektionsauswahl bereits Perfekt UND PPP haben, kommen hier vor.</p>
+                <h3>📜 Modus 2: Verb-Formen</h3>
+                <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
+                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern. Bestimme Person <strong>und</strong> Numerus (z. B. <em>3. Person Plural</em>) – sobald du weitere Lektionen ausgewählt hast, kommt zusätzlich das <strong>Tempus</strong> mit ins Spiel (z. B. <em>3. Person Plural, Perfekt</em>).</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Welche Tempora schon auftauchen, richtet sich automatisch nach deiner Lektionsauswahl: Präsens von Anfang an, Perfekt ab Lektion 10, Imperfekt ab Lektion 12, Futur I ab Lektion 13, Plusquamperfekt ab Lektion 14.</p>
             </div>
-            <button class="start-btn" id="btn-start-stammformen">Stammformen üben</button>
+            <button class="start-btn" id="btn-start-verb">Verb-Formen üben</button>
         </div>
 
         <!-- Didaktische Feedbackbox -->
@@ -254,6 +256,7 @@
                 </div>
             </div>
 
+            <div style="text-align:center; font-family: var(--font-display); font-size: 1.15rem; color: var(--roman-gold); margin-bottom: 4px;" id="question-prompt">Bestimme die Form.</div>
             <div class="gram-clue" id="target-clue">Welle 1 von 10</div>
 
             <div class="options-grid">
@@ -282,19 +285,21 @@
             "1. Person Singular", "2. Person Singular", "3. Person Singular",
             "1. Person Plural", "2. Person Plural", "3. Person Plural"
         ];
+        const CASE_LABELS = { Nom: 'Nominativ', Gen: 'Genitiv', Dat: 'Dativ', Akk: 'Akkusativ', Abl: 'Ablativ' };
+        const CASE_KEYS = ['Nom', 'Gen', 'Dat', 'Akk', 'Abl'];
 
         let wallHealth = 100;
         let currentWaveIdx = 0;
         const totalWaves = 10;
         let currentCorrectAnswer = "";
-        let currentVerbObj = null;
-        let currentPersonIdx = 0;
+        let currentTargetObj = null;
+        let currentRound = null;
         let roundLocked = false;
-        
-        let verbPool = [];
-        let gameMode = 'forms'; // 'forms' | 'stammformen'
+
+        let targetPool = [];
+        let gameMode = 'noun'; // 'noun' | 'verb'
         let activePool = [];
-        let maxSelectedLesson = 0; // höchste gewählte Lektion, für die Perfekt-/PPP-Sperre im Stammformen-Modus
+        let maxSelectedLesson = 0; // höchste gewählte Lektion, für die Tempus-Freischaltung im Verb-Modus
 
         // Wiederholungsrunde für falsch beantwortete Fragen
         let missedItems = [];
@@ -317,8 +322,8 @@
 
         window.onload = function() {
             // Ausfallsicheres Event-Binding für iOS
-            document.getElementById('btn-start-game').addEventListener('click', function() { promptLessonsAndStart('forms'); });
-            document.getElementById('btn-start-stammformen').addEventListener('click', function() { promptLessonsAndStart('stammformen'); });
+            document.getElementById('btn-start-noun').addEventListener('click', function() { promptLessonsAndStart('noun'); });
+            document.getElementById('btn-start-verb').addEventListener('click', function() { promptLessonsAndStart('verb'); });
             document.getElementById('btn-next-wave').addEventListener('click', loadNextWave);
             document.getElementById('btn-restart').addEventListener('click', function() { promptLessonsAndStart(); });
             document.getElementById('btn-review').addEventListener('click', startReview);
@@ -330,142 +335,87 @@
             }
         };
 
-        // Die KI-Engine des Spiels: Konjugiert Verben vollautomatisch!
-        function conjugateVerb(verbObj) {
-            // Echte unregelmäßige (suppletive) Verben - eigener Stamm je Person/Zeitform
-            if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
-            if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
-            if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
-            if (verbObj.latin === "adesse") return ["adsum", "ades", "adest", "adsumus", "adestis", "adsunt"];
-            if (verbObj.latin === "interesse") return ["intersum", "interes", "interest", "intersumus", "interestis", "intersunt"];
-            if (verbObj.latin === "abesse") return ["absum", "abes", "abest", "absumus", "abestis", "absunt"];
-            if (verbObj.latin === "velle") return ["volō", "vīs", "vult", "volumus", "vultis", "volunt"];
-            if (verbObj.latin === "nōlle") return ["nōlō", "nōn vīs", "nōn vult", "nōlumus", "nōn vultis", "nōlunt"];
-            if (verbObj.latin === "praeesse") return ["praesum", "praees", "praeest", "praesumus", "praeestis", "praesunt"];
-            if (verbObj.latin === "ferre") return ["ferō", "fers", "fert", "ferimus", "fertis", "ferunt"];
-            if (verbObj.latin === "sē cōnferre") return ["cōnferō", "cōnfers", "cōnfert", "cōnferimus", "cōnfertis", "cōnferunt"];
-            if (verbObj.latin === "afferre") return ["afferō", "affers", "affert", "afferimus", "affertis", "afferunt"];
-            if (verbObj.latin === "offerre") return ["offerō", "offers", "offert", "offerimus", "offertis", "offerunt"];
-            if (verbObj.latin === "īnferre") return ["īnferō", "īnfers", "īnfert", "īnferimus", "īnfertis", "īnferunt"];
-            if (verbObj.latin === "abīre") return ["abeō", "abīs", "abit", "abīmus", "abītis", "abeunt"];
-            // "dare" ist KEIN unregelmäßiges Verb (bleibt a-Konjugation!) - nur die Vokallänge weicht ab
-            // (kurzes a in fast allen Formen: dō, dās, dat ... statt dās/dāt mit Länge). Deshalb hier als
-            // Formen-Tabelle hinterlegt, damit die Vokallängen korrekt bleiben, nicht weil es zu den echten
-            // Suppletiv-Verben gehört.
-            if (verbObj.latin === "dare") return ["dō", "dās", "dat", "damus", "datis", "dant"];
-            if (verbObj.latin === "adīre") return ["adeō", "adīs", "adit", "adīmus", "adītis", "adeunt"];
-            if (verbObj.latin === "perīre") return ["pereō", "perīs", "perit", "perīmus", "perītis", "pereunt"];
-            if (verbObj.latin === "exīre") return ["exeō", "exīs", "exit", "exīmus", "exītis", "exeunt"];
-            if (verbObj.latin === "subīre") return ["subeō", "subīs", "subit", "subīmus", "subītis", "subeunt"];
-            if (verbObj.latin === "redīre") return ["redeō", "redīs", "redit", "redīmus", "redītis", "redeunt"];
-            
-            let inf = verbObj.latin;
-            let firstSg = verbObj.middle;
-            let cClass = verbObj.gram_class;
-            
-            // Den Stamm sauber extrahieren (z.B. amāre -> am, currere -> curr)
-            // Die .slice() Methode umgeht elegant auch Besonderheiten wie das kurze e in cōnsīdere
-            let stem = inf.slice(0, -3); 
+        // Gemeinsame Rundenlogik: aus einer Liste von {form, label}-"Slots" eine Frage bauen.
+        // Wird sowohl vom Nomen- als auch vom Verb-Modus genutzt.
+        function buildRoundFromSlots(slots) {
+            const targetIdx = Math.floor(Math.random() * slots.length);
+            const target = slots[targetIdx];
 
-            if (cClass.includes("a-Konjugation")) {
-                return [firstSg, stem+"ās", stem+"at", stem+"āmus", stem+"ātis", stem+"ant"];
-            } else if (cClass.includes("e-Konjugation")) {
-                return [firstSg, stem+"ēs", stem+"et", stem+"ēmus", stem+"ētis", stem+"ent"];
-            } else if (cClass.includes("i-Konjugation")) {
-                return [firstSg, stem+"īs", stem+"it", stem+"īmus", stem+"ītis", stem+"iunt"];
-            } else if (cClass.includes("gemischte")) {
-                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"iunt"];
-            } else { 
-                // Konsonantische Konjugation (z.B. currere -> curris, currit)
-                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"unt"];
+            // Distraktoren: andere Formen UND andere Label (keine homonymen Formen als "falsch" anbieten,
+            // z.B. Nom./Akk. Plural bei Neutra sind identisch und daher beide korrekt)
+            let candidates = slots.filter((s, i) => i !== targetIdx && s.form !== target.form && s.label !== target.label);
+            candidates = candidates.sort(() => Math.random() - 0.5);
+
+            const seenLabels = new Set([target.label]);
+            const distractors = [];
+            for (const c of candidates) {
+                if (seenLabels.has(c.label)) continue;
+                seenLabels.add(c.label);
+                distractors.push(c.label);
+                if (distractors.length === 3) break;
             }
-        }
-
-        /* ============ STAMMFORMEN-MODUS ============ */
-        function getVerbStem(verbObj) {
-            // Alle Infinitiv-Endungen (āre, ēre, īre, ere) sind genau 3 Zeichen lang
-            return verbObj.latin.slice(0, -3);
-        }
-        function getPresentPattern(gramClass) {
-            if (gramClass.includes("e-Konjugation")) return 'e';
-            if (gramClass.includes("i-Konjugation") || gramClass.includes("gemischte")) return 'i';
-            return 'none'; // a-Konjugation, konsonantische Konjugation
-        }
-        function classifyPerfectPattern(perfect) {
-            if (perfect.endsWith('vī')) return 'v';
-            if (perfect.endsWith('uī')) return 'u';
-            if (perfect.endsWith('sī') || perfect.endsWith('xī')) return 's';
-            return 'other';
-        }
-        function fakePerfect(pattern, stem) {
-            if (pattern === 'v') return stem + 'āvī';
-            if (pattern === 'u') return stem + 'uī';
-            return stem + 'sī'; // 's'
-        }
-        function fakePresent(pattern, stem) {
-            if (pattern === 'e') return stem + 'eō';
-            if (pattern === 'i') return stem + 'iō';
-            return stem + 'ō'; // 'none'
-        }
-
-        function buildStammformenRound(verbObj) {
-            const stem = getVerbStem(verbObj);
-            const realPerfectPattern = classifyPerfectPattern(verbObj.perfect);
-            const realPresentPattern = getPresentPattern(verbObj.gram_class);
-
-            const wrongPerfectPatterns = ['v', 'u', 's'].filter(p => p !== realPerfectPattern).slice(0, 2);
-            const fakePerfect1 = fakePerfect(wrongPerfectPatterns[0], stem);
-            const fakePerfect2 = fakePerfect(wrongPerfectPatterns[1], stem);
-
-            const wrongPresentPatterns = ['none', 'e', 'i'].filter(p => p !== realPresentPattern);
-            const chosenWrongPresent = wrongPresentPatterns[Math.floor(Math.random() * wrongPresentPatterns.length)];
-            const fakePres = fakePresent(chosenWrongPresent, stem);
-
-            // PPP nur einbeziehen, wenn es sowohl existiert als auch in der gewählten Lektionsauswahl bekannt ist
-            const pppKnown = !!verbObj.ppp && (verbObj.pppLesson || verbObj.lesson) <= maxSelectedLesson;
-
-            let correct, distractors;
-            if (pppKnown) {
-                correct = `${verbObj.middle}, ${verbObj.perfect}, ${verbObj.ppp}`;
-                distractors = [
-                    `${verbObj.middle}, ${fakePerfect1}, ${verbObj.ppp}`,
-                    `${verbObj.middle}, ${fakePerfect2}, ${verbObj.ppp}`,
-                    `${fakePres}, ${verbObj.perfect}, ${verbObj.ppp}`
-                ];
-            } else {
-                // Zweiteilige Frage: nur Präsens + Perfekt, PPP noch nicht bekannt
-                correct = `${verbObj.middle}, ${verbObj.perfect}`;
-                distractors = [
-                    `${verbObj.middle}, ${fakePerfect1}`,
-                    `${verbObj.middle}, ${fakePerfect2}`,
-                    `${fakePres}, ${verbObj.perfect}`
-                ];
+            // Sicherheitsnetz, falls ein sehr kleines Paradigma nicht genug eindeutige Distraktoren hergibt
+            while (distractors.length < 3) {
+                distractors.push((distractors[distractors.length - 1] || target.label) + '\u200b');
             }
 
-            // Sicherheitsnetz gegen die (sehr seltene) Kollision zweier Distraktoren
-            distractors = [...new Set(distractors)];
-            while (distractors.length < 3) distractors.push(distractors[0] + '\u200b'); // unsichtbares Trennzeichen im Notfall
-
-            return { correct: correct, options: [correct, ...distractors].sort(() => Math.random() - 0.5) };
+            return {
+                targetForm: target.form,
+                correctLabel: target.label,
+                options: [target.label, ...distractors].sort(() => Math.random() - 0.5)
+            };
         }
 
+        function buildNounRound(nounObj) {
+            const table = NounEngine.decline(nounObj);
+            const slots = [];
+            CASE_KEYS.forEach(c => {
+                ['Sg', 'Pl'].forEach(n => {
+                    const numKey = n === 'Sg' ? 'sg' : 'pl';
+                    const caseKey = { Nom: 'nom', Gen: 'gen', Dat: 'dat', Akk: 'akk', Abl: 'abl' }[c];
+                    const form = table[numKey] ? table[numKey][caseKey] : null;
+                    if (form) {
+                        slots.push({ form: form, label: CASE_LABELS[c] + ' ' + (n === 'Sg' ? 'Singular' : 'Plural') });
+                    }
+                });
+            });
+            return buildRoundFromSlots(slots);
+        }
+
+        function buildVerbRound(verbObj) {
+            const knownTempora = VerbEngine.getKnownTempora(maxSelectedLesson);
+            const slots = [];
+            knownTempora.forEach(t => {
+                if ((t === 'Perfekt' || t === 'Plusquamperfekt') && !verbObj.perfect) return;
+                const forms = VerbEngine.getFormsForTempus(verbObj, t);
+                const tLabel = t === 'FuturI' ? 'Futur I' : t;
+                const showTempus = knownTempora.length > 1; // Solange nur Präsens bekannt ist, Tempus nicht extra nennen
+                forms.forEach((form, i) => {
+                    slots.push({ form: form, label: showTempus ? (persons[i] + ', ' + tLabel) : persons[i] });
+                });
+            });
+            return buildRoundFromSlots(slots);
+        }
 
         function startDefense() {
             if (activePool.length === 0) {
                 alert("Fehler: Kein Vokabelpool ausgewählt!"); return;
             }
 
-            if (gameMode === 'stammformen') {
-                verbPool = activePool.filter(v =>
-                    v.type === 'verb' && v.perfect &&
-                    (v.perfectLesson || v.lesson) <= maxSelectedLesson
+            if (gameMode === 'noun') {
+                targetPool = activePool.filter(v =>
+                    v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.')
                 );
-                if (verbPool.length < 4) {
-                    alert("Für diese Lektionsauswahl gibt es noch zu wenig Verben mit bekanntem Perfekt. Bitte mehr Lektionen wählen oder den anderen Modus nutzen.");
+                if (targetPool.length < 4) {
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenige geeignete Nomen. Bitte mehr Lektionen wählen.");
                     return;
                 }
             } else {
-                verbPool = activePool.filter(v => v.type === 'verb' && v.gram_class !== 'Deponens' && v.gram_class !== 'unregelmäßig (Passiv von facere)');
+                targetPool = activePool.filter(v => v.type === 'verb' && VerbEngine.isSupported(v));
+                if (targetPool.length < 4) {
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenige geeignete Verben. Bitte mehr Lektionen wählen.");
+                    return;
+                }
             }
 
             currentWaveIdx = 0;
@@ -487,77 +437,36 @@
             document.getElementById('feedback-box').style.display = 'none';
             const ampelIcons = ['🔴', '🟡', '🟢'];
 
-            if (gameMode === 'stammformen') {
-                if (forced) {
-                    currentVerbObj = forced.verbObj;
-                } else {
-                    currentVerbObj = LudiProgress.weightedPick(verbPool);
-                }
-                currentPersonIdx = null;
-
-                const round = buildStammformenRound(currentVerbObj);
-                currentCorrectAnswer = round.correct;
-
-                const stone = document.getElementById('target-verb');
-                stone.innerText = currentVerbObj.latin;
-                const newStone = stone.cloneNode(true);
-                stone.parentNode.replaceChild(newStone, stone);
-
-                const colorIdx = LudiProgress.getBoxColor(currentVerbObj.latin);
-                const waveLabel = isReviewMode
-                    ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
-                    : `Welle ${currentWaveIdx + 1} von ${totalWaves}`;
-                document.getElementById('target-clue').innerText = `${waveLabel} — Stammformen gesucht ${ampelIcons[colorIdx]}`;
-
-                for (let i = 0; i < 4; i++) {
-                    const btn = document.getElementById('shield' + i);
-                    btn.innerText = round.options[i];
-                    btn.className = 'shield-btn';
-                    btn.style.fontSize = '0.9rem';
-                    btn.disabled = false;
-                }
-                return;
-            }
-
-            // ---- Standard-Modus: Formen bestimmen ----
             if (forced) {
                 // Wiederholungsmodus: exakt dieselbe Frage nochmal stellen
-                currentVerbObj = forced.verbObj;
-                currentPersonIdx = forced.personIdx;
+                currentTargetObj = forced.targetObj;
+                currentRound = forced.round;
             } else {
-                // Normaler Modus: gewichtete Auswahl nach Ampel-Level (rote Verben häufiger)
-                currentVerbObj = LudiProgress.weightedPick(verbPool);
-                currentPersonIdx = Math.floor(Math.random() * 6);
+                // Normaler Modus: gewichtete Auswahl nach Ampel-Level (rote Wörter häufiger)
+                currentTargetObj = LudiProgress.weightedPick(targetPool);
+                currentRound = gameMode === 'noun' ? buildNounRound(currentTargetObj) : buildVerbRound(currentTargetObj);
             }
 
-            const forms = conjugateVerb(currentVerbObj);
-            const targetWord = forms[currentPersonIdx];
-            currentCorrectAnswer = persons[currentPersonIdx];
+            currentCorrectAnswer = currentRound.correctLabel;
 
             // Stein fliegen lassen
             const stone = document.getElementById('target-verb');
-            stone.innerText = targetWord;
+            stone.innerText = currentRound.targetForm;
             const newStone = stone.cloneNode(true);
             stone.parentNode.replaceChild(newStone, stone);
 
-            const colorIdx = LudiProgress.getBoxColor(currentVerbObj.latin);
+            const colorIdx = LudiProgress.getBoxColor(currentTargetObj.latin);
             const waveLabel = isReviewMode
                 ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
                 : `Welle ${currentWaveIdx + 1} von ${totalWaves}`;
             document.getElementById('target-clue').innerText =
-                `${waveLabel} — Infinitiv: ${currentVerbObj.latin} ${ampelIcons[colorIdx]}`;
-
-            // Falsche Antworten (Distraktoren) generieren (andere Personen)
-            let wrongPool = persons.filter(p => p !== currentCorrectAnswer);
-            wrongPool = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
-            
-            const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+                `${waveLabel} — Grundform: ${currentTargetObj.latin} ${ampelIcons[colorIdx]}`;
 
             for(let i = 0; i < 4; i++) {
                 const btn = document.getElementById('shield' + i);
-                btn.innerText = finalOptions[i];
+                btn.innerText = currentRound.options[i];
                 btn.className = 'shield-btn';
-                btn.style.fontSize = '';
+                btn.style.fontSize = currentRound.options[i].length > 18 ? '0.9rem' : '';
                 btn.disabled = false;
             }
         }
@@ -578,21 +487,18 @@
 
             fbBox.style.display = 'flex';
 
-            LudiProgress.recordVocabAttempt(currentVerbObj.latin, isCorrect);
+            LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
+            const wordTypeLabel = gameMode === 'noun' ? 'des Nomens' : 'des Verbs';
 
             if (isCorrect) {
                 if (isReviewMode) reviewCorrectCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
-                if (gameMode === 'stammformen') {
-                    fbText.innerHTML = `Hervorragend! Die Stammformen von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}) lauten korrekt: <strong>${currentCorrectAnswer}</strong>.`;
-                } else {
-                    fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentVerbObj.latin}</strong> (${currentVerbObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
-                }
+                fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentTargetObj.latin}</strong> (${currentTargetObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
             } else {
                 if (!isReviewMode) {
-                    missedItems.push({ verbObj: currentVerbObj, personIdx: currentPersonIdx });
+                    missedItems.push({ targetObj: currentTargetObj, round: currentRound });
                 }
                 selectedBtn.classList.add('wrong');
                 for(let i = 0; i < 4; i++) {
@@ -609,11 +515,7 @@
 
                 fbTitle.innerText = "💥 TREFFER!";
                 fbTitle.style.color = "#F44336";
-                if (gameMode === 'stammformen') {
-                    fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Die richtigen Stammformen von <strong>${currentVerbObj.latin}</strong> lauten: <strong>${currentCorrectAnswer}</strong>.`;
-                } else {
-                    fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> des Verbs <strong>${currentVerbObj.latin}</strong>.`;
-                }
+                fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> ${wordTypeLabel} <strong>${currentTargetObj.latin}</strong>.`;
             }
         }
 
@@ -679,20 +581,22 @@
             endBox.style.display = 'block';
 
             LudiProgress.saveGameResult('kastell', wallHealth, 100);
+            const wordTypePlural = gameMode === 'noun' ? 'Nomenformen' : 'Verbformen';
+            const wordTypeGen = gameMode === 'noun' ? 'Nomen' : 'Verben';
 
             if (isVictory) {
                 title.innerText = "🏛️ KASTELL VERTEIDIGT!";
                 title.style.color = "#4CAF50";
-                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die Verbendungen absolut sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
+                msg.innerHTML = `Ausgezeichnete Arbeit, Zenturio!<br>Deine Kohorte beherrscht die ${wordTypePlural} absolut sicher. Das Kastell hat der Belagerung mit einer Reststärke von <strong>${wallHealth}%</strong> standgehalten!`;
             } else {
                 title.innerText = "🔥 KASTELL ZERSTÖRT!";
                 title.style.color = "#F44336";
-                msg.innerHTML = `Die feindlichen Verben haben deine Verteidigungsmauern komplett zertrümmert.<br>Schau dir die Personalendungen noch einmal genau an und starte einen neuen Versuch!`;
+                msg.innerHTML = `Die feindlichen ${wordTypeGen} haben deine Verteidigungsmauern komplett zertrümmert.<br>Schau dir die Endungen noch einmal genau an und starte einen neuen Versuch!`;
             }
 
-            const summary = LudiProgress.getBoxSummary(verbPool);
+            const summary = LudiProgress.getBoxSummary(targetPool);
             document.getElementById('box-summary').innerText =
-                `Dein Vokabelkasten (${verbPool.length} Verben in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
+                `Dein Vokabelkasten (${targetPool.length} ${wordTypeGen} in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
 
             const reviewBtn = document.getElementById('btn-review');
             if (missedItems.length > 0) {
