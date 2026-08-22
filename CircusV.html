@@ -7,6 +7,7 @@
     <!-- Einbindung der zentralen Vokabeldatenbank -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <style>
         :root {
@@ -437,6 +438,13 @@
             const targetAnswer = currentCorrectAnswer.trim();
             const isCorrect = (selectedText === targetAnswer);
             LudiProgress.recordVocabAttempt(currentVocabItem.latin, isCorrect);
+
+            const wordTypeToCategory = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' };
+            const category = wordTypeToCategory[currentVocabItem.type];
+            if (category) {
+                const unlock = LudiProgress.recordCategoryAttempt(category, isCorrect);
+                if (unlock) AchievementToast.show(unlock);
+            }
 
             if (isCorrect) {
                 selectedButton.classList.add('correct');

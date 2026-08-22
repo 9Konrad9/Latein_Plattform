@@ -7,6 +7,7 @@
     <!-- Zentrale Vokabeldatenbank und Engines einbinden -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
@@ -492,6 +493,19 @@
             const wordTypeLabel = gameMode === 'noun' ? 'des Substantivs' : 'des Verbs';
             // Kasus-Namen sind im Deutschen maskulin ("der Nominativ"), Person ist feminin ("die 1. Person")
             const article = gameMode === 'noun' ? 'der' : 'die';
+
+            // Achievement-Kategorie aus dem Label ableiten: bei Substantiven das erste Wort
+            // (Kasus), bei Verben das Tempus nach dem Komma - bzw. "Präsens", wenn (noch)
+            // kein Tempus mit angezeigt wird (nur Präsens bekannt).
+            let category;
+            if (gameMode === 'noun') {
+                category = currentCorrectAnswer.split(' ')[0]; // "Nominativ", "Genitiv", ...
+            } else {
+                const parts = currentCorrectAnswer.split(', ');
+                category = parts.length > 1 ? parts[1].replace('Futur I', 'FuturI') : 'Präsens';
+            }
+            const unlock = LudiProgress.recordCategoryAttempt(category, isCorrect);
+            if (unlock) AchievementToast.show(unlock);
 
             if (isCorrect) {
                 if (isReviewMode) reviewCorrectCount++;

@@ -9,10 +9,23 @@ const LudiProgress = (() => {
     function _load() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            return raw ? JSON.parse(raw) : { games: {}, vocab: {} };
+            const data = raw ? JSON.parse(raw) : {};
+            if (!data.games) data.games = {};
+            if (!data.vocab) data.vocab = {};
+            if (!data.achievements) {
+                data.achievements = {
+                    streakCurrent: 0,
+                    streakBest: 0,
+                    totalAnswered: 0,
+                    daysPlayed: [],
+                    categories: {},
+                    unlockedTiers: {} // z.B. { 'streak': 2, 'cat_Imperativ': 1 } - höchste bereits gezeigte Stufe (0=keine)
+                };
+            }
+            return data;
         } catch (e) {
             console.warn('Fortschritt konnte nicht geladen werden:', e);
-            return { games: {}, vocab: {} };
+            return { games: {}, vocab: {}, achievements: { streakCurrent: 0, streakBest: 0, totalAnswered: 0, daysPlayed: [], categories: {}, unlockedTiers: {} } };
         }
     }
 
@@ -80,7 +93,30 @@ const LudiProgress = (() => {
             entry.wrong++;
             entry.box = 0;
         }
+
+        // Spielübergreifende Achievement-Werte mitpflegen (Serie, Gesamtzahl, Spieltage)
+        const a = data.achievements;
+        a.totalAnswered++;
+        if (correct) {
+            a.streakCurrent++;
+            a.streakBest = Math.max(a.streakBest, a.streakCurrent);
+        } else {
+            a.streakCurrent = 0;
+        }
+        const today = _todayString();
+        if (!a.daysPlayed) a.daysPlayed = [];
+        if (!a.daysPlayed.includes(today)) a.daysPlayed.push(today);
+
+        const greenCount = Object.values(data.vocab).filter(v => (v.box || 0) >= MAX_BOX).length;
+        const unlocks = [];
+        const u1 = _checkUnlock(data, 'streak', a.streakBest, FIXED_ACHIEVEMENTS[0].thresholds, { icon: FIXED_ACHIEVEMENTS[0].icon, title: FIXED_ACHIEVEMENTS[0].title, unit: FIXED_ACHIEVEMENTS[0].unit });
+        const u2 = _checkUnlock(data, 'total', a.totalAnswered, FIXED_ACHIEVEMENTS[1].thresholds, { icon: FIXED_ACHIEVEMENTS[1].icon, title: FIXED_ACHIEVEMENTS[1].title, unit: FIXED_ACHIEVEMENTS[1].unit });
+        const u3 = _checkUnlock(data, 'mastery', greenCount, FIXED_ACHIEVEMENTS[2].thresholds, { icon: FIXED_ACHIEVEMENTS[2].icon, title: FIXED_ACHIEVEMENTS[2].title, unit: FIXED_ACHIEVEMENTS[2].unit });
+        const u4 = _checkUnlock(data, 'days', a.daysPlayed.length, FIXED_ACHIEVEMENTS[3].thresholds, { icon: FIXED_ACHIEVEMENTS[3].icon, title: FIXED_ACHIEVEMENTS[3].title, unit: FIXED_ACHIEVEMENTS[3].unit });
+        [u1, u2, u3, u4].forEach(u => { if (u) unlocks.push(u); });
+
         _save(data);
+        return unlocks;
     }
 
     /**
@@ -180,6 +216,144 @@ const LudiProgress = (() => {
         localStorage.removeItem(STORAGE_KEY);
     }
 
+    // ============================================================
+    // ACHIEVEMENTS
+    // ============================================================
+
+    const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Diamant'];
+
+    // Die 4 festen, spielübergreifenden Achievements
+    const FIXED_ACHIEVEMENTS = [
+        { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 50] },
+        { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 500, 1000, 2500] },
+        { id: 'mastery', icon: '🟢', title: 'Vokabel-Meisterschaft', unit: 'Vokabeln auf Grün', thresholds: [50, 200, 500, 900] },
+        { id: 'days', icon: '📅', title: 'Beständigkeit', unit: 'verschiedene Tage gespielt', thresholds: [3, 7, 14, 30] }
+    ];
+
+    // Schwellwerte für alle Kategorie-spezifischen Achievements (Wortarten in
+    // Circus Maximus, Kasus/Tempora/Modi im Formen-Kastell)
+    const CATEGORY_THRESHOLDS = [10, 25, 50, 100];
+
+    // Anzeige-Label + Icon pro Kategorie-Schlüssel. Neue Kategorien können hier
+    // einfach ergänzt werden, sobald ein Spiel sie über recordCategoryAttempt meldet.
+    const CATEGORY_META = {
+        'Substantiv': { icon: '📜', label: 'Substantive' },
+        'Verb': { icon: '⚡', label: 'Verben' },
+        'Adjektiv': { icon: '🎨', label: 'Adjektive' },
+        'Nominativ': { icon: '①', label: 'Nominativ' },
+        'Genitiv': { icon: '②', label: 'Genitiv' },
+        'Dativ': { icon: '③', label: 'Dativ' },
+        'Akkusativ': { icon: '④', label: 'Akkusativ' },
+        'Ablativ': { icon: '⑤', label: 'Ablativ' },
+        'Präsens': { icon: '🕐', label: 'Präsens' },
+        'Imperfekt': { icon: '⏳', label: 'Imperfekt' },
+        'FuturI': { icon: '🔮', label: 'Futur I' },
+        'Perfekt': { icon: '✅', label: 'Perfekt' },
+        'Plusquamperfekt': { icon: '📯', label: 'Plusquamperfekt' },
+        'Passiv': { icon: '🔄', label: 'Passiv' },
+        'Imperativ': { icon: '📢', label: 'Imperativ' },
+        'Konjunktiv': { icon: '💭', label: 'Konjunktiv' },
+        'Infinitiv': { icon: '➰', label: 'Infinitiv' },
+        'PPA': { icon: '🏃', label: 'PPA' },
+        'Gerundium': { icon: '📝', label: 'Gerundium/Gerundivum' }
+    };
+
+    function _todayString() {
+        return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    }
+
+    /** Ermittelt für einen Wert und eine Schwellwert-Liste die erreichte Stufe (0-4). */
+    function _tierForValue(value, thresholds) {
+        let tier = 0;
+        for (let i = 0; i < thresholds.length; i++) {
+            if (value >= thresholds[i]) tier = i + 1;
+        }
+        return tier;
+    }
+
+    /**
+     * Prüft, ob sich die Stufe eines Achievements gegenüber dem zuletzt als
+     * "gezeigt" vermerkten Stand erhöht hat. Falls ja, wird der neue Stand
+     * vermerkt und das Achievement als frisch freigeschaltet zurückgegeben.
+     */
+    function _checkUnlock(data, achievementId, currentValue, thresholds, meta) {
+        const newTier = _tierForValue(currentValue, thresholds);
+        const prevTier = data.achievements.unlockedTiers[achievementId] || 0;
+        if (newTier > prevTier) {
+            data.achievements.unlockedTiers[achievementId] = newTier;
+            return { id: achievementId, tier: newTier, tierName: TIER_NAMES[newTier - 1], threshold: thresholds[newTier - 1], ...meta };
+        }
+        return null;
+    }
+
+    /**
+     * Kategorie-spezifischen Versuch protokollieren (z.B. "Imperativ", "Substantiv").
+     * Zählt NUR den Kategorie-Fortschritt - Serie/Gesamtzahl/Tage laufen bereits
+     * über recordVocabAttempt(), das jedes Spiel ohnehin schon aufruft.
+     * Rückgabe: neu freigeschaltetes Achievement-Objekt, oder null.
+     */
+    function recordCategoryAttempt(category, correct) {
+        const data = _load();
+        if (!data.achievements.categories[category]) {
+            data.achievements.categories[category] = { correct: 0, total: 0 };
+        }
+        const entry = data.achievements.categories[category];
+        entry.total++;
+        if (correct) entry.correct++;
+
+        const meta = CATEGORY_META[category] || { icon: '🏅', label: category };
+        const unlock = correct
+            ? _checkUnlock(data, 'cat_' + category, entry.correct, CATEGORY_THRESHOLDS, {
+                icon: meta.icon, title: meta.label, unit: `${meta.label} richtig beantwortet`
+            })
+            : null;
+        _save(data);
+        return unlock;
+    }
+
+    /**
+     * Liefert den vollständigen Achievement-Status für die Übersichtsseite:
+     * alle 4 festen Achievements + alle bisher gemeldeten Kategorien, jeweils
+     * mit aktuellem Wert, erreichter Stufe (0-4) und Fortschritt zur nächsten Stufe.
+     */
+    function getAchievementOverview() {
+        const data = _load();
+        const a = data.achievements;
+        const greenCount = Object.values(data.vocab).filter(v => (v.box || 0) >= MAX_BOX).length;
+
+        const fixedValues = {
+            streak: a.streakBest,
+            total: a.totalAnswered,
+            mastery: greenCount,
+            days: (a.daysPlayed || []).length
+        };
+
+        const result = FIXED_ACHIEVEMENTS.map(def => {
+            const value = fixedValues[def.id];
+            const tier = _tierForValue(value, def.thresholds);
+            const nextThreshold = def.thresholds[tier] || null;
+            return { ...def, value, tier, nextThreshold };
+        });
+
+        Object.keys(a.categories).forEach(cat => {
+            const meta = CATEGORY_META[cat] || { icon: '🏅', label: cat };
+            const value = a.categories[cat].correct;
+            const tier = _tierForValue(value, CATEGORY_THRESHOLDS);
+            const nextThreshold = CATEGORY_THRESHOLDS[tier] || null;
+            result.push({
+                id: 'cat_' + cat, icon: meta.icon, title: meta.label,
+                unit: `${meta.label} richtig beantwortet`,
+                thresholds: CATEGORY_THRESHOLDS, value, tier, nextThreshold
+            });
+        });
+
+        return result;
+    }
+
+    function getTotalUnlockedCount() {
+        return getAchievementOverview().reduce((sum, a) => sum + a.tier, 0);
+    }
+
     return {
         saveGameResult,
         getGameProgress,
@@ -191,6 +365,12 @@ const LudiProgress = (() => {
         weightedPick,
         getBoxSummary,
         getWeakVocab,
-        resetProgress
+        resetProgress,
+        recordCategoryAttempt,
+        getAchievementOverview,
+        getTotalUnlockedCount,
+        FIXED_ACHIEVEMENTS,
+        CATEGORY_THRESHOLDS,
+        TIER_NAMES
     };
 })();

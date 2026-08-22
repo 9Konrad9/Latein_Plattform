@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Trophäensammlung - Lūdī Rōmānī</title>
+    <script src="progress.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #222;
+            --text-light: #f5f5f5;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+            --tier-bronze: #b08d57;
+            --tier-silver: #c8ccd0;
+            --tier-gold: #e5c34d;
+            --tier-diamond: #b9e6ff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            font-family: var(--font-body);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header-section { text-align: center; margin-bottom: 10px; }
+        h1 {
+            font-family: var(--font-display);
+            color: var(--roman-gold);
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+        .subtitle { color: #ccc; font-style: italic; margin-bottom: 6px; }
+
+        .home-link {
+            display: inline-block; margin-bottom: 20px; color: var(--roman-gold);
+            text-decoration: none; border: 1px solid var(--roman-gold); border-radius: 6px;
+            padding: 6px 14px; font-size: 0.9rem; touch-action: manipulation;
+        }
+        .home-link:active { background: rgba(212,175,55,0.15); }
+
+        .total-badge {
+            font-family: var(--font-display); font-size: 1.1rem; color: var(--roman-marble);
+            background: rgba(212,175,55,0.1); border: 1px solid var(--roman-bronze);
+            border-radius: 10px; padding: 10px 20px; margin-bottom: 24px; text-align: center;
+        }
+
+        .section-title {
+            width: 100%; max-width: 1000px; font-family: var(--font-display);
+            color: var(--roman-gold); font-size: 1.3rem; margin: 20px 0 10px;
+            border-bottom: 2px solid var(--roman-bronze); padding-bottom: 6px;
+        }
+
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 10px;
+        }
+
+        .achievement-card {
+            background: var(--card-bg);
+            border: 2px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .achievement-card.locked { opacity: 0.55; filter: grayscale(0.6); }
+
+        .badge-img { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; }
+
+        .achievement-info { flex: 1; min-width: 0; }
+        .achievement-title { font-weight: bold; color: var(--roman-marble); font-size: 1rem; margin-bottom: 2px; }
+        .achievement-tier-label { font-size: 0.8rem; margin-bottom: 6px; }
+        .tier-bronze-text { color: var(--tier-bronze); }
+        .tier-silver-text { color: var(--tier-silver); }
+        .tier-gold-text { color: var(--tier-gold); }
+        .tier-diamond-text { color: var(--tier-diamond); }
+        .tier-none-text { color: #888; }
+
+        .progress-track {
+            background: #333; border-radius: 5px; height: 10px; overflow: hidden; margin-bottom: 4px;
+        }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--roman-bronze), var(--roman-gold)); border-radius: 5px; }
+        .progress-text { font-size: 0.75rem; color: #aaa; }
+
+        .empty-note {
+            width: 100%; max-width: 1000px; text-align: center; color: #999;
+            font-style: italic; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <h1>🏆 Trophäensammlung</h1>
+        <div class="subtitle">Deine Erfolge in Lūdī Rōmānī</div>
+    </div>
+    <a href="index.html" class="home-link">← Zurück zum Hauptmenü</a>
+    <div class="total-badge" id="total-badge">Lade Fortschritt...</div>
+
+    <div class="section-title">🎖️ Allgemeine Erfolge</div>
+    <div class="achievement-grid" id="fixed-grid"></div>
+
+    <div class="section-title">📖 Formen &amp; Wortarten</div>
+    <div class="achievement-grid" id="category-grid"></div>
+    <div class="empty-note" id="empty-note" style="display:none;">
+        Noch keine formen-spezifischen Erfolge freigeschaltet. Spiel z.B. Circus Maximus oder das Formen-Kastell, um hier Fortschritt zu sammeln!
+    </div>
+
+    <script>
+        const BADGE_IMAGES = ['', 'assets/achievements/badge_bronze.png', 'assets/achievements/badge_silver.png', 'assets/achievements/badge_gold.png', 'assets/achievements/badge_diamond.png'];
+        const TIER_CLASSES = ['tier-none-text', 'tier-bronze-text', 'tier-silver-text', 'tier-gold-text', 'tier-diamond-text'];
+
+        function renderCard(a) {
+            const hasTier = a.tier > 0;
+            const badgeSrc = hasTier ? BADGE_IMAGES[a.tier] : BADGE_IMAGES[1]; // ungefärbt zeigen wir trotzdem Bronze-Silhouette, aber gesperrt
+            const tierLabel = hasTier ? `${LudiProgress.TIER_NAMES[a.tier - 1]} erreicht!` : 'Noch nicht freigeschaltet';
+            const tierClass = TIER_CLASSES[a.tier];
+            const maxThreshold = a.thresholds[a.thresholds.length - 1];
+            const progressBase = a.tier > 0 ? a.thresholds[a.tier - 1] : 0;
+            const progressTarget = a.nextThreshold !== null ? a.nextThreshold : maxThreshold;
+            const progressPct = a.nextThreshold !== null
+                ? Math.min(100, Math.round(((a.value - progressBase) / (progressTarget - progressBase)) * 100))
+                : 100;
+            const progressText = a.nextThreshold !== null
+                ? `${a.value} / ${progressTarget} ${a.unit}`
+                : `${a.value} ${a.unit} — alle Stufen erreicht!`;
+
+            return `
+                <div class="achievement-card ${hasTier ? '' : 'locked'}">
+                    <img class="badge-img" src="${badgeSrc}" alt="${LudiProgress.TIER_NAMES[Math.max(a.tier,1) - 1]}-Abzeichen">
+                    <div class="achievement-info">
+                        <div class="achievement-title">${a.icon} ${a.title}</div>
+                        <div class="achievement-tier-label ${tierClass}">${tierLabel}</div>
+                        <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+                        <div class="progress-text">${progressText}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const overview = LudiProgress.getAchievementOverview();
+            const totalUnlocked = overview.reduce((sum, a) => sum + a.tier, 0);
+            const totalPossible = overview.length * 4;
+            document.getElementById('total-badge').innerText = `${totalUnlocked} von ${totalPossible} Stufen freigeschaltet`;
+
+            const fixedIds = ['streak', 'total', 'mastery', 'days'];
+            const fixed = overview.filter(a => fixedIds.includes(a.id));
+            const categories = overview.filter(a => !fixedIds.includes(a.id));
+
+            document.getElementById('fixed-grid').innerHTML = fixed.map(renderCard).join('');
+
+            if (categories.length === 0) {
+                document.getElementById('empty-note').style.display = 'block';
+                document.getElementById('category-grid').innerHTML = '';
+            } else {
+                document.getElementById('empty-note').style.display = 'none';
+                document.getElementById('category-grid').innerHTML = categories.map(renderCard).join('');
+            }
+        }
+
+        render();
+    </script>
+</body>
+</html>

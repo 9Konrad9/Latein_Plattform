@@ -209,6 +209,19 @@
         </div>
     </div>
 
+    <div style="width: 100%; max-width: 1000px; margin-bottom: 10px;">
+        <div class="game-card" style="border-top-color: var(--roman-gold); background: linear-gradient(135deg, #2d2410, #1a1608);">
+            <div class="game-icon">🏆</div>
+            <div class="game-title">Trophäensammlung</div>
+            <div class="game-focus">Deine Erfolge auf einen Blick</div>
+            <div class="game-desc">
+                Serien, Meisterschaft, Fleiß und formen-spezifische Erfolge - in Bronze, Silber, Gold und Diamant.
+            </div>
+            <div class="progress-badge" id="achievements-summary">Lade...</div>
+            <a href="Achievements.html" class="play-btn">Trophäen ansehen</a>
+        </div>
+    </div>
+
     <nav class="pillar-nav">
         <a href="#wortschatz" style="--pillar-color: var(--pillar-wortschatz);">🔤 Wortschatz</a>
         <a href="#formenlehre" style="--pillar-color: var(--pillar-formenlehre);">📐 Formenlehre</a>
@@ -391,6 +404,18 @@
     </section>
 
     <script>
+        // Trophäensammlung-Kachel: Anzahl freigeschalteter Stufen anzeigen
+        if (typeof LudiProgress !== 'undefined') {
+            const summaryEl = document.getElementById('achievements-summary');
+            if (summaryEl) {
+                const overview = LudiProgress.getAchievementOverview();
+                const unlocked = overview.reduce((sum, a) => sum + a.tier, 0);
+                const possible = overview.length * 4;
+                summaryEl.classList.add('has-score');
+                summaryEl.innerText = `🏅 ${unlocked} von ${possible} Stufen freigeschaltet`;
+            }
+        }
+
         // Gesamtfortschritt (Rot/Gelb/Grün nach Leitner-System) in der Circus-Maximus-Kachel anzeigen
         if (typeof globalVocabularyPool !== 'undefined' && typeof LudiProgress !== 'undefined') {
             const ampelEl = document.getElementById('circus-ampel');
