@@ -19,6 +19,12 @@ const LessonFilter = (() => {
      * onConfirm(filteredPool): wird mit dem gefilterten Pool aufgerufen, sobald bestätigt wurde
      */
     function show(pool, onConfirm) {
+        // Schutz gegen Doppel-Tap: falls schon ein Overlay offen ist (z.B. durch
+        // versehentliches zweimaliges Antippen des Start-Buttons auf dem iPad),
+        // dieses zuerst entfernen, damit sich niemals zwei Overlays stapeln.
+        const existing = document.getElementById('lesson-filter-overlay');
+        if (existing) existing.remove();
+
         const lessons = getAvailableLessons(pool);
 
         const overlay = document.createElement('div');

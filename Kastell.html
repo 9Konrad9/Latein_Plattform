@@ -208,12 +208,12 @@
         <div id="start-screen" class="start-screen">
             <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
             <div class="notice-box">
-                <h3>📜 Modus 1: Nomen-Formen</h3>
-                <p>Bei dieser Verteidigung dreht sich alles um <strong>Nomen</strong>.</p>
-                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen deklinierte Nomenformen auf unsere Mauern (z. B. <em>rēgum</em>). Bestimme Kasus <strong>und</strong> Numerus (z. B. <em>Genitiv Plural</em>).</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Nomen hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Wort sofort zurück auf Rot.</p>
+                <h3>📜 Modus 1: Substantiv-Formen</h3>
+                <p>Bei dieser Verteidigung dreht sich alles um <strong>Substantive</strong>.</p>
+                <p style="margin-top: 10px;">Die feindlichen Katapulte werfen deklinierte Substantivformen auf unsere Mauern (z. B. <em>rēgum</em>). Bestimme Kasus <strong>und</strong> Numerus (z. B. <em>Genitiv Plural</em>).</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Substantiv hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Wort sofort zurück auf Rot.</p>
             </div>
-            <button class="start-btn" id="btn-start-noun">Nomen-Formen üben</button>
+            <button class="start-btn" id="btn-start-noun">Substantiv-Formen üben</button>
 
             <div class="notice-box" style="margin-top: 25px;">
                 <h3>📜 Modus 2: Verb-Formen</h3>
@@ -336,7 +336,7 @@
         };
 
         // Gemeinsame Rundenlogik: aus einer Liste von {form, label}-"Slots" eine Frage bauen.
-        // Wird sowohl vom Nomen- als auch vom Verb-Modus genutzt.
+        // Wird sowohl vom Substantiv- als auch vom Verb-Modus genutzt.
         function buildRoundFromSlots(slots) {
             const targetIdx = Math.floor(Math.random() * slots.length);
             const target = slots[targetIdx];
@@ -407,7 +407,7 @@
                     v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.')
                 );
                 if (targetPool.length < 4) {
-                    alert("Für diese Lektionsauswahl gibt es noch zu wenige geeignete Nomen. Bitte mehr Lektionen wählen.");
+                    alert("Für diese Lektionsauswahl gibt es noch zu wenige geeignete Substantive. Bitte mehr Lektionen wählen.");
                     return;
                 }
             } else {
@@ -449,11 +449,12 @@
 
             currentCorrectAnswer = currentRound.correctLabel;
 
-            // Stein fliegen lassen
+            // Stein fliegen lassen (Animation per Reflow-Trick neu starten, robuster als cloneNode)
             const stone = document.getElementById('target-verb');
-            stone.innerText = currentRound.targetForm;
-            const newStone = stone.cloneNode(true);
-            stone.parentNode.replaceChild(newStone, stone);
+            stone.textContent = currentRound.targetForm;
+            stone.style.animation = 'none';
+            void stone.offsetWidth; // erzwingt Reflow, damit die Animation sauber neu startet
+            stone.style.animation = '';
 
             const colorIdx = LudiProgress.getBoxColor(currentTargetObj.latin);
             const waveLabel = isReviewMode
@@ -464,7 +465,7 @@
 
             for(let i = 0; i < 4; i++) {
                 const btn = document.getElementById('shield' + i);
-                btn.innerText = currentRound.options[i];
+                btn.textContent = currentRound.options[i];
                 btn.className = 'shield-btn';
                 btn.style.fontSize = currentRound.options[i].length > 18 ? '0.9rem' : '';
                 btn.disabled = false;
@@ -478,7 +479,7 @@
             for(let i = 0; i < 4; i++) document.getElementById('shield' + i).disabled = true;
 
             const selectedBtn = document.getElementById('shield' + idx);
-            const selectedText = selectedBtn.innerText;
+            const selectedText = selectedBtn.textContent;
             const isCorrect = (selectedText === currentCorrectAnswer);
 
             const fbBox = document.getElementById('feedback-box');
@@ -488,7 +489,7 @@
             fbBox.style.display = 'flex';
 
             LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
-            const wordTypeLabel = gameMode === 'noun' ? 'des Nomens' : 'des Verbs';
+            const wordTypeLabel = gameMode === 'noun' ? 'des Substantivs' : 'des Verbs';
 
             if (isCorrect) {
                 if (isReviewMode) reviewCorrectCount++;
@@ -502,7 +503,7 @@
                 }
                 selectedBtn.classList.add('wrong');
                 for(let i = 0; i < 4; i++) {
-                    if(document.getElementById('shield' + i).innerText === currentCorrectAnswer) {
+                    if(document.getElementById('shield' + i).textContent === currentCorrectAnswer) {
                         document.getElementById('shield' + i).classList.add('correct');
                     }
                 }
@@ -581,8 +582,8 @@
             endBox.style.display = 'block';
 
             LudiProgress.saveGameResult('kastell', wallHealth, 100);
-            const wordTypePlural = gameMode === 'noun' ? 'Nomenformen' : 'Verbformen';
-            const wordTypeGen = gameMode === 'noun' ? 'Nomen' : 'Verben';
+            const wordTypePlural = gameMode === 'noun' ? 'Substantivformen' : 'Verbformen';
+            const wordTypeGen = gameMode === 'noun' ? 'Substantive' : 'Verben';
 
             if (isVictory) {
                 title.innerText = "🏛️ KASTELL VERTEIDIGT!";
