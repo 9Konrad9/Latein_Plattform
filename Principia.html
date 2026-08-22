@@ -7,6 +7,7 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="lessonFilter.js"></script>
+    <script src="verbEngine.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -266,50 +267,14 @@
         }
 
         // Identische Konjugations-Engine wie im Formen-Kastell (für konsistente, garantiert korrekte Formen)
+        // Adapter: liefert dasselbe Format wie zuvor [1.Sg,2.Sg,3.Sg,1.Pl,2.Pl,3.Pl] Präsens,
+        // nutzt aber intern VerbEngine (deckt alle unregelmäßigen Verben korrekt ab).
+        // Deponentien nutzen die Passiv-Endungen (ihre einzige, aktiv bedeutende Form) -
+        // die alte lokale Funktion hätte sie fälschlich wie reguläre Aktiv-Verben behandelt.
         function conjugateVerb(verbObj) {
-            // Echte unregelmäßige (suppletive) Verben - eigener Stamm je Person/Zeitform
-            if (verbObj.latin === "esse") return ["sum", "es", "est", "sumus", "estis", "sunt"];
-            if (verbObj.latin === "posse") return ["possum", "potes", "potest", "possumus", "potestis", "possunt"];
-            if (verbObj.latin === "īre") return ["eō", "īs", "it", "īmus", "ītis", "eunt"];
-            if (verbObj.latin === "adesse") return ["adsum", "ades", "adest", "adsumus", "adestis", "adsunt"];
-            if (verbObj.latin === "interesse") return ["intersum", "interes", "interest", "intersumus", "interestis", "intersunt"];
-            if (verbObj.latin === "abesse") return ["absum", "abes", "abest", "absumus", "abestis", "absunt"];
-            if (verbObj.latin === "velle") return ["volō", "vīs", "vult", "volumus", "vultis", "volunt"];
-            if (verbObj.latin === "nōlle") return ["nōlō", "nōn vīs", "nōn vult", "nōlumus", "nōn vultis", "nōlunt"];
-            if (verbObj.latin === "praeesse") return ["praesum", "praees", "praeest", "praesumus", "praeestis", "praesunt"];
-            if (verbObj.latin === "ferre") return ["ferō", "fers", "fert", "ferimus", "fertis", "ferunt"];
-            if (verbObj.latin === "sē cōnferre") return ["cōnferō", "cōnfers", "cōnfert", "cōnferimus", "cōnfertis", "cōnferunt"];
-            if (verbObj.latin === "afferre") return ["afferō", "affers", "affert", "afferimus", "affertis", "afferunt"];
-            if (verbObj.latin === "offerre") return ["offerō", "offers", "offert", "offerimus", "offertis", "offerunt"];
-            if (verbObj.latin === "īnferre") return ["īnferō", "īnfers", "īnfert", "īnferimus", "īnfertis", "īnferunt"];
-            if (verbObj.latin === "abīre") return ["abeō", "abīs", "abit", "abīmus", "abītis", "abeunt"];
-            // "dare" ist KEIN unregelmäßiges Verb (bleibt a-Konjugation!) - nur die Vokallänge weicht ab
-            // (kurzes a in fast allen Formen: dō, dās, dat ... statt dās/dāt mit Länge). Deshalb hier als
-            // Formen-Tabelle hinterlegt, damit die Vokallängen korrekt bleiben, nicht weil es zu den echten
-            // Suppletiv-Verben gehört.
-            if (verbObj.latin === "dare") return ["dō", "dās", "dat", "damus", "datis", "dant"];
-            if (verbObj.latin === "adīre") return ["adeō", "adīs", "adit", "adīmus", "adītis", "adeunt"];
-            if (verbObj.latin === "perīre") return ["pereō", "perīs", "perit", "perīmus", "perītis", "pereunt"];
-            if (verbObj.latin === "exīre") return ["exeō", "exīs", "exit", "exīmus", "exītis", "exeunt"];
-            if (verbObj.latin === "subīre") return ["subeō", "subīs", "subit", "subīmus", "subītis", "subeunt"];
-            if (verbObj.latin === "redīre") return ["redeō", "redīs", "redit", "redīmus", "redītis", "redeunt"];
-
-            let inf = verbObj.latin;
-            let firstSg = verbObj.middle;
-            let cClass = verbObj.gram_class;
-            let stem = inf.slice(0, -3);
-
-            if (cClass.includes("a-Konjugation")) {
-                return [firstSg, stem+"ās", stem+"at", stem+"āmus", stem+"ātis", stem+"ant"];
-            } else if (cClass.includes("e-Konjugation")) {
-                return [firstSg, stem+"ēs", stem+"et", stem+"ēmus", stem+"ētis", stem+"ent"];
-            } else if (cClass.includes("i-Konjugation")) {
-                return [firstSg, stem+"īs", stem+"it", stem+"īmus", stem+"ītis", stem+"iunt"];
-            } else if (cClass.includes("gemischte")) {
-                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"iunt"];
-            } else {
-                return [firstSg, stem+"is", stem+"it", stem+"imus", stem+"itis", stem+"unt"];
-            }
+            if (!VerbEngine.isSupported(verbObj)) return [verbObj.middle, '', '', '', '', ''];
+            const genus = verbObj.gram_class === 'Deponens' ? 'Passiv' : 'Aktiv';
+            return VerbEngine.getFormsForTempus(verbObj, 'Präsens', genus);
         }
 
         function getVerbStem(item) {

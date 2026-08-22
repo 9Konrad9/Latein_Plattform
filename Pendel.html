@@ -7,6 +7,8 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="lessonFilter.js"></script>
+    <script src="nounEngine.js"></script>
+    <script src="verbEngine.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -434,39 +436,19 @@
             return globalVocabularyPool.find(v => v.latin === lemma);
         }
 
-        // Deklinations-Engine (Nom./Akk. Sg. reichen für dieses Spiel)
+        // Adapter: liefert dasselbe Format wie zuvor {nomSg, akkSg}, nutzt intern NounEngine.
         function declineNounSg(lemma) {
             const nounObj = getVocabEntry(lemma);
-            const nomSg = nounObj.latin;
-            const middle = nounObj.middle;
-            const genderMatch = middle.match(/\s(m|f|n)\.\s*$/);
-            const gender = genderMatch ? genderMatch[1] : 'm';
-            const genSg = middle.replace(/\s(m|f|n)\.\s*$/, '').trim();
-            const gramClass = nounObj.gram_class;
-            let stem, akkSg;
-            if (gramClass.includes("o-Deklination")) {
-                stem = genSg.slice(0, -1);
-                akkSg = (gender === 'n') ? nomSg : stem + "um";
-            } else if (gramClass.includes("a-Deklination")) {
-                stem = genSg.slice(0, -2);
-                akkSg = stem + "am";
-            } else {
-                stem = genSg.slice(0, -2);
-                akkSg = stem + "em";
-            }
-            return { nomSg, akkSg };
+            const t = NounEngine.decline(nounObj);
+            return { nomSg: t.sg.nom, akkSg: t.sg.akk };
         }
 
-        // Konjugations-Engine (nur 3. Pers. Sg. gebraucht)
+        // Adapter: 3. Person Singular Präsens, nutzt intern VerbEngine (deckt jetzt auch
+        // unregelmäßige Verben und Deponentien korrekt ab, nicht nur reguläre Klassen).
         function conjugate3Sg(lemma) {
             const verbObj = getVocabEntry(lemma);
-            let inf = verbObj.latin;
-            let cClass = verbObj.gram_class;
-            let stem = inf.slice(0, -3);
-            if (cClass.includes("a-Konjugation")) return stem + "at";
-            if (cClass.includes("e-Konjugation")) return stem + "et";
-            if (cClass.includes("i-Konjugation")) return stem + "it";
-            return stem + "it";
+            if (!VerbEngine.isSupported(verbObj)) return verbObj.middle; // Sicherheitsnetz
+            return VerbEngine.getFormsForTempus(verbObj, 'Präsens')[2];
         }
 
         function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }

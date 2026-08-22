@@ -7,6 +7,7 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="lessonFilter.js"></script>
+    <script src="nounEngine.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -240,51 +241,14 @@
         // --- GRAMMATIK ENGINE (KNG) ---
         // Definition der möglichen Fälle. 0=Nom, 1=Gen, 2=Dat, 3=Akk, 4=Abl
         const allowedCases = [0, 1, 3]; // Nur Nom, Gen und Akk erlaubt!
-        
+
+        // Adapter: liefert dieselbe (caseIdx, numIdx)-Aufrufkonvention wie zuvor,
+        // nutzt aber intern NounEngine (deckt jetzt auch e-/u-Deklination korrekt ab,
+        // die vorher stillschweigend auf die bloße Nominativform zurückfielen).
         function declineNoun(nounObj, caseIdx, numIdx) {
-            if(caseIdx === 0 && numIdx === 0) return nounObj.latin;
-
-            let parts = nounObj.middle.split(" ");
-            let genForm = parts[0];
-            let gender = parts[1]; 
-            
-            let stem = genForm;
-            let cClass = nounObj.gram_class;
-            
-            if (cClass.includes("a-Dekl")) stem = genForm.replace(/ae$/, "");
-            else if (cClass.includes("o-Dekl")) stem = genForm.replace(/ī$/, "");
-            else if (cClass.includes("kons")) stem = genForm.replace(/is$/, "");
-            
-            if(!stem) stem = genForm.slice(0, -2); // Fallback
-
-            const endings = {
-                "a-Dekl": { "Sg": [nounObj.latin, "ae", "ae", "am", "ā"], "Pl": ["ae", "ārum", "īs", "ās", "īs"] },
-                "o-Dekl": {
-                    "m.": { "Sg": [nounObj.latin, "ī", "ō", "um", "ō"], "Pl": ["ī", "ōrum", "īs", "ōs", "īs"] },
-                    "n.": { "Sg": [nounObj.latin, "ī", "ō", "um", "ō"], "Pl": ["a", "ōrum", "īs", "a", "īs"] }
-                },
-                "kons": {
-                    "m.": { "Sg": [nounObj.latin, "is", "ī", "em", "e"], "Pl": ["ēs", "um", "ibus", "ēs", "ibus"] },
-                    "f.": { "Sg": [nounObj.latin, "is", "ī", "em", "e"], "Pl": ["ēs", "um", "ibus", "ēs", "ibus"] },
-                    "n.": { "Sg": [nounObj.latin, "is", "ī", nounObj.latin, "e"], "Pl": ["a", "um", "ibus", "a", "ibus"] }
-                }
-            };
-
-            let genKey = gender.includes("n") ? "n." : (gender.includes("f") ? "f." : "m.");
-            
-            try {
-                if(cClass.includes("a-Dekl")) {
-                    let e = numIdx===0 ? endings["a-Dekl"]["Sg"][caseIdx] : endings["a-Dekl"]["Pl"][caseIdx];
-                    return caseIdx===0 && numIdx===0 ? e : stem + e;
-                } else if(cClass.includes("o-Dekl")) {
-                    let e = numIdx===0 ? endings["o-Dekl"][genKey]["Sg"][caseIdx] : endings["o-Dekl"][genKey]["Pl"][caseIdx];
-                    return caseIdx===0 && numIdx===0 ? e : stem + e;
-                } else if(cClass.includes("kons")) {
-                    let e = numIdx===0 ? endings["kons"][genKey]["Sg"][caseIdx] : endings["kons"][genKey]["Pl"][caseIdx];
-                    return (caseIdx===0 && numIdx===0) || (caseIdx===3 && numIdx===0 && genKey==="n.") ? e : stem + e;
-                }
-            } catch(e) { return nounObj.latin; }
-            return nounObj.latin;
+            const caseKeys = ['Nom', 'Gen', 'Dat', 'Akk', 'Abl'];
+            const numerus = numIdx === 0 ? 'Sg' : 'Pl';
+            return NounEngine.getForm(nounObj, caseKeys[caseIdx], numerus);
         }
 
         function declineAdjective(adjObj, targetGender, caseIdx, numIdx) {
