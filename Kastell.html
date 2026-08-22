@@ -490,13 +490,15 @@
 
             LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
             const wordTypeLabel = gameMode === 'noun' ? 'des Substantivs' : 'des Verbs';
+            // Kasus-Namen sind im Deutschen maskulin ("der Nominativ"), Person ist feminin ("die 1. Person")
+            const article = gameMode === 'noun' ? 'der' : 'die';
 
             if (isCorrect) {
                 if (isReviewMode) reviewCorrectCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentTargetObj.latin}</strong> (${currentTargetObj.meaning}).<br><br>Das ist korrekt die <strong>${currentCorrectAnswer}</strong>.`;
+                fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentTargetObj.latin}</strong> (${currentTargetObj.meaning}).<br><br>Das ist korrekt ${article} <strong>${currentCorrectAnswer}</strong>.`;
             } else {
                 if (!isReviewMode) {
                     missedItems.push({ targetObj: currentTargetObj, round: currentRound });
@@ -516,7 +518,7 @@
 
                 fbTitle.innerText = "💥 TREFFER!";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war die <strong>${currentCorrectAnswer}</strong> ${wordTypeLabel} <strong>${currentTargetObj.latin}</strong>.`;
+                fbText.innerHTML = `Achtung, die Mauer bröckelt!<br><br>Gesucht war ${article} <strong>${currentCorrectAnswer}</strong> ${wordTypeLabel} <strong>${currentTargetObj.latin}</strong>.`;
             }
         }
 
