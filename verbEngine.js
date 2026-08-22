@@ -1,13 +1,14 @@
 // verbEngine.js
 // Zentrale, wiederverwendbare Konjugations-Engine für Verben.
 //
-// AUSBAUSTAND (Schritt 1): Aktiv/Indikativ vollständig, für die 5 regulären
-// Konjugationsklassen (a-, e-, i-, konsonantische, gemischte Konjugation),
+// AUSBAUSTAND (Schritt 1 + 1b): Aktiv/Indikativ vollständig, für:
+// - die 5 regulären Konjugationsklassen (a-, e-, i-, konsonantische, gemischte)
+// - die 7 unregelmäßigen Verbfamilien: esse (+adesse/abesse/interesse/praeesse),
+//   posse, velle, nōlle, īre (+Komposita), ferre (+Komposita)
 // über alle 5 Tempora (Präsens, Imperfekt, Futur I, Perfekt, Plusquamperfekt).
 //
 // NICHT abgedeckt (bewusst spätere Ausbauschritte):
-// - Die 7 unregelmäßigen Verbfamilien (esse, posse, velle, nōlle, īre+Komposita,
-//   ferre+Komposita) und fierī -> eigener Schritt mit Sonderformen-Tabellen
+// - fierī (grammatisch eng mit Passiv verbunden -> wird dort mitgebaut)
 // - Passiv, Konjunktiv, Imperativ, Gerundium/Gerundivum -> spätere Ausbaustufen
 //
 // isSupported(verbObj) MUSS vor jedem getForm()-Aufruf geprüft werden.
@@ -29,14 +30,13 @@ const VerbEngine = (() => {
     const TEMPORA = ['Präsens', 'Imperfekt', 'FuturI', 'Perfekt', 'Plusquamperfekt'];
 
     /**
-     * Prüft, ob ein Verb von dieser Engine (Schritt 1: reguläres Aktiv/Indikativ) abgedeckt wird.
-     * Deponentien, die 7 unregelmäßigen Familien und fierī liefern false.
+     * Prüft, ob ein Verb von dieser Engine abgedeckt wird.
+     * Deponentien und fierī liefern false (fierī gehört inhaltlich zum Passiv-Ausbauschritt).
      */
     function isSupported(verbObj) {
         if (verbObj.type !== 'verb') return false;
         if (verbObj.gram_class === 'Deponens') return false;
-        if (verbObj.gram_class === 'unregelmäßiges Verb') return false;
-        if (verbObj.gram_class === 'unregelmäßig (Passiv von facere)') return false;
+        if (verbObj.gram_class === 'unregelmäßig (Passiv von facere)') return false; // fierī
         return true;
     }
 
@@ -63,13 +63,30 @@ const VerbEngine = (() => {
     }
 
     function getPerfectStem(verbObj) {
-        // 1. Pers. Sg. Perfekt endet immer auf "ī" (bei regulären Verben)
+        // 1. Pers. Sg. Perfekt endet immer auf "ī"
         return verbObj.perfect.slice(0, -1);
     }
 
     /**
-     * Präsens Aktiv Indikativ, alle 6 Personen.
+     * Perfekt Aktiv Indikativ, alle 6 Personen. Baut IMMER auf dem gespeicherten
+     * Perfektstamm auf - unabhängig von Konjugationsklasse, funktioniert daher auch
+     * für die unregelmäßigen Verbfamilien, deren Perfekt/Plusquamperfekt trotz
+     * unregelmäßigem Präsensstamm einer regulären Perfektendung folgt.
      */
+    function perfectActive(verbObj) {
+        const stem = getPerfectStem(verbObj);
+        return [stem + 'ī', stem + 'istī', stem + 'it', stem + 'imus', stem + 'istis', stem + 'ērunt'];
+    }
+
+    function pluperfectActive(verbObj) {
+        const stem = getPerfectStem(verbObj);
+        return [stem + 'eram', stem + 'erās', stem + 'erat', stem + 'erāmus', stem + 'erātis', stem + 'erant'];
+    }
+
+    // ============================================================
+    // REGULÄRE KONJUGATIONSKLASSEN (a-, e-, i-, konsonantische, gemischte)
+    // ============================================================
+
     function presentActive(verbObj) {
         const stem = getPresentStem(verbObj);
         const gc = verbObj.gram_class;
@@ -89,9 +106,6 @@ const VerbEngine = (() => {
         return [stem + 'ō', stem + 'is', stem + 'it', stem + 'imus', stem + 'itis', stem + 'unt'];
     }
 
-    /**
-     * Imperfekt Aktiv Indikativ, alle 6 Personen.
-     */
     function imperfectActive(verbObj) {
         const stem = getPresentStem(verbObj);
         const gc = verbObj.gram_class;
@@ -105,10 +119,6 @@ const VerbEngine = (() => {
         return [stem + 'ēbam', stem + 'ēbās', stem + 'ēbat', stem + 'ēbāmus', stem + 'ēbātis', stem + 'ēbant'];
     }
 
-    /**
-     * Futur I Aktiv Indikativ, alle 6 Personen.
-     * a-/e-Konjugation: b-Futur. i-/konsonantische/gemischte Konjugation: a-/e-Futur.
-     */
     function futureIActive(verbObj) {
         const stem = getPresentStem(verbObj);
         const gc = verbObj.gram_class;
@@ -125,22 +135,138 @@ const VerbEngine = (() => {
         return [stem + 'am', stem + 'ēs', stem + 'et', stem + 'ēmus', stem + 'ētis', stem + 'ent'];
     }
 
+    // ============================================================
+    // UNREGELMÄSSIGE VERBFAMILIEN (Schritt 1b)
+    // ============================================================
+
+    // esse, posse, velle, nōlle: komplette Sonderformen-Tabellen für alle 5 Tempora.
+    // Perfekt/Plusquamperfekt hier ebenfalls fest hinterlegt (statt über perfectActive/
+    // pluperfectActive aus dem gespeicherten perfect-Feld), da diese vier Verben so
+    // zentral sind, dass maximale Absicherung wichtiger ist als Wiederverwendung.
+    const BASE_TABLES = {
+        esse: {
+            'Präsens': ['sum', 'es', 'est', 'sumus', 'estis', 'sunt'],
+            'Imperfekt': ['eram', 'erās', 'erat', 'erāmus', 'erātis', 'erant'],
+            'FuturI': ['erō', 'eris', 'erit', 'erimus', 'eritis', 'erunt'],
+            'Perfekt': ['fuī', 'fuistī', 'fuit', 'fuimus', 'fuistis', 'fuērunt'],
+            'Plusquamperfekt': ['fueram', 'fuerās', 'fuerat', 'fuerāmus', 'fuerātis', 'fuerant']
+        },
+        posse: {
+            'Präsens': ['possum', 'potes', 'potest', 'possumus', 'potestis', 'possunt'],
+            'Imperfekt': ['poteram', 'poterās', 'poterat', 'poterāmus', 'poterātis', 'poterant'],
+            'FuturI': ['poterō', 'poteris', 'poterit', 'poterimus', 'poteritis', 'poterunt'],
+            'Perfekt': ['potuī', 'potuistī', 'potuit', 'potuimus', 'potuistis', 'potuērunt'],
+            'Plusquamperfekt': ['potueram', 'potuerās', 'potuerat', 'potuerāmus', 'potuerātis', 'potuerant']
+        },
+        velle: {
+            'Präsens': ['volō', 'vīs', 'vult', 'volumus', 'vultis', 'volunt'],
+            'Imperfekt': ['volēbam', 'volēbās', 'volēbat', 'volēbāmus', 'volēbātis', 'volēbant'],
+            'FuturI': ['volam', 'volēs', 'volet', 'volēmus', 'volētis', 'volent'],
+            'Perfekt': ['voluī', 'voluistī', 'voluit', 'voluimus', 'voluistis', 'voluērunt'],
+            'Plusquamperfekt': ['volueram', 'voluerās', 'voluerat', 'voluerāmus', 'voluerātis', 'voluerant']
+        },
+        nōlle: {
+            'Präsens': ['nōlō', 'nōn vīs', 'nōn vult', 'nōlumus', 'nōn vultis', 'nōlunt'],
+            'Imperfekt': ['nōlēbam', 'nōlēbās', 'nōlēbat', 'nōlēbāmus', 'nōlēbātis', 'nōlēbant'],
+            'FuturI': ['nōlam', 'nōlēs', 'nōlet', 'nōlēmus', 'nōlētis', 'nōlent'],
+            'Perfekt': ['nōluī', 'nōluistī', 'nōluit', 'nōluimus', 'nōluistis', 'nōluērunt'],
+            'Plusquamperfekt': ['nōlueram', 'nōluerās', 'nōluerat', 'nōluerāmus', 'nōluerātis', 'nōluerant']
+        }
+    };
+
+    // īre und ferre: nur Präsens (+ bei īre auch Imperfekt/Futur) sind wirklich
+    // unregelmäßig. Perfekt/Plusquamperfekt folgen der regulären Endung auf dem
+    // gespeicherten Perfektstamm (siehe perfectActive/pluperfectActive) und werden
+    // daher hier NICHT hinterlegt.
+    const IRE_BASE = {
+        'Präsens': ['eō', 'īs', 'it', 'īmus', 'ītis', 'eunt'],
+        'Imperfekt': ['ībam', 'ībās', 'ībat', 'ībāmus', 'ībātis', 'ībant'],
+        'FuturI': ['ībō', 'ībis', 'ībit', 'ībimus', 'ībitis', 'ībunt']
+    };
+
+    const FERRE_BASE = {
+        'Präsens': ['ferō', 'fers', 'fert', 'ferimus', 'fertis', 'ferunt']
+    };
+
     /**
-     * Perfekt Aktiv Indikativ, alle 6 Personen. Unabhängig von der Konjugationsklasse -
-     * das Perfektsystem baut IMMER auf dem gespeicherten Perfektstamm auf.
+     * Erkennt, zu welcher unregelmäßigen Familie ein Verb gehört, und liefert
+     * das nötige Präfix zurück (z.B. "ad" bei adīre, "" bei īre selbst).
+     * Gibt null zurück, wenn das Verb zu keiner der Sonderfamilien gehört.
+     * WICHTIG: nur für gram_class "unregelmäßiges Verb" aufrufen - sonst würden
+     * ganz normale i-Konjugation-Verben wie audīre (endet ebenfalls auf "īre")
+     * fälschlich als īre-Kompositum erkannt.
      */
-    function perfectActive(verbObj) {
-        const stem = getPerfectStem(verbObj);
-        return [stem + 'ī', stem + 'istī', stem + 'it', stem + 'imus', stem + 'istis', stem + 'ērunt'];
+    function detectIrregularFamily(verbObj) {
+        if (verbObj.gram_class !== 'unregelmäßiges Verb') return null;
+
+        const latin = verbObj.latin.replace(/^sē\s+/, ''); // reflexives "sē" bei sē cōnferre entfernen
+
+        if (latin === 'esse' || latin === 'posse' || latin === 'velle' || latin === 'nōlle') {
+            return { base: latin, prefix: '' };
+        }
+        if (latin.endsWith('esse') && latin !== 'esse') {
+            return { base: 'esse', prefix: latin.slice(0, -4) };
+        }
+        if (latin.endsWith('īre')) {
+            return { base: 'īre', prefix: latin.slice(0, -3) };
+        }
+        if (latin.endsWith('ferre')) {
+            return { base: 'ferre', prefix: latin.slice(0, -5) };
+        }
+        return null;
     }
 
     /**
-     * Plusquamperfekt Aktiv Indikativ, alle 6 Personen. Ebenfalls klassenunabhängig
-     * auf dem Perfektstamm aufbauend.
+     * Liefert die Formen eines unregelmäßigen Verbs für ein Tempus, oder null,
+     * wenn das Verb zu keiner unregelmäßigen Familie gehört.
      */
-    function pluperfectActive(verbObj) {
-        const stem = getPerfectStem(verbObj);
-        return [stem + 'eram', stem + 'erās', stem + 'erat', stem + 'erāmus', stem + 'erātis', stem + 'erant'];
+    function irregularForms(verbObj, tempus) {
+        const fam = detectIrregularFamily(verbObj);
+        if (!fam) return null;
+
+        // esse, posse, velle, nōlle: direkt aus der kompletten Tabelle (mit Präfix bei Komposita)
+        if (fam.base === 'esse' || fam.base === 'posse' || fam.base === 'velle' || fam.base === 'nōlle') {
+            const table = BASE_TABLES[fam.base][tempus];
+            if (!table) return null;
+            if (!fam.prefix) return table;
+            // esse-Komposita: Präfix + Basisform (z.B. ad+sum -> adsum). Perfekt/Plusquamperfekt
+            // NICHT hier ableiten (abesse hat die Ausnahme āfuī statt "ab"+"fuī") - dafür wird
+            // stattdessen unten der gespeicherte perfect-Wert des jeweiligen Kompositums genutzt.
+            if (tempus === 'Perfekt' || tempus === 'Plusquamperfekt') {
+                return tempus === 'Perfekt' ? perfectActive(verbObj) : pluperfectActive(verbObj);
+            }
+            return table.map(f => fam.prefix + f);
+        }
+
+        // īre und Komposita
+        if (fam.base === 'īre') {
+            if (tempus === 'Perfekt') return perfectActive(verbObj);
+            if (tempus === 'Plusquamperfekt') return pluperfectActive(verbObj);
+            const table = IRE_BASE[tempus];
+            if (!table) return null;
+            return fam.prefix ? table.map(f => fam.prefix + f) : table;
+        }
+
+        // ferre und Komposita
+        if (fam.base === 'ferre') {
+            if (tempus === 'Präsens') {
+                return FERRE_BASE['Präsens'].map(f => fam.prefix + f);
+            }
+            // Imperfekt/Futur folgen der regulären konsonantischen Endung auf dem
+            // (präfigierten) Präsensstamm "fer"; Perfekt/Plusquamperfekt auf dem
+            // gespeicherten Perfektstamm des jeweiligen Kompositums.
+            const pseudoStem = fam.prefix + 'fer';
+            if (tempus === 'Imperfekt') {
+                return [pseudoStem + 'ēbam', pseudoStem + 'ēbās', pseudoStem + 'ēbat', pseudoStem + 'ēbāmus', pseudoStem + 'ēbātis', pseudoStem + 'ēbant'];
+            }
+            if (tempus === 'FuturI') {
+                return [pseudoStem + 'am', pseudoStem + 'ēs', pseudoStem + 'et', pseudoStem + 'ēmus', pseudoStem + 'ētis', pseudoStem + 'ent'];
+            }
+            if (tempus === 'Perfekt') return perfectActive(verbObj);
+            if (tempus === 'Plusquamperfekt') return pluperfectActive(verbObj);
+        }
+
+        return null;
     }
 
     const BUILDERS = {
@@ -158,7 +284,11 @@ const VerbEngine = (() => {
      */
     function getFormsForTempus(verbObj, tempus) {
         if (!isSupported(verbObj)) {
-            throw new Error(`VerbEngine: "${verbObj.latin}" wird von Schritt 1 nicht abgedeckt (Deponens/unregelmäßig).`);
+            throw new Error(`VerbEngine: "${verbObj.latin}" wird nicht unterstützt (Deponens oder fierī).`);
+        }
+        if (verbObj.gram_class !== 'Deponens') {
+            const irregular = irregularForms(verbObj, tempus);
+            if (irregular) return irregular;
         }
         if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verbObj.perfect) {
             throw new Error(`VerbEngine: Kein Perfektstamm für "${verbObj.latin}" hinterlegt.`);
