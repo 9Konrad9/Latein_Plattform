@@ -346,7 +346,7 @@
             let declinedNoun = declineNoun(noun, caseIdx, numIdx);
             currentCorrectAnswer = declineAdjective(adj, nounGender, caseIdx, numIdx);
 
-            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${adj.latin}</strong> für:<br><span class="q-highlight">${declinedNoun} <span style="font-size:1rem; color:#aaa;">(${noun.latin})</span></span>`;
+            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${adj.latin}</strong> für:<br><span class="q-highlight">${declinedNoun} <span style="font-size:1rem; color:#aaa;">(${noun.latin}, ${noun.middle})</span></span>`;
 
             // Intelligente Distraktoren: Gleiches Adjektiv, aber falsche KNG-Kombinationen (ebenfalls nur aus erlaubten Fällen)
             let wrongPool = [];
