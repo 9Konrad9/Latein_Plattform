@@ -139,7 +139,12 @@
                 <p style="margin-top: 10px;">Dir wird ein Substantiv im Nominativ, Genitiv oder Akkusativ gezeigt. Deine Aufgabe: Wähle das Adjektiv aus, das sich in <strong>Fall, Zahl und Geschlecht (KNG)</strong> perfekt anpasst!</p>
                 <p style="margin-top: 10px; font-size: 0.9rem; color: #ccc;"><em>Tipp: Achte auf das Geschlecht der Vokabel. Nicht jedes Wort auf -us ist maskulin, nicht jedes auf -a ist feminin!</em></p>
             </div>
-            <button class="main-btn" id="btn-start">Bauplatz betreten</button>
+
+            <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px;">
+                <button class="main-btn" id="btn-start-uo">Reguläre Adjektive (-us/-a/-um)</button>
+                <button class="main-btn" id="btn-start-i">i-Deklination (ab Lektion 17)</button>
+                <button class="main-btn" id="btn-start-mixed">Gemischt</button>
+            </div>
             <a href="index.html" class="main-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 10px 20px;">Zurück zum Menü</a>
         </div>
 
@@ -251,7 +256,8 @@
             return NounEngine.getForm(nounObj, caseKeys[caseIdx], numerus);
         }
 
-        function declineAdjective(adjObj, targetGender, caseIdx, numIdx) {
+        // Reguläre a-/o-Deklination-Adjektive (-us/-a/-um-Muster)
+        function declineAdjectiveUO(adjObj, genKey, caseIdx, numIdx) {
             let latin = adjObj.latin;
             let stem = "";
             let nomM = "";
@@ -261,8 +267,6 @@
             else if (latin.includes("noster")) { stem = "nostr"; nomM = "noster"; }
             else if (latin.includes("vester")) { stem = "vestr"; nomM = "vester"; }
             else { stem = latin.split(",")[0].replace("us", ""); nomM = stem + "us"; }
-            
-            let genKey = targetGender.includes("n") ? "n." : (targetGender.includes("f") ? "f." : "m.");
 
             const endings = {
                 "m.": { "Sg": [nomM, "ī", "ō", "um", "ō"], "Pl": ["ī", "ōrum", "īs", "ōs", "īs"] },
@@ -271,8 +275,60 @@
             };
 
             let e = numIdx===0 ? endings[genKey]["Sg"][caseIdx] : endings[genKey]["Pl"][caseIdx];
-            if (caseIdx===0 && numIdx===0 && genKey==="m.") return nomM; 
+            if (caseIdx===0 && numIdx===0 && genKey==="m.") return nomM;
             return stem + e;
+        }
+
+        // i-Deklination-Adjektive (zwei-, drei- und einendig) - deutlich häufiger als
+        // man denkt (mind. 20 Adjektive im Wortschatz: gravis, audāx, celer, ācer, ...).
+        // dīves ist eine echte, im gram_clue vermerkte Ausnahme (Abl. Sg. -e statt -ī,
+        // Nom./Akk. Pl. n. -a statt -ia, Gen. Pl. -um statt -ium).
+        function declineAdjectiveI(adjObj, genKey, caseIdx, numIdx) {
+            if (adjObj.latin === "dīves") {
+                const stem = "dīvit";
+                const mfEndings = { Sg: ["dīves", stem+"is", stem+"ī", stem+"em", stem+"e"], Pl: [stem+"ēs", stem+"um", stem+"ibus", stem+"ēs", stem+"ibus"] };
+                const nEndings = { Sg: ["dīves", stem+"is", stem+"ī", "dīves", stem+"e"], Pl: [stem+"a", stem+"um", stem+"ibus", stem+"a", stem+"ibus"] };
+                const t = genKey === "n." ? nEndings : mfEndings;
+                return numIdx===0 ? t.Sg[caseIdx] : t.Pl[caseIdx];
+            }
+
+            const parts = adjObj.latin.split(",").map(s => s.trim());
+            let nomM, nomF, nomN, stem;
+
+            if (parts.length === 3) { // dreiendig, z.B. "ācer, ācris, ācre"
+                nomM = parts[0];
+                stem = parts[1].replace(/is$/, "");
+                nomF = stem + "is"; nomN = stem + "e";
+            } else if (parts.length === 2) { // zweiendig, z.B. "gravis, grave"
+                nomM = nomF = parts[0];
+                stem = parts[0].replace(/is$/, "");
+                nomN = parts[1];
+            } else { // einendig, z.B. "audāx" - Genitivstamm aus gram_clue extrahieren
+                nomM = nomF = nomN = adjObj.latin;
+                const m = (adjObj.gram_clue || "").match(/Genitiv:\s*([a-zA-ZāēīōūǣĀĒĪŌŪ]+)is/);
+                stem = m ? m[1] : adjObj.latin.slice(0, -1); // Sicherheitsnetz, sollte dank gram_clue nie greifen
+            }
+
+            if (genKey === "n.") {
+                if (caseIdx === 0 || caseIdx === 3) return numIdx === 0 ? nomN : stem + "ia";
+                const nEnd = { "1": stem+"is", "2": stem+"ī", "4": stem+"ī" };
+                const nPlEnd = { "1": stem+"ium", "2": stem+"ibus", "4": stem+"ibus" };
+                return numIdx===0 ? nEnd[caseIdx] : nPlEnd[caseIdx];
+            }
+
+            const nomForm = genKey === "m." ? nomM : nomF;
+            if (caseIdx === 0) return numIdx === 0 ? nomForm : stem + "ēs";
+            const mfEnd = { "1": stem+"is", "2": stem+"ī", "3": stem+"em", "4": stem+"ī" };
+            const mfPlEnd = { "1": stem+"ium", "2": stem+"ibus", "3": stem+"ēs", "4": stem+"ibus" };
+            return numIdx===0 ? mfEnd[caseIdx] : mfPlEnd[caseIdx];
+        }
+
+        function declineAdjective(adjObj, targetGender, caseIdx, numIdx) {
+            const genKey = targetGender.includes("n") ? "n." : (targetGender.includes("f") ? "f." : "m.");
+            if (adjObj.gram_class === "i-Deklination") {
+                return declineAdjectiveI(adjObj, genKey, caseIdx, numIdx);
+            }
+            return declineAdjectiveUO(adjObj, genKey, caseIdx, numIdx);
         }
 
         // --- SPIELLOGIK ---
@@ -285,8 +341,10 @@
         let nounPool = [];
         let adjPool = [];
         let activePool = [];
+        let adjMode = 'uo'; // 'uo' | 'i' | 'mixed'
 
-        function promptLessonsAndStart() {
+        function promptLessonsAndStart(mode) {
+            if (mode) adjMode = mode;
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js fehlt!"); return;
             }
@@ -297,8 +355,10 @@
         }
 
         window.onload = function() {
-            document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
-            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-start-uo').addEventListener('click', function() { promptLessonsAndStart('uo'); });
+            document.getElementById('btn-start-i').addEventListener('click', function() { promptLessonsAndStart('i'); });
+            document.getElementById('btn-start-mixed').addEventListener('click', function() { promptLessonsAndStart('mixed'); });
+            document.getElementById('btn-restart').addEventListener('click', function() { promptLessonsAndStart(); });
             for(let i=0; i<4; i++) {
                 document.getElementById('opt' + i).addEventListener('click', function() { submitAnswer(i); });
             }
@@ -321,10 +381,22 @@
             }
 
             nounPool = activePool.filter(v => v.type === "noun" && !v.middle.includes("Pl."));
-            adjPool = activePool.filter(v => v.type === "adjective");
+            // Numerale (indeklinabel oder mit völlig eigener Deklination wie duo/trēs/mīlle)
+            // passen nicht zu einem KNG-Kongruenz-Spiel und werden grundsätzlich ausgeschlossen.
+            const realAdjectives = v => v.type === "adjective" && (v.gram_class === "a-/o-Deklination" || v.gram_class === "i-Deklination");
+            if (adjMode === 'uo') {
+                adjPool = activePool.filter(v => realAdjectives(v) && v.gram_class !== "i-Deklination");
+            } else if (adjMode === 'i') {
+                adjPool = activePool.filter(v => realAdjectives(v) && v.gram_class === "i-Deklination");
+            } else {
+                adjPool = activePool.filter(realAdjectives);
+            }
 
             if (nounPool.length === 0 || adjPool.length === 0) {
-                alert("In den ausgewählten Lektionen gibt es noch keine passenden Adjektive (die ersten Adjektive kommen erst ab Lektion 5 dazu). Bitte wähle mindestens Lektion 5 oder 6 mit aus.");
+                const hinweis = adjMode === 'i'
+                    ? "In den ausgewählten Lektionen gibt es noch keine i-Deklination-Adjektive (die ersten kommen erst ab Lektion 17 dazu). Bitte wähle mindestens Lektion 17 mit aus."
+                    : "In den ausgewählten Lektionen gibt es noch keine passenden Adjektive (die ersten Adjektive kommen erst ab Lektion 5 dazu). Bitte wähle mindestens Lektion 5 oder 6 mit aus.";
+                alert(hinweis);
                 return;
             }
 
