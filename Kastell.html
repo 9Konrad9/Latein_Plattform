@@ -85,7 +85,9 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            background: linear-gradient(to bottom, #1a2a3a 0%, #3a221d 70%, #5c3a21 100%);
+            background-image: url('assets/kastell/battlefield_bg.jpg');
+            background-size: cover;
+            background-position: center bottom;
             border: 4px solid #333;
             border-radius: 8px;
             height: 220px;
@@ -96,25 +98,17 @@
             margin-bottom: 15px;
         }
 
-        .catapult-wrapper { width: 80px; height: 70px; position: relative; margin-bottom: 10px; }
+        .catapult-wrapper { width: 150px; height: 140px; position: relative; margin-bottom: 0; flex-shrink: 0; z-index: 2; }
 
         .castle-wall-graphics {
-            width: 120px;
             height: 100%;
-            background: #555;
-            background-image: linear-gradient(rgba(0,0,0,0.2) 2px, transparent 2px), linear-gradient(90deg, rgba(0,0,0,0.2) 2px, transparent 2px);
-            background-size: 20px 10px;
-            border-left: 4px solid #333;
-            position: relative;
-            display: flex;
-            justify-content: space-between;
+            width: auto;
+            object-fit: contain;
+            object-position: bottom;
+            flex-shrink: 0;
+            z-index: 2;
+            filter: drop-shadow(-4px 0 6px rgba(0,0,0,0.4));
         }
-
-        .merlon {
-            width: 30px; height: 20px; background: #444;
-            border: 2px solid #222; border-top: none; position: absolute; top: -20px;
-        }
-        .m1 { left: 5px; } .m2 { left: 45px; } .m3 { left: 85px; }
 
         .stone-path {
             position: absolute; left: 90px; bottom: 60px;
@@ -123,23 +117,30 @@
         }
 
         .attack-stone {
-            background: radial-gradient(circle at 30% 30%, #999, #444);
-            border-radius: 50%;
-            padding: 15px 25px;
+            background-image: url('assets/kastell/stone.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 130px;
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-family: var(--font-display);
-            font-size: 1.6rem;
+            font-size: 1.35rem;
             font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-            box-shadow: 4px 6px 12px rgba(0,0,0,0.6);
+            color: #3a2f22;
             text-align: center;
-            border: 2px dashed rgba(255,255,255,0.2);
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 1;
             animation: flyAnimation 1.5s ease-out;
         }
 
         @keyframes flyAnimation {
-            0% { transform: translate(-100px, 40px) scale(0.6); }
-            100% { transform: translate(0, 0) scale(1); }
+            0% { transform: translate(-160px, 30px) scale(0.28); opacity: 0.7; }
+            60% { opacity: 1; }
+            100% { transform: translate(0, 0) scale(1); opacity: 1; }
         }
 
         .health-bar-container {
@@ -241,20 +242,12 @@
 
             <div class="battlefield">
                 <div class="catapult-wrapper">
-                    <svg width="80" height="70" viewBox="0 0 80 70">
-                        <rect x="10" y="55" width="60" height="8" fill="#8b5a2b" rx="2"/>
-                        <circle cx="20" cy="63" r="6" fill="#444"/>
-                        <circle cx="60" cy="63" r="6" fill="#444"/>
-                        <line x1="50" y1="55" x2="30" y2="20" stroke="#8b5a2b" stroke-width="6"/>
-                        <circle cx="28" cy="18" r="7" fill="#666"/>
-                    </svg>
+                    <img src="assets/kastell/catapult.png" alt="Katapult" style="width:100%; height:100%; object-fit:contain;">
                 </div>
                 <div class="stone-path">
                     <div class="attack-stone" id="target-verb">---</div>
                 </div>
-                <div class="castle-wall-graphics">
-                    <div class="merlon m1"></div><div class="merlon m2"></div><div class="merlon m3"></div>
-                </div>
+                <img src="assets/kastell/wall.png" alt="Kastell-Mauer" class="castle-wall-graphics">
             </div>
 
             <div style="text-align:center; font-family: var(--font-display); font-size: 1.15rem; color: var(--roman-gold); margin-bottom: 4px;" id="question-prompt">Bestimme die Form.</div>
