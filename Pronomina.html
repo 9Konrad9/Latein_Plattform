@@ -175,6 +175,18 @@
             </div>
             <button class="start-btn" id="btn-start-personal">Personalpronomina üben</button>
 
+            <div class="notice-box">
+                <h3>👉 Modus 3: Demonstrativpronomina</h3>
+                <p>Zu einem Nomen in einer bestimmten Form wird das passende Pronomen (<strong>hic, ille</strong> oder <strong>is</strong>) gesucht - Genus, Numerus und Kasus müssen übereinstimmen, genau wie bei einem Adjektiv.</p>
+            </div>
+            <button class="start-btn" id="btn-start-demonstrativ" style="margin-bottom: 25px;">Demonstrativpronomina üben</button>
+
+            <div class="notice-box">
+                <h3>🔗 Modus 4: Relativpronomen</h3>
+                <p><strong>Wichtig:</strong> Genus und Numerus von <strong>quī, quae, quod</strong> richten sich nach dem Bezugswort - der <strong>Kasus</strong> aber nach der Funktion des Pronomens im Nebensatz selbst! Der Kasus des Bezugsworts im Hauptsatz ist dabei egal.</p>
+            </div>
+            <button class="start-btn" id="btn-start-relativ">Relativpronomen üben</button>
+
             <p id="overall-progress-note" style="margin-top: 20px; font-size: 0.85rem; color: #888;"></p>
         </div>
 
@@ -392,6 +404,8 @@
         window.onload = function() {
             document.getElementById('btn-start-possessiv').addEventListener('click', startPossessiv);
             document.getElementById('btn-start-personal').addEventListener('click', promptLessonsAndStartPersonal);
+            document.getElementById('btn-start-demonstrativ').addEventListener('click', promptLessonsAndStartDemonstrativ);
+            document.getElementById('btn-start-relativ').addEventListener('click', promptLessonsAndStartRelativ);
             document.getElementById('btn-restart').addEventListener('click', backToModeSelect);
             document.getElementById('btn-next-case').addEventListener('click', nextCase);
             for (let i = 0; i < 4; i++) {
@@ -427,6 +441,167 @@
             document.getElementById('combat-box').style.display = 'flex';
 
             showCase();
+        }
+
+        // Vollständige, hochirreguläre Deklinationstabellen (keine Ableitungsformel möglich).
+        const DEMONSTRATIVE_PRONOUNS = {
+            hic: {
+                label: 'hic, haec, hoc',
+                m: { sg: { nom: 'hic', gen: 'huius', dat: 'huic', akk: 'hunc', abl: 'hōc' }, pl: { nom: 'hī', gen: 'hōrum', dat: 'hīs', akk: 'hōs', abl: 'hīs' } },
+                f: { sg: { nom: 'haec', gen: 'huius', dat: 'huic', akk: 'hanc', abl: 'hāc' }, pl: { nom: 'hae', gen: 'hārum', dat: 'hīs', akk: 'hās', abl: 'hīs' } },
+                n: { sg: { nom: 'hoc', gen: 'huius', dat: 'huic', akk: 'hoc', abl: 'hōc' }, pl: { nom: 'haec', gen: 'hōrum', dat: 'hīs', akk: 'haec', abl: 'hīs' } }
+            },
+            ille: {
+                label: 'ille, illa, illud',
+                m: { sg: { nom: 'ille', gen: 'illīus', dat: 'illī', akk: 'illum', abl: 'illō' }, pl: { nom: 'illī', gen: 'illōrum', dat: 'illīs', akk: 'illōs', abl: 'illīs' } },
+                f: { sg: { nom: 'illa', gen: 'illīus', dat: 'illī', akk: 'illam', abl: 'illā' }, pl: { nom: 'illae', gen: 'illārum', dat: 'illīs', akk: 'illās', abl: 'illīs' } },
+                n: { sg: { nom: 'illud', gen: 'illīus', dat: 'illī', akk: 'illud', abl: 'illō' }, pl: { nom: 'illa', gen: 'illōrum', dat: 'illīs', akk: 'illa', abl: 'illīs' } }
+            },
+            is: {
+                label: 'is, ea, id',
+                m: { sg: { nom: 'is', gen: 'eius', dat: 'eī', akk: 'eum', abl: 'eō' }, pl: { nom: 'eī', gen: 'eōrum', dat: 'eīs', akk: 'eōs', abl: 'eīs' } },
+                f: { sg: { nom: 'ea', gen: 'eius', dat: 'eī', akk: 'eam', abl: 'eā' }, pl: { nom: 'eae', gen: 'eārum', dat: 'eīs', akk: 'eās', abl: 'eīs' } },
+                n: { sg: { nom: 'id', gen: 'eius', dat: 'eī', akk: 'id', abl: 'eō' }, pl: { nom: 'ea', gen: 'eōrum', dat: 'eīs', akk: 'ea', abl: 'eīs' } }
+            }
+        };
+        const RELATIVE_PRONOUN = {
+            m: { sg: { nom: 'quī', gen: 'cuius', dat: 'cui', akk: 'quem', abl: 'quō' }, pl: { nom: 'quī', gen: 'quōrum', dat: 'quibus', akk: 'quōs', abl: 'quibus' } },
+            f: { sg: { nom: 'quae', gen: 'cuius', dat: 'cui', akk: 'quam', abl: 'quā' }, pl: { nom: 'quae', gen: 'quārum', dat: 'quibus', akk: 'quās', abl: 'quibus' } },
+            n: { sg: { nom: 'quod', gen: 'cuius', dat: 'cui', akk: 'quod', abl: 'quō' }, pl: { nom: 'quae', gen: 'quōrum', dat: 'quibus', akk: 'quae', abl: 'quibus' } }
+        };
+        const CASE_KEYS = ['nom', 'gen', 'dat', 'akk', 'abl'];
+        const CASE_LABELS = { nom: 'Nominativ', gen: 'Genitiv', dat: 'Dativ', akk: 'Akkusativ', abl: 'Ablativ' };
+        const GENDER_LABELS = { m: 'maskulin', f: 'feminin', n: 'neutrum' };
+
+        /** Demonstrativpronomen (hic/ille/is): reine KNG-Kongruenz-Übung, wie bei einem Adjektiv. */
+        function generateDemonstrativRound(nounPool) {
+            const pronounKeys = ['hic', 'ille', 'is'];
+            const pronounKey = pronounKeys[Math.floor(Math.random() * pronounKeys.length)];
+            const table = DEMONSTRATIVE_PRONOUNS[pronounKey];
+
+            const validNouns = nounPool.filter(n => {
+                const d = NounEngine.decline(n);
+                return CASE_KEYS.every(c => d.sg[c] !== null && d.pl[c] !== null);
+            });
+            const pool = validNouns.length > 0 ? validNouns : nounPool;
+            const noun = pool[Math.floor(Math.random() * pool.length)];
+            const nounDecl = NounEngine.decline(noun);
+            const gender = nounDecl.gender === 'n' ? 'n' : (nounDecl.gender === 'f' ? 'f' : 'm');
+
+            const caseKey = CASE_KEYS[Math.floor(Math.random() * CASE_KEYS.length)];
+            const numKey = Math.random() < 0.5 ? 'sg' : 'pl';
+            const nounForm = nounDecl[numKey][caseKey];
+            const correct = table[gender][numKey][caseKey];
+
+            const distractorSet = new Set();
+            ['m', 'f', 'n'].filter(g => g !== gender).forEach(g => distractorSet.add(table[g][numKey][caseKey]));
+            CASE_KEYS.filter(c => c !== caseKey).sort(() => Math.random() - 0.5).slice(0, 2).forEach(c => distractorSet.add(table[gender][numKey][c]));
+            distractorSet.add(table[gender][numKey === 'sg' ? 'pl' : 'sg'][caseKey]);
+            distractorSet.delete(correct);
+            let distractors = [...distractorSet].sort(() => Math.random() - 0.5).slice(0, 3);
+            while (distractors.length < 3) {
+                const g = ['m', 'f', 'n'][Math.floor(Math.random() * 3)];
+                const n2 = ['sg', 'pl'][Math.floor(Math.random() * 2)];
+                const c = CASE_KEYS[Math.floor(Math.random() * 5)];
+                const f = table[g][n2][c];
+                if (f !== correct && !distractors.includes(f)) distractors.push(f);
+            }
+
+            return {
+                latin: `___ ${nounForm}`,
+                translation: `Gesucht: <strong>${table.label}</strong> passend zu „${nounForm}“ (${CASE_LABELS[caseKey]} ${numKey === 'sg' ? 'Singular' : 'Plural'}, ${GENDER_LABELS[gender]}).`,
+                correct: correct,
+                options: [correct, ...distractors].sort(() => Math.random() - 0.5),
+                explanation: `<strong>${correct}</strong> stimmt in Kasus (${CASE_LABELS[caseKey]}), Numerus und Genus mit „${nounForm}“ überein - genau wie bei einem Adjektiv.`,
+                _trackWord: pronounKey
+            };
+        }
+
+        /**
+         * Relativpronomen (quī/quae/quod): Genus/Numerus kommen vom Bezugswort, der KASUS
+         * aber von der Funktion im Nebensatz - das ist der zentrale Lernpunkt dieser Übung.
+         */
+        function generateRelativeRound(nounPool) {
+            const validNouns = nounPool.filter(n => {
+                const d = NounEngine.decline(n);
+                return CASE_KEYS.every(c => d.sg[c] !== null && d.pl[c] !== null);
+            });
+            const pool = validNouns.length > 0 ? validNouns : nounPool;
+            const antecedent = pool[Math.floor(Math.random() * pool.length)];
+            const antDecl = NounEngine.decline(antecedent);
+            const gender = antDecl.gender === 'n' ? 'n' : (antDecl.gender === 'f' ? 'f' : 'm');
+
+            const antCase = CASE_KEYS[Math.floor(Math.random() * CASE_KEYS.length)];
+            const antNum = Math.random() < 0.5 ? 'sg' : 'pl';
+            const antForm = antDecl[antNum][antCase];
+
+            const functions = [
+                { case: 'nom', label: 'Subjekt des Nebensatzes' },
+                { case: 'akk', label: 'Akkusativobjekt des Nebensatzes' },
+                { case: 'gen', label: 'Genitivattribut im Nebensatz' },
+                { case: 'dat', label: 'Dativobjekt des Nebensatzes' },
+                { case: 'abl', label: 'nach einer Präposition mit Ablativ im Nebensatz' }
+            ];
+            const func = functions[Math.floor(Math.random() * functions.length)];
+            const relNum = antNum;
+            const correct = RELATIVE_PRONOUN[gender][relNum][func.case];
+
+            const distractorSet = new Set();
+            if (func.case !== antCase) distractorSet.add(RELATIVE_PRONOUN[gender][relNum][antCase]);
+            ['m', 'f', 'n'].filter(g => g !== gender).forEach(g => distractorSet.add(RELATIVE_PRONOUN[g][relNum][func.case]));
+            CASE_KEYS.filter(c => c !== func.case).sort(() => Math.random() - 0.5).slice(0, 2).forEach(c => distractorSet.add(RELATIVE_PRONOUN[gender][relNum][c]));
+            distractorSet.delete(correct);
+            let distractors = [...distractorSet].sort(() => Math.random() - 0.5).slice(0, 3);
+            while (distractors.length < 3) {
+                const g = ['m', 'f', 'n'][Math.floor(Math.random() * 3)];
+                const n2 = ['sg', 'pl'][Math.floor(Math.random() * 2)];
+                const c = CASE_KEYS[Math.floor(Math.random() * 5)];
+                const f = RELATIVE_PRONOUN[g][n2][c];
+                if (f !== correct && !distractors.includes(f)) distractors.push(f);
+            }
+
+            return {
+                latin: `${antForm} (${CASE_LABELS[antCase]}), ___ ...`,
+                translation: `Bezugswort: „${antForm}“ (${antecedent.meaning}, ${GENDER_LABELS[gender]}, ${antNum === 'sg' ? 'Singular' : 'Plural'}). Gesucht: quī/quae/quod als <strong>${func.label}</strong>.`,
+                correct: correct,
+                options: [correct, ...distractors].sort(() => Math.random() - 0.5),
+                explanation: `<strong>${correct}</strong>: Genus (${GENDER_LABELS[gender]}) und Numerus kommen vom Bezugswort „${antForm}“ - der <strong>Kasus</strong> (${CASE_LABELS[func.case]}) aber von der Funktion „${func.label}“. Der Kasus des Bezugsworts selbst (${CASE_LABELS[antCase]}) spielt für die Pronomen-Form KEINE Rolle!`,
+                _trackWord: 'quī'
+            };
+        }
+
+        function promptLessonsAndStartDemonstrativ() {
+            if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js nicht gefunden!"); return; }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                const nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
+                if (nounPool.length < 1) { alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive. Bitte wähle weitere Lektionen mit aus."); return; }
+                currentMode = 'demonstrativ';
+                orderedCases = [];
+                for (let i = 0; i < 12; i++) orderedCases.push(generateDemonstrativRound(nounPool));
+                currentIdx = 0; correctCount = 0;
+                document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('end-box').style.display = 'none';
+                document.getElementById('combat-box').style.display = 'flex';
+                showCase();
+            });
+        }
+
+        function promptLessonsAndStartRelativ() {
+            if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js nicht gefunden!"); return; }
+            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                activePool = filteredPool;
+                const nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
+                if (nounPool.length < 1) { alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive. Bitte wähle weitere Lektionen mit aus."); return; }
+                currentMode = 'relativ';
+                orderedCases = [];
+                for (let i = 0; i < 12; i++) orderedCases.push(generateRelativeRound(nounPool));
+                currentIdx = 0; correctCount = 0;
+                document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('end-box').style.display = 'none';
+                document.getElementById('combat-box').style.display = 'flex';
+                showCase();
+            });
         }
 
         function promptLessonsAndStartPersonal() {
@@ -520,7 +695,7 @@
                 fbText.innerHTML = c.explanation;
             }
 
-            if (currentMode === 'personal' && c._trackWord) {
+            if (currentMode !== 'possessiv' && c._trackWord) {
                 LudiProgress.recordVocabAttempt(c._trackWord, isCorrect);
             }
         }
@@ -543,8 +718,8 @@
             const msg = document.getElementById('end-msg');
             endBox.style.display = 'block';
 
-            const saveId = currentMode === 'personal' ? 'personalpronomen' : 'possessiv';
-            LudiProgress.saveGameResult(saveId, correctCount, orderedCases.length);
+            const saveIds = { personal: 'personalpronomen', possessiv: 'possessiv', demonstrativ: 'demonstrativpronomen', relativ: 'relativpronomen' };
+            LudiProgress.saveGameResult(saveIds[currentMode] || currentMode, correctCount, orderedCases.length);
 
             if (correctCount === orderedCases.length) {
                 title.innerText = "🏛️ MEISTERDETEKTIV!";
@@ -557,9 +732,13 @@
                 title.style.color = "#F44336";
             }
 
-            msg.innerHTML = currentMode === 'personal'
-                ? `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: Subjekt = <strong>Nominativ</strong> (ego, tū, nōs, vōs), Objekt = <strong>Akkusativ</strong> (mē, tē, nōs, vōs).`
-                : `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: <strong>suus/sua/suum</strong> = gehört dem Subjekt selbst. <strong>eius/eōrum</strong> = gehört jemand anderem.`;
+            const endMessages = {
+                personal: `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: Subjekt = <strong>Nominativ</strong> (ego, tū, nōs, vōs), Objekt = <strong>Akkusativ</strong> (mē, tē, nōs, vōs).`,
+                possessiv: `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: <strong>suus/sua/suum</strong> = gehört dem Subjekt selbst. <strong>eius/eōrum</strong> = gehört jemand anderem.`,
+                demonstrativ: `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: hic/ille/is stimmen in Kasus, Numerus und Genus mit ihrem Bezugswort überein - genau wie ein Adjektiv.`,
+                relativ: `Du hast <strong>${correctCount} von ${orderedCases.length}</strong> Fällen richtig gelöst.<br><br>Denk dran: Genus und Numerus von quī/quae/quod kommen vom Bezugswort - der <strong>Kasus</strong> aber von der Funktion im Nebensatz!`
+            };
+            msg.innerHTML = endMessages[currentMode] || '';
         }
     </script>
 </body>
