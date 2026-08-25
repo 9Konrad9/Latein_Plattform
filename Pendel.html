@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Pendel! - Der Übersetzungstrainer</title>
+    <title>Pendel! - Die Pendelmethode</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="lessonFilter.js"></script>
@@ -111,6 +111,7 @@
         .latin-word.found-sub { background: #4CAF50; color: #fff; cursor: default; }
         .latin-word.found-praed { background: #2980b9; color: #fff; cursor: default; }
         .latin-word.found-obj { background: #8e44ad; color: #fff; cursor: default; }
+        .latin-word.found-dat { background: #d35400; color: #fff; cursor: default; }
         .latin-word.adverbial { background: #e0e0e0; color: #666; cursor: default; font-style: italic; }
         .latin-word.wrong-flash { background: #F44336; color: #fff; }
 
@@ -129,18 +130,6 @@
             background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 15px;
             font-size: 0.95rem; color: #ccc; text-align: center; display: none;
         }
-
-        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; flex-grow: 1; }
-        .opt-btn {
-            background: linear-gradient(#800000, #5a0000);
-            border: 3px solid var(--roman-gold); color: var(--roman-marble);
-            padding: 14px 12px; font-size: 1rem; font-weight: bold; font-family: var(--font-body);
-            border-radius: 8px; cursor: pointer; text-align: left; touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .opt-btn:not(:disabled):active { background: #4a0000; }
-        .correct { background: #4CAF50 !important; border-color: #fff !important; }
-        .wrong { background: #F44336 !important; border-color: #fff !important; }
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -165,7 +154,7 @@
 " title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>⚖️ Pendel!</h1>
-    <div class="subtitle">Der Übersetzungstrainer</div>
+    <div class="subtitle">Die Pendelmethode</div>
 
     <div class="game-container">
 
@@ -174,25 +163,14 @@
             <h2 style="font-family: var(--font-display); color: var(--roman-marble); margin-bottom: 12px;">Die Pendelmethode üben</h2>
             <div class="notice-box">
                 <h3>📜 So funktioniert's:</h3>
-                <p>Du bekommst einen vollständigen lateinischen Satz. In vier Schritten baust du dir daraus das Gerüst - genau wie in der Klassenarbeit:</p>
+                <p>Du bekommst einen vollständigen lateinischen Satz. Schrittweise baust du dir daraus das Gerüst - genau wie in der Klassenarbeit:</p>
                 <p style="margin-top: 10px;"><span class="step">1</span> Finde zuerst das <strong>Subjekt</strong>.</p>
                 <p style="margin-top: 6px;"><span class="step">2</span> Von dort geht's nach hinten zum <strong>Prädikat</strong>.</p>
-                <p style="margin-top: 6px;"><span class="step">3</span> Und wieder zurück zum <strong>Objekt</strong> (falls vorhanden).</p>
-                <p style="margin-top: 6px;"><span class="step">4</span> Übrige Wörter (Adverbialien) werden dir erklärt - die musst du selbst einsortieren.</p>
-                <p style="margin-top: 10px; font-weight: bold; color: #ff6b5b;">Zum Schluss wählst du aus vier deutschen Übersetzungen die richtige - manche vertauschen absichtlich Subjekt und Objekt, genau der Fehler, der in der Klassenarbeit am häufigsten passiert!</p>
+                <p style="margin-top: 6px;"><span class="step">3</span> Und wieder zurück zum <strong>Objekt</strong> (falls vorhanden - Akkusativ oder Dativ, je nach Verb).</p>
+                <p style="margin-top: 6px;"><span class="step">4</span> Übrige Wörter (Genitiv-Attribut, Adverbialien) werden dir am Ende erklärt.</p>
+                <p style="margin-top: 10px; color: #ccc;">Die Sätze werden aus eurem echten Wortschatz erzeugt, passend zu den Lektionen, die du auswählst - je mehr Lektionen, desto mehr Tempora und Satzglieder können vorkommen.</p>
             </div>
-
-            <div class="notice-box">
-                <h3>📖 Modus 1: Echte Lehrbuchsätze</h3>
-                <p>Originalsätze aus euren Lektionstexten (leicht gekürzt/umgestellt). Wörter außerhalb des Lernwortschatzes werden wie im Buch als Fußnote erklärt.</p>
-            </div>
-            <button class="start-btn" id="btn-start-real" style="margin-bottom: 25px;">Lehrbuchsätze üben</button>
-
-            <div class="notice-box">
-                <h3>🎲 Modus 2: Freies Training</h3>
-                <p>Zufällig erzeugte, aber sinnvolle Sätze aus einem festen Familie/Alltag-Wortschatz (Lektion 1-5) - unbegrenzt viele Wiederholungen.</p>
-            </div>
-            <button class="start-btn" id="btn-start-game">Freies Training starten</button>
+            <button class="start-btn" id="btn-start-game">Pendeln starten</button>
         </div>
 
         <!-- SPIELFELD -->
@@ -204,7 +182,7 @@
                 <div class="step-pill" id="pill-sub">1. Subjekt</div>
                 <div class="step-pill" id="pill-praed">2. Prädikat</div>
                 <div class="step-pill" id="pill-obj">3. Objekt</div>
-                <div class="step-pill" id="pill-trans">4. Übersetzung</div>
+                <div class="step-pill" id="pill-done">4. Fertig</div>
             </div>
 
             <div class="instruction-line" id="instruction-line">Finde das Subjekt!</div>
@@ -220,16 +198,12 @@
                 <div id="sentence-words"></div>
             </div>
 
-            <div id="footnote-area" style="display:none; font-size:0.85rem; color:#bbb; text-align:center; margin:-8px 0 15px; font-style:italic;"></div>
-
             <div class="geruest-box" id="geruest-box">
                 <span class="tag">DEIN GERÜST</span>
                 <span id="geruest-text">...</span>
             </div>
 
             <div class="adverbial-note" id="adverbial-note"></div>
-
-            <div class="options-grid" id="options-grid"></div>
         </div>
 
         <!-- FEEDBACK -->
@@ -253,361 +227,187 @@
     </div>
 
     <script>
-        /* ============ ECHTE LEHRBUCHSÄTZE (Lektion 1-6) ============ */
-        // Originalsätze aus den Lektionstexten, teils gekürzt/umgestellt, damit sie dem
-        // Subjekt-Objekt-Prädikat-Schema folgen. Wörter außerhalb des Lernwortschatzes
-        // tragen ein "footnote"-Feld, das wie im Buch als Fußnote angezeigt wird.
-        const realSentences = [
-            // --- Lektion 1 ---
-            { lesson: 1, tokens: [
-                { text: "Familia", role: "sub" }, { text: "avum", role: "obj" }, { text: "exspectat", role: "praed" }
-              ], correctGerman: "Die Familie erwartet den Großvater.",
-              distractors: ["Der Großvater erwartet die Familie.", "Die Familie sieht den Großvater.", "Die Familie ruft den Großvater."] },
-            { lesson: 1, tokens: [
-                { text: "Cornēlia", role: "sub" }, { text: "peristȳlium", role: "obj" }, { text: "intrat", role: "praed" }
-              ], correctGerman: "Cornelia betritt das Peristyl.",
-              distractors: ["Das Peristyl betritt Cornelia.", "Cornelia sucht das Peristyl.", "Cornelia sieht das Peristyl."] },
-            { lesson: 1, tokens: [
-                { text: "Avus", role: "sub" }, { text: "nēminem", role: "obj", footnote: "nēminem (Akk.): niemanden" }, { text: "videt", role: "praed" }
-              ], correctGerman: "Der Großvater sieht niemanden.",
-              distractors: ["Niemand sieht den Großvater.", "Der Großvater ruft niemanden.", "Der Großvater sucht niemanden."] },
-            { lesson: 1, tokens: [
-                { text: "Catella", role: "sub" }, { text: "botellum", role: "obj", footnote: "botellum (Akk.): ein Würstchen" }, { text: "tenet", role: "praed" }
-              ], correctGerman: "Das Hündchen hält ein Würstchen.",
-              distractors: ["Ein Würstchen hält das Hündchen.", "Das Hündchen sucht ein Würstchen.", "Das Hündchen sieht ein Würstchen."] },
+        // Echte Intransitiva (nehmen weder Akkusativ- noch Dativobjekt)
+        const trueIntransitive = [
+            "esse", "adesse", "posse", "clāmāre", "venīre", "labōrāre", "lūdere", "gaudēre", "currere", "īre", "iacēre", "abīre", "perīre", "cēdere", "studēre", "īnstāre",
+            "pergere", "properāre", "sedēre", "cōnsīdere", "tacēre", "accēdere", "surgere", "crēscere"
+        ];
+        // Echte Dativ-Verben (nehmen ein Dativobjekt statt eines Akkusativobjekts)
+        const dativeVerbs = ["pārēre", "nocēre", "respondēre", "placēre"];
 
-            // --- Lektion 2 ---
-            { lesson: 2, tokens: [
-                { text: "Aulus", role: "sub" }, { text: "sorōrem", role: "obj" }, { text: "quaerit", role: "praed" }
-              ], correctGerman: "Aulus sucht seine Schwester.",
-              distractors: ["Die Schwester sucht Aulus.", "Aulus sieht seine Schwester.", "Aulus ruft seine Schwester."] },
-            { lesson: 2, tokens: [
-                { text: "Aulus", role: "sub" }, { text: "Cornēliam", role: "obj" }, { text: "captat", role: "praed", footnote: "captāre: fangen" }
-              ], correctGerman: "Aulus fängt Cornelia.",
-              distractors: ["Cornelia fängt Aulus.", "Aulus sieht Cornelia.", "Aulus ruft Cornelia."] },
-            { lesson: 2, tokens: [
-                { text: "Parentēs", role: "sub" }, { text: "subitō", role: "adv" }, { text: "peristȳlium", role: "obj" }, { text: "intrant", role: "praed" }
-              ], correctGerman: "Die Eltern betreten plötzlich das Peristyl.",
-              distractors: ["Das Peristyl betritt plötzlich die Eltern.", "Die Eltern sehen plötzlich das Peristyl.", "Die Eltern betreten dann das Peristyl."] },
-            { lesson: 2, tokens: [
-                { text: "Aulus", role: "sub" }, { text: "mātrem", role: "obj" }, { text: "rogat", role: "praed" }
-              ], correctGerman: "Aulus fragt die Mutter.",
-              distractors: ["Die Mutter fragt Aulus.", "Aulus sieht die Mutter.", "Aulus ruft die Mutter."] },
-
-            // --- Lektion 3 ---
-            { lesson: 3, tokens: [
-                { text: "Cornēlia", role: "sub" }, { text: "equōs", role: "obj" }, { text: "amat", role: "praed" }
-              ], correctGerman: "Cornelia liebt Pferde.",
-              distractors: ["Die Pferde lieben Cornelia.", "Cornelia sieht Pferde.", "Cornelia sucht Pferde."] },
-            { lesson: 3, tokens: [
-                { text: "Lūcius", role: "sub" }, { text: "lepusculōs", role: "obj", footnote: "lepusculus, lepusculum m.: das Häschen" }, { text: "amat", role: "praed" }
-              ], correctGerman: "Lucius liebt die Häschen.",
-              distractors: ["Die Häschen lieben Lucius.", "Lucius sieht die Häschen.", "Lucius sucht die Häschen."] },
-            { lesson: 3, tokens: [
-                { text: "Parentēs", role: "sub" }, { text: "bovēs", role: "obj" }, { text: "amant", role: "praed" }
-              ], correctGerman: "Die Eltern lieben die Rinder.",
-              distractors: ["Die Rinder lieben die Eltern.", "Die Eltern sehen die Rinder.", "Die Eltern suchen die Rinder."] },
-            { lesson: 3, tokens: [
-                { text: "Lūcius", role: "sub" }, { text: "avum", role: "obj" }, { text: "quaerit", role: "praed" }
-              ], correctGerman: "Lucius sucht den Großvater.",
-              distractors: ["Der Großvater sucht Lucius.", "Lucius sieht den Großvater.", "Lucius ruft den Großvater."] },
-            { lesson: 3, tokens: [
-                { text: "Puerī", role: "sub" }, { text: "per", role: "adv" }, { text: "hortum", role: "adv" }, { text: "currunt", role: "praed" }
-              ], correctGerman: "Die Jungen laufen durch den Garten.",
-              distractors: ["Die Jungen laufen in den Garten.", "Die Jungen laufen vor den Garten.", "Die Jungen stehen im Garten."] },
-
-            // --- Lektion 4 ---
-            { lesson: 4, tokens: [
-                { text: "Atticus", role: "sub" }, { text: "līberōs", role: "obj" }, { text: "ad", role: "adv" }, { text: "scholam", role: "adv" }, { text: "dūcit", role: "praed" }
-              ], correctGerman: "Atticus führt die Kinder zur Schule.",
-              distractors: ["Die Kinder führen Atticus zur Schule.", "Atticus sieht die Kinder zur Schule.", "Atticus führt die Kinder zum Forum."] },
-            { lesson: 4, tokens: [
-                { text: "Magister", role: "sub" }, { text: "discipulōs", role: "obj" }, { text: "monet", role: "praed" }
-              ], correctGerman: "Der Lehrer ermahnt die Schüler.",
-              distractors: ["Die Schüler ermahnen den Lehrer.", "Der Lehrer sieht die Schüler.", "Der Lehrer ruft die Schüler."] },
-            { lesson: 4, tokens: [
-                { text: "Asinī", role: "sub", footnote: "asinus, asinum m.: der Esel" }, { text: "onera", role: "obj", footnote: "onus, onera: die Lasten" }, { text: "portant", role: "praed" }
-              ], correctGerman: "Die Esel tragen die Lasten.",
-              distractors: ["Die Lasten tragen die Esel.", "Die Esel sehen die Lasten.", "Die Esel suchen die Lasten."] },
-            { lesson: 4, tokens: [
-                { text: "Iūlia", role: "sub" }, { text: "frātrem", role: "obj" }, { text: "īnstruit", role: "praed" }
-              ], correctGerman: "Iulia unterweist ihren Bruder.",
-              distractors: ["Der Bruder unterweist Iulia.", "Iulia sieht ihren Bruder.", "Iulia ruft ihren Bruder."] },
-
-            // --- Lektion 5 ---
-            { lesson: 5, tokens: [
-                { text: "Lycus", role: "sub" }, { text: "Aulum", role: "obj" }, { text: "per", role: "adv" }, { text: "forum", role: "adv" }, { text: "dūcit", role: "praed" }
-              ], correctGerman: "Lycus führt Aulus durch das Forum.",
-              distractors: ["Aulus führt Lycus durch das Forum.", "Lycus sieht Aulus durch das Forum.", "Lycus führt Aulus zum Forum."] },
-            { lesson: 5, tokens: [
-                { text: "Statua", role: "sub" }, { text: "asȳlum", role: "obj", footnote: "asȳlum, asȳlī n.: das Asyl" }, { text: "praebet", role: "praed" }
-              ], correctGerman: "Die Statue bietet Asyl.",
-              distractors: ["Asyl bietet die Statue.", "Die Statue sucht Asyl.", "Die Statue sieht Asyl."] },
-            { lesson: 5, tokens: [
-                { text: "Mors", role: "sub" }, { text: "tē", role: "obj" }, { text: "manet", role: "praed" }
-              ], correctGerman: "Der Tod erwartet dich.",
-              distractors: ["Du erwartest den Tod.", "Der Tod sieht dich.", "Der Tod ruft dich."] },
-            { lesson: 5, tokens: [
-                { text: "Silvānus", role: "sub" }, { text: "ānulum", role: "obj", footnote: "ānulus, ānulī m.: der Ring" }, { text: "nōn habet", role: "praed" }
-              ], correctGerman: "Silvanus hat den Ring nicht.",
-              distractors: ["Der Ring hat Silvanus nicht.", "Silvanus sieht den Ring nicht.", "Silvanus sucht den Ring nicht."] },
-            { lesson: 5, tokens: [
-                { text: "Quīntus", role: "sub" }, { text: "līberōs", role: "obj" }, { text: "nōn videt", role: "praed" }
-              ], correctGerman: "Quintus sieht die Kinder nicht.",
-              distractors: ["Die Kinder sehen Quintus nicht.", "Quintus ruft die Kinder nicht.", "Quintus sucht die Kinder nicht."] },
-
-            // --- Lektion 6 ---
-            { lesson: 6, tokens: [
-                { text: "Spectātōrēs", role: "sub" }, { text: "sīgnum", role: "obj" }, { text: "exspectant", role: "praed" }
-              ], correctGerman: "Die Zuschauer erwarten das Zeichen.",
-              distractors: ["Das Zeichen erwartet die Zuschauer.", "Die Zuschauer sehen das Zeichen.", "Die Zuschauer suchen das Zeichen."] },
-            { lesson: 6, tokens: [
-                { text: "Agitātōrēs", role: "sub" }, { text: "equōs", role: "obj" }, { text: "incitant", role: "praed" }
-              ], correctGerman: "Die Wagenlenker treiben die Pferde an.",
-              distractors: ["Die Pferde treiben die Wagenlenker an.", "Die Wagenlenker sehen die Pferde.", "Die Wagenlenker rufen die Pferde."] },
-            { lesson: 6, tokens: [
-                { text: "Aurēlius", role: "sub" }, { text: "inter", role: "adv" }, { text: "agitātōrēs", role: "adv" }, { text: "praestat", role: "praed" }
-              ], correctGerman: "Aurelius zeichnet sich unter den Wagenlenkern aus.",
-              distractors: ["Aurelius zeichnet sich unter den Zuschauern aus.", "Aurelius bleibt unter den Wagenlenkern.", "Aurelius sucht unter den Wagenlenkern."] },
-            { lesson: 6, tokens: [
-                { text: "Aulus", role: "sub" }, { text: "Bassum", role: "obj" }, { text: "cōnspicit", role: "praed" }
-              ], correctGerman: "Aulus erblickt Bassus.",
-              distractors: ["Bassus erblickt Aulus.", "Aulus ruft Bassus.", "Aulus sucht Bassus."] },
-            { lesson: 6, tokens: [
-                { text: "Aurēlius", role: "sub" }, { text: "ultimum", role: "obj", footnote: "ultimum spatium: die letzte Runde" }, { text: "spatium", role: "obj" }, { text: "incipit", role: "praed" }
-              ], correctGerman: "Aurelius beginnt die letzte Runde.",
-              distractors: ["Die letzte Runde beginnt Aurelius.", "Aurelius sieht die letzte Runde.", "Aurelius sucht die letzte Runde."] }
+        // Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ (ab Lektion 7),
+        // dieselbe Auswahl wie in Via Rōmāna.
+        const ADVERBIAL_ABL_LESSON = 7;
+        const adverbialTypes = [
+            { key: 'zeit', prep: null, words: ['hōra', 'nox', 'annus', 'diēs', 'lūx'], label: 'Zeit' },
+            { key: 'ort', prep: 'in', words: ['villa', 'urbs', 'templum', 'īnsula', 'silva', 'oppidum'], label: 'Ort' },
+            { key: 'herkunft', prep: 'ex', words: ['urbs', 'prōvincia', 'domus', 'silva', 'terra'], label: 'Herkunft/Trennung' },
+            { key: 'mittel', prep: null, words: ['gladius', 'manus', 'nāvis', 'arma', 'dextra'], label: 'Mittel' },
+            { key: 'begleitung', prep: 'cum', words: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'], label: 'Begleitung' }
         ];
 
-        /* ============ SZENE: FAMILIA (Lektion 1-4) ============ */
+        let activePool = [];
+        let nounPool = [];
+        let verbPool = [];
+        let maxSelectedLesson = 0;
 
-        // Personen (können Subjekt oder - bei personenfähigen Verben - Objekt sein)
-        const personLemmas = ["pater","māter","fīlius","fīlia","avus","dominus","domina","servus","serva","puer","puella","frāter","soror","vir","amicus","amica"];
-        // Dinge (nur als Objekt bei "Ding"-Verben)
-        const thingLemmas = ["canis","equus","tunica","dōnum","pecūnia","tabula","cēna"];
-
-        // Handverlesene, korrekte deutsche Formen (Nominativ/Akkusativ) - unabhängig von automatischer Ableitung geprüft.
-        const germanNounForms = {
-            "pater": ["der Vater", "den Vater"], "māter": ["die Mutter", "die Mutter"],
-            "fīlius": ["der Sohn", "den Sohn"], "fīlia": ["die Tochter", "die Tochter"],
-            "avus": ["der Großvater", "den Großvater"], "dominus": ["der Herr", "den Herrn"],
-            "domina": ["die Herrin", "die Herrin"], "servus": ["der Sklave", "den Sklaven"],
-            "serva": ["die Sklavin", "die Sklavin"], "puer": ["der Junge", "den Jungen"],
-            "puella": ["das Mädchen", "das Mädchen"], "frāter": ["der Bruder", "den Bruder"],
-            "soror": ["die Schwester", "die Schwester"], "vir": ["der Mann", "den Mann"],
-            "amicus": ["der Freund", "den Freund"], "amica": ["die Freundin", "die Freundin"],
-            "canis": ["der Hund", "den Hund"], "equus": ["das Pferd", "das Pferd"],
-            "tunica": ["die Tunika", "die Tunika"], "dōnum": ["das Geschenk", "das Geschenk"],
-            "pecūnia": ["das Geld", "das Geld"], "tabula": ["das Wachstäfelchen", "das Wachstäfelchen"],
-            "cēna": ["die Mahlzeit", "die Mahlzeit"]
-        };
-
-        // Verben: deutsche 3.-Person-Singular-Form + Objekt-Kategorie ("person", "thing" oder "either")
-        const sceneVerbs = [
-            { latin: "vocāre", de: "ruft", cat: "person" },
-            { latin: "vidēre", de: "sieht", cat: "either" },
-            { latin: "audīre", de: "hört", cat: "either" },
-            { latin: "docēre", de: "unterrichtet", cat: "person" },
-            { latin: "pūnīre", de: "bestraft", cat: "person" },
-            { latin: "monēre", de: "ermahnt", cat: "person" },
-            { latin: "salūtāre", de: "grüßt", cat: "person" },
-            { latin: "amāre", de: "liebt", cat: "person" },
-            { latin: "dūcere", de: "führt", cat: "person" },
-            { latin: "quaerere", de: "sucht", cat: "either" },
-            { latin: "portāre", de: "trägt", cat: "thing" },
-            { latin: "tenēre", de: "hält", cat: "either" },
-            { latin: "servāre", de: "bewacht", cat: "either" }
-        ];
-
-        // Adverbialien: Präpositionalphrasen (Akk.) und einfache Zeitadverbien
-        const prepPhrases = [
-            { prep: "ad", nounLemma: "forum", de: "zum Forum" },
-            { prep: "ad", nounLemma: "schola", de: "zur Schule" },
-            { prep: "in", nounLemma: "hortus", de: "in den Garten" },
-            { prep: "ante", nounLemma: "villa", de: "vor dem Landhaus" }
-        ];
-        const simpleAdverbs = [
-            { latin: "nunc", de: "jetzt" }, { latin: "hodiē", de: "heute" },
-            { latin: "subitō", de: "plötzlich" }, { latin: "iam", de: "schon" },
-            { latin: "statim", de: "sofort" }, { latin: "tum", de: "dann" }
-        ];
-
-        function getVocabEntry(lemma) {
-            return globalVocabularyPool.find(v => v.latin === lemma);
-        }
-
-        // Adapter: liefert dasselbe Format wie zuvor {nomSg, akkSg}, nutzt intern NounEngine.
-        function declineNounSg(lemma) {
-            const nounObj = getVocabEntry(lemma);
-            const t = NounEngine.decline(nounObj);
-            return { nomSg: t.sg.nom, akkSg: t.sg.akk };
-        }
-
-        // Adapter: 3. Person Singular Präsens, nutzt intern VerbEngine (deckt jetzt auch
-        // unregelmäßige Verben und Deponentien korrekt ab, nicht nur reguläre Klassen).
-        function conjugate3Sg(lemma) {
-            const verbObj = getVocabEntry(lemma);
-            if (!VerbEngine.isSupported(verbObj)) return verbObj.middle; // Sicherheitsnetz
-            return VerbEngine.getFormsForTempus(verbObj, 'Präsens')[2];
-        }
-
-        function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-        // Baut einen vollständigen, semantisch sinnvollen Satz aus der Familia-Szene.
-        function buildRoundRaw() {
-            const subjectLemma = personLemmas[Math.floor(Math.random() * personLemmas.length)];
-            const verbData = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)];
-
-            let objectPool;
-            if (verbData.cat === 'person') objectPool = personLemmas.filter(l => l !== subjectLemma);
-            else if (verbData.cat === 'thing') objectPool = thingLemmas;
-            else objectPool = (Math.random() < 0.5 ? personLemmas.filter(l => l !== subjectLemma) : thingLemmas);
-            const objectLemma = objectPool[Math.floor(Math.random() * objectPool.length)];
-
-            const subjDecl = declineNounSg(subjectLemma);
-            const objDecl = declineNounSg(objectLemma);
-            const verbForm = conjugate3Sg(verbData.latin);
-
-            const subjGerman = germanNounForms[subjectLemma];
-            const objGerman = germanNounForms[objectLemma];
-
-            let adverbialTokens = [];
-            let adverbialGerman = null;
-            const advRoll = Math.random();
-            if (advRoll < 0.35) {
-                const p = prepPhrases[Math.floor(Math.random() * prepPhrases.length)];
-                const nDecl = declineNounSg(p.nounLemma);
-                adverbialTokens = [{ text: p.prep, role: 'adv', lemma: p.prep }, { text: nDecl.akkSg, role: 'adv', lemma: p.nounLemma }];
-                adverbialGerman = p.de;
-            } else if (advRoll < 0.7) {
-                const a = simpleAdverbs[Math.floor(Math.random() * simpleAdverbs.length)];
-                adverbialTokens = [{ text: a.latin, role: 'adv', lemma: a.latin }];
-                adverbialGerman = a.de;
-            }
-
-            const subToken = { text: subjDecl.nomSg, role: 'sub', lemma: subjectLemma };
-            const objToken = { text: objDecl.akkSg, role: 'obj', lemma: objectLemma };
-            const praedToken = { text: verbForm, role: 'praed', lemma: verbData.latin };
-
-            // Feste Reihenfolge: Subjekt - (Objekt) - Prädikat, Adverbialien wandern dazwischen
-            // (nach dem Subjekt ODER nach dem Objekt) - keine völlig freie Wortstellung, das ist
-            // für den Einstieg bewusst vereinfacht.
-            let tokens = [subToken];
-            const adverbialAfterSubject = adverbialTokens.length > 0 && Math.random() < 0.5;
-            if (adverbialAfterSubject) tokens.push(...adverbialTokens);
-            tokens.push(objToken);
-            if (adverbialTokens.length > 0 && !adverbialAfterSubject) tokens.push(...adverbialTokens);
-            tokens.push(praedToken);
-
-            const correctGerman = cap(subjGerman[0]) + ' ' + verbData.de + ' ' + objGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
-            const swapGerman = cap(objGerman[0]) + ' ' + verbData.de + ' ' + subjGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
-
-            let otherVerb;
-            do { otherVerb = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)]; } while (otherVerb.latin === verbData.latin);
-            const wrongVerbGerman = cap(subjGerman[0]) + ' ' + otherVerb.de + ' ' + objGerman[1] + (adverbialGerman ? ' ' + adverbialGerman : '') + '.';
-
-            let thirdDistractor;
-            if (adverbialGerman) {
-                const allAdvs = [...prepPhrases.map(p => p.de), ...simpleAdverbs.map(a => a.de)];
-                let otherAdvDe;
-                do { otherAdvDe = allAdvs[Math.floor(Math.random() * allAdvs.length)]; } while (otherAdvDe === adverbialGerman);
-                thirdDistractor = cap(subjGerman[0]) + ' ' + verbData.de + ' ' + objGerman[1] + ' ' + otherAdvDe + '.';
-            } else {
-                let otherVerb2;
-                do { otherVerb2 = sceneVerbs[Math.floor(Math.random() * sceneVerbs.length)]; } while (otherVerb2.latin === verbData.latin || otherVerb2.latin === otherVerb.latin);
-                thirdDistractor = cap(subjGerman[0]) + ' ' + otherVerb2.de + ' ' + objGerman[1] + '.';
-            }
-
-            return {
-                tokens, subjectLemma, objectLemma, verbLemma: verbData.latin,
-                correctGerman, distractors: [swapGerman, wrongVerbGerman, thirdDistractor],
-                adverbialGerman, hadAdverbial: adverbialTokens.length > 0
-            };
-        }
-
-        // Absicherung: falls durch Zufall zwei Optionen identisch würden, neu würfeln.
-        function buildRound() {
-            for (let attempt = 0; attempt < 10; attempt++) {
-                const round = buildRoundRaw();
-                const allOptions = [round.correctGerman, ...round.distractors];
-                if (new Set(allOptions).size === 4) return round;
-            }
-            return buildRoundRaw(); // Fallback, extrem unwahrscheinlich nötig
-        }
-
-        /* ============ SPIELSTEUERUNG ============ */
-
-        const totalRounds = 8;
-        let totalRoundsOverride = null;
-        let roundIdx = 0;
-        let correctCount = 0;
         let currentRound = null;
-        let foundSpanOrder = [];
+        let roundIdx = 0;
+        let totalRounds = 8;
+        let correctCount = 0;
         let currentStep = 'sub';
         let roundHadError = false;
+        let foundSpanOrder = [];
+
         let missedItems = [];
         let isReviewMode = false;
         let reviewQueue = [];
         let reviewIdx = 0;
         let reviewCorrectCount = 0;
 
-        let roundSource = 'free'; // 'free' oder 'real'
-        let realRoundPool = [];
-
-        window.onload = function() {
-            document.getElementById('btn-start-game').addEventListener('click', startGame);
-            document.getElementById('btn-start-real').addEventListener('click', promptLessonsAndStartReal);
-            document.getElementById('btn-restart').addEventListener('click', backToModeSelect);
-            document.getElementById('btn-next').addEventListener('click', onNextClicked);
-            document.getElementById('btn-review').addEventListener('click', startReview);
-        };
-
-        function backToModeSelect() {
-            document.getElementById('end-box').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'block';
-        }
-
-        function startGame() {
-            roundSource = 'free';
-            roundIdx = 0;
-            correctCount = 0;
-            missedItems = [];
-            isReviewMode = false;
-
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('end-box').style.display = 'none';
-            document.getElementById('combat-box').style.display = 'flex';
-
-            showRound();
-        }
-
-        function promptLessonsAndStartReal() {
+        function promptLessonsAndStart() {
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
-            // LessonFilter dient hier nur zur Lektionsauswahl (nicht als Wortschatz-Pool selbst) -
-            // wir lesen aus dem gefilterten Ergebnis ab, welche Lektionsnummern gewählt wurden.
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
-                selectedLessonsForReal = [...new Set(filteredPool.map(v => v.lesson))];
-                startReal();
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
+                activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
+                nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
+                verbPool = activePool.filter(v => v.type === 'verb' && v.gram_class !== 'Deponens' && v.gram_class !== 'unregelmäßig (Passiv von facere)');
+
+                if (nounPool.length < 2 || verbPool.length < 1) {
+                    alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive/Verben. Bitte wähle weitere Lektionen mit aus.");
+                    return;
+                }
+
+                startGame();
             });
         }
 
-        let selectedLessonsForReal = null;
+        function buildAdverbialTokens() {
+            const availableTypes = adverbialTypes.filter(t => t.words.some(w => nounPool.some(n => n.latin === w)));
+            if (availableTypes.length === 0) return [];
+            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+            const candidateWords = type.words.filter(w => nounPool.some(n => n.latin === w));
+            if (candidateWords.length === 0) return [];
+            const chosenWord = candidateWords[Math.min(Math.floor(Math.random() * candidateWords.length), candidateWords.length - 1)];
+            const noun = nounPool.find(n => n.latin === chosenWord);
+            if (!noun) return [];
+            const decl = NounEngine.decline(noun);
+            const plural = Math.random() > 0.75;
+            const ablForm = plural ? decl.pl.abl : decl.sg.abl;
+            if (!ablForm) return [];
+            const tokens = [];
+            if (type.prep) tokens.push({ text: type.prep, role: 'adv', lemma: type.prep });
+            tokens.push({ text: ablForm, role: 'adv', lemma: noun.latin, advLabel: type.label });
+            return tokens;
+        }
 
-        function startReal() {
-            const pool = selectedLessonsForReal
-                ? realSentences.filter(s => selectedLessonsForReal.includes(s.lesson))
-                : realSentences;
+        function buildExplanation(tokens, tempusLabel) {
+            const sub = tokens.find(t => t.role === 'sub');
+            const praed = tokens.find(t => t.role === 'praed');
+            const objOrDat = tokens.find(t => t.role === 'obj' || t.role === 'dat');
+            let text = `<strong>${sub.text}</strong> ist das Subjekt (Nominativ), <strong>${praed.text}</strong> das Prädikat (${tempusLabel}).`;
+            if (objOrDat) {
+                const roleLabel = objOrDat.role === 'dat' ? 'Dativobjekt' : 'Akkusativobjekt';
+                text += ` <strong>${objOrDat.text}</strong> ist das ${roleLabel}.`;
+            }
+            const attr = tokens.find(t => t.role === 'attr');
+            if (attr) text += ` <strong>${attr.text}</strong> ist ein Genitiv-Attribut.`;
+            if (tokens.some(t => t.role === 'adv')) {
+                text += ` Die grau markierten Wörter bilden eine adverbiale Bestimmung, die du selbst sinnvoll einordnest.`;
+            }
+            return text;
+        }
 
-            if (pool.length === 0) {
-                alert("Für diese Lektionsauswahl gibt es noch keine echten Sätze. Bitte andere Lektionen wählen.");
-                return;
+        function buildRound() {
+            const knownTempora = VerbEngine.getKnownTempora(maxSelectedLesson);
+            const shuffledNouns = [...nounPool].sort(() => Math.random() - 0.5);
+            const genitiveCapableNouns = shuffledNouns.filter(n => {
+                const d = NounEngine.decline(n);
+                return d.sg.gen !== null && d.pl.gen !== null;
+            });
+            const dativeCapableNouns = shuffledNouns.filter(n => {
+                const d = NounEngine.decline(n);
+                return d.sg.dat !== null && d.pl.dat !== null;
+            });
+
+            for (let attempt = 0; attempt < 15; attempt++) {
+                const tempus = knownTempora[Math.floor(Math.random() * knownTempora.length)];
+                const verb = LudiProgress.weightedPick(verbPool);
+                if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.perfect) continue;
+
+                let forms;
+                try { forms = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv'); } catch (e) { continue; }
+
+                const subNoun = LudiProgress.weightedPick(shuffledNouns);
+                const subDecl = NounEngine.decline(subNoun);
+                const subPlural = Math.random() > 0.5;
+                const subForm = subPlural ? subDecl.pl.nom : subDecl.sg.nom;
+                const verbForm = subPlural ? forms[5] : forms[2];
+                const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
+
+                let tokens = [{ text: subForm, role: 'sub', lemma: subNoun.latin }];
+
+                const isDativeVerb = dativeVerbs.includes(verb.latin);
+                const isIntransitive = trueIntransitive.includes(verb.latin);
+
+                if (isDativeVerb) {
+                    const datPool = dativeCapableNouns.length > 0 ? dativeCapableNouns : shuffledNouns;
+                    let datNoun;
+                    do { datNoun = datPool[Math.floor(Math.random() * datPool.length)]; } while (datNoun.latin === subNoun.latin && datPool.length > 1);
+                    const datDecl = NounEngine.decline(datNoun);
+                    const datPlural = Math.random() > 0.5;
+                    const datForm = datPlural ? datDecl.pl.dat : datDecl.sg.dat;
+                    tokens.push({ text: datForm, role: 'dat', lemma: datNoun.latin });
+                } else if (!isIntransitive) {
+                    let objNoun;
+                    do { objNoun = shuffledNouns[Math.floor(Math.random() * shuffledNouns.length)]; } while (objNoun.latin === subNoun.latin && shuffledNouns.length > 1);
+                    const objDecl = NounEngine.decline(objNoun);
+                    const objPlural = Math.random() > 0.5;
+                    const objForm = objPlural ? objDecl.pl.akk : objDecl.sg.akk;
+                    tokens.push({ text: objForm, role: 'obj', lemma: objNoun.latin });
+                }
+
+                tokens.push({ text: verbForm, role: 'praed', lemma: verb.latin });
+
+                if (Math.random() > 0.5 && genitiveCapableNouns.length > 0) {
+                    let attrNoun;
+                    do { attrNoun = genitiveCapableNouns[Math.floor(Math.random() * genitiveCapableNouns.length)]; } while ((attrNoun.latin === subNoun.latin || tokens.some(t => t.lemma === attrNoun.latin)) && genitiveCapableNouns.length > 1);
+                    const attrDecl = NounEngine.decline(attrNoun);
+                    const attrPlural = Math.random() > 0.5;
+                    const attrForm = attrPlural ? attrDecl.pl.gen : attrDecl.sg.gen;
+                    tokens.push({ text: attrForm, role: 'attr', lemma: attrNoun.latin });
+                } else if (maxSelectedLesson >= ADVERBIAL_ABL_LESSON && Math.random() > 0.4) {
+                    const advTokens = buildAdverbialTokens();
+                    tokens.push(...advTokens);
+                }
+
+                // Reihenfolge durchmischen - der ganze Sinn der Pendelmethode ist ja gerade,
+                // sich NICHT auf die Wortstellung zu verlassen, sondern auf die Endungen zu achten.
+                tokens.sort(() => Math.random() - 0.5);
+
+                return {
+                    tokens,
+                    hadAdverbial: tokens.some(t => t.role === 'adv'),
+                    verbLemma: verb.latin,
+                    explanation: buildExplanation(tokens, tLabel)
+                };
             }
 
-            roundSource = 'real';
-            realRoundPool = [...pool].sort(() => Math.random() - 0.5);
-            totalRoundsOverride = realRoundPool.length;
+            // Sicherheitsnetz: sollte praktisch nie erreicht werden
+            const subNoun = nounPool[0];
+            const subDecl = NounEngine.decline(subNoun);
+            const verb = verbPool[0];
+            const forms = VerbEngine.getFormsForTempus(verb, 'Präsens', 'Aktiv');
+            const tokens = [
+                { text: subDecl.sg.nom, role: 'sub', lemma: subNoun.latin },
+                { text: forms[2], role: 'praed', lemma: verb.latin }
+            ];
+            return { tokens, hadAdverbial: false, verbLemma: verb.latin, explanation: buildExplanation(tokens, 'Präsens') };
+        }
+
+        function startGame() {
             roundIdx = 0;
             correctCount = 0;
             missedItems = [];
@@ -620,54 +420,23 @@
             showRound();
         }
 
-        function prepareRealRound(entry) {
-            const hasAdv = entry.tokens.some(t => t.role === 'adv');
-            return {
-                tokens: entry.tokens.map(t => ({ text: t.text, role: t.role, lemma: t.text, footnote: t.footnote })),
-                correctGerman: entry.correctGerman,
-                distractors: entry.distractors,
-                adverbialGerman: null,
-                hadAdverbial: hasAdv,
-                verbLemma: entry.tokens.find(t => t.role === 'praed').text
-            };
-        }
-
         function showRound(forced) {
-            if (forced) {
-                currentRound = forced;
-            } else if (roundSource === 'real') {
-                currentRound = prepareRealRound(realRoundPool[roundIdx]);
-            } else {
-                currentRound = buildRound();
-            }
+            currentRound = forced || buildRound();
             currentStep = 'sub';
             roundHadError = false;
+            foundSpanOrder = [];
 
-            const effectiveTotal = totalRoundsOverride || totalRounds;
             document.getElementById('round-number').innerText = isReviewMode
                 ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
-                : `SATZ ${roundIdx + 1} VON ${effectiveTotal}`;
-            document.getElementById('progress-bar').style.width = (roundIdx / effectiveTotal * 100) + '%';
+                : `SATZ ${roundIdx + 1} VON ${totalRounds}`;
+            document.getElementById('progress-bar').style.width = (roundIdx / totalRounds * 100) + '%';
 
             document.getElementById('geruest-text').innerText = '...';
             document.getElementById('adverbial-note').style.display = 'none';
-            document.getElementById('options-grid').innerHTML = '';
 
-            renderFootnotes();
             renderSentence();
             updateStepPills();
             updateInstruction();
-        }
-
-        function renderFootnotes() {
-            const area = document.getElementById('footnote-area');
-            const notes = currentRound.tokens.filter(t => t.footnote).map(t => t.footnote);
-            if (notes.length > 0) {
-                area.innerText = notes.map((n, i) => `${i + 1} ${n}`).join('   ·   ');
-                area.style.display = 'block';
-            } else {
-                area.style.display = 'none';
-            }
         }
 
         function renderSentence() {
@@ -676,8 +445,8 @@
             currentRound.tokens.forEach((token, idx) => {
                 const span = document.createElement('span');
                 span.className = 'latin-word';
-                span.innerText = token.text.toLowerCase();
                 span.dataset.idx = idx;
+                span.textContent = token.text;
                 span.addEventListener('click', () => handleWordClick(idx));
                 box.appendChild(span);
             });
@@ -686,33 +455,26 @@
 
         function clearPendulumArrows() {
             const svg = document.getElementById('pendulum-svg');
-            svg.querySelectorAll('path.pendulum-arrow').forEach(p => p.remove());
-            foundSpanOrder = [];
+            svg.querySelectorAll('.pendulum-arrow').forEach(el => el.remove());
         }
 
-        // Zeichnet einen gebogenen Pfeil zwischen zwei Wort-Elementen, relativ zur sentence-box positioniert.
         function drawPendulumArrow(fromSpan, toSpan) {
             const svg = document.getElementById('pendulum-svg');
-            const boxRect = document.querySelector('.sentence-box').getBoundingClientRect();
+            const svgRect = svg.getBoundingClientRect();
             const fromRect = fromSpan.getBoundingClientRect();
             const toRect = toSpan.getBoundingClientRect();
-
-            const x1 = fromRect.left + fromRect.width / 2 - boxRect.left;
-            const y1 = fromRect.top - boxRect.top;
-            const x2 = toRect.left + toRect.width / 2 - boxRect.left;
-            const y2 = toRect.top - boxRect.top;
-
-            const midX = (x1 + x2) / 2;
-            const arcY = Math.min(y1, y2) - 26;
-
+            const x1 = fromRect.left + fromRect.width / 2 - svgRect.left;
+            const y1 = fromRect.top - svgRect.top;
+            const x2 = toRect.left + toRect.width / 2 - svgRect.left;
+            const y2 = toRect.top - svgRect.top;
+            const midY = Math.min(y1, y2) - 22;
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('class', 'pendulum-arrow');
-            path.setAttribute('d', `M ${x1} ${y1} Q ${midX} ${arcY} ${x2} ${y2}`);
+            path.setAttribute('d', `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${midY} ${x2} ${y2}`);
             path.setAttribute('stroke', '#b8860b');
-            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-width', '2');
             path.setAttribute('fill', 'none');
             path.setAttribute('marker-end', 'url(#arrowhead)');
-            path.style.opacity = '1';
+            path.classList.add('pendulum-arrow');
             svg.appendChild(path);
         }
 
@@ -720,30 +482,41 @@
             const texts = {
                 sub: "Schritt 1: Finde das Subjekt!",
                 praed: "Schritt 2: Jetzt nach hinten zum Prädikat!",
-                obj: "Schritt 3: Und zurück zum Objekt!"
+                obj: "Schritt 3: Und zurück zum Objekt!",
+                dat: "Schritt 3: Und zurück zum Dativobjekt!"
             };
             document.getElementById('instruction-line').innerText = texts[currentStep] || '';
         }
 
         function updateStepPills() {
-            const order = ['sub', 'praed', 'obj', 'trans'];
-            const currentPos = order.indexOf(currentStep);
+            const order = ['sub', 'praed', currentStep === 'dat' ? 'dat' : 'obj', 'done'];
+            const objPill = document.getElementById('pill-obj');
+            objPill.innerText = currentStep === 'dat' || currentRound.tokens.some(t => t.role === 'dat') ? '3. Dativobjekt' : '3. Objekt';
+
+            const currentPos = order.indexOf(currentStep === 'dat' ? 'dat' : currentStep);
+            const ids = { sub: 'pill-sub', praed: 'pill-praed', obj: 'pill-obj', dat: 'pill-obj', done: 'pill-done' };
             order.forEach((role, i) => {
-                const pill = document.getElementById('pill-' + role);
+                const pill = document.getElementById(ids[role]);
                 pill.classList.remove('current', 'done');
                 if (i < currentPos) pill.classList.add('done');
                 else if (i === currentPos) pill.classList.add('current');
             });
         }
 
+        function updateGeruestDisplay(role, text) {
+            const labels = { sub: 'Subjekt', praed: 'Prädikat', obj: 'Objekt', dat: 'Dativobjekt' };
+            const el = document.getElementById('geruest-text');
+            const current = el.innerText === '...' ? '' : el.innerText;
+            const addition = `${text.toLowerCase()} (${labels[role]})`;
+            el.innerText = current ? `${current}  →  ${addition}` : addition;
+        }
+
         function handleWordClick(idx) {
-            if (currentStep === 'trans' || currentStep === 'done') return;
+            if (currentStep === 'done') return;
             const token = currentRound.tokens[idx];
             const span = document.querySelector(`.latin-word[data-idx="${idx}"]`);
 
             if (token.role === currentStep) {
-                // Alle Tokens mit derselben Rolle markieren (wichtig bei Mehrwort-Ausdrücken
-                // wie "ultimum spatium" oder Präpositionalphrasen wie "ad forum").
                 currentRound.tokens.forEach((t, i) => {
                     if (t.role === currentStep) {
                         const s = document.querySelector(`.latin-word[data-idx="${i}"]`);
@@ -767,38 +540,25 @@
             }
         }
 
-        function updateGeruestDisplay(role, text) {
-            const labels = { sub: 'Subjekt', praed: 'Prädikat', obj: 'Objekt' };
-            const el = document.getElementById('geruest-text');
-            const current = el.innerText === '...' ? '' : el.innerText;
-            const addition = `${text.toLowerCase()} (${labels[role]})`;
-            el.innerText = current ? `${current}  →  ${addition}` : addition;
-        }
-
         function advanceStep() {
             if (currentStep === 'sub') {
                 currentStep = 'praed';
                 updateInstruction();
                 updateStepPills();
             } else if (currentStep === 'praed') {
-                const hasObject = currentRound.tokens.some(t => t.role === 'obj');
-                if (hasObject) {
-                    currentStep = 'obj';
-                    updateInstruction();
-                    updateStepPills();
-                } else {
-                    revealAdverbialAndTranslation();
-                }
-            } else if (currentStep === 'obj') {
-                revealAdverbialAndTranslation();
+                const hasAkkObj = currentRound.tokens.some(t => t.role === 'obj');
+                const hasDatObj = currentRound.tokens.some(t => t.role === 'dat');
+                if (hasAkkObj) { currentStep = 'obj'; updateInstruction(); updateStepPills(); }
+                else if (hasDatObj) { currentStep = 'dat'; updateInstruction(); updateStepPills(); }
+                else { finishRound(); }
+            } else if (currentStep === 'obj' || currentStep === 'dat') {
+                finishRound();
             }
         }
 
-        function revealAdverbialAndTranslation() {
-            currentStep = 'trans';
-            document.getElementById('instruction-line').innerText = 'Schritt 4: Wähle die richtige Übersetzung!';
+        function finishRound() {
+            currentStep = 'done';
 
-            // Übrige Wörter (Adverbialien) grau markieren
             currentRound.tokens.forEach((token, idx) => {
                 if (token.role === 'adv') {
                     const span = document.querySelector(`.latin-word[data-idx="${idx}"]`);
@@ -808,48 +568,16 @@
             });
 
             const advNote = document.getElementById('adverbial-note');
-            if (currentRound.hadAdverbial && currentRound.adverbialGerman) {
-                advNote.innerText = `Übrig bleibt ein Adverbiale: „${currentRound.adverbialGerman}" - das sortierst du selbst in die Übersetzung ein.`;
-            } else if (currentRound.hadAdverbial) {
-                advNote.innerText = `Die grau markierten Wörter sind das Adverbiale - sortiere es selbst in die Übersetzung ein.`;
+            if (currentRound.hadAdverbial) {
+                advNote.innerText = `Die grau markierten Wörter bilden eine adverbiale Bestimmung - die ordnest du selbst sinnvoll in die Übersetzung ein.`;
+                advNote.style.display = 'block';
             } else {
-                advNote.innerText = `Dieser Satz hat kein Adverbiale - das Gerüst ist schon die ganze Übersetzung!`;
+                advNote.style.display = 'none';
             }
-            advNote.style.display = 'block';
 
             updateStepPills();
-            showTranslationOptions();
-        }
 
-        function showTranslationOptions() {
-            const options = [currentRound.correctGerman, ...currentRound.distractors].sort(() => Math.random() - 0.5);
-            const grid = document.getElementById('options-grid');
-            grid.innerHTML = '';
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'opt-btn';
-                btn.innerText = opt;
-                btn.addEventListener('click', () => handleTranslationClick(opt, btn));
-                grid.appendChild(btn);
-            });
-        }
-
-        function handleTranslationClick(chosenText, btnEl) {
-            document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
-
-            const isCorrect = (chosenText === currentRound.correctGerman) && !roundHadError;
-            const translationCorrect = (chosenText === currentRound.correctGerman);
-
-            if (!translationCorrect) {
-                roundHadError = true;
-                btnEl.classList.add('wrong');
-                document.querySelectorAll('.opt-btn').forEach(b => {
-                    if (b.innerText === currentRound.correctGerman) b.classList.add('correct');
-                });
-            } else {
-                btnEl.classList.add('correct');
-            }
-
+            const isCorrect = !roundHadError;
             LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
 
             const fbBox = document.getElementById('feedback-box');
@@ -858,19 +586,15 @@
             fbBox.style.display = 'flex';
 
             if (isCorrect) {
-                if (isReviewMode) reviewCorrectCount++;
-                else correctCount++;
+                if (isReviewMode) reviewCorrectCount++; else correctCount++;
                 fbTitle.innerText = "⚖️ SAUBER GEPENDELT!";
                 fbTitle.style.color = "#4CAF50";
-                fbText.innerHTML = `„${currentRound.correctGerman}" ist die richtige Übersetzung. Gerüst und Adverbiale passen zusammen.`;
             } else {
                 if (!isReviewMode) missedItems.push(currentRound);
                 fbTitle.innerText = "🧭 NOCH NICHT GANZ...";
                 fbTitle.style.color = "#F44336";
-                fbText.innerHTML = translationCorrect
-                    ? `Die Übersetzung war richtig, aber beim Bestimmen der Satzglieder ist noch ein Fehler passiert. Schau dir die markierten Wörter nochmal genau an.`
-                    : `Richtig wäre „${currentRound.correctGerman}" gewesen. Achte besonders auf Subjekt und Objekt - die werden am häufigsten vertauscht!`;
             }
+            fbText.innerHTML = currentRound.explanation;
         }
 
         function onNextClicked() {
@@ -886,9 +610,8 @@
                 return;
             }
 
-            const effectiveTotal = totalRoundsOverride || totalRounds;
             roundIdx++;
-            if (roundIdx < effectiveTotal) {
+            if (roundIdx < totalRounds) {
                 showRound();
             } else {
                 endGame();
@@ -902,21 +625,19 @@
             const msg = document.getElementById('end-msg');
             endBox.style.display = 'block';
 
-            const effectiveTotal = totalRoundsOverride || totalRounds;
-            const saveId = roundSource === 'real' ? 'pendel_lehrbuch' : 'pendel';
-            LudiProgress.saveGameResult(saveId, correctCount, effectiveTotal);
+            LudiProgress.saveGameResult('pendel', correctCount, totalRounds);
 
-            if (correctCount === effectiveTotal) {
+            if (correctCount === totalRounds) {
                 title.innerText = "🏛️ MEISTER DER PENDELMETHODE!";
                 title.style.color = "#4CAF50";
-            } else if (correctCount >= effectiveTotal * 0.6) {
+            } else if (correctCount >= totalRounds * 0.6) {
                 title.innerText = "⚖️ GUT GEPENDELT!";
                 title.style.color = "var(--roman-gold)";
             } else {
                 title.innerText = "🧭 WEITER ÜBEN!";
                 title.style.color = "#F44336";
             }
-            msg.innerHTML = `Du hast <strong>${correctCount} von ${effectiveTotal}</strong> Sätzen komplett fehlerfrei gependelt (alle Schritte UND die Übersetzung richtig).`;
+            msg.innerHTML = `Du hast <strong>${correctCount} von ${totalRounds}</strong> Sätzen ohne Fehlklick gependelt.`;
 
             const reviewBtn = document.getElementById('btn-review');
             if (missedItems.length > 0) {
@@ -951,6 +672,12 @@
             document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor fehlerhaften Sätze nochmal gependelt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt fehlerfrei gelöst.`;
         }
 
+        window.onload = function() {
+            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-next').addEventListener('click', onNextClicked);
+            document.getElementById('btn-review').addEventListener('click', startReview);
+            document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+        };
     </script>
 </body>
 </html>
