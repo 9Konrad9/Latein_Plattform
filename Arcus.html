@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Arcus - Der AcI-Bogen</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
+    <script src="lessonFilter.js"></script>
+    <script src="nounEngine.js"></script>
+    <script src="verbEngine.js"></script>
+    <script src="sentenceEngine.js"></script>
+    <style>
+        :root {
+            --roman-gold: #d4af37;
+            --roman-bronze: #8c7853;
+            --roman-marble: #f0e6d2;
+            --roman-red: #800000;
+            --bg-dark: #121212;
+            --card-bg: #2d2d2d;
+            --text-light: #f5f5f5;
+            --stone: #b9ac93;
+            --stone-dark: #7d7362;
+            --font-display: 'Georgia', 'Times New Roman', serif;
+            --font-body: 'Verdana', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        h1 {
+            color: var(--roman-gold);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .subtitle { font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center; }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            border: 4px solid var(--roman-bronze);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            position: relative;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .start-screen { text-align: center; padding: 10px; }
+        .notice-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid var(--roman-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .notice-box h3 { color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 10px; text-transform: uppercase; }
+        .notice-box .step { display: inline-block; background: rgba(212,175,55,0.15); border-radius: 5px; padding: 2px 8px; font-weight: bold; color: var(--roman-gold); }
+        .notice-box em { color: var(--roman-marble); }
+
+        .start-btn {
+            background: var(--roman-gold); color: var(--roman-red);
+            font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
+            border: none; border-radius: 30px; font-size: 1.2rem; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
+        }
+
+        .round-number { text-align: center; font-size: 0.9rem; color: #aaa; margin-bottom: 6px; letter-spacing: 1px; }
+        .progress-bar-container { width: 100%; background: #444; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        .progress-bar { width: 0%; background: var(--roman-gold); height: 100%; transition: width 0.4s ease; }
+
+        /* --- Der Bogen --- */
+        .arch-area { display: flex; justify-content: center; margin-bottom: 10px; }
+        #arch { width: 240px; height: 118px; overflow: visible; }
+        .arch-part { fill: #3a3a3a; stroke: var(--stone-dark); stroke-width: 2; transition: fill 0.35s ease; }
+        .arch-part.set { fill: var(--stone); }
+        .arch-part.keystone.set { fill: var(--roman-gold); }
+        .arch-label { font-family: var(--font-body); font-size: 9px; fill: #888; text-anchor: middle; letter-spacing: 0.5px; }
+        .arch-label.set { fill: var(--roman-marble); }
+
+        /* --- Der Satz --- */
+        .sentence-box {
+            background: var(--roman-marble); color: #2a2a2a; border-radius: 8px;
+            padding: 24px 18px; margin-bottom: 15px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .latin-word {
+            font-family: var(--font-display); font-size: 1.4rem; font-weight: bold;
+            display: inline-block; margin: 4px 6px; padding: 4px 9px; border-radius: 6px;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+        }
+        .latin-word:hover { background: rgba(128,0,0,0.08); }
+        .latin-word.found-aciSub { background: #8e44ad; color: #fff; cursor: default; }
+        .latin-word.found-aciInf { background: #2980b9; color: #fff; cursor: default; }
+        .latin-word.rest { color: #777; cursor: default; }
+        .latin-word.wrong-flash { background: #F44336; color: #fff; }
+
+        .instruction-line {
+            text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--roman-gold);
+            margin-bottom: 14px; min-height: 2.8em;
+        }
+        .instruction-line small { display: block; font-weight: normal; font-size: 0.85rem; color: #aaa; margin-top: 4px; }
+
+        /* --- Zeitverhältnis --- */
+        .time-choice { display: none; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .time-btn {
+            background: linear-gradient(#800000, #5a0000);
+            border: 3px solid var(--roman-gold); color: var(--roman-marble);
+            padding: 14px 22px; font-size: 1.05rem; font-weight: bold; font-family: var(--font-display);
+            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .time-btn:not(:disabled):active { background: #4a0000; }
+        .time-btn small { display: block; font-family: var(--font-body); font-weight: normal; font-size: 0.72rem; color: #d8c9a8; margin-top: 3px; }
+        .time-btn.correct { background: #4CAF50 !important; border-color: #fff !important; }
+        .time-btn.wrong { background: #F44336 !important; border-color: #fff !important; }
+
+        /* --- Feedback --- */
+        .feedback-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px; text-align: center; z-index: 10;
+        }
+        .feedback-title { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 15px; }
+        .feedback-explanation { font-size: 1.05rem; line-height: 1.55; margin-bottom: 25px; max-width: 520px; }
+        .feedback-explanation strong { color: var(--roman-gold); }
+
+        .end-treasury-grid { font-size: 1rem; color: #ccc; line-height: 1.7; }
+    </style>
+</head>
+<body>
+<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" style="
+    position: fixed; top: 10px; left: 10px; z-index: 100000;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(20,15,10,0.85); border: 2px solid #d4af37; color: #d4af37;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    touch-action: manipulation;
+" title="Zurück zum Hauptmenü">🏠</a>
+
+    <h1>🏛️ Arcus</h1>
+    <div class="subtitle">Der AcI-Bogen</div>
+
+    <div class="game-container">
+
+        <!-- START -->
+        <div id="start-screen" class="start-screen">
+            <div class="notice-box">
+                <h3>🏛️ Der Auftrag</h3>
+                <p>Ein <strong>AcI</strong> trägt sich selbst — wie ein römischer Bogen. Er braucht zwei Pfeiler:</p>
+                <p style="margin-top:10px;"><span class="step">1</span> den <strong>Subjektsakkusativ</strong> — er steht im Akkusativ, ist aber <em>kein Objekt</em>, sondern das Subjekt des AcI.</p>
+                <p style="margin-top:6px;"><span class="step">2</span> den <strong>Infinitiv</strong> — das Prädikat des AcI.</p>
+                <p style="margin-top:10px;">Ab Lektion 10 kommt der <strong>Schlussstein</strong> dazu: Ist die Handlung <em>gleichzeitig</em> oder <em>vorzeitig</em>?</p>
+                <p style="margin-top:10px; color:#aaa; font-size:0.92rem;">Der AcI wird in Lektion 8 eingeführt — wähle also mindestens Lektion 8 mit aus.</p>
+            </div>
+            <button class="start-btn" id="btn-start">Bogen bauen</button>
+        </div>
+
+        <!-- SPIEL -->
+        <div id="game-box" style="display:none; flex-direction:column; flex-grow:1;">
+            <div class="round-number" id="round-number">SATZ 1 VON 8</div>
+            <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+
+            <div class="arch-area">
+                <svg id="arch" viewBox="0 0 240 118" aria-hidden="true">
+                    <!-- Pfeiler links: Subjektsakkusativ -->
+                    <rect id="arch-left" class="arch-part" x="26" y="52" width="34" height="56" rx="2"></rect>
+                    <!-- Pfeiler rechts: Infinitiv -->
+                    <rect id="arch-right" class="arch-part" x="180" y="52" width="34" height="56" rx="2"></rect>
+                    <!-- Bogenläufe -->
+                    <path id="arch-span" class="arch-part" d="M26 52 A 94 94 0 0 1 214 52 L 196 52 A 76 76 0 0 0 44 52 Z"></path>
+                    <!-- Schlussstein: Zeitverhältnis -->
+                    <path id="arch-key" class="arch-part keystone" d="M112 14 L128 14 L131 34 L109 34 Z"></path>
+                    <text class="arch-label" id="lbl-left" x="43" y="116">Akkusativ</text>
+                    <text class="arch-label" id="lbl-right" x="197" y="116">Infinitiv</text>
+                </svg>
+            </div>
+
+            <div class="sentence-box"><div id="sentence-words"></div></div>
+
+            <div class="instruction-line" id="instruction"></div>
+
+            <div class="time-choice" id="time-choice">
+                <button class="time-btn" id="btn-gleichzeitig">gleichzeitig<small>Infinitiv Präsens</small></button>
+                <button class="time-btn" id="btn-vorzeitig">vorzeitig<small>Infinitiv Perfekt</small></button>
+            </div>
+        </div>
+
+        <!-- ENDE -->
+        <div id="end-box" class="start-screen" style="display:none;">
+            <h2 style="font-family: var(--font-display); color: var(--roman-gold); margin-bottom: 12px;" id="end-title">Bogen vollendet!</h2>
+            <div class="notice-box"><div class="end-treasury-grid" id="end-summary"></div></div>
+            <button class="start-btn" id="btn-review" style="display:none; margin-bottom:12px;">Fehler wiederholen</button>
+            <br>
+            <button class="start-btn" id="btn-again">Noch einmal</button>
+            <p style="margin-top:16px;"><a href="index.html" style="color:var(--roman-gold);">← Zum Hauptmenü</a></p>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="feedback-overlay" id="feedback-box">
+            <div class="feedback-title" id="fb-title"></div>
+            <div class="feedback-explanation" id="fb-text"></div>
+            <button class="start-btn" id="btn-next">Weiter</button>
+        </div>
+
+    </div>
+
+<script>
+    // Schritt → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
+    const STEP_CATEGORY = {
+        aciSub: 'Subjektsakkusativ',
+        aciInf: 'AcI-Infinitiv',
+        zeit:   'Zeitverhältnis'
+    };
+
+    let activePool = [];
+    let nounPool = [];
+    let verbPool = [];
+    let maxSelectedLesson = 0;
+
+    let currentRound = null;
+    let roundIdx = 0;
+    const totalRounds = 8;
+    let correctCount = 0;
+    let currentStep = 'aciSub';
+    let stepHadError = false;
+    let roundHadError = false;
+    let locked = false;
+
+    let missedItems = [];
+    let isReviewMode = false;
+    let reviewQueue = [];
+    let reviewIdx = 0;
+    let reviewCorrectCount = 0;
+
+    window.onload = function () {
+        document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+        document.getElementById('btn-next').addEventListener('click', onNextClicked);
+        document.getElementById('btn-again').addEventListener('click', promptLessonsAndStart);
+        document.getElementById('btn-review').addEventListener('click', startReview);
+        document.getElementById('btn-gleichzeitig').addEventListener('click', () => chooseTime('gleichzeitig'));
+        document.getElementById('btn-vorzeitig').addEventListener('click', () => chooseTime('vorzeitig'));
+    };
+
+    function promptLessonsAndStart() {
+        if (typeof globalVocabularyPool === 'undefined') {
+            alert('Fehler: vocabulary.js nicht gefunden!'); return;
+        }
+        LessonFilter.show(globalVocabularyPool, function (filteredPool, selectedLessonNumbers) {
+            activePool = filteredPool;
+            maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
+
+            if (maxSelectedLesson < SentenceEngine.ACI_LESSON) {
+                alert('Der AcI wird erst in Lektion ' + SentenceEngine.ACI_LESSON + ' eingeführt. Bitte wähle mindestens Lektion ' + SentenceEngine.ACI_LESSON + ' mit aus.');
+                return;
+            }
+
+            nounPool = activePool.filter(v => v.type === 'noun' && SentenceEngine.nomenTauglich(v));
+            verbPool = activePool.filter(v => v.type === 'verb' && SentenceEngine.verbTauglich(v));
+
+            if (!SentenceEngine.buildAcI({ nounPool, verbPool, maxLesson: maxSelectedLesson })) {
+                alert('In den ausgewählten Lektionen lässt sich noch kein AcI bilden. Bitte wähle weitere Lektionen mit aus.');
+                return;
+            }
+
+            startGame();
+        });
+    }
+
+    function startGame() {
+        roundIdx = 0;
+        correctCount = 0;
+        missedItems = [];
+        isReviewMode = false;
+
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('end-box').style.display = 'none';
+        document.getElementById('game-box').style.display = 'flex';
+
+        showRound();
+    }
+
+    function buildRound() {
+        for (let versuch = 0; versuch < 10; versuch++) {
+            const s = SentenceEngine.buildAcI({ nounPool, verbPool, maxLesson: maxSelectedLesson });
+            if (s) return s;
+        }
+        return null;
+    }
+
+    function showRound(forced) {
+        currentRound = forced || buildRound();
+        if (!currentRound) { alert('Es ließ sich kein Satz bilden. Bitte wähle weitere Lektionen mit aus.'); return; }
+
+        currentStep = 'aciSub';
+        stepHadError = false;
+        roundHadError = false;
+        locked = false;
+
+        document.getElementById('round-number').innerText = isReviewMode
+            ? 'WIEDERHOLUNG ' + (reviewIdx + 1) + ' VON ' + reviewQueue.length
+            : 'SATZ ' + (roundIdx + 1) + ' VON ' + totalRounds;
+        document.getElementById('progress-bar').style.width =
+            (isReviewMode ? (reviewIdx / reviewQueue.length) : (roundIdx / totalRounds)) * 100 + '%';
+
+        resetArch();
+        renderSentence();
+        updateInstruction();
+        document.getElementById('time-choice').style.display = 'none';
+    }
+
+    function resetArch() {
+        ['arch-left', 'arch-right', 'arch-span', 'arch-key'].forEach(id =>
+            document.getElementById(id).classList.remove('set'));
+        ['lbl-left', 'lbl-right'].forEach(id => document.getElementById(id).classList.remove('set'));
+    }
+
+    function renderSentence() {
+        const box = document.getElementById('sentence-words');
+        box.innerHTML = '';
+        currentRound.tokens.forEach((token, idx) => {
+            const span = document.createElement('span');
+            span.className = 'latin-word';
+            span.dataset.idx = idx;
+            span.textContent = token.text;
+            span.addEventListener('click', () => handleWordClick(idx));
+            box.appendChild(span);
+        });
+    }
+
+    // Ist das Zeitverhältnis in dieser Lektionsspanne überhaupt eine Frage?
+    // Vor L10 gibt es nur den Infinitiv Präsens, also nur Gleichzeitigkeit.
+    function zeitIstFrage() {
+        return VerbEngine.isInfinitiveKnown('Perfekt', 'Aktiv', maxSelectedLesson);
+    }
+
+    function updateInstruction() {
+        const el = document.getElementById('instruction');
+        if (currentStep === 'aciSub') {
+            el.innerHTML = 'Welches Wort ist der <strong>Subjektsakkusativ</strong>?<small>Es steht im Akkusativ — aber es ist kein Objekt.</small>';
+        } else if (currentStep === 'aciInf') {
+            el.innerHTML = 'Und welches Wort ist der <strong>Infinitiv</strong>?<small>Das Prädikat des AcI.</small>';
+        } else if (currentStep === 'zeit') {
+            el.innerHTML = 'Ist die Handlung des AcI <strong>gleichzeitig</strong> oder <strong>vorzeitig</strong>?<small>Schau auf die Form des Infinitivs.</small>';
+        }
+    }
+
+    function markiere(rolle) {
+        currentRound.tokens.forEach((t, i) => {
+            if (t.role !== rolle) return;
+            const s = document.querySelector('.latin-word[data-idx="' + i + '"]');
+            s.classList.add('found-' + rolle);
+            s.style.cursor = 'default';
+        });
+    }
+
+    function handleWordClick(idx) {
+        if (locked || (currentStep !== 'aciSub' && currentStep !== 'aciInf')) return;
+
+        const token = currentRound.tokens[idx];
+        const span = document.querySelector('.latin-word[data-idx="' + idx + '"]');
+
+        if (token.role === currentStep) {
+            melde(STEP_CATEGORY[currentStep], !stepHadError);
+            stepHadError = false;
+
+            markiere(currentStep);
+            document.getElementById(currentStep === 'aciSub' ? 'arch-left' : 'arch-right').classList.add('set');
+            document.getElementById(currentStep === 'aciSub' ? 'lbl-left' : 'lbl-right').classList.add('set');
+
+            if (currentStep === 'aciSub') {
+                currentStep = 'aciInf';
+                updateInstruction();
+            } else {
+                // Beide Pfeiler stehen - der Bogen schließt sich
+                document.getElementById('arch-span').classList.add('set');
+                currentRound.tokens.forEach((t, i) => {
+                    if (t.role === 'sub' || t.role === 'praed') {
+                        document.querySelector('.latin-word[data-idx="' + i + '"]').classList.add('rest');
+                    }
+                });
+
+                if (zeitIstFrage()) {
+                    currentStep = 'zeit';
+                    updateInstruction();
+                    document.getElementById('time-choice').style.display = 'flex';
+                    document.getElementById('btn-gleichzeitig').disabled = false;
+                    document.getElementById('btn-vorzeitig').disabled = false;
+                    document.getElementById('btn-gleichzeitig').className = 'time-btn';
+                    document.getElementById('btn-vorzeitig').className = 'time-btn';
+                } else {
+                    document.getElementById('arch-key').classList.add('set');
+                    finishRound();
+                }
+            }
+        } else {
+            roundHadError = true;
+            stepHadError = true;
+            span.classList.add('wrong-flash');
+            setTimeout(() => span.classList.remove('wrong-flash'), 400);
+        }
+    }
+
+    function chooseTime(wahl) {
+        if (locked || currentStep !== 'zeit') return;
+        locked = true;
+        document.getElementById('btn-gleichzeitig').disabled = true;
+        document.getElementById('btn-vorzeitig').disabled = true;
+
+        const richtig = (wahl === currentRound.zeitverhaeltnis);
+        if (!richtig) roundHadError = true;
+        melde(STEP_CATEGORY.zeit, richtig);
+
+        document.getElementById('btn-' + wahl).classList.add(richtig ? 'correct' : 'wrong');
+        if (!richtig) document.getElementById('btn-' + currentRound.zeitverhaeltnis).classList.add('correct');
+        if (richtig) document.getElementById('arch-key').classList.add('set');
+
+        setTimeout(finishRound, richtig ? 350 : 850);
+    }
+
+    function melde(kategorie, richtig) {
+        LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
+        const unlock = LudiProgress.recordCategoryAttempt(kategorie, richtig);
+        if (unlock) AchievementToast.show(unlock);
+    }
+
+    function finishRound() {
+        locked = true;
+        currentStep = 'done';
+
+        if (isReviewMode) {
+            if (!roundHadError) reviewCorrectCount++;
+        } else {
+            if (!roundHadError) correctCount++;
+            else missedItems.push(currentRound);
+        }
+
+        const box = document.getElementById('feedback-box');
+        document.getElementById('fb-title').innerText = roundHadError ? '🏛️ Der Bogen wackelt...' : '✅ Bogen steht!';
+        document.getElementById('fb-title').style.color = roundHadError ? '#F44336' : '#4CAF50';
+        document.getElementById('fb-text').innerHTML = currentRound.explanation;
+        box.style.display = 'flex';
+    }
+
+    function onNextClicked() {
+        document.getElementById('feedback-box').style.display = 'none';
+
+        if (isReviewMode) {
+            reviewIdx++;
+            if (reviewIdx >= reviewQueue.length) endReview();
+            else showRound(reviewQueue[reviewIdx]);
+            return;
+        }
+
+        roundIdx++;
+        if (roundIdx >= totalRounds) endGame();
+        else showRound();
+    }
+
+    function endGame() {
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('end-box').style.display = 'block';
+        document.getElementById('end-title').innerText = correctCount === totalRounds ? 'Bogen vollendet!' : 'Runde beendet';
+
+        LudiProgress.saveGameResult('arcus', correctCount, totalRounds);
+
+        let text = '<strong>' + correctCount + ' von ' + totalRounds + '</strong> Bögen ohne Fehler gebaut.';
+        if (missedItems.length) text += '<br><br>' + missedItems.length + ' Satz/Sätze bereiteten Mühe.';
+        document.getElementById('end-summary').innerHTML = text;
+        document.getElementById('btn-review').style.display = missedItems.length ? 'inline-block' : 'none';
+    }
+
+    function startReview() {
+        reviewQueue = missedItems.slice();
+        reviewIdx = 0;
+        reviewCorrectCount = 0;
+        isReviewMode = true;
+
+        document.getElementById('end-box').style.display = 'none';
+        document.getElementById('game-box').style.display = 'flex';
+        showRound(reviewQueue[0]);
+    }
+
+    function endReview() {
+        isReviewMode = false;
+        document.getElementById('game-box').style.display = 'none';
+        document.getElementById('end-box').style.display = 'block';
+        document.getElementById('end-title').innerText = 'Wiederholung beendet';
+        document.getElementById('end-summary').innerHTML =
+            'In der Wiederholung <strong>' + reviewCorrectCount + ' von ' + reviewQueue.length + '</strong> fehlerfrei.';
+        document.getElementById('btn-review').style.display = 'none';
+    }
+</script>
+</body>
+</html>

@@ -50,6 +50,9 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   Volle Tempus-/Genus-Vielfalt.
 - **Pendel.html** – klassische Pendelmethode (Subjekt → Prädikat → Objekt schrittweise), generiert
   aus echtem Wortschatz, mit Erklärung statt Übersetzungsauswahl am Ende.
+- **Arcus.html** – AcI (ab L8). Zwei Schritte: Subjektsakkusativ und Infinitiv im Satz anklicken,
+  ab L10 zusätzlich das Zeitverhältnis (gleichzeitig/vorzeitig). Bildmetapher ist der römische
+  Bogen: zwei Pfeiler und ein Schlussstein. Nutzt `SentenceEngine.buildAcI()`.
 - **Pronomina.html** – vier Modi: Possessiv (handkuratierte Sätze), Personal, Demonstrativ
   (hic/ille/is, KNG-Kongruenz-generiert), Relativ (quī/quae/quod – Kasus kommt von der Funktion
   im Nebensatz, NICHT vom Bezugswort!).
@@ -161,8 +164,13 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   passende Erwartung am Verb. Deutlich mehr Aufwand als Stufe 1 – erst angehen, wenn im Spiel
   auffällt, dass es stört.
 
-- Satzwertige Konstruktionen (AcI, Participium coniunctum, Ablativus absolutus) als eigenes,
-  neues Spiel – noch nicht begonnen, nur besprochen.
+- Satzwertige Konstruktionen: Der **AcI** ist in `Arcus.html` umgesetzt. Offen sind
+  **Participium coniunctum** (PPP ab L18, PPA ab L20) und **Ablativus absolutus** (ab L22) –
+  gedacht als weitere Modi desselben Spiels, mit einem gemischten Modus als eigentlichem Ziel:
+  Der Unterschied zwischen PC und Abl. abs. ist genau die Frage, ob das Bezugswort des Partizips
+  im Hauptsatz steht, also ob `head` dorthin zeigt oder nicht.
+  Dafür fehlt in `verbEngine.js` noch eine PPP-Deklination (das us/a/um-Muster gibt es bereits
+  in `getGerundivumDeclension` und ließe sich nachnutzen).
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
   eine sinnvolle Kategorie hat. Ohne bleiben nur Quiz.html (Kulturwissen, kein Wortschatz) und
   IssaJump.html (reine Bedeutungsabfrage – könnte die Wortart-Zähler mitbedienen, tut es aber

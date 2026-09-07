@@ -273,7 +273,12 @@ const LudiProgress = (() => {
         'Demonstrativpronomen': { icon: '👉', label: 'Demonstrativpronomen' },
         'Relativpronomen': { icon: '🔀', label: 'Relativpronomen' },
         'Grundformen': { icon: '🪙', label: 'Grundformen' },
-        'Wortartklassen': { icon: '🗂️', label: 'Deklinations-/Konjugationsklassen' }
+        'Wortartklassen': { icon: '🗂️', label: 'Deklinations-/Konjugationsklassen' },
+
+        // Satzwertige Konstruktionen (Arcus)
+        'Subjektsakkusativ': { icon: '🏛️', label: 'Subjektsakkusativ' },
+        'AcI-Infinitiv': { icon: '🪧', label: 'Infinitiv im AcI' },
+        'Zeitverhältnis': { icon: '⏱️', label: 'Zeitverhältnis' }
     };
 
     function _todayString() {

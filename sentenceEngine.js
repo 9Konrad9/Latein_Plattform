@@ -593,8 +593,16 @@ const SentenceEngine = (() => {
                 }
             ];
 
+            // Zwei natürliche Stellungen, sonst lernen Schüler die Position statt der
+            // Grammatik. Beide sind gutes Latein; die zweite (Kopfverb am Ende) ist
+            // sogar die lateinische Grundstellung.
+            //   puella videt servum venīre   |   puella servum venīre videt
+            const angeordnet = Math.random() > 0.5
+                ? tokens
+                : [tokens[0], tokens[2], tokens[3], tokens[1]];
+
             return {
-                tokens,
+                tokens: neuVerankern(angeordnet, tokens),
                 tempus: 'Präsens',
                 genus: 'Aktiv',
                 verbLemma: kopf.latin,
