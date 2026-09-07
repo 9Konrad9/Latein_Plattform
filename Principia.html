@@ -6,6 +6,7 @@
     <title>Prīncipia! - Die Münzprägerei</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="verbEngine.js"></script>
     <style>
@@ -508,6 +509,14 @@
             fbBox.style.display = 'flex';
 
             LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
+
+            // Das Spiel übt Grundformen - bei Nomen Genitiv + Geschlecht, bei Verben die
+            // Stammformen. Beides zählt auf denselben Zähler, weil es dieselbe Fähigkeit ist.
+            // Bewusst NICHT auf die Wortart-Zähler: die zählen in Circus Maximus die
+            // Bedeutung, und Formenwissen gehört nicht in denselben Topf.
+            const unlock = LudiProgress.recordCategoryAttempt('Grundformen', isCorrect);
+            if (unlock) AchievementToast.show(unlock);
+
             const colorIdx = LudiProgress.getBoxColor(currentTarget.latin);
 
             if (isCorrect) {

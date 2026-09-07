@@ -6,6 +6,7 @@
     <title>Gladiatoren-Duell - Split-Screen</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <style>
         :root {
@@ -183,6 +184,11 @@
         let hp = { p1: 5, p2: 5 };
         let currentCorrectAnswer = "";
         let currentDuelItem = null;
+        let currentQType = 0;   // 0 = Bedeutung, 1 = Formen, 2 = Klassen (fuer die Achievement-Kategorie)
+
+        // Gleiche Zuordnung wie in Circus Maximus, damit Bedeutungsfragen aus beiden
+        // Spielen auf dieselben Zähler einlaufen.
+        const WORTART_CATEGORY = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' };
         let countdownInterval = null;
         let activePool = [];
         let maxSelectedLesson = 0;
@@ -280,6 +286,7 @@
             if (item.type === "adjective") allowedTypes.push(2);
 
             const qType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+            currentQType = qType;
             let questionText = "";
             let categoryText = "";
             let wrongPool = [];
@@ -425,6 +432,16 @@
             const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
             const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
             LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
+
+            // Bedeutungsfragen zählen auf die Wortart-Zähler ein - dieselbe Fähigkeit,
+            // die Circus Maximus abfragt. Formen- und Klassenfragen bekommen eigene.
+            const kategorie = currentQType === 0
+                ? WORTART_CATEGORY[currentDuelItem.type]
+                : (currentQType === 1 ? 'Grundformen' : 'Wortartklassen');
+            if (kategorie) {
+                const unlock = LudiProgress.recordCategoryAttempt(kategorie, isCorrect);
+                if (unlock) AchievementToast.show(unlock);
+            }
             let winnerZone = playerNum === 1 ? "player1" : "player2";
 
             if (isCorrect) {

@@ -97,9 +97,10 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
 
 - Satzwertige Konstruktionen (AcI, Participium coniunctum, Ablativus absolutus) als eigenes,
   neues Spiel – noch nicht begonnen, nur besprochen.
-- Achievement-Kategorie-Tracking (`recordCategoryAttempt`) fehlt noch in: Duell.html,
-  Principia.html, Villa.html, Pronomina.html, ViaRomana.html (nur CircusV.html und Kastell.html
-  rufen es bisher auf).
+- Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
+  eine sinnvolle Kategorie hat. Ohne bleiben nur Quiz.html (Kulturwissen, kein Wortschatz) und
+  IssaJump.html (reine Bedeutungsabfrage – könnte die Wortart-Zähler mitbedienen, tut es aber
+  noch nicht).
 
 ## Arbeitsweise, die sich bewährt hat
 

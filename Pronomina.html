@@ -6,6 +6,7 @@
     <title>Pronomina! - Der Pronomen-Detektiv</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
@@ -322,6 +323,14 @@
         let correctCount = 0;
         let roundLocked = false;
         let currentMode = null; // 'possessiv' oder 'personal'
+
+        // Modus → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
+        const MODE_CATEGORY = {
+            possessiv:    'Possessivpronomen',
+            personal:     'Personalpronomen',
+            demonstrativ: 'Demonstrativpronomen',
+            relativ:      'Relativpronomen'
+        };
         let activePool = [];
 
         // --- Personalpronomina: Daten und Engine ---
@@ -698,6 +707,12 @@
             if (currentMode !== 'possessiv' && c._trackWord) {
                 LudiProgress.recordVocabAttempt(c._trackWord, isCorrect);
             }
+
+            // Kategorie ist die Pronomenart. Auch der Possessiv-Modus zählt hier mit -
+            // er ist nur beim Vokabel-Tracking ausgenommen, weil er mit handkuratierten
+            // Sätzen statt mit einzelnen Lemmata arbeitet.
+            const unlock = LudiProgress.recordCategoryAttempt(MODE_CATEGORY[currentMode], isCorrect);
+            if (unlock) AchievementToast.show(unlock);
         }
 
         function nextCase() {

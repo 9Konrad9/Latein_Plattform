@@ -240,11 +240,23 @@
 
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
     <script src="sentenceEngine.js"></script>
     <script>
+        // Satzglied-Rolle → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
+        const ROLE_CATEGORY = {
+            sub:   'Subjekt',
+            praed: 'Prädikat',
+            obj:   'Akkusativobjekt',
+            dat:   'Dativobjekt',
+            attr:  'Genitiv-Attribut',
+            abl:   'Handlungsträger',
+            adv:   'Adverbiale'
+        };
+
         // Satzbau kommt vollständig aus SentenceEngine. Die Valenz jedes Verbs steht als
         // Feld `valenz` in vocabulary.js - die früher hier hartkodierten Listen
         // (trueIntransitive/dativeVerbs) erfassten nur 28 von 298 Verben und gaben allen
@@ -386,6 +398,10 @@
 
             const isCorrect = (chosenRole === currentTargetRole);
             LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
+
+            // Achievement-Kategorie ist das abgefragte Satzglied selbst.
+            const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentTargetRole], isCorrect);
+            if (unlock) AchievementToast.show(unlock);
 
             if (isReviewMode) {
                 if (isCorrect) reviewCorrectCount++;

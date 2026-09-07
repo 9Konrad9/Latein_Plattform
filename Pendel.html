@@ -6,6 +6,7 @@
     <title>Pendel! - Die Pendelmethode</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
@@ -231,6 +232,16 @@
         // Satzbau kommt vollständig aus SentenceEngine (gemeinsam mit Via Rōmāna).
         // Die Valenz jedes Verbs steht als Feld `valenz` in vocabulary.js.
 
+        // Satzglied-Rolle → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
+        const ROLE_CATEGORY = {
+            sub:   'Subjekt',
+            praed: 'Prädikat',
+            obj:   'Akkusativobjekt',
+            dat:   'Dativobjekt',
+            attr:  'Genitiv-Attribut',
+            adv:   'Adverbiale'
+        };
+
         let activePool = [];
         let nounPool = [];
         let verbPool = [];
@@ -242,6 +253,7 @@
         let correctCount = 0;
         let currentStep = 'sub';
         let roundHadError = false;
+        let stepHadError = false;
         let foundSpanOrder = [];
 
         let missedItems = [];
@@ -319,6 +331,7 @@
             currentRound = forced || buildRound();
             currentStep = 'sub';
             roundHadError = false;
+            stepHadError = false;
             foundSpanOrder = [];
 
             document.getElementById('round-number').innerText = isReviewMode
@@ -412,6 +425,13 @@
             const span = document.querySelector(`.latin-word[data-idx="${idx}"]`);
 
             if (token.role === currentStep) {
+                // Der Schritt gilt als gekonnt, wenn bis hierhin kein Fehlgriff kam.
+                // Erfasst wird pro Schritt, nicht pro Runde - sonst ginge unter, WELCHES
+                // Satzglied Schwierigkeiten macht.
+                const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentStep], !stepHadError);
+                if (unlock) AchievementToast.show(unlock);
+                stepHadError = false;
+
                 currentRound.tokens.forEach((t, i) => {
                     if (t.role === currentStep) {
                         const s = document.querySelector(`.latin-word[data-idx="${i}"]`);
@@ -430,6 +450,7 @@
                 advanceStep();
             } else {
                 roundHadError = true;
+                stepHadError = true;
                 span.classList.add('wrong-flash');
                 setTimeout(() => span.classList.remove('wrong-flash'), 400);
             }

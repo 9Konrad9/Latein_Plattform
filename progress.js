@@ -255,7 +255,25 @@ const LudiProgress = (() => {
         'Konjunktiv': { icon: '💭', label: 'Konjunktiv' },
         'Infinitiv': { icon: '➰', label: 'Infinitiv' },
         'PPA': { icon: '🏃', label: 'PPA' },
-        'Gerundium': { icon: '📝', label: 'Gerundium/Gerundivum' }
+        'Gerundium': { icon: '📝', label: 'Gerundium/Gerundivum' },
+
+        // Satzglieder (Via Rōmāna, Pendel)
+        'Subjekt': { icon: '🧍', label: 'Subjekt' },
+        'Prädikat': { icon: '⚙️', label: 'Prädikat' },
+        'Akkusativobjekt': { icon: '🎯', label: 'Akkusativobjekt' },
+        'Dativobjekt': { icon: '🎁', label: 'Dativobjekt' },
+        'Genitiv-Attribut': { icon: '🔗', label: 'Genitiv-Attribut' },
+        'Handlungsträger': { icon: '🎭', label: 'Handlungsträger' },
+        'Adverbiale': { icon: '🧭', label: 'Adverbiale Bestimmung' },
+
+        // Formenlehre jenseits der Kasus/Tempora (Villa, Pronomina, Principia, Duell)
+        'KNG-Kongruenz': { icon: '🧩', label: 'KNG-Kongruenz' },
+        'Personalpronomen': { icon: '👤', label: 'Personalpronomen' },
+        'Possessivpronomen': { icon: '👝', label: 'Possessivpronomen' },
+        'Demonstrativpronomen': { icon: '👉', label: 'Demonstrativpronomen' },
+        'Relativpronomen': { icon: '🔀', label: 'Relativpronomen' },
+        'Grundformen': { icon: '🪙', label: 'Grundformen' },
+        'Wortartklassen': { icon: '🗂️', label: 'Deklinations-/Konjugationsklassen' }
     };
 
     function _todayString() {
