@@ -1,0 +1,450 @@
+// sentenceEngine.js
+// Zentrale Satzbau-Engine. Eine Ebene über NounEngine (Formen eines Nomens) und
+// VerbEngine (Formen eines Verbs): baut aus lektionsgefiltertem Wortschatz einen
+// vollständigen, grammatisch stimmigen Satz und liefert ihn als Tokenliste mit
+// Rollen, Bezügen und Erklärungen zurück.
+//
+// Einbinden per <script src="sentenceEngine.js"></script> NACH nounEngine.js und verbEngine.js.
+//
+// Die Valenz jedes Verbs steht als Feld `valenz` in vocabulary.js und entscheidet,
+// welches Objekt gebaut wird - NICHT mehr eine hartkodierte Liste im Spiel.
+// Erlaubte Werte: "akk" | "dat" | "dat+akk" | "intrans" | "abl" | "gen",
+// oder ein Array mehrerer Werte (dann wird pro Satz einer davon gewählt).
+
+const SentenceEngine = (() => {
+
+    // ---- Lektions-Gating (analog zum Pontes-Inhaltsverzeichnis) ----
+    const ADVERBIAL_LESSON = 7;   // Ablativ-Adverbialien
+    const PASSIV_LESSON    = 15;  // ab hier kann passiv gebaut werden
+
+    // ---- Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ ----
+    // Ein zufälliges Nomen zu ziehen ergäbe oft Unsinn ("zur Zeit des Schwertes"),
+    // daher pro Funktion eine handverlesene Auswahl.
+    const ADVERBIALE = [
+        { key: 'zeit',       prep: null,  woerter: ['hōra', 'nox', 'annus', 'diēs', 'lūx'],                     label: 'Zeit (Ablativus temporis)',                  frage: 'Wann?' },
+        { key: 'ort',        prep: 'in',  woerter: ['villa', 'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],  label: 'Ort (Ablativus loci)',                        frage: 'Wo?' },
+        { key: 'herkunft',   prep: 'ex',  woerter: ['urbs', 'prōvincia', 'domus', 'silva', 'terra'],            label: 'Herkunft/Trennung (Ablativus separationis)',  frage: 'Woher?' },
+        { key: 'mittel',     prep: null,  woerter: ['gladius', 'manus', 'nāvis', 'arma', 'dextra'],             label: 'Mittel (Ablativus instrumenti)',              frage: 'Womit?' },
+        { key: 'begleitung', prep: 'cum', woerter: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'],   label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?' }
+    ];
+
+    const ALLE_ROLLEN = ['sub', 'praed', 'obj', 'dat', 'attr', 'abl', 'adv'];
+
+    // ================= Hilfsmittel =================
+
+    function zufall(n) { return Math.floor(Math.random() * n); }
+    function waehle(arr) { return arr[zufall(arr.length)]; }
+
+    /** Echtes Fisher-Yates. Array.sort(() => Math.random() - 0.5) ist nachweislich verzerrt. */
+    function mische(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = zufall(i + 1);
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    /** Gewichtete Auswahl über das Leitner-System, falls verfügbar; sonst gleichverteilt. */
+    function waehleGewichtet(arr) {
+        if (typeof LudiProgress !== 'undefined' && LudiProgress.weightedPick) {
+            return LudiProgress.weightedPick(arr);
+        }
+        return waehle(arr);
+    }
+
+    /** Liefert die möglichen Valenzen eines Verbs als Array. */
+    function valenzen(verbObj) {
+        const v = verbObj.valenz;
+        if (!v) return ['akk'];               // Sicherheitsnetz für unvollständige Datensätze
+        return Array.isArray(v) ? v : [v];
+    }
+
+    /** Darf dieses Verb überhaupt in einen generierten Satz? */
+    function verbTauglich(verbObj) {
+        if (verbObj.satzbau === false) return false;       // mehrteilige Lemmata (sē gerere ...)
+        if (verbObj.latin.includes(' ')) return false;      // Sicherheitsnetz
+        return true;
+    }
+
+    /** Darf dieses Nomen in einen generierten Satz? */
+    function nomenTauglich(nounObj) {
+        if (nounObj.latin.includes(' ')) return false;
+        if (nounObj.middle && nounObj.middle.includes('Pl.')) return false;  // Pluralia tantum
+        return true;
+    }
+
+    /**
+     * Holt eine Kasusform und gibt null zurück, wenn sie fehlt (defektive Nomen wie vīs).
+     * Jeder Aufrufer MUSS das Ergebnis prüfen - sonst landen null/undefined im UI.
+     */
+    function form(nounObj, kasus, numerus) {
+        const d = NounEngine.decline(nounObj);
+        const t = numerus === 'pl' ? d.pl : d.sg;
+        return t[kasus] || null;
+    }
+
+    /** Nomen, die in diesem Kasus (Sg. UND Pl.) eine Form besitzen. */
+    function mitKasus(pool, kasus) {
+        return pool.filter(n => {
+            const d = NounEngine.decline(n);
+            return d.sg[kasus] && d.pl[kasus];
+        });
+    }
+
+    /** Grobe Näherung an "belebt" - ein echtes Datenfeld fehlt. Neutra sind praktisch nie Personen. */
+    function belebtAehnlich(pool) {
+        const gefiltert = pool.filter(n => NounEngine.decline(n).gender !== 'n');
+        return gefiltert.length ? gefiltert : pool;
+    }
+
+    /**
+     * VerbEngine notiert zusammengesetzte Formen in Paradigmen-Schreibweise mit allen
+     * drei Genera ("amātus/a/um est", Pl. "amātī/ae/a sunt") - in einer Konjugations-
+     * tabelle richtig, weil dort kein Subjekt bekannt ist. Im Satz ist es bekannt, also
+     * muss das Partizip mit ihm kongruieren. Betrifft Passiv-Perfekt/-Plusquamperfekt
+     * und die Perfektformen der Deponentien.
+     */
+    function kongruiere(text, gender, numerus) {
+        if (!text) return text;
+        const SG = { m: 'us', f: 'a', n: 'um' };
+        const PL = { m: 'ī', f: 'ae', n: 'a' };
+        const endung = numerus === 'pl' ? (PL[gender] || PL.m) : (SG[gender] || SG.m);
+        return text.replace('us/a/um', endung).replace('ī/ae/a', endung);
+    }
+
+    // ================= Bausteine =================
+
+    /** Baut eine adverbiale Bestimmung im Ablativ, oder null. */
+    function baueAdverbiale(nounPool, belegt) {
+        const frei = belegt ? nounPool.filter(n => !belegt.has(n.latin)) : nounPool;
+        const moeglich = ADVERBIALE
+            .map(t => ({ typ: t, treffer: t.woerter.filter(w => frei.some(n => n.latin === w)) }))
+            .filter(x => x.treffer.length > 0);
+        if (!moeglich.length) return null;
+
+        const { typ, treffer } = waehle(moeglich);
+        const nomen = frei.find(n => n.latin === waehle(treffer));
+        if (!nomen) return null;
+        if (belegt) belegt.add(nomen.latin);
+
+        const numerus = Math.random() > 0.75 ? 'pl' : 'sg';   // meist Singular, idiomatischer
+        const abl = form(nomen, 'abl', numerus) || form(nomen, 'abl', 'sg');
+        if (!abl) return null;
+
+        const text = typ.prep ? `${typ.prep} ${abl}` : abl;
+        return {
+            text, role: 'adv', lemma: nomen.latin, head: null,
+            exp: `„${text}“ ist eine adverbiale Bestimmung im Ablativ (${typ.label}) - Frage: ${typ.frage}`
+        };
+    }
+
+    /** Wählt ein Nomen, das noch nicht im Satz vorkommt. */
+    function frischesNomen(pool, belegt) {
+        const frei = pool.filter(n => !belegt.has(n.latin));
+        if (!frei.length) return null;
+        return waehleGewichtet(frei);
+    }
+
+    // ================= Satzbau =================
+
+    /**
+     * Baut einen Satz.
+     *
+     * optionen:
+     *   nounPool, verbPool  - bereits lektionsgefilterte Wortlisten (Pflicht)
+     *   maxLesson           - höchste gewählte Lektion, steuert das Gating
+     *   genus               - 'Aktiv' | 'Passiv' | 'auto' (Vorgabe 'auto')
+     *   allow               - erlaubte Rollen (Vorgabe: alle außer ablobj/genobj)
+     *   wordOrder           - 'natural' (SOV, Attribut beim Bezugswort) | 'shuffled'
+     *
+     * Rückgabe: { tokens, tempus, genus, explanation } oder null, wenn nichts baubar war.
+     * Jedes Token: { text, role, lemma, head, exp }; head ist der Index des Bezugsworts
+     * (nur beim Genitiv-Attribut gesetzt), sonst null.
+     */
+    function build(optionen) {
+        const opt = optionen || {};
+        const maxLesson = opt.maxLesson != null ? opt.maxLesson : 999;
+        const erlaubt = opt.allow || ALLE_ROLLEN;
+        const wortstellung = opt.wordOrder || 'natural';
+        const darf = r => erlaubt.indexOf(r) !== -1;
+
+        const nomen = (opt.nounPool || []).filter(nomenTauglich);
+        const verben = (opt.verbPool || []).filter(verbTauglich);
+        if (nomen.length < 2 || !verben.length) return null;
+
+        const nomNomen = mitKasus(nomen, 'nom');
+        if (!nomNomen.length) return null;
+
+        const kombis = VerbEngine.getKnownCombinations(maxLesson);
+        const aktivTempora  = [...new Set(kombis.filter(k => k.genus === 'Aktiv').map(k => k.tempus))];
+        const passivTempora = [...new Set(kombis.filter(k => k.genus === 'Passiv').map(k => k.tempus))];
+        if (!aktivTempora.length) return null;
+
+        // Passiv braucht ein transitives Verb - sonst gibt es nichts zu erleiden.
+        const transitiv = verben.filter(v => valenzen(v).some(x => x === 'akk' || x === 'dat+akk'));
+        const passivMoeglich = darf('abl') && maxLesson >= PASSIV_LESSON
+            && passivTempora.length > 0 && transitiv.length > 0;
+
+        let genus = opt.genus || 'auto';
+        if (genus === 'auto') genus = (passivMoeglich && Math.random() < 0.3) ? 'Passiv' : 'Aktiv';
+        if (genus === 'Passiv' && !passivMoeglich) genus = 'Aktiv';
+
+        for (let versuch = 0; versuch < 20; versuch++) {
+            const satz = genus === 'Passiv'
+                ? bauePassiv(nomen, nomNomen, transitiv, passivTempora, maxLesson, darf)
+                : baueAktiv(nomen, nomNomen, verben, aktivTempora, maxLesson, darf);
+            if (satz) return abschliessen(satz, wortstellung);
+        }
+
+        // Letzter Ausweg: der einfachste mögliche Satz
+        const einfach = baueAktiv(nomen, nomNomen, verben, ['Präsens'], maxLesson, () => false);
+        return einfach ? abschliessen(einfach, wortstellung) : null;
+    }
+
+    function baueAktiv(nomen, nomNomen, verben, tempora, maxLesson, darf) {
+        const tempus = waehle(tempora);
+        const verb = waehleGewichtet(verben);
+
+        if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.perfect) return null;
+        if (!VerbEngine.isGenusApplicable(verb, 'Aktiv')) return null;
+
+        let formen;
+        try { formen = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv'); } catch (e) { return null; }
+
+        const belegt = new Set();
+        const subNomen = waehleGewichtet(nomNomen);
+        belegt.add(subNomen.latin);
+
+        const plural = Math.random() > 0.5;
+        const subForm = form(subNomen, 'nom', plural ? 'pl' : 'sg');
+        if (!subForm) return null;
+
+        const tokens = [{
+            text: subForm, role: 'sub', lemma: subNomen.latin, head: null,
+            exp: `„${subForm}“ steht im Nominativ und bestimmt, wer oder was handelt.`
+        }];
+
+        // ---- Objekt(e) nach der Valenz des Verbs ----
+        const valenz = waehle(valenzen(verb));
+
+        if ((valenz === 'dat' || valenz === 'dat+akk') && darf('dat')) {
+            const t = baueObjekt(nomen, belegt, 'dat', verb);
+            if (!t) return null;
+            tokens.push(t);
+        }
+        if ((valenz === 'akk' || valenz === 'dat+akk') && darf('obj')) {
+            const t = baueObjekt(nomen, belegt, 'akk', verb);
+            if (!t) return null;
+            tokens.push(t);
+        }
+        // "abl" (carēre, ūtī) und "gen" (oblīvīscī) bauen bewusst kein Objekt:
+        // Die Spiele haben dafür keine eigene Rolle, und ein Ablativobjekt als
+        // "adverbiale Bestimmung" auszugeben wäre fachlich falsch.
+
+        ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf);
+
+        // Deponentien bilden das Perfekt mit Partizip - das muss zum Subjekt passen.
+        const subGenus = NounEngine.decline(subNomen).gender;
+        const verbForm = kongruiere(plural ? formen[5] : formen[2], subGenus, plural ? 'pl' : 'sg');
+        if (!verbForm) return null;
+        const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
+        tokens.push({
+            text: verbForm, role: 'praed', lemma: verb.latin, head: null,
+            exp: `„${verbForm}“ ist das Prädikat (${tLabel}). Die Endung zeigt an, wer handelt und (ggf.) wann.`
+        });
+
+        return { tokens, tempus: tLabel, genus: 'Aktiv', verb };
+    }
+
+    function bauePassiv(nomen, nomNomen, transitiv, tempora, maxLesson, darf) {
+        const tempus = waehle(tempora);
+        const verb = waehleGewichtet(transitiv);
+
+        if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.ppp) return null;
+        if (!VerbEngine.isGenusApplicable(verb, 'Passiv')) return null;
+
+        let formen;
+        try { formen = VerbEngine.getFormsForTempus(verb, tempus, 'Passiv'); } catch (e) { return null; }
+
+        const belegt = new Set();
+        const subNomen = waehleGewichtet(nomNomen);
+        belegt.add(subNomen.latin);
+
+        const plural = Math.random() > 0.5;
+        const subForm = form(subNomen, 'nom', plural ? 'pl' : 'sg');
+        // Passiv-Perfekt/-Plusquamperfekt sind zusammengesetzt: PPP muss zum Subjekt passen.
+        const subGenus = NounEngine.decline(subNomen).gender;
+        const verbForm = kongruiere(plural ? formen[5] : formen[2], subGenus, plural ? 'pl' : 'sg');
+        if (!subForm || !verbForm) return null;
+
+        const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
+        const tokens = [
+            {
+                text: subForm, role: 'sub', lemma: subNomen.latin, head: null,
+                exp: `„${subForm}“ steht im Nominativ - im Passivsatz das, was die Handlung ERLEIDET (nicht ausführt).`
+            },
+            {
+                text: verbForm, role: 'praed', lemma: verb.latin, head: null,
+                exp: `„${verbForm}“ ist das Prädikat im Passiv (${tLabel}). Erkennbar an den Passiv-Endungen (-tur, -ntur, -or ...).`
+            }
+        ];
+
+        // Handlungsträger im Ablativ mit ā/ab - bevorzugt ein belebtes Nomen
+        if (Math.random() > 0.4) {
+            const kandidaten = belebtAehnlich(mitKasus(nomen, 'abl')).filter(n => !belegt.has(n.latin));
+            if (kandidaten.length) {
+                const agens = waehleGewichtet(kandidaten);
+                belegt.add(agens.latin);
+                const abl = form(agens, 'abl', Math.random() > 0.5 ? 'pl' : 'sg');
+                if (abl) {
+                    const prep = /^[aeiouāēīōūAEIOUĀĒĪŌŪ]/.test(abl) ? 'ab' : 'ā';
+                    tokens.push({
+                        text: `${prep} ${abl}`, role: 'abl', lemma: agens.latin, head: null,
+                        exp: `„${prep} ${abl}“ ist der Handlungsträger (Ablativ mit ā/ab) - von wem die Handlung ausgeht.`
+                    });
+                }
+            }
+        } else {
+            ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf);
+        }
+
+        return { tokens, tempus: tLabel, genus: 'Passiv', verb };
+    }
+
+    function baueObjekt(nomen, belegt, kasus, verb) {
+        const pool = mitKasus(nomen, kasus).filter(n => !belegt.has(n.latin));
+        if (!pool.length) return null;
+        const n = waehleGewichtet(pool);
+        belegt.add(n.latin);
+
+        const numerus = Math.random() > 0.5 ? 'pl' : 'sg';
+        const text = form(n, kasus, numerus);
+        if (!text) return null;
+
+        const exp = kasus === 'dat'
+            ? `„${text}“ steht im Dativ (Wem?) - „${verb.latin}“ verlangt ein Dativobjekt.`
+            : `„${text}“ steht im Akkusativ (Wen oder was?) - es ist das direkte Ziel der Handlung.`;
+
+        return { text, role: kasus === 'dat' ? 'dat' : 'obj', lemma: n.latin, head: null, exp };
+    }
+
+    /**
+     * Hängt entweder ein Genitiv-Attribut an ein bereits vorhandenes Nomen
+     * oder eine adverbiale Bestimmung an. Das Attribut bekommt über `head`
+     * sein Bezugswort - ein Attribut ohne Bezugswort wäre keines.
+     */
+    function ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf) {
+        const bezugsfaehig = tokens
+            .map((t, i) => ({ t, i }))
+            .filter(x => x.t.role === 'sub' || x.t.role === 'obj' || x.t.role === 'dat');
+
+        if (darf('attr') && bezugsfaehig.length && Math.random() > 0.5) {
+            const pool = mitKasus(nomen, 'gen').filter(n => !belegt.has(n.latin));
+            if (pool.length) {
+                const n = waehleGewichtet(pool);
+                belegt.add(n.latin);
+                const text = form(n, 'gen', Math.random() > 0.5 ? 'pl' : 'sg');
+                if (text) {
+                    const bezug = waehle(bezugsfaehig);
+                    tokens.push({
+                        text, role: 'attr', lemma: n.latin, head: bezug.i,
+                        exp: `„${text}“ steht im Genitiv (wessen?) und ist Attribut zu „${bezug.t.text}“ - es bestimmt dieses Wort näher.`
+                    });
+                    return;
+                }
+            }
+        }
+
+        if (darf('adv') && maxLesson >= ADVERBIAL_LESSON && Math.random() > 0.4) {
+            const adv = baueAdverbiale(nomen, belegt);
+            if (adv) tokens.push(adv);
+        }
+    }
+
+    // ================= Wortstellung & Abschluss =================
+
+    function abschliessen(satz, wortstellung) {
+        const tokens = ordne(satz.tokens, wortstellung);
+        return {
+            tokens,
+            tempus: satz.tempus,
+            genus: satz.genus,
+            verbLemma: satz.verb.latin,
+            explanation: gesamterklaerung(tokens, satz)
+        };
+    }
+
+    /**
+     * 'natural'  - lateinische Grundstellung: Prädikat ans Ende, Attribut direkt
+     *              hinter sein Bezugswort, der Rest gemischt.
+     * 'shuffled' - alles durcheinander (Pendelmethode: gerade NICHT auf die
+     *              Stellung verlassen, sondern auf die Endungen achten).
+     */
+    function ordne(tokens, modus) {
+        if (modus === 'shuffled') return neuVerankern(mische(tokens), tokens);
+
+        const praed = tokens.filter(t => t.role === 'praed');
+        const attribute = tokens.filter(t => t.role === 'attr');
+        const rest = mische(tokens.filter(t => t.role !== 'praed' && t.role !== 'attr'));
+
+        const ergebnis = [];
+        rest.forEach(t => {
+            ergebnis.push(t);
+            // Attribut direkt hinter sein Bezugswort
+            attribute.forEach(a => {
+                if (tokens[a.head] === t) ergebnis.push(a);
+            });
+        });
+        // Attribute ohne auffindbaren Bezug (sollte nicht vorkommen) hinten anhängen
+        attribute.forEach(a => { if (ergebnis.indexOf(a) === -1) ergebnis.push(a); });
+        praed.forEach(p => ergebnis.push(p));
+
+        return neuVerankern(ergebnis, tokens);
+    }
+
+    /** Nach dem Umsortieren zeigen die head-Indizes noch auf die alten Positionen. */
+    function neuVerankern(neu, alt) {
+        return neu.map(t => {
+            if (t.head == null) return t;
+            const bezug = alt[t.head];
+            const idx = neu.indexOf(bezug);
+            return Object.assign({}, t, { head: idx === -1 ? null : idx });
+        });
+    }
+
+    function gesamterklaerung(tokens, satz) {
+        const finde = r => tokens.find(t => t.role === r);
+        const sub = finde('sub'), praed = finde('praed');
+        let text = `<strong>${sub.text}</strong> ist das Subjekt (Nominativ), <strong>${praed.text}</strong> das Prädikat (${satz.tempus}${satz.genus === 'Passiv' ? ' Passiv' : ''}).`;
+
+        const obj = finde('obj'), dat = finde('dat');
+        if (dat) text += ` <strong>${dat.text}</strong> ist das Dativobjekt.`;
+        if (obj) text += ` <strong>${obj.text}</strong> ist das Akkusativobjekt.`;
+
+        const attr = finde('attr');
+        if (attr) {
+            const bezug = attr.head != null ? tokens[attr.head] : null;
+            text += ` <strong>${attr.text}</strong> ist Genitiv-Attribut${bezug ? ` zu „${bezug.text}“` : ''}.`;
+        }
+
+        const abl = finde('abl');
+        if (abl) text += ` <strong>${abl.text}</strong> nennt den Handlungsträger.`;
+
+        if (finde('adv')) text += ` Dazu kommt eine adverbiale Bestimmung im Ablativ.`;
+
+        return text;
+    }
+
+    return {
+        build,
+        ALLE_ROLLEN,
+        ADVERBIAL_LESSON,
+        PASSIV_LESSON,
+        // für Tests und Spiele nützlich:
+        valenzen,
+        verbTauglich,
+        nomenTauglich,
+        mische
+    };
+})();

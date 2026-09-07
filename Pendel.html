@@ -9,6 +9,7 @@
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
+    <script src="sentenceEngine.js"></script>
     <style>
         :root {
             --roman-gold: #d4af37;
@@ -227,24 +228,8 @@
     </div>
 
     <script>
-        // Echte Intransitiva (nehmen weder Akkusativ- noch Dativobjekt)
-        const trueIntransitive = [
-            "esse", "adesse", "posse", "clāmāre", "venīre", "labōrāre", "lūdere", "gaudēre", "currere", "īre", "iacēre", "abīre", "perīre", "cēdere", "studēre", "īnstāre",
-            "pergere", "properāre", "sedēre", "cōnsīdere", "tacēre", "accēdere", "surgere", "crēscere"
-        ];
-        // Echte Dativ-Verben (nehmen ein Dativobjekt statt eines Akkusativobjekts)
-        const dativeVerbs = ["pārēre", "nocēre", "respondēre", "placēre"];
-
-        // Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ (ab Lektion 7),
-        // dieselbe Auswahl wie in Via Rōmāna.
-        const ADVERBIAL_ABL_LESSON = 7;
-        const adverbialTypes = [
-            { key: 'zeit', prep: null, words: ['hōra', 'nox', 'annus', 'diēs', 'lūx'], label: 'Zeit' },
-            { key: 'ort', prep: 'in', words: ['villa', 'urbs', 'templum', 'īnsula', 'silva', 'oppidum'], label: 'Ort' },
-            { key: 'herkunft', prep: 'ex', words: ['urbs', 'prōvincia', 'domus', 'silva', 'terra'], label: 'Herkunft/Trennung' },
-            { key: 'mittel', prep: null, words: ['gladius', 'manus', 'nāvis', 'arma', 'dextra'], label: 'Mittel' },
-            { key: 'begleitung', prep: 'cum', words: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'], label: 'Begleitung' }
-        ];
+        // Satzbau kommt vollständig aus SentenceEngine (gemeinsam mit Via Rōmāna).
+        // Die Valenz jedes Verbs steht als Feld `valenz` in vocabulary.js.
 
         let activePool = [];
         let nounPool = [];
@@ -272,8 +257,8 @@
             LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
                 maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
-                nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
-                verbPool = activePool.filter(v => v.type === 'verb' && v.gram_class !== 'Deponens' && v.gram_class !== 'unregelmäßig (Passiv von facere)');
+                nounPool = activePool.filter(v => v.type === 'noun' && SentenceEngine.nomenTauglich(v));
+                verbPool = activePool.filter(v => v.type === 'verb' && SentenceEngine.verbTauglich(v));
 
                 if (nounPool.length < 2 || verbPool.length < 1) {
                     alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive/Verben. Bitte wähle weitere Lektionen mit aus.");
@@ -284,127 +269,37 @@
             });
         }
 
-        function buildAdverbialTokens() {
-            const availableTypes = adverbialTypes.filter(t => t.words.some(w => nounPool.some(n => n.latin === w)));
-            if (availableTypes.length === 0) return [];
-            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-            const candidateWords = type.words.filter(w => nounPool.some(n => n.latin === w));
-            if (candidateWords.length === 0) return [];
-            const chosenWord = candidateWords[Math.min(Math.floor(Math.random() * candidateWords.length), candidateWords.length - 1)];
-            const noun = nounPool.find(n => n.latin === chosenWord);
-            if (!noun) return [];
-            const decl = NounEngine.decline(noun);
-            const plural = Math.random() > 0.75;
-            const ablForm = plural ? decl.pl.abl : decl.sg.abl;
-            if (!ablForm) return [];
-            const tokens = [];
-            if (type.prep) tokens.push({ text: type.prep, role: 'adv', lemma: type.prep });
-            tokens.push({ text: ablForm, role: 'adv', lemma: noun.latin, advLabel: type.label });
-            return tokens;
-        }
-
-        function buildExplanation(tokens, tempusLabel) {
-            const sub = tokens.find(t => t.role === 'sub');
-            const praed = tokens.find(t => t.role === 'praed');
-            const objOrDat = tokens.find(t => t.role === 'obj' || t.role === 'dat');
-            let text = `<strong>${sub.text}</strong> ist das Subjekt (Nominativ), <strong>${praed.text}</strong> das Prädikat (${tempusLabel}).`;
-            if (objOrDat) {
-                const roleLabel = objOrDat.role === 'dat' ? 'Dativobjekt' : 'Akkusativobjekt';
-                text += ` <strong>${objOrDat.text}</strong> ist das ${roleLabel}.`;
-            }
-            const attr = tokens.find(t => t.role === 'attr');
-            if (attr) text += ` <strong>${attr.text}</strong> ist ein Genitiv-Attribut.`;
-            if (tokens.some(t => t.role === 'adv')) {
-                text += ` Die grau markierten Wörter bilden eine adverbiale Bestimmung, die du selbst sinnvoll einordnest.`;
-            }
-            return text;
-        }
-
+        // Die Pendelmethode lebt davon, sich NICHT auf die Wortstellung zu verlassen,
+        // sondern auf die Endungen zu achten - daher 'shuffled'.
+        //
+        // SentenceEngine liefert eine Adverbiale als ein Token ("in villā"); hier wird
+        // sie in ihre Wörter zerlegt, weil in diesem Spiel jedes Wort einzeln
+        // angeklickt wird. Die Rolle bleibt dabei erhalten.
         function buildRound() {
-            const knownTempora = VerbEngine.getKnownTempora(maxSelectedLesson);
-            const shuffledNouns = [...nounPool].sort(() => Math.random() - 0.5);
-            const genitiveCapableNouns = shuffledNouns.filter(n => {
-                const d = NounEngine.decline(n);
-                return d.sg.gen !== null && d.pl.gen !== null;
-            });
-            const dativeCapableNouns = shuffledNouns.filter(n => {
-                const d = NounEngine.decline(n);
-                return d.sg.dat !== null && d.pl.dat !== null;
-            });
+            for (let versuch = 0; versuch < 10; versuch++) {
+                const satz = SentenceEngine.build({
+                    nounPool: nounPool,
+                    verbPool: verbPool,
+                    maxLesson: maxSelectedLesson,
+                    wordOrder: 'shuffled'
+                });
+                if (!satz) continue;
 
-            for (let attempt = 0; attempt < 15; attempt++) {
-                const tempus = knownTempora[Math.floor(Math.random() * knownTempora.length)];
-                const verb = LudiProgress.weightedPick(verbPool);
-                if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.perfect) continue;
-
-                let forms;
-                try { forms = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv'); } catch (e) { continue; }
-
-                const subNoun = LudiProgress.weightedPick(shuffledNouns);
-                const subDecl = NounEngine.decline(subNoun);
-                const subPlural = Math.random() > 0.5;
-                const subForm = subPlural ? subDecl.pl.nom : subDecl.sg.nom;
-                const verbForm = subPlural ? forms[5] : forms[2];
-                const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
-
-                let tokens = [{ text: subForm, role: 'sub', lemma: subNoun.latin }];
-
-                const isDativeVerb = dativeVerbs.includes(verb.latin);
-                const isIntransitive = trueIntransitive.includes(verb.latin);
-
-                if (isDativeVerb) {
-                    const datPool = dativeCapableNouns.length > 0 ? dativeCapableNouns : shuffledNouns;
-                    let datNoun;
-                    do { datNoun = datPool[Math.floor(Math.random() * datPool.length)]; } while (datNoun.latin === subNoun.latin && datPool.length > 1);
-                    const datDecl = NounEngine.decline(datNoun);
-                    const datPlural = Math.random() > 0.5;
-                    const datForm = datPlural ? datDecl.pl.dat : datDecl.sg.dat;
-                    tokens.push({ text: datForm, role: 'dat', lemma: datNoun.latin });
-                } else if (!isIntransitive) {
-                    let objNoun;
-                    do { objNoun = shuffledNouns[Math.floor(Math.random() * shuffledNouns.length)]; } while (objNoun.latin === subNoun.latin && shuffledNouns.length > 1);
-                    const objDecl = NounEngine.decline(objNoun);
-                    const objPlural = Math.random() > 0.5;
-                    const objForm = objPlural ? objDecl.pl.akk : objDecl.sg.akk;
-                    tokens.push({ text: objForm, role: 'obj', lemma: objNoun.latin });
-                }
-
-                tokens.push({ text: verbForm, role: 'praed', lemma: verb.latin });
-
-                if (Math.random() > 0.5 && genitiveCapableNouns.length > 0) {
-                    let attrNoun;
-                    do { attrNoun = genitiveCapableNouns[Math.floor(Math.random() * genitiveCapableNouns.length)]; } while ((attrNoun.latin === subNoun.latin || tokens.some(t => t.lemma === attrNoun.latin)) && genitiveCapableNouns.length > 1);
-                    const attrDecl = NounEngine.decline(attrNoun);
-                    const attrPlural = Math.random() > 0.5;
-                    const attrForm = attrPlural ? attrDecl.pl.gen : attrDecl.sg.gen;
-                    tokens.push({ text: attrForm, role: 'attr', lemma: attrNoun.latin });
-                } else if (maxSelectedLesson >= ADVERBIAL_ABL_LESSON && Math.random() > 0.4) {
-                    const advTokens = buildAdverbialTokens();
-                    tokens.push(...advTokens);
-                }
-
-                // Reihenfolge durchmischen - der ganze Sinn der Pendelmethode ist ja gerade,
-                // sich NICHT auf die Wortstellung zu verlassen, sondern auf die Endungen zu achten.
-                tokens.sort(() => Math.random() - 0.5);
+                const tokens = [];
+                satz.tokens.forEach(t => {
+                    t.text.split(' ').forEach(wort => {
+                        tokens.push({ text: wort, role: t.role, lemma: t.lemma });
+                    });
+                });
 
                 return {
-                    tokens,
+                    tokens: tokens,
                     hadAdverbial: tokens.some(t => t.role === 'adv'),
-                    verbLemma: verb.latin,
-                    explanation: buildExplanation(tokens, tLabel)
+                    verbLemma: satz.verbLemma,
+                    explanation: satz.explanation
                 };
             }
-
-            // Sicherheitsnetz: sollte praktisch nie erreicht werden
-            const subNoun = nounPool[0];
-            const subDecl = NounEngine.decline(subNoun);
-            const verb = verbPool[0];
-            const forms = VerbEngine.getFormsForTempus(verb, 'Präsens', 'Aktiv');
-            const tokens = [
-                { text: subDecl.sg.nom, role: 'sub', lemma: subNoun.latin },
-                { text: forms[2], role: 'praed', lemma: verb.latin }
-            ];
-            return { tokens, hadAdverbial: false, verbLemma: verb.latin, explanation: buildExplanation(tokens, 'Präsens') };
+            return null;
         }
 
         function startGame() {

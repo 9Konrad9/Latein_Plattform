@@ -243,43 +243,12 @@
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
+    <script src="sentenceEngine.js"></script>
     <script>
-        // Verben, die kein sinnvolles Akkusativobjekt nehmen (intransitiv oder Dativ-Verben:
-        // sedēre, respondēre, placēre usw.) - für Satzpläne mit Objekt ausgeschlossen.
-        // Echte Intransitiva (nehmen weder Akkusativ- noch Dativobjekt)
-        const trueIntransitive = [
-            "esse", "adesse", "posse", "clāmāre", "venīre", "labōrāre", "lūdere", "gaudēre", "currere", "īre", "iacēre", "abīre", "perīre", "cēdere", "studēre", "īnstāre",
-            "pergere", "properāre", "sedēre", "cōnsīdere", "tacēre", "accēdere", "surgere", "crēscere"
-        ];
-        // Echte Dativ-Verben (nehmen ein Dativobjekt statt eines Akkusativobjekts)
-        const dativeVerbs = ["pārēre", "nocēre", "respondēre", "placēre"];
-        const intransitiveOrDative = [...trueIntransitive, ...dativeVerbs]; // rückwärtskompatibel, falls noch woanders genutzt
-
-        // Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ (ab Lektion 7).
-        // Ein zufälliges Nomen zu ziehen würde oft unsinnige Sätze ergeben (z.B. "zur Zeit
-        // des Schwertes") - daher pro Funktion eine passende, handverlesene Auswahl.
-        const ADVERBIAL_ABL_LESSON = 7;
-        const adverbialTypes = [
-            { key: 'zeit', prep: null, words: ['hōra', 'nox', 'annus', 'diēs', 'lūx'], label: 'Zeit (Ablativus temporis)', frage: 'Wann?' },
-            { key: 'ort', prep: 'in', words: ['villa', 'urbs', 'templum', 'īnsula', 'silva', 'oppidum'], label: 'Ort (Ablativus loci)', frage: 'Wo?' },
-            { key: 'herkunft', prep: 'ex', words: ['urbs', 'prōvincia', 'domus', 'silva', 'terra'], label: 'Herkunft/Trennung (Ablativus separationis)', frage: 'Woher?' },
-            { key: 'mittel', prep: null, words: ['gladius', 'manus', 'nāvis', 'arma', 'dextra'], label: 'Mittel (Ablativus instrumenti)', frage: 'Womit?' },
-            { key: 'begleitung', prep: 'cum', words: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'], label: 'Begleitung (Ablativus sociativus)', frage: 'Mit wem?' }
-        ];
-
-        // Identische Konjugations-Engine wie im Formen-Kastell
-        // Adapter: liefert dasselbe Format wie zuvor [1.Sg,2.Sg,3.Sg,1.Pl,2.Pl,3.Pl] Präsens Aktiv,
-        // nutzt aber intern VerbEngine (deckt alle unregelmäßigen Verben/Deponentien korrekt ab,
-        // die vorher als lange Einzelfall-Liste hartkodiert waren).
-        function conjugateVerb(verbObj) {
-            if (!VerbEngine.isSupported(verbObj)) return [verbObj.middle, '', '', '', '', ''];
-            return VerbEngine.getFormsForTempus(verbObj, 'Präsens');
-        }
-
-        // Adapter: liefert die vollständige NounEngine-Tabelle { sg:{nom,gen,dat,akk,abl}, pl:{...}, gender }
-        function declineNoun(nounObj) {
-            return NounEngine.decline(nounObj);
-        }
+        // Satzbau kommt vollständig aus SentenceEngine. Die Valenz jedes Verbs steht als
+        // Feld `valenz` in vocabulary.js - die früher hier hartkodierten Listen
+        // (trueIntransitive/dativeVerbs) erfassten nur 28 von 298 Verben und gaben allen
+        // übrigen ausnahmslos ein Akkusativobjekt.
 
         let correctCount = 0;
         const totalRounds = 10;
@@ -326,8 +295,8 @@
         }
 
         function startGame() {
-            nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
-            verbPool = activePool.filter(v => v.type === 'verb' && v.gram_class !== 'Deponens' && v.gram_class !== 'unregelmäßig (Passiv von facere)');
+            nounPool = activePool.filter(v => v.type === 'noun' && SentenceEngine.nomenTauglich(v));
+            verbPool = activePool.filter(v => v.type === 'verb' && SentenceEngine.verbTauglich(v));
 
             if (nounPool.length < 3 || verbPool.length < 1) {
                 alert("In den ausgewählten Lektionen gibt es noch zu wenige Nomen/Verben für dieses Spiel. Bitte wähle weitere Lektionen mit aus.");
@@ -355,170 +324,32 @@
             }
         }
 
-        // Baut einen Satz aus echtem, lektionsgefiltertem Wortschatz. Nutzt die volle VerbEngine
-        // (variable Tempora, Aktiv/Passiv) statt nur Präsens Aktiv wie zuvor.
-
-        // Baut eine adverbiale Bestimmung im Ablativ (Zeit/Ort/Herkunft/Mittel/Begleitung),
-        // sofern passende Wörter im aktuellen Pool vorhanden sind. Gibt null zurück, falls nicht.
-        function buildAdverbialPhrase() {
-            const availableTypes = adverbialTypes.filter(t => t.words.some(w => nounPool.some(n => n.latin === w)));
-            if (availableTypes.length === 0) return null;
-            const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-            const candidateWords = type.words.filter(w => nounPool.some(n => n.latin === w));
-            if (candidateWords.length === 0) return null; // Sicherheitsnetz, sollte durch obigen Filter nie eintreten
-            const chosenWord = candidateWords[Math.min(Math.floor(Math.random() * candidateWords.length), candidateWords.length - 1)];
-            const noun = nounPool.find(n => n.latin === chosenWord);
-            if (!noun) return null; // Sicherheitsnetz gegen den seltenen Randfall
-            const decl = declineNoun(noun);
-            const plural = Math.random() > 0.75; // meist Singular, idiomatischer
-            const ablForm = plural ? decl.pl.abl : decl.sg.abl;
-            const fullForm = type.prep ? `${type.prep} ${ablForm}` : ablForm;
-            const exp = `„${fullForm}“ ist eine adverbiale Bestimmung im Ablativ (${type.label}) - Frage: ${type.frage}`;
-            return { w: fullForm, role: "adv", lemma: noun.latin, exp };
-        }
-
-        function finalizeRound(words) {
-            // Wortstellungs-Falle: Satzglieder ab und zu durchmischen (Prädikat bleibt meist hinten)
-            if (Math.random() > 0.5) {
-                let praedRef = words.pop();
-                words.sort(() => Math.random() - 0.5);
-                words.push(praedRef);
-            }
-            const targetIdx = Math.floor(Math.random() * words.length);
-            return { words, targetIdx, role: words[targetIdx].role, explanation: words[targetIdx].exp, trackLemma: words[targetIdx].lemma };
-        }
-
+        // Baut eine Runde und würfelt aus, welches Satzglied bestimmt werden soll.
+        // 'natural' = lateinische Grundstellung; das Genitiv-Attribut steht dadurch
+        // direkt hinter seinem Bezugswort, worauf sich auch die Erklärung bezieht.
         function buildRound(forced) {
             if (forced) return forced;
 
-            const knownCombos = VerbEngine.getKnownCombinations(maxSelectedLesson);
-            const aktivTempora = [...new Set(knownCombos.filter(c => c.genus === 'Aktiv').map(c => c.tempus))];
-            const passivTempora = [...new Set(knownCombos.filter(c => c.genus === 'Passiv').map(c => c.tempus))];
+            for (let versuch = 0; versuch < 10; versuch++) {
+                const satz = SentenceEngine.build({
+                    nounPool: nounPool,
+                    verbPool: verbPool,
+                    maxLesson: maxSelectedLesson,
+                    wordOrder: 'natural'
+                });
+                if (!satz) continue;
 
-            const transitiveVerbs = verbPool.filter(v => !trueIntransitive.includes(v.latin) && !dativeVerbs.includes(v.latin));
-            const shuffledNouns = [...nounPool].sort(() => Math.random() - 0.5);
-            // Grobe Annäherung an "belebt" (fehlt als echtes Datenfeld): Neutra so gut wie nie Personen.
-            const animateLikeNouns = shuffledNouns.filter(n => NounEngine.decline(n).gender !== 'n');
-            const agentPool = animateLikeNouns.length > 0 ? animateLikeNouns : shuffledNouns;
-            // Manche Nomen sind grammatisch defektiv und haben keinen Genitiv (z.B. vīs) -
-            // die dürfen nicht als Genitiv-Attribut ausgewählt werden.
-            const genitiveCapableNouns = shuffledNouns.filter(n => {
-                const d = declineNoun(n);
-                return d.sg.gen !== null && d.pl.gen !== null;
-            });
-            // Dasselbe für den Dativ (vīs hat z.B. im Singular keinen Dativ).
-            const dativeCapableNouns = shuffledNouns.filter(n => {
-                const d = declineNoun(n);
-                return d.sg.dat !== null && d.pl.dat !== null;
-            });
-
-            const canPassiv = passivTempora.length > 0 && transitiveVerbs.length > 0;
-            const usePassiv = canPassiv && Math.random() < 0.3;
-
-            if (usePassiv) {
-                for (let attempt = 0; attempt < 15; attempt++) {
-                    const tempus = passivTempora[Math.floor(Math.random() * passivTempora.length)];
-                    const verb = transitiveVerbs[Math.floor(Math.random() * transitiveVerbs.length)];
-                    if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.ppp) continue;
-
-                    let forms;
-                    try { forms = VerbEngine.getFormsForTempus(verb, tempus, 'Passiv'); } catch (e) { continue; }
-
-                    const subNoun = LudiProgress.weightedPick(shuffledNouns);
-                    const subDecl = declineNoun(subNoun);
-                    const subPlural = Math.random() > 0.5;
-                    const subForm = subPlural ? subDecl.pl.nom : subDecl.sg.nom;
-                    const verbForm = subPlural ? forms[5] : forms[2];
-                    const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
-
-                    let words = [
-                        { w: subForm, role: "sub", lemma: subNoun.latin, exp: `„${subForm}“ steht im Nominativ - im Passivsatz das, was die Handlung ERLEIDET (nicht ausführt).` },
-                        { w: verbForm, role: "praed", lemma: verb.latin, exp: `„${verbForm}“ ist das Prädikat im Passiv (${tLabel}). Erkennbar an den Passiv-Endungen (-tur, -ntur, -or, -ntur ...).` }
-                    ];
-
-                    if (Math.random() > 0.4 && agentPool.length > 0) {
-                        let agentNoun;
-                        do { agentNoun = agentPool[Math.floor(Math.random() * agentPool.length)]; } while (agentNoun.latin === subNoun.latin && agentPool.length > 1);
-                        const agentDecl = declineNoun(agentNoun);
-                        const agentPlural = Math.random() > 0.5;
-                        const ablForm = agentPlural ? agentDecl.pl.abl : agentDecl.sg.abl;
-                        const prep = /^[aeiouāēīōūAEIOUĀĒĪŌŪ]/.test(ablForm) ? 'ab' : 'ā';
-                        words.push({ w: prep + ' ' + ablForm, role: "abl", lemma: agentNoun.latin, exp: `„${prep} ${ablForm}“ ist der Handlungsträger (Ablativ mit ā/ab) - von wem die Handlung ausgeht.` });
-                    } else if (maxSelectedLesson >= ADVERBIAL_ABL_LESSON && Math.random() > 0.5) {
-                        const adv = buildAdverbialPhrase();
-                        if (adv) words.push(adv);
-                    }
-
-                    return finalizeRound(words);
-                }
-                // Falls 15 Versuche nichts Passendes fanden (z.B. kein Verb mit PPP), auf Aktiv zurückfallen.
+                const words = satz.tokens.map(t => ({ w: t.text, role: t.role, lemma: t.lemma, exp: t.exp }));
+                const targetIdx = Math.floor(Math.random() * words.length);
+                return {
+                    words: words,
+                    targetIdx: targetIdx,
+                    role: words[targetIdx].role,
+                    explanation: words[targetIdx].exp,
+                    trackLemma: words[targetIdx].lemma
+                };
             }
-
-            for (let attempt = 0; attempt < 15; attempt++) {
-                const tempus = aktivTempora[Math.floor(Math.random() * aktivTempora.length)];
-                const verb = LudiProgress.weightedPick(verbPool);
-                if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && !verb.perfect) continue;
-
-                let forms;
-                try { forms = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv'); } catch (e) { continue; }
-
-                const subNoun = LudiProgress.weightedPick(shuffledNouns);
-                const subDecl = declineNoun(subNoun);
-                const subPlural = Math.random() > 0.5;
-                const subForm = subPlural ? subDecl.pl.nom : subDecl.sg.nom;
-                const verbForm = subPlural ? forms[5] : forms[2];
-                const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
-
-                let words = [
-                    { w: subForm, role: "sub", lemma: subNoun.latin, exp: `„${subForm}“ steht im Nominativ und bestimmt, wer oder was handelt.` }
-                ];
-
-                const isDativeVerb = dativeVerbs.includes(verb.latin);
-                const isIntransitive = trueIntransitive.includes(verb.latin);
-
-                if (isDativeVerb) {
-                    const datPool = dativeCapableNouns.length > 0 ? dativeCapableNouns : shuffledNouns;
-                    let datNoun;
-                    do { datNoun = datPool[Math.floor(Math.random() * datPool.length)]; } while (datNoun.latin === subNoun.latin && datPool.length > 1);
-                    const datDecl = declineNoun(datNoun);
-                    const datPlural = Math.random() > 0.5;
-                    const datForm = datPlural ? datDecl.pl.dat : datDecl.sg.dat;
-                    words.push({ w: datForm, role: "dat", lemma: datNoun.latin, exp: `„${datForm}“ steht im Dativ (Wem?) - „${verb.latin}“ verlangt ein Dativobjekt.` });
-                } else if (!isIntransitive) {
-                    let objNoun;
-                    do { objNoun = shuffledNouns[Math.floor(Math.random() * shuffledNouns.length)]; } while (objNoun.latin === subNoun.latin && shuffledNouns.length > 1);
-                    const objDecl = declineNoun(objNoun);
-                    const objPlural = Math.random() > 0.5;
-                    const objForm = objPlural ? objDecl.pl.akk : objDecl.sg.akk;
-                    words.push({ w: objForm, role: "obj", lemma: objNoun.latin, exp: `„${objForm}“ steht im Akkusativ (Wen-oder-was-Frage) - es ist das direkte Ziel der Handlung.` });
-                }
-
-                if (Math.random() > 0.5 && genitiveCapableNouns.length > 0) {
-                    let attrNoun;
-                    do { attrNoun = genitiveCapableNouns[Math.floor(Math.random() * genitiveCapableNouns.length)]; } while ((attrNoun.latin === subNoun.latin || words.some(w => w.lemma === attrNoun.latin)) && genitiveCapableNouns.length > 1);
-                    const attrDecl = declineNoun(attrNoun);
-                    const attrPlural = Math.random() > 0.5;
-                    const attrForm = attrPlural ? attrDecl.pl.gen : attrDecl.sg.gen;
-                    words.push({ w: attrForm, role: "attr", lemma: attrNoun.latin, exp: `„${attrForm}“ ist ein Genitiv (wessen?) - es beschreibt einen Besitzer/Bezug näher, auch wenn es direkt neben einem anderen Wort steht.` });
-                } else if (maxSelectedLesson >= ADVERBIAL_ABL_LESSON && Math.random() > 0.4) {
-                    const adv = buildAdverbialPhrase();
-                    if (adv) words.push(adv);
-                }
-
-                words.push({ w: verbForm, role: "praed", lemma: verb.latin, exp: `„${verbForm}“ ist das Prädikat (${tLabel}). Die Endung zeigt an, wer handelt und (ggf.) wann.` });
-
-                return finalizeRound(words);
-            }
-
-            // Sicherheitsnetz: sollte praktisch nie erreicht werden (nur falls Pool extrem klein ist)
-            const subNoun = shuffledNouns[0];
-            const subDecl = declineNoun(subNoun);
-            const verb = verbPool[0];
-            const forms = VerbEngine.getFormsForTempus(verb, 'Präsens', 'Aktiv');
-            return finalizeRound([
-                { w: subDecl.sg.nom, role: "sub", lemma: subNoun.latin, exp: "Nominativ - wer/was handelt." },
-                { w: forms[2], role: "praed", lemma: verb.latin, exp: "Prädikat." }
-            ]);
+            return null;
         }
 
         function nextQuestion(forced) {
@@ -563,14 +394,23 @@
                 else { missedItems.push({ words: currentWords, targetIdx: currentTargetIdx, role: currentTargetRole, explanation: currentExplanation, trackLemma: currentTrackLemma }); }
             }
 
-            const roleNames = { sub: "Subjekt", praed: "Prädikat", obj: "Akkusativ-Objekt", attr: "Genitiv-Attribut" };
+            // Artikel steht mit im Namen, weil die Rollen unterschiedliche Genera haben.
+            const roleNames = {
+                sub:   "das Subjekt",
+                praed: "das Prädikat",
+                obj:   "das Akkusativobjekt",
+                dat:   "das Dativobjekt",
+                attr:  "das Genitiv-Attribut",
+                abl:   "der Handlungsträger im Ablativ",
+                adv:   "die adverbiale Bestimmung"
+            };
             const title = document.getElementById('feedback-title');
             if (isCorrect) {
                 title.innerText = "✅ Richtig!";
             } else {
                 title.innerText = "🧭 Nicht ganz...";
             }
-            showModal(`Das war ${isCorrect ? "" : "nicht "}das ${roleNames[currentTargetRole]}.\n\n${currentExplanation}`);
+            showModal(`Das war ${isCorrect ? "" : "nicht "}${roleNames[currentTargetRole]}.\n\n${currentExplanation}`);
         }
 
         function updateWagon() {
