@@ -94,9 +94,63 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
 - **Bild-Assets**: Cartoon-Stil, "children's book style, simple clean lines", auf Magenta-Hintergrund
   (#FF00FF) generiert und dann per HSV-basiertem Colorkey freigestellt (Python/PIL), dann skaliert
   und als JPEG (Hintergründe) oder PNG (transparente Elemente) gespeichert.
-- **Lektions-Gating**: Jede Engine-Fähigkeit hat eine feste Einführungs-Lektion (analog zum
-  Pontes-Inhaltsverzeichnis), z.B. Passiv ab L15, PPA ab L20, Konjunktiv ab L24/L28/L29,
-  Ablativ-Adverbialien ab L7, Gerundium/Gerundivum ab T2 (≈L33).
+- **Lektions-Gating**: Jede Engine-Fähigkeit hat eine feste Einführungs-Lektion. Die
+  verbindlichen Nummern stehen im Abschnitt „Lehrgang: was wann drankommt“ weiter unten –
+  dort nachschlagen, nicht schätzen. Beim Ergänzen einer neuen Fähigkeit gehört die Nummer
+  als benannte Konstante in die Engine und in `test-gating.js`.
+
+## Lehrgang: was wann drankommt
+
+Aus dem Inhaltsverzeichnis von *Pontes* übernommen – **die verbindliche Quelle für jedes
+Lektions-Gating**. Nicht aus dem Gedächtnis ergänzen, sondern hier nachschlagen.
+
+Die Transitio-Lektionen T1–T4 sind im Code als **Lektion 32–35** geführt (T1=32 … T4=35);
+im Buch stehen sie nach L31 und können in beliebiger Reihenfolge bearbeitet werden.
+
+| L | Syntax | Formenlehre |
+|---|---|---|
+| S | Subjekt/Prädikat, „verstecktes“ Subjekt, Substantiv als Prädikatsnomen | |
+| 1 | **Akkusativobjekt** | Subst. Nom.+Akk. Sg. (o-/a-/kons.), Verben 3. P. Sg. |
+| 2 | Kongruenz Subjekt–Prädikat | Subst. Nom.+Akk. Pl., Neutra o-Dekl., Vokativ, Verben 3. P. Pl., **Infinitiv** |
+| 3 | adverbiale Bestimmung: Richtungsangabe | Verben 1.+2. P., *esse*, Personalpron. (1.+2.), Präp. + Akk. |
+| 4 | Frage- und Aufforderungssätze | **Imperativ**, *posse* |
+| 5 | Adjektiv/Substantiv als Attribut, Adjektiv als Prädikatsnomen, **KNG-Kongruenz** | Adjektive o-/a-Dekl., gem. Konjugation |
+| 6 | **Genitiv als Attribut**, Possessivpronomina | **Genitiv**, Possessivpronomina |
+| 7 | **Ablativ als adverbiale Bestimmung** (Ort, Herkunft, Begleitung, Mittel, Zeit) | **Ablativ**, *īre* |
+| 8 | **AcI als satzwertige Konstruktion** | Adverbien zu Adj. der o-/a-Dekl. |
+| 9 | **Dativobjekt**, Demonstrativpron. *is* | **Dativ**, *is* |
+| 10 | Perfekt, **Zeitverhältnisse im AcI** | **Perfekt**, **Infinitiv der Vorzeitigkeit** |
+| 11 | adverbiale Nebensätze | *hic*, *ille*, weitere Perfektbildungen |
+| 12 | Imperfekt vs. Perfekt | **Imperfekt**, Neutra kons. Dekl. |
+| 13 | Futur, Substantivierung von Adjektiven | **Futur I**, *ipse* |
+| 14 | Plusquamperfekt | **Plusquamperfekt** |
+| 15 | **Passiv** | Präsens/Imperfekt/Futur Passiv, **Infinitiv Präsens Passiv** |
+| 16 | Relativsätze | Perfekt+Plusquamperfekt Passiv, **Infinitiv Perfekt Passiv**, **PPP**, Relativpronomen |
+| 17 | relativer Satzanschluss | Adjektive i-Dekl. (*ācer, gravis, audāx*), Adverbien |
+| 18 | **PPP (Vorzeitigkeit, Passiv) im Participium coniunctum** | |
+| 19 | Genitiv possessivus/subiectivus/obiectivus/partitivus | Genitiv der Personalpron., *iste* |
+| 20 | **PPA (Gleichzeitigkeit, Aktiv) im Participium coniunctum** | **PPA** |
+| 21 | Akkusativ der Ausdehnung | e-Deklination |
+| 22 | **Ablativus absolutus** | |
+| 23 | Reflexivität im AcI, Satzgliedfunktion von AcI und Infinitiv | *velle* |
+| 24 | Irrealis der Gegenwart und Vergangenheit | **Konjunktiv Imperfekt + Plusquamperfekt** |
+| 25 | *ut*-Sätze (final, konsekutiv, Wunschsätze), *nē* / *ut nōn* | |
+| 26 | *cum*-Sätze (temporal, kausal, konzessiv) | u-Deklination |
+| 27 | **nominaler Abl. abs.**, Prädikativum | |
+| 28 | gleichzeitige konjunktivische Nebensätze, Partizipien attributiv | **Konjunktiv Präsens** |
+| 29 | vorzeitige konjunktivische Nebensätze, indirekte Fragesätze | **Konjunktiv Perfekt** |
+| 30 | Konjunktiv im Hauptsatz (Optativ, Jussiv, Adhortativ, Prohibitiv) | *ferre* |
+| 31 | Deponentien, **Partizip der Deponentien** | **Deponentien**, *fierī* |
+| T1 (32) | Dativ finalis/commodi/possessivus | *nōlle* |
+| T2 (33) | Verwendung des **Gerundiums**, Genitivus qualitatis | **Gerundium** |
+| T3 (34) | Verwendung des **Gerundivums** (mit und ohne *esse*), Dativus auctoris | **Gerundivum** |
+| T4 (35) | *(im vorliegenden Auszug des Inhaltsverzeichnisses nicht enthalten)* | |
+
+Wo diese Zahlen im Code stehen: `VerbEngine.TEMPUS_LESSON_AKTIV/_PASSIV`, `INFINITIV_LESSON`,
+`IMPERATIV_LESSON`, `PPA_LESSON`, `KONJUNKTIV_LESSON`, `GERUNDIUM_LESSON`, `GERUNDIVUM_LESSON`
+sowie `SentenceEngine.ATTRIBUT_LESSON/ADVERBIAL_LESSON/DATIVOBJEKT_LESSON/PASSIV_LESSON`.
+`latein-tests/test-gating.js` prüft alle 22 Konstanten gegen diese Tabelle und dazu, dass die
+erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
 
 ## Offene Punkte / auf der Liste
 

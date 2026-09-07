@@ -13,9 +13,12 @@
 
 const SentenceEngine = (() => {
 
-    // ---- Lektions-Gating (analog zum Pontes-Inhaltsverzeichnis) ----
-    const ADVERBIAL_LESSON = 7;   // Ablativ-Adverbialien
-    const PASSIV_LESSON    = 15;  // ab hier kann passiv gebaut werden
+    // ---- Lektions-Gating (Lektionsnummern aus dem Pontes-Inhaltsverzeichnis) ----
+    const ATTRIBUT_LESSON  = 6;   // L6: Genitiv als Attribut ("Wessen?")
+    const ADVERBIAL_LESSON = 7;   // L7: Ablativ als adverbiale Bestimmung
+    const DATIVOBJEKT_LESSON = 9; // L9: Dativobjekt (der Dativ selbst wird hier eingeführt)
+    const PASSIV_LESSON    = 15;  // L15: Passiv
+    // Das Akkusativobjekt kommt in L1 und braucht deshalb kein Gate.
 
     // ---- Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ ----
     // Ein zufälliges Nomen zu ziehen ergäbe oft Unsinn ("zur Zeit des Schwertes"),
@@ -245,7 +248,10 @@ const SentenceEngine = (() => {
         // ---- Objekt(e) nach der Valenz des Verbs ----
         const valenz = waehle(valenzen(verb));
 
-        if ((valenz === 'dat' || valenz === 'dat+akk') && darf('dat')) {
+        // Der Dativ wird erst in L9 eingeführt. Davor bleibt ein Dativverb wie
+        // respondēre im Wortschatz, baut aber kein Objekt - "puella respondet"
+        // ist korrekt und verlangt nichts, was noch nicht gelehrt wurde.
+        if ((valenz === 'dat' || valenz === 'dat+akk') && darf('dat') && maxLesson >= DATIVOBJEKT_LESSON) {
             const t = baueObjekt(nomen, belegt, 'dat', verb);
             if (!t) return null;
             tokens.push(t);
@@ -357,7 +363,7 @@ const SentenceEngine = (() => {
             .map((t, i) => ({ t, i }))
             .filter(x => x.t.role === 'sub' || x.t.role === 'obj' || x.t.role === 'dat');
 
-        if (darf('attr') && bezugsfaehig.length && Math.random() > 0.5) {
+        if (darf('attr') && maxLesson >= ATTRIBUT_LESSON && bezugsfaehig.length && Math.random() > 0.5) {
             const pool = mitKasus(nomen, 'gen').filter(n => !belegt.has(n.latin));
             if (pool.length) {
                 const n = waehleGewichtet(pool);
@@ -457,7 +463,9 @@ const SentenceEngine = (() => {
     return {
         build,
         ALLE_ROLLEN,
+        ATTRIBUT_LESSON,
         ADVERBIAL_LESSON,
+        DATIVOBJEKT_LESSON,
         PASSIV_LESSON,
         // für Tests und Spiele nützlich:
         valenzen,

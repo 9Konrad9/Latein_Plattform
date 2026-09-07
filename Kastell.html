@@ -475,17 +475,22 @@
             }
 
             // --- Gerundium / Gerundivum ---
-            if (VerbEngine.isGerundiveKnown(maxSelectedLesson) && VerbEngine.isGerundiveApplicable(verbObj)) {
-                const g = VerbEngine.getGerundium(verbObj);
-                slots.push({ form: g.gen, label: 'Gerundium Genitiv', weight: FORM_WEIGHT.selten });
-                slots.push({ form: g.dat, label: 'Gerundium Dativ', weight: FORM_WEIGHT.selten });
-                slots.push({ form: g.akk, label: 'Gerundium Akkusativ', weight: FORM_WEIGHT.selten });
-                slots.push({ form: g.abl, label: 'Gerundium Ablativ', weight: FORM_WEIGHT.selten });
+            // Getrennt gestaffelt: Gerundium kommt in T2, das Gerundivum erst in T3.
+            if (VerbEngine.isGerundiveApplicable(verbObj)) {
+                if (VerbEngine.isGerundiumKnown(maxSelectedLesson)) {
+                    const g = VerbEngine.getGerundium(verbObj);
+                    slots.push({ form: g.gen, label: 'Gerundium Genitiv', weight: FORM_WEIGHT.selten });
+                    slots.push({ form: g.dat, label: 'Gerundium Dativ', weight: FORM_WEIGHT.selten });
+                    slots.push({ form: g.akk, label: 'Gerundium Akkusativ', weight: FORM_WEIGHT.selten });
+                    slots.push({ form: g.abl, label: 'Gerundium Ablativ', weight: FORM_WEIGHT.selten });
+                }
 
-                const gd = VerbEngine.getGerundivumDeclension(verbObj);
-                slots.push({ form: gd.sg.nom, label: 'Gerundivum Nominativ Singular', weight: FORM_WEIGHT.selten });
-                slots.push({ form: gd.sg.akk, label: 'Gerundivum Akkusativ Singular', weight: FORM_WEIGHT.selten });
-                slots.push({ form: gd.pl.nom, label: 'Gerundivum Nominativ Plural', weight: FORM_WEIGHT.selten });
+                if (VerbEngine.isGerundivumKnown(maxSelectedLesson)) {
+                    const gd = VerbEngine.getGerundivumDeclension(verbObj);
+                    slots.push({ form: gd.sg.nom, label: 'Gerundivum Nominativ Singular', weight: FORM_WEIGHT.selten });
+                    slots.push({ form: gd.sg.akk, label: 'Gerundivum Akkusativ Singular', weight: FORM_WEIGHT.selten });
+                    slots.push({ form: gd.pl.nom, label: 'Gerundivum Nominativ Plural', weight: FORM_WEIGHT.selten });
+                }
             }
 
             return buildRoundFromSlots(slots);

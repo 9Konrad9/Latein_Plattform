@@ -813,7 +813,10 @@ const VerbEngine = (() => {
     // e-Konj/konsonantische "-end-".
     // ============================================================
 
-    const GERUNDIVE_LESSON = 33; // T2
+    // Gerundium und Gerundivum werden im Lehrbuch NICHT gemeinsam eingeführt:
+    // T2 behandelt das Gerundium, erst T3 das Gerundivum.
+    const GERUNDIUM_LESSON  = 33; // T2
+    const GERUNDIVUM_LESSON = 34; // T3
 
     /**
      * esse/posse/velle/nōlle/fierī (und esse-Komposita) bilden klassisch kein
@@ -827,8 +830,12 @@ const VerbEngine = (() => {
         return true;
     }
 
-    function isGerundiveKnown(maxSelectedLesson) {
-        return maxSelectedLesson >= GERUNDIVE_LESSON;
+    function isGerundiumKnown(maxSelectedLesson) {
+        return maxSelectedLesson >= GERUNDIUM_LESSON;
+    }
+
+    function isGerundivumKnown(maxSelectedLesson) {
+        return maxSelectedLesson >= GERUNDIVUM_LESSON;
     }
 
     function gerundStemByType(root, conjType) {
@@ -903,10 +910,12 @@ const VerbEngine = (() => {
         getSubjunctiveForms,
         KONJUNKTIV_LESSON,
         isGerundiveApplicable,
-        isGerundiveKnown,
+        isGerundiumKnown,
+        isGerundivumKnown,
         getGerundium,
         getGerundivumDeclension,
-        GERUNDIVE_LESSON,
+        GERUNDIUM_LESSON,
+        GERUNDIVUM_LESSON,
         TEMPORA,
         GENERA,
         TEMPUS_LESSON_AKTIV,
