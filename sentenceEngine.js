@@ -31,7 +31,13 @@ const SentenceEngine = (() => {
         { key: 'begleitung', prep: 'cum', woerter: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'],   label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?' }
     ];
 
+    const ACI_LESSON = 8;         // L8: AcI als satzwertige Konstruktion
+
     const ALLE_ROLLEN = ['sub', 'praed', 'obj', 'dat', 'attr', 'abl', 'adv'];
+
+    // Rollen innerhalb eines AcI. Bewusst eigene Namen: Der Subjektsakkusativ ist
+    // KEIN Objekt, auch wenn er im Akkusativ steht - genau das ist die Hürde.
+    const ACI_ROLLEN = ['aciSub', 'aciInf'];
 
     // ================= Hilfsmittel =================
 
@@ -61,6 +67,17 @@ const SentenceEngine = (() => {
         const v = verbObj.valenz;
         if (!v) return ['akk'];               // Sicherheitsnetz für unvollständige Datensätze
         return Array.isArray(v) ? v : [v];
+    }
+
+    /**
+     * Deponentien (und fierī) haben passive FORMEN, aber aktive BEDEUTUNG.
+     * VerbEngine führt sie deshalb unter genus 'Passiv' - für eine Konjugationstabelle
+     * richtig. Im Satz ist die Bedeutung maßgeblich: „hortārī“ heißt ermahnen, nicht
+     * ermahnt werden, und ein echter Passivsatz mit Handlungsträger ist damit unmöglich.
+     * Deshalb überall dort trennen, wo Form und Bedeutung auseinanderfallen.
+     */
+    function istDeponens(verbObj) {
+        return verbObj.gram_class === 'Deponens' || verbObj.latin === 'fierī';
     }
 
     /** Darf dieses Verb überhaupt in einen generierten Satz? */
@@ -120,11 +137,16 @@ const SentenceEngine = (() => {
      * muss das Partizip mit ihm kongruieren. Betrifft Passiv-Perfekt/-Plusquamperfekt
      * und die Perfektformen der Deponentien.
      */
-    function kongruiere(text, gender, numerus) {
+    const PARTIZIP_ENDUNG = {
+        nom: { sg: { m: 'us', f: 'a',  n: 'um' }, pl: { m: 'ī',  f: 'ae', n: 'a' } },
+        // Im AcI kongruiert das Partizip mit dem Subjektsakkusativ, steht also im Akkusativ.
+        akk: { sg: { m: 'um', f: 'am', n: 'um' }, pl: { m: 'ōs', f: 'ās', n: 'a' } }
+    };
+
+    function kongruiere(text, gender, numerus, kasus) {
         if (!text) return text;
-        const SG = { m: 'us', f: 'a', n: 'um' };
-        const PL = { m: 'ī', f: 'ae', n: 'a' };
-        const endung = numerus === 'pl' ? (PL[gender] || PL.m) : (SG[gender] || SG.m);
+        const tabelle = PARTIZIP_ENDUNG[kasus || 'nom'][numerus === 'pl' ? 'pl' : 'sg'];
+        const endung = tabelle[gender] || tabelle.m;
         return text.replace('us/a/um', endung).replace('ī/ae/a', endung);
     }
 
@@ -197,7 +219,8 @@ const SentenceEngine = (() => {
         if (!aktivTempora.length) return null;
 
         // Passiv braucht ein transitives Verb - sonst gibt es nichts zu erleiden.
-        const transitiv = verben.filter(v => valenzen(v).some(x => x === 'akk' || x === 'dat+akk'));
+        // Deponentien scheiden aus: ihre Formen sind passiv, ihre Bedeutung ist es nicht.
+        const transitiv = verben.filter(v => !istDeponens(v) && valenzen(v).some(x => x === 'akk' || x === 'dat+akk'));
         const passivMoeglich = darf('abl') && maxLesson >= PASSIV_LESSON
             && passivTempora.length > 0 && transitiv.length > 0;
 
@@ -460,9 +483,142 @@ const SentenceEngine = (() => {
         return text;
     }
 
+    // ================= AcI =================
+
+    /**
+     * Baut einen Satz mit AcI: Kopfsatz (Subjekt + Kopfverb) plus eingebetteter
+     * Akkusativ + Infinitiv.
+     *
+     *   „puella videt servum venīre.“   Subjekt puella, Kopfverb videt,
+     *                                    Subjektsakkusativ servum, Infinitiv venīre.
+     *
+     * Das Zeitverhältnis steckt in der Infinitiv-Form: Präsens = gleichzeitig,
+     * Perfekt = vorzeitig. Beides wird vom Lehrgang gestaffelt (Infinitiv Perfekt
+     * Aktiv ab L10) - die Aufgabe „gleichzeitig oder vorzeitig?“ schaltet sich damit
+     * genau dann frei, wenn das Lehrbuch die Zeitverhältnisse im AcI behandelt.
+     *
+     * Rückgabe wie build(), zusätzlich: zeitverhaeltnis ('gleichzeitig'|'vorzeitig'),
+     * infGenus ('Aktiv'|'Passiv'), kopfLemma.
+     */
+    function buildAcI(optionen) {
+        const opt = optionen || {};
+        const maxLesson = opt.maxLesson != null ? opt.maxLesson : 999;
+        if (maxLesson < ACI_LESSON) return null;
+
+        const nomen = (opt.nounPool || []).filter(nomenTauglich);
+        const verben = (opt.verbPool || []).filter(verbTauglich);
+        const koepfe = verben.filter(v => v.aci);
+        if (nomen.length < 2 || !koepfe.length || !verben.length) return null;
+
+        const nomNomen = mitKasus(nomen, 'nom');
+        const akkNomen = mitKasus(nomen, 'akk');
+        if (!nomNomen.length || !akkNomen.length) return null;
+
+        // Welche Infinitive sind in dieser Lektionsspanne bekannt?
+        const inf = [];
+        [['Präsens', 'Aktiv'], ['Perfekt', 'Aktiv'], ['Präsens', 'Passiv'], ['Perfekt', 'Passiv']]
+            .forEach(k => { if (VerbEngine.isInfinitiveKnown(k[0], k[1], maxLesson)) inf.push({ tempus: k[0], genus: k[1] }); });
+        if (!inf.length) return null;
+
+        for (let versuch = 0; versuch < 25; versuch++) {
+            const kopf = waehleGewichtet(koepfe);
+            const wahl = waehle(inf);
+            const innen = waehleGewichtet(verben);
+
+            // wahl.genus ist die BEDEUTUNG. Ein Deponens trägt sie in passiver Form,
+            // hat aber selbst kein Passiv - es kann also nur die aktive Lesart liefern.
+            if (istDeponens(innen) && wahl.genus === 'Passiv') continue;
+            const formGenus = istDeponens(innen) ? 'Passiv' : wahl.genus;
+
+            // Passivische Bedeutung braucht ein transitives Verb - sonst gibt es nichts zu erleiden.
+            if (wahl.genus === 'Passiv' && !valenzen(innen).some(x => x === 'akk' || x === 'dat+akk')) continue;
+            if (!VerbEngine.isInfinitiveApplicable(innen, wahl.tempus, formGenus)) continue;
+
+            let infForm;
+            try { infForm = VerbEngine.getInfinitive(innen, wahl.tempus, formGenus); } catch (e) { continue; }
+            if (!infForm) continue;
+
+            // Kopfsatz. Sagen, denken und befehlen kann nur ein Mensch - ein Tier nicht
+            // ("bōs iubet"). Sehen und hören dagegen schon, deshalb tragen die
+            // Wahrnehmungsverben aci: "wahrnehmen" und lassen auch Tiere zu.
+            const kopfPool = kopf.aci === 'wahrnehmen'
+                ? nurBelebte(nomNomen)
+                : nomNomen.filter(n => n.belebt === 'person');
+            if (!kopfPool.length) continue;
+            const kopfSub = waehleGewichtet(kopfPool);
+            const belegt = new Set([kopfSub.latin]);
+            const kopfPlural = Math.random() > 0.5;
+            const kopfSubForm = form(kopfSub, 'nom', kopfPlural ? 'pl' : 'sg');
+
+            let kopfFormen;
+            try { kopfFormen = VerbEngine.getFormsForTempus(kopf, 'Präsens', 'Aktiv'); } catch (e) { continue; }
+            const kopfForm = kopfPlural ? kopfFormen[5] : kopfFormen[2];
+            if (!kopfSubForm || !kopfForm) continue;
+
+            // Subjektsakkusativ: logisches Subjekt des Infinitivs. Im Aktiv gilt für ihn
+            // derselbe Belebtheitsanspruch wie für jedes Subjekt; im Passiv erleidet er.
+            const akkPool = (wahl.genus === 'Aktiv' && innen.subjBelebt ? nurBelebte(akkNomen) : akkNomen)
+                .filter(n => !belegt.has(n.latin));
+            if (!akkPool.length) continue;
+            const akkNomenWahl = waehleGewichtet(akkPool);
+            const akkNumerus = Math.random() > 0.5 ? 'pl' : 'sg';
+            const akkForm = form(akkNomenWahl, 'akk', akkNumerus);
+            if (!akkForm) continue;
+
+            // Zusammengesetzte Infinitive (Perfekt Passiv, Deponentien) enthalten ein
+            // Partizip. Es kongruiert mit dem Subjektsakkusativ - also Akkusativ,
+            // nicht Nominativ: "servum missum esse", "puellās missās esse".
+            const akkGenus = NounEngine.decline(akkNomenWahl).gender;
+            infForm = kongruiere(infForm, akkGenus, akkNumerus, 'akk');
+
+            const zeit = wahl.tempus === 'Präsens' ? 'gleichzeitig' : 'vorzeitig';
+            const genusText = wahl.genus === 'Passiv' ? ' Passiv' : '';
+
+            const tokens = [
+                {
+                    text: kopfSubForm, role: 'sub', lemma: kopfSub.latin, head: null,
+                    exp: `„${kopfSubForm}“ ist das Subjekt des Hauptsatzes - wer wahrnimmt, sagt oder denkt.`
+                },
+                {
+                    text: kopfForm, role: 'praed', lemma: kopf.latin, head: null,
+                    exp: `„${kopfForm}“ ist das Prädikat des Hauptsatzes. Verben des Sagens, Denkens und Wahrnehmens lösen einen AcI aus.`
+                },
+                {
+                    text: akkForm, role: 'aciSub', lemma: akkNomenWahl.latin, head: 3,
+                    exp: `„${akkForm}“ steht im Akkusativ, ist aber KEIN Objekt: Es ist das Subjekt des AcI - im Deutschen wird es zum Subjekt des „dass“-Satzes.`
+                },
+                {
+                    text: infForm, role: 'aciInf', lemma: innen.latin, head: 2,
+                    exp: `„${infForm}“ ist der Infinitiv${genusText} des AcI (${wahl.tempus}) und damit ${zeit} zum Prädikat des Hauptsatzes.`
+                }
+            ];
+
+            return {
+                tokens,
+                tempus: 'Präsens',
+                genus: 'Aktiv',
+                verbLemma: kopf.latin,
+                kopfLemma: kopf.latin,
+                infLemma: innen.latin,
+                zeitverhaeltnis: zeit,
+                infTempus: wahl.tempus,
+                infGenus: wahl.genus,
+                explanation: `<strong>${kopfSubForm} ${kopfForm}</strong> ist der Hauptsatz. ` +
+                    `<strong>${akkForm}</strong> und <strong>${infForm}</strong> bilden den AcI: ` +
+                    `„…, dass ${akkForm} ${infForm}“. Der Infinitiv steht im ${wahl.tempus}${genusText}, ` +
+                    `die Handlung ist also <strong>${zeit}</strong>.`
+            };
+        }
+
+        return null;
+    }
+
     return {
         build,
+        buildAcI,
         ALLE_ROLLEN,
+        ACI_ROLLEN,
+        ACI_LESSON,
         ATTRIBUT_LESSON,
         ADVERBIAL_LESSON,
         DATIVOBJEKT_LESSON,
