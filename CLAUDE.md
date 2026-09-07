@@ -16,6 +16,11 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - `vocabulary.js` – die Wortschatz-Datenbank. Jeder Eintrag: `{ latin, lesson, type, middle,
   gram_clue, gram_class, meaning, ... }`. Bei Verben zusätzlich `perfect`, `perfectLesson`, `ppp`,
   `pppLesson` (nur gesetzt, wenn die Form SPÄTER gelehrt wird als das Wort selbst).
+  Für den Satzbau tragen Verben außerdem `valenz` (`"akk" | "dat" | "dat+akk" | "intrans" |
+  `"abl"` | `"gen"`, oder ein Array, wenn beide Verwendungen gelten) und `subjBelebt`
+  (verlangt das Verb ein Lebewesen als Subjekt?); Nomen tragen `belebt`
+  (`"person" | "tier" | "sache"`). Mehrteilige Lemmata haben `satzbau: false`.
+  Diese vier Felder sind fachlich gegengelesen – NICHT im Vorbeigehen ändern.
 - `nounEngine.js` – zentrale Deklinations-Engine für Substantive. API: `NounEngine.decline(nounObj)`
   gibt `{ sg: {nom,gen,dat,akk,abl}, pl: {...}, gender }` zurück (Werte können `null` sein bei
   defektiven Nomen wie *vīs*!). `NounEngine.getForm(nounObj, caseKey, numerus)` für Einzelformen.
@@ -94,6 +99,13 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   Ablativ-Adverbialien ab L7, Gerundium/Gerundivum ab T2 (≈L33).
 
 ## Offene Punkte / auf der Liste
+
+- **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
+  die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:
+  rund 49 % der Aktivsätze haben eines, und *poēta vulnus legit* ist weiterhin möglich. Dafür
+  bräuchte es grobe Sachfelder an den Nomen (Flüssigkeit, Ort, Text, Abstraktum …) und die
+  passende Erwartung am Verb. Deutlich mehr Aufwand als Stufe 1 – erst angehen, wenn im Spiel
+  auffällt, dass es stört.
 
 - Satzwertige Konstruktionen (AcI, Participium coniunctum, Ablativus absolutus) als eigenes,
   neues Spiel – noch nicht begonnen, nur besprochen.

@@ -92,9 +92,21 @@ const SentenceEngine = (() => {
         });
     }
 
-    /** Grobe Näherung an "belebt" - ein echtes Datenfeld fehlt. Neutra sind praktisch nie Personen. */
-    function belebtAehnlich(pool) {
-        const gefiltert = pool.filter(n => NounEngine.decline(n).gender !== 'n');
+    /**
+     * Bezeichnet dieses Nomen ein Lebewesen? Steht als Feld `belebt` in vocabulary.js
+     * ("person" | "tier" | "sache"). Ältere Datensätze ohne das Feld gelten als belebt,
+     * damit ein fehlender Eintrag den Wortschatz nicht stillschweigend halbiert.
+     */
+    function istBelebt(nounObj) {
+        return nounObj.belebt !== 'sache';
+    }
+
+    /**
+     * Schränkt einen Nomen-Pool auf Lebewesen ein. Fällt auf den vollen Pool zurück,
+     * wenn keine übrig blieben - lieber ein schiefer Satz als gar keiner.
+     */
+    function nurBelebte(pool) {
+        const gefiltert = pool.filter(istBelebt);
         return gefiltert.length ? gefiltert : pool;
     }
 
@@ -212,8 +224,13 @@ const SentenceEngine = (() => {
         let formen;
         try { formen = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv'); } catch (e) { return null; }
 
+        // Die meisten Verben (244 von 298) verlangen ein Lebewesen als Subjekt: eine Wunde
+        // kann nichts verehren. Ohne diese Einschränkung waren 41,5 % aller erzeugten Sätze
+        // semantisch unmöglich, weil nur gut ein Viertel der Nomen Lebewesen bezeichnet.
+        const subPool = verb.subjBelebt ? nurBelebte(nomNomen) : nomNomen;
+
         const belegt = new Set();
-        const subNomen = waehleGewichtet(nomNomen);
+        const subNomen = waehleGewichtet(subPool);
         belegt.add(subNomen.latin);
 
         const plural = Math.random() > 0.5;
@@ -290,9 +307,10 @@ const SentenceEngine = (() => {
             }
         ];
 
-        // Handlungsträger im Ablativ mit ā/ab - bevorzugt ein belebtes Nomen
+        // Handlungsträger im Ablativ mit ā/ab. Wer eine Handlung ausführt, ist ein
+        // Lebewesen - eine sachliche Ursache stünde ohne Präposition im blanken Ablativ.
         if (Math.random() > 0.4) {
-            const kandidaten = belebtAehnlich(mitKasus(nomen, 'abl')).filter(n => !belegt.has(n.latin));
+            const kandidaten = nurBelebte(mitKasus(nomen, 'abl')).filter(n => !belegt.has(n.latin));
             if (kandidaten.length) {
                 const agens = waehleGewichtet(kandidaten);
                 belegt.add(agens.latin);
