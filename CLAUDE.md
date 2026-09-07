@@ -70,6 +70,22 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   `node --check`, dann funktionaler Test durch Laden der HTML-Datei mit `runScripts: 'dangerously'`).
   localStorage funktioniert unter `file://`-URLs in jsdom nicht zuverlässig – bei Bedarf mit
   In-Memory-Ersatz oder `http://`-Basis-URL umgehen.
+  Testumgebung liegt in `C:\Users\konra\latein-tests` (Node + jsdom), bewusst AUSSERHALB des
+  OneDrive-Ordners – `node_modules` gehört nicht in die Synchronisierung und nicht ins Repo.
+  Wiederverwendbare Testbasis dort: `harness.js` (`loadScripts([...])` → `{ ev, errors }`).
+  Zwei Fallstricke, die dabei jedes Mal zuschlagen:
+  - **`window.eval(quelltext)` funktioniert NICHT** zum Laden der Projektdateien. Deren Globals
+    (`globalVocabularyPool`, `NounEngine`, `VerbEngine` ...) sind top-level `const` – solche
+    Bindings landen weder auf `window`, noch überleben sie den eval-Scope. Die Dateien müssen als
+    echte `<script>`-Tags in die Seite; der Zugriff läuft danach über `window.eval('name')`.
+  - **Beim Inlinen die Sequenz `</script` escapen.** `nounEngine.js`, `verbEngine.js`, `progress.js`
+    und `achievementToast.js` enthalten sie im Einbinde-Hinweis-Kommentar. Im Browser harmlos (die
+    Dateien werden per `src` geladen), beim Inlinen bricht der HTML-Parser dort das Script-Tag ab –
+    die Datei lädt dann still nur zur Hälfte.
+  - **jsdom kennt `innerText` nicht.** Die Spiele setzen Texte fast überall per `.innerText`; in
+    jsdom legt das nur eine gewöhnliche JS-Eigenschaft an, statt den DOM-Text zu ändern.
+    `.textContent` liefert deshalb weiter den HTML-Platzhalter – ein Test, der `textContent` prüft,
+    prüft nichts. Stattdessen die Eigenschaft selbst lesen (`el.innerText`).
 - **Bild-Assets**: Cartoon-Stil, "children's book style, simple clean lines", auf Magenta-Hintergrund
   (#FF00FF) generiert und dann per HSV-basiertem Colorkey freigestellt (Python/PIL), dann skaliert
   und als JPEG (Hintergründe) oder PNG (transparente Elemente) gespeichert.
