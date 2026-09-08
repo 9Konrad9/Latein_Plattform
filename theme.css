@@ -1,0 +1,164 @@
+/* theme.css
+   Gemeinsame Gestaltung aller Spiele. Einbinden per
+   <link rel="stylesheet" href="theme.css"> VOR dem eigenen <style>-Block.
+
+   Vorher deklarierte jede der 13 HTML-Dateien ihre eigene Palette - eine
+   Farbänderung hieß dreizehn Mal dieselbe Änderung. Hier steht sie einmal.
+
+   Grundgedanke: Die Spielillustrationen (Kastells Schlachtfeld, Villas
+   Baustelle, der Circus) sind hell - blauer Himmel, grüne Hügel, sandiger
+   Boden. Der frühere fast schwarze Rahmen arbeitete gegen sie. Der Rahmen
+   ist deshalb warmer Stein, die Schrift dunkle Tinte, und Gold bleibt
+   Material in den Bild-Assets statt Schriftfarbe.
+
+   Alle Kontrastwerte gemessen, nicht geschätzt (WCAG-Verhältnis). */
+
+:root {
+    /* ---- Grundflächen ---- */
+    --wand:        #e6d9bf;   /* Seitengrund, Travertin */
+    --wand-tief:   #d8c8a6;   /* Abstufung, Ränder */
+    --putz:        #f4ecdb;   /* Karten und helle Flächen */
+    --putz-hell:   #fbf6ec;   /* hervorgehobene Flächen */
+
+    /* ---- Schrift ---- */
+    --ink:         #33281c;   /* Fließtext        auf Wand 10,3 · auf Putz 12,2 */
+    --ink-soft:    #6b5a44;   /* Sekundärtext     auf Wand  4,7 · auf Putz  5,6 */
+    --pompeji:     #9b2c2c;   /* Akzent, Überschriften, römisches Wandrot
+                                                   auf Wand  5,4 · auf Putz  6,4 */
+
+    /* ---- Material: nur für Ränder und Flächen, NIE als Schriftfarbe ---- */
+    --bronze:      #8c7853;
+    --gold:        #b8912f;
+    --marmor:      #f0e6d2;
+
+    /* ---- Rückmeldung ---- */
+    --richtig:     #2f6b3a;
+    --falsch:      #b03030;
+
+    /* ---- Vier Säulen des Hauptmenüs ----
+       Die alten Werte (Gold, Hellblau, Hellgrün, Orange) lagen auf hellem
+       Grund bei 1,5-2,9 und waren nicht lesbar. Diese hier bei 4,0-5,0. */
+    --pillar-wortschatz:  #8a6114;
+    --pillar-formenlehre: #2c6076;
+    --pillar-syntax:      #456f34;
+    --pillar-kultur:      #8f4318;
+
+    /* ---- Schrift ---- */
+    --font-display: 'Georgia', 'Times New Roman', serif;
+    --font-body: 'Verdana', 'Segoe UI', sans-serif;
+
+    /* ---- Wiederkehrende Maße ---- */
+    --rand: 2px solid var(--bronze);
+    --schatten: 0 4px 14px rgba(80, 60, 30, 0.18);
+    --schatten-tief: 0 8px 24px rgba(80, 60, 30, 0.26);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--wand);
+    color: var(--ink);
+    min-height: 100vh;
+}
+
+/* ---------- Der Haus-Knopf, in elf Dateien identisch ---------- */
+
+#global-menu-btn {
+    position: fixed; top: 10px; left: 10px; z-index: 100000;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--putz);
+    border: 2px solid var(--bronze);
+    color: var(--pompeji);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; text-decoration: none;
+    box-shadow: var(--schatten);
+    touch-action: manipulation;
+}
+#global-menu-btn:hover { background: var(--putz-hell); border-color: var(--pompeji); }
+
+/* ---------- Überschriften ---------- */
+
+.seiten-titel {
+    color: var(--pompeji);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.seiten-untertitel {
+    color: var(--ink-soft);
+    font-style: italic;
+    text-align: center;
+}
+
+/* ---------- Knöpfe ---------- */
+
+.start-btn {
+    background: var(--pompeji);
+    color: var(--marmor);
+    font-family: var(--font-display);
+    font-weight: bold;
+    padding: 15px 40px;
+    border: 2px solid #6d1f1f;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: var(--schatten);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.start-btn:not(:disabled):hover { background: #8a2626; }
+.start-btn:not(:disabled):active { transform: translateY(2px); }
+
+/* ---------- Hinweiskasten ---------- */
+
+.notice-box {
+    background: var(--putz);
+    border: 2px solid var(--bronze);
+    border-left: 6px solid var(--pompeji);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    text-align: left;
+    line-height: 1.6;
+    color: var(--ink);
+}
+.notice-box h3 {
+    color: var(--pompeji);
+    font-family: var(--font-display);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+.notice-box .step {
+    display: inline-block;
+    background: rgba(155, 44, 44, 0.10);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-weight: bold;
+    color: var(--pompeji);
+}
+
+/* ---------- Fortschrittsbalken ---------- */
+
+.progress-bar-container {
+    width: 100%;
+    background: var(--wand-tief);
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid var(--bronze);
+}
+.progress-bar {
+    width: 0%;
+    background: var(--pompeji);
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+}

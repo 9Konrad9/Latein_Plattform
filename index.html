@@ -6,52 +6,35 @@
     <title>Lūdī Rōmānī - Lernspiele</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        :root {
-            --roman-gold: #d4af37;
-            --roman-bronze: #8c7853;
-            --roman-marble: #f0e6d2;
-            --roman-red: #800000;
-            --bg-dark: #121212;
-            --card-bg: #222;
-            --text-light: #f5f5f5;
-            --font-display: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'Verdana', sans-serif;
-
-            /* Eine Akzentfarbe pro Säule, damit man auch beim Scrollen sofort sieht,
-               in welchem Bereich man sich befindet. */
-            --pillar-wortschatz: #d4af37;
-            --pillar-formenlehre: #5b8ba0;
-            --pillar-syntax: #6b9c5a;
-            --pillar-kultur: #c1652f;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* Palette und geteilte Bausteine stehen in theme.css.
+           Hier nur, was das Hauptmenü allein braucht. */
 
         body {
-            font-family: var(--font-body);
-            background-color: var(--bg-dark);
-            color: var(--text-light);
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
             padding: 30px 15px;
+            /* Feine Steinmaserung, damit die Fläche nicht tot wirkt */
+            background-image:
+                radial-gradient(circle at 20% 15%, rgba(255,255,255,0.5) 0%, transparent 55%),
+                radial-gradient(circle at 80% 70%, rgba(216,200,166,0.55) 0%, transparent 50%);
+            background-attachment: fixed;
         }
 
-        .header-section { text-align: center; margin-bottom: 30px; }
+        .header-section { text-align: center; margin-bottom: 20px; }
 
         h1 {
-            color: var(--roman-gold);
+            color: var(--pompeji);
             font-family: var(--font-display);
             text-transform: uppercase;
             font-size: 2.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             letter-spacing: 3px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
 
-        .subtitle { color: var(--roman-marble); font-size: 1.1rem; font-style: italic; opacity: 0.8; }
+        .subtitle { color: var(--ink-soft); font-size: 1.1rem; font-style: italic; }
 
         .pillar-nav {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
@@ -60,26 +43,27 @@
         .pillar-nav a {
             text-decoration: none; font-family: var(--font-body); font-size: 0.85rem;
             font-weight: bold; padding: 8px 16px; border-radius: 20px;
-            border: 2px solid var(--pillar-color, var(--roman-bronze));
-            color: var(--pillar-color, var(--roman-marble));
-            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--pillar-color, var(--bronze));
+            color: var(--pillar-color, var(--ink));
+            background: var(--putz);
         }
+        .pillar-nav a:hover { background: var(--putz-hell); }
 
         .pillar-section { width: 100%; max-width: 1000px; margin-top: 45px; }
         .pillar-section:first-of-type { margin-top: 20px; }
 
         .pillar-header {
             display: flex; align-items: baseline; gap: 14px;
-            border-bottom: 3px solid var(--pillar-color, var(--roman-bronze));
+            border-bottom: 3px solid var(--pillar-color, var(--bronze));
             padding-bottom: 10px; margin-bottom: 8px;
         }
         .pillar-icon { font-size: 1.8rem; }
         .pillar-title {
             font-family: var(--font-display); font-size: 1.7rem; text-transform: uppercase;
-            letter-spacing: 1px; color: var(--pillar-color, var(--roman-gold));
+            letter-spacing: 1px; color: var(--pillar-color, var(--pompeji));
         }
         .pillar-desc {
-            font-size: 0.95rem; color: #aaa; margin-bottom: 22px; font-style: italic;
+            font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 22px; font-style: italic;
         }
 
         .games-grid {
@@ -90,21 +74,22 @@
         }
 
         .game-card {
-            background: var(--card-bg);
-            border: 2px solid var(--roman-bronze);
-            border-top: 5px solid var(--pillar-color, var(--roman-red));
+            background: var(--putz);
+            border: 2px solid var(--bronze);
+            border-top: 5px solid var(--pillar-color, var(--pompeji));
             border-radius: 10px;
             padding: 16px 14px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: var(--schatten);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
 
         .game-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            border-color: var(--pillar-color, var(--roman-gold));
+            box-shadow: var(--schatten-tief);
+            border-color: var(--pillar-color, var(--pompeji));
+            background: var(--putz-hell);
         }
 
         .game-icon { font-size: 2.2rem; margin-bottom: 8px; text-align: center; }
@@ -112,7 +97,7 @@
         .game-title {
             font-family: var(--font-display);
             font-size: 1.15rem;
-            color: var(--roman-gold);
+            color: var(--pompeji);
             margin-bottom: 6px;
             text-transform: uppercase;
             text-align: center;
@@ -120,8 +105,8 @@
         }
 
         .game-focus {
-            background: rgba(212, 175, 55, 0.1);
-            color: #ffcc00;
+            background: var(--wand);
+            color: var(--pillar-color, var(--ink));
             font-size: 0.78rem;
             font-weight: bold;
             padding: 5px 8px;
@@ -129,21 +114,21 @@
             margin-bottom: 10px;
             text-align: center;
             text-transform: uppercase;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            border: 1px solid var(--wand-tief);
         }
 
         .game-desc {
             font-size: 0.85rem;
-            line-height: 1.4;
-            color: #ccc;
+            line-height: 1.45;
+            color: var(--ink);
             flex-grow: 1;
             margin-bottom: 14px;
             text-align: center;
         }
 
         .play-btn {
-            background: var(--roman-red);
-            color: var(--roman-marble);
+            background: var(--pompeji);
+            color: var(--marmor);
             text-decoration: none;
             font-family: var(--font-display);
             font-weight: bold;
@@ -152,13 +137,14 @@
             border-radius: 6px;
             text-align: center;
             text-transform: uppercase;
-            border: 2px solid #5a0000;
+            border: 2px solid #6d1f1f;
             transition: background 0.2s;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .play-btn:active { background: #5a0000; }
+        .play-btn:hover { background: #8a2626; }
+        .play-btn:active { transform: translateY(1px); }
 
         .progress-badge {
             font-size: 0.8rem;
@@ -166,30 +152,51 @@
             margin-bottom: 12px;
             padding: 5px 8px;
             border-radius: 4px;
-            background: rgba(255,255,255,0.06);
-            color: #aaa;
+            background: var(--wand);
+            color: var(--ink-soft);
+            border: 1px solid var(--wand-tief);
         }
 
         .progress-badge.has-score {
-            color: var(--roman-gold);
-            background: rgba(212, 175, 55, 0.08);
+            color: var(--ink);
+            background: rgba(184, 145, 47, 0.16);
+            border-color: var(--gold);
+            font-weight: bold;
         }
 
         .vocab-ampel {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             font-size: 0.8rem; margin-bottom: 12px; padding: 5px 8px;
-            border-radius: 4px; background: rgba(255,255,255,0.06); color: #ccc;
+            border-radius: 4px; background: var(--wand); color: var(--ink-soft);
+            border: 1px solid var(--wand-tief);
         }
         .vocab-ampel .ampel-bar {
             display: flex; height: 8px; width: 80px; border-radius: 4px; overflow: hidden;
-            background: #333;
+            background: var(--wand-tief);
         }
-        .vocab-ampel .ampel-seg.red { background: #c0392b; }
-        .vocab-ampel .ampel-seg.yellow { background: #d4af37; }
-        .vocab-ampel .ampel-seg.green { background: #4CAF50; }
+        .vocab-ampel .ampel-seg.red { background: #b03030; }
+        .vocab-ampel .ampel-seg.yellow { background: #c99a25; }
+        .vocab-ampel .ampel-seg.green { background: #2f6b3a; }
+
+        /* Säulen als Zierrat am Seitenrand - nur wo Platz ist, und sie dürfen
+           den Inhalt nicht überlagern, deshalb hinter allem und ohne Klickfläche. */
+        .saeule-links, .saeule-rechts {
+            position: fixed; bottom: 0; width: 120px; height: 78vh;
+            background: url('assets/ui/saeule.png') bottom center / contain no-repeat;
+            opacity: 0.30; pointer-events: none; z-index: -1;
+        }
+        .saeule-links { left: 0; }
+        .saeule-rechts { right: 0; transform: scaleX(-1); }
+        @media (max-width: 1240px) {
+            .saeule-links, .saeule-rechts { display: none; }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Reiner Zierrat: hinter dem Inhalt, ohne Klickfläche, auf schmalen Schirmen aus -->
+    <div class="saeule-links" aria-hidden="true"></div>
+    <div class="saeule-rechts" aria-hidden="true"></div>
 
     <div class="header-section">
         <h1>Lūdī Rōmānī</h1>
@@ -197,7 +204,7 @@
     </div>
 
     <div style="width: 100%; max-width: 1000px; margin-bottom: 10px;">
-        <div class="game-card" style="border-top-color: var(--roman-gold); background: linear-gradient(135deg, #2d2410, #1a1608);">
+        <div class="game-card" style="border-top-color: var(--gold); background: linear-gradient(135deg, #f9f1dc, #efe1bd);">
             <div class="game-icon">🏆</div>
             <div class="game-title">Trophäensammlung</div>
             <div class="game-focus">Deine Erfolge auf einen Blick</div>
