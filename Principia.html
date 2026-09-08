@@ -75,22 +75,23 @@
             color: var(--ink);
         }
 
-        /* --- Münzen --- */
+        /* --- Münzen der Schatzkammer ---
+           Geprägte Münzen als Bild statt als CSS-Farbverlauf. Sie tragen keinen
+           Text - das Wort steht als Label darunter -, deshalb dürfen sie voll
+           ausgestaltet sein. Das Metall folgt der Leitner-Stufe des Wortes.
+           Der Schatten kommt per drop-shadow, nicht per box-shadow: Er soll dem
+           Umriss der Münze folgen, und die zerbrochene ist kein Kreis mehr. */
         .coin {
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 3px 6px rgba(80, 60, 30, 0.22), inset 0 0 10px rgba(90, 70, 40, 0.07);
-            border: 3px solid #6b5510;
-            background: radial-gradient(circle at 35% 32%, #f6e29a, #d4af37 55%, #97771d);
-            font-family: var(--font-display);
-            font-weight: bold;
-            color: #4a3a0a;
-            text-shadow: 0 1px 0 rgba(90, 70, 40, 0.07);
+            background-image: url('assets/ui/muenze-gold.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: drop-shadow(0 2px 3px rgba(80, 60, 30, 0.3));
         }
-        .coin.silver { background: radial-gradient(circle at 35% 32%, #f2f2f2, #b7b7b7 55%, #7a7a7a); border-color: var(--wand-tief); color: #333; }
-        .coin.bronze { background: radial-gradient(circle at 35% 32%, #e0aa76, #a5652f 55%, #6e3d17); border-color: #4a2c10; color: #3a1f08; }
-        .coin.blank  { background: var(--putz-hell); border-color: var(--wand-tief); color: var(--ink-soft); box-shadow: none; }
-        .coin.cracked { background: #5c2020; border-color: #300; color: #eee; }
+        .coin.silver  { background-image: url('assets/ui/muenze-silber.png'); }
+        .coin.bronze  { background-image: url('assets/ui/muenze-bronze.png'); }
+        .coin.blank   { background-image: url('assets/ui/muenze-roh.png'); filter: none; opacity: 0.75; }
+        .coin.cracked { background-image: url('assets/ui/muenze-bruch.png'); }
 
         .treasury-row {
             display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
@@ -123,18 +124,36 @@
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; flex-grow: 1;
         }
 
+        /* --- Die vier Antwortmünzen ---
+           Ein Schrötling: Schmuck nur im Perlkreis am Rand, das Feld in der Mitte
+           bleibt glatt und leer - der Schüler prägt es durch seine Wahl. Genau
+           deshalb bleibt der Text lesbar.
+
+           Die 15 % Innenabstand sind am Bild gemessen: Das glatte Feld ist ein
+           Kreis mit 76 % des Durchmessers (Radius 121,5 px im 320-px-Bild). Ein
+           dreizeiliger Textblock passt darin bis rund 68 % der Knopfbreite.
+           Die Schriftgröße wächst mit dem Knopf mit, damit auch der längste
+           Stammformensatz (animadvertō, animadvertī, animadversum) auf schmalen
+           Schirmen im Feld bleibt. */
         .coin-btn {
             aspect-ratio: 1;
             border-radius: 50%;
-            border: 3px solid var(--gold);
-            background: radial-gradient(circle at 35% 32%, #3a2f1a, #1c1710 70%);
-            color: var(--marmor);
-            font-family: var(--font-display); font-weight: bold; font-size: 1.05rem;
-            cursor: pointer; box-shadow: 0 4px 8px rgba(80, 60, 30, 0.12);
+            border: 3px solid transparent;
+            background-image: url('assets/ui/muenze-feld.png');
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #3f2d10;   /* kontrast-ok: 8,2 auf dem glatten Feld der Münze #ebc883 */
+            font-family: var(--font-display); font-weight: bold;
+            font-size: clamp(0.68rem, 3.9vw, 1.05rem);
+            line-height: 1.2;
+            cursor: pointer;
+            filter: drop-shadow(0 3px 5px rgba(80, 60, 30, 0.28));
             display: flex; align-items: center; justify-content: center; text-align: center;
-            padding: 10px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            padding: 15%; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
-        .coin-btn:not(:disabled):active { background: radial-gradient(circle at 35% 32%, #4a3f2a, #2c2110 70%); color: #fff; }
+        .coin-btn:not(:disabled):hover { filter: drop-shadow(0 3px 5px rgba(80, 60, 30, 0.28)) brightness(1.06); }
+        .coin-btn:not(:disabled):active { filter: drop-shadow(0 1px 2px rgba(80, 60, 30, 0.28)) brightness(0.94); transform: translateY(2px); }
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -161,6 +180,7 @@
         .end-treasury-grid .coin-wrap { text-align: center; width: 62px; }
         .end-treasury-grid .coin { width: 44px; height: 44px; font-size: 0.85rem; margin: 0 auto; }
         .end-treasury-grid .coin-label { font-size: 0.65rem; color: var(--ink-soft); margin-top: 3px; word-break: break-word; }
+        .end-treasury-grid .coin-label.fehl { color: var(--falsch); }
         /* Emblem über der Überschrift, nach dem Vorbild der Trophäenseite:
            ein Gegenstand, der zum Spiel gehört, statt eines Emojis. */
         .emblem { display: block; height: 68px; margin: 0 auto 4px; }
@@ -189,7 +209,7 @@
             <div class="notice-box">
                 <h3>📜 Der Auftrag:</h3>
                 <p>Du siehst die <strong>Grundform</strong> eines Wortes (Nominativ bei Nomen, Infinitiv bei Verben). Präge die passende <strong>mittlere Wörterbuch-Spalte</strong> dazu: bei Nomen den Genitiv + Geschlecht (z. B. <em>patris, m.</em>), bei Verben die 1. Person Singular (z. B. <em>videō</em>).</p>
-                <p style="margin-top: 10px;">Jede richtige Zuordnung prägt eine Münze für deine Schatzkammer. Falsche Prägungen zerbrechen und werden ausgemustert.</p>
+                <p style="margin-top: 10px;">Jede richtige Zuordnung prägt eine Münze für deine Schatzkammer. Falsche Prägungen zerbrechen und bleiben als Bruch in der Reihe stehen.</p>
                 <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch geprägte Münzen direkt nochmal prägen.</p>
             </div>
             <div class="treasury-stat" id="overall-treasury">Lade Schatzkammer...</div>
@@ -402,8 +422,12 @@
             }
         };
 
-        function coinColorClass(colorIdx) {
-            return ['bronze', 'silver', ''][colorIdx]; // '' = Standard-Gold-Stil (grün/Stufe 4)
+        // Fehlprägungen bekommen die zerbrochene Münze - vorher legte eine falsche
+        // Antwort dieselbe makellose Münze in die Schatzkammer wie eine richtige,
+        // das Spiel meldete also „Fehlprägung!" und verbuchte sie als Erfolg.
+        function coinClass(c) {
+            if (c.broken) return 'coin cracked';
+            return 'coin ' + ['bronze', 'silver', ''][c.colorIdx]; // '' = Gold (Stufe 4)
         }
 
         function renderTreasuryRow() {
@@ -411,8 +435,8 @@
             row.innerHTML = '';
             sessionCoins.forEach(c => {
                 const div = document.createElement('div');
-                div.className = 'coin ' + coinColorClass(c.colorIdx);
-                div.innerText = '🪙';
+                div.className = coinClass(c);
+                div.title = c.broken ? c.word + ' - Fehlprägung' : c.word;
                 row.appendChild(div);
             });
             // Leere Platzhalter für noch ausstehende Münzen dieser Runde
@@ -524,7 +548,7 @@
             } else {
                 if (!isReviewMode) {
                     missedItems.push(currentTarget);
-                    sessionCoins.push({ word: currentTarget.latin, colorIdx });
+                    sessionCoins.push({ word: currentTarget.latin, colorIdx, broken: true });
                 }
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
@@ -566,10 +590,9 @@
                 const wrap = document.createElement('div');
                 wrap.className = 'coin-wrap';
                 const coin = document.createElement('div');
-                coin.className = 'coin ' + coinColorClass(c.colorIdx);
-                coin.innerText = '🪙';
+                coin.className = coinClass(c);
                 const label = document.createElement('div');
-                label.className = 'coin-label';
+                label.className = 'coin-label' + (c.broken ? ' fehl' : '');
                 label.innerText = c.word;
                 wrap.appendChild(coin);
                 wrap.appendChild(label);
