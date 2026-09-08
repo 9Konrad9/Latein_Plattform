@@ -422,18 +422,35 @@ const SentenceEngine = (() => {
         };
     }
 
+    /* Feste Schulstellung für die Pendelmethode. Sie ist bewusst NICHT die
+       klassische lateinische Wortstellung: Gependelt wird an einem festen
+       Rahmen entlang - vorne das Subjekt, hinten das Prädikat, dazwischen das
+       Objekt -, sonst geht der Schritt „jetzt nach hinten zum Prädikat“ ins
+       Leere. Adverbiale und Handlungsträger stehen kurz vor dem Prädikat, wie
+       im Lehrbuchsatz *puella rosam in hortō videt*. */
+    const PENDEL_FOLGE = ['sub', 'dat', 'obj', 'abl', 'adv', 'praed'];
+
     /**
      * 'natural'  - lateinische Grundstellung: Prädikat ans Ende, Attribut direkt
      *              hinter sein Bezugswort, der Rest gemischt.
-     * 'shuffled' - alles durcheinander (Pendelmethode: gerade NICHT auf die
+     * 'pendel'   - feste Reihenfolge nach PENDEL_FOLGE.
+     * 'shuffled' - alles durcheinander (Via Rōmāna: gerade NICHT auf die
      *              Stellung verlassen, sondern auf die Endungen achten).
      */
     function ordne(tokens, modus) {
         if (modus === 'shuffled') return neuVerankern(mische(tokens), tokens);
 
-        const praed = tokens.filter(t => t.role === 'praed');
         const attribute = tokens.filter(t => t.role === 'attr');
-        const rest = mische(tokens.filter(t => t.role !== 'praed' && t.role !== 'attr'));
+        const ohneAttribut = tokens.filter(t => t.role !== 'attr');
+
+        let rest;
+        if (modus === 'pendel') {
+            rest = ohneAttribut.slice().sort(
+                (a, b) => PENDEL_FOLGE.indexOf(a.role) - PENDEL_FOLGE.indexOf(b.role));
+        } else {
+            const praed = ohneAttribut.filter(t => t.role === 'praed');
+            rest = mische(ohneAttribut.filter(t => t.role !== 'praed')).concat(praed);
+        }
 
         const ergebnis = [];
         rest.forEach(t => {
@@ -445,7 +462,6 @@ const SentenceEngine = (() => {
         });
         // Attribute ohne auffindbaren Bezug (sollte nicht vorkommen) hinten anhängen
         attribute.forEach(a => { if (ergebnis.indexOf(a) === -1) ergebnis.push(a); });
-        praed.forEach(p => ergebnis.push(p));
 
         return neuVerankern(ergebnis, tokens);
     }

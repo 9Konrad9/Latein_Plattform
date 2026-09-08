@@ -74,8 +74,13 @@
         .timer-crit { color: var(--falsch) !important; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.4; } }
 
+        /* resizeArena() setzt Breite und Höhe in Pixeln. Sobald die Höhe der
+           begrenzende Faktor ist, ist die Arena schmaler als der Container -
+           ohne auto-Ränder klebte sie dann am linken Rand. */
         .circus-stadium {
             width: 100%;
+            margin-left: auto;
+            margin-right: auto;
             background: var(--wand-tief);
             border: 3px solid var(--bronze);
             border-radius: 20px;
@@ -193,7 +198,6 @@
         Fahre im Uhrzeigersinn um die Spina! Zeitlimit: 5 Minuten.
     </div>
 
-    <div class="trenner" style="max-width: 980px;" aria-hidden="true"></div>
 
     <div class="game-container">
         

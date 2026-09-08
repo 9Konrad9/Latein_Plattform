@@ -203,11 +203,17 @@ body {
    Unter 1240 px bleibt kein Rand mehr übrig, auf den sie passen - dort aus.
 
    Die Regeln standen vorher nur in index.html; sie liegen hier, weil jede
-   Spielseite dieselben zwei <div> einhängt. */
+   Spielseite dieselben zwei <div> einhängt.
+
+   Die Breite folgt der Höhe, nicht umgekehrt: Das Bild misst 200x860, also
+   1:4,3. Bei fester Breite von 130 px reichte die Säule mit `contain` nur
+   130x4,3 = 559 px hoch und ließ oben Wand frei. 24vh Breite ist etwas mehr
+   als die 23,3vh, die das Seitenverhältnis verlangt - so bleibt sie vollständig
+   sichtbar statt seitlich beschnitten. */
 
 .saeule-links, .saeule-rechts {
-    position: fixed; bottom: 0; width: 130px; height: 100vh;
-    background: url('assets/ui/saeule.png') bottom center / contain no-repeat;
+    position: fixed; bottom: 0; width: 24vh; height: 100vh;
+    background: url('assets/ui/saeule.png') bottom center / auto 100% no-repeat;
     pointer-events: none; z-index: -1;
 }
 .saeule-links  { left: 0; }

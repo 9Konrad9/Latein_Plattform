@@ -270,8 +270,12 @@
             });
         }
 
-        // Die Pendelmethode lebt davon, sich NICHT auf die Wortstellung zu verlassen,
-        // sondern auf die Endungen zu achten - daher 'shuffled'.
+        // Feste Reihenfolge Subjekt - Objekt - Prädikat ('pendel'). Das ist nicht
+        // die klassische lateinische Wortstellung, aber die Pendelmethode braucht
+        // einen festen Rahmen: Man pendelt von vorne nach hinten und wieder nach
+        // vorne. Mit gemischter Stellung lief der Schritt „jetzt nach hinten zum
+        // Prädikat“ ins Leere, weil das Prädikat irgendwo stand.
+        // Wer auf die Endungen statt auf die Stellung achten soll, spielt Via Rōmāna.
         //
         // SentenceEngine liefert eine Adverbiale als ein Token ("in villā"); hier wird
         // sie in ihre Wörter zerlegt, weil in diesem Spiel jedes Wort einzeln
@@ -282,7 +286,7 @@
                     nounPool: nounPool,
                     verbPool: verbPool,
                     maxLesson: maxSelectedLesson,
-                    wordOrder: 'shuffled'
+                    wordOrder: 'pendel'
                 });
                 if (!satz) continue;
 
