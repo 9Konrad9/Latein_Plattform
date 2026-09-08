@@ -19,18 +19,36 @@
             /* Der Steinwand-Grund kommt aus theme.css und gilt für alle Seiten */
         }
 
-        .header-section { text-align: center; margin-bottom: 20px; }
-
-        h1 {
-            color: var(--pompeji);
-            font-family: var(--font-display);
-            text-transform: uppercase;
-            font-size: 2.8rem;
-            margin-bottom: 8px;
-            letter-spacing: 3px;
+        /* Der Seitentitel steht auf der Bronzetafel - dem letzten Asset, das
+           noch keinen Platz hatte. Inneres Feld #66543b, dazu Marmorcreme:
+           Kontrast 5,85. Schnittwerte am Bild gemessen (900x354). */
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            max-width: 640px;
+            border-style: solid;
+            border-width: 30px 76px 26px 76px;
+            border-image: url('assets/ui/tabula.png') 45 131 44 131 fill stretch;
+            padding: 6px 4px 10px;
         }
 
-        .subtitle { color: var(--ink-soft); font-size: 1.1rem; font-style: italic; }
+        h1 {
+            color: var(--marmor);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 2.6rem;
+            margin-bottom: 4px;
+            letter-spacing: 3px;
+            text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+            /* kontrast-ok: 5,85 auf dem inneren Feld der Bronzetafel #66543b */
+        }
+
+        .subtitle { color: #e8ddc4; font-size: 1.05rem; font-style: italic; /* kontrast-ok: 5,38 auf der Bronzetafel #66543b */ }
+
+        @media (max-width: 620px) {
+            .header-section { border-width: 20px 44px 18px 44px; }
+            h1 { font-size: 1.9rem; letter-spacing: 2px; }
+        }
 
         .pillar-nav {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
@@ -48,10 +66,16 @@
         .pillar-section { width: 100%; max-width: 1000px; margin-top: 45px; }
         .pillar-section:first-of-type { margin-top: 20px; }
 
+        /* Überschrift und Beschreibung stehen sonst nackt auf der Mauer und
+           kämpfen mit dem Ziegelmuster. Sie sitzen deshalb zusammen auf einer
+           hellen Platte - Titel oben, Beschreibung darunter, ein Block. */
         .pillar-header {
             display: flex; align-items: baseline; gap: 14px;
+            background: rgba(244, 236, 219, 0.9);
+            border: 1px solid var(--wand-tief);
             border-bottom: 3px solid var(--pillar-color, var(--bronze));
-            padding-bottom: 10px; margin-bottom: 8px;
+            border-radius: 8px 8px 0 0;
+            padding: 10px 16px; margin-bottom: 0;
         }
         .pillar-icon { font-size: 1.8rem; }
         .pillar-title {
@@ -59,7 +83,11 @@
             letter-spacing: 1px; color: var(--pillar-color, var(--pompeji));
         }
         .pillar-desc {
-            font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 22px; font-style: italic;
+            font-size: 0.95rem; color: var(--ink-soft); font-style: italic;
+            background: rgba(244, 236, 219, 0.9);
+            border: 1px solid var(--wand-tief); border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 9px 16px 11px; margin-bottom: 22px;
         }
 
         .games-grid {
@@ -174,12 +202,14 @@
         .vocab-ampel .ampel-seg.yellow { background: #c99a25; }
         .vocab-ampel .ampel-seg.green { background: #2f6b3a; }
 
-        /* Säulen als Zierrat am Seitenrand - nur wo Platz ist, und sie dürfen
-           den Inhalt nicht überlagern, deshalb hinter allem und ohne Klickfläche. */
+        /* Säulen am Seitenrand. Vorher standen sie halbdurchsichtig und auf
+           78 % Höhe da - das las sich als Schemen, nicht als Architektur.
+           Jetzt deckend und über die volle Höhe: Sie werden oben angeschnitten,
+           tragen also sichtbar weiter, statt in der Luft zu enden. */
         .saeule-links, .saeule-rechts {
-            position: fixed; bottom: 0; width: 120px; height: 78vh;
+            position: fixed; bottom: 0; width: 130px; height: 100vh;
             background: url('assets/ui/saeule.png') bottom center / contain no-repeat;
-            opacity: 0.30; pointer-events: none; z-index: -1;
+            pointer-events: none; z-index: -1;
         }
         .saeule-links { left: 0; }
         .saeule-rechts { right: 0; transform: scaleX(-1); }
