@@ -95,8 +95,22 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
     `.textContent` liefert deshalb weiter den HTML-Platzhalter – ein Test, der `textContent` prüft,
     prüft nichts. Stattdessen die Eigenschaft selbst lesen (`el.innerText`).
 - **Bild-Assets**: Cartoon-Stil, "children's book style, simple clean lines", auf Magenta-Hintergrund
-  (#FF00FF) generiert und dann per HSV-basiertem Colorkey freigestellt (Python/PIL), dann skaliert
-  und als JPEG (Hintergründe) oder PNG (transparente Elemente) gespeichert.
+  generiert und dann per HSV-basiertem Colorkey freigestellt, skaliert und als JPEG (Hintergründe)
+  oder PNG (transparente Elemente) gespeichert.
+  Das Freistellen lief früher über Python/PIL – Python ist auf dieser Maschine nicht mehr
+  installiert. Ersatz ist `latein-tests/freistellen.js` (sharp):
+  `node freistellen.js quelle.jpg ziel.png --breite 900 --tolerance 30`, mit `--info` nur messen.
+  Es leitet den Hintergrundfarbton aus den vier Bildecken ab, statt #FF00FF anzunehmen – die
+  Generatoren liefern oft ein abweichendes Magenta (gemessen 322° und 333°). Ausgabe ist
+  palettiertes PNG mit 128 Farben; bei diesen flachen Flächen spart das rund 85 % ohne
+  sichtbaren Verlust.
+- **UI-Assets in `assets/ui/`** werden per `border-image` eingebunden, nicht per
+  `background-size` – sonst verzerren Rahmen und Griffe beim Dehnen. **Die Schnittwerte in
+  `border-image-slice` sind Bildpixel und skalieren NICHT mit**: Wird ein Asset ausgetauscht oder
+  neu skaliert, müssen sie neu gemessen werden (inneres Feld suchen, Randbreiten ablesen).
+  Vor dem Einbau den Kontrast des inneren Feldes gegen die Schriftfarbe prüfen – die Tabula
+  (`#66543b`) trägt cremefarbene Schrift mit 5,85, die Plaque (`#aa754a`) liegt mit 3,2–3,7
+  in einem Mittelton, auf dem weder helle noch dunkle Schrift gut steht.
 - **Lektions-Gating**: Jede Engine-Fähigkeit hat eine feste Einführungs-Lektion. Die
   verbindlichen Nummern stehen im Abschnitt „Lehrgang: was wann drankommt“ weiter unten –
   dort nachschlagen, nicht schätzen. Beim Ergänzen einer neuen Fähigkeit gehört die Nummer

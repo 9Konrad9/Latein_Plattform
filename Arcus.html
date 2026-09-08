@@ -99,22 +99,43 @@
         .arch-label { font-family: var(--font-body); font-size: 9px; fill: #888; text-anchor: middle; letter-spacing: 0.5px; }
         .arch-label.set { fill: var(--roman-marble); }
 
-        /* --- Der Satz --- */
+        /* --- Der Satz auf der Bronzetafel ---
+           border-image statt background-size, damit die Griffe und der genietete
+           Rahmen beim Dehnen ihre Form behalten. Die Schnittwerte sind am Bild
+           gemessen (900x354, inneres Feld ab x=131 bzw. y=45) - beim Austausch des
+           Bildes also neu messen, sie sind Bildpixel und skalieren nicht mit.
+           Das innere Feld ist #66543b - dazu cremefarbene Schrift (Kontrast 5,85). */
         .sentence-box {
-            background: var(--roman-marble); color: #2a2a2a; border-radius: 8px;
-            padding: 24px 18px; margin-bottom: 15px; text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border-style: solid;
+            border-width: 37px 95px 32px 95px;
+            border-image: url('assets/ui/tabula.png') 45 131 44 131 fill stretch;
+            background: none;
+            color: var(--roman-marble);
+            padding: 10px 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            min-height: 96px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .latin-word {
             font-family: var(--font-display); font-size: 1.4rem; font-weight: bold;
             display: inline-block; margin: 4px 6px; padding: 4px 9px; border-radius: 6px;
             cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.55);
         }
-        .latin-word:hover { background: rgba(128,0,0,0.08); }
+        .latin-word:hover { background: rgba(240,230,210,0.14); }
         .latin-word.found-aciSub { background: #8e44ad; color: #fff; cursor: default; }
         .latin-word.found-aciInf { background: #2980b9; color: #fff; cursor: default; }
-        .latin-word.rest { color: #777; cursor: default; }
+        .latin-word.rest { color: #a2937a; cursor: default; text-shadow: none; }
         .latin-word.wrong-flash { background: #F44336; color: #fff; }
+
+        /* Auf schmalen Geräten fressen die Griffe sonst den Textbereich auf */
+        @media (max-width: 560px) {
+            .sentence-box { border-width: 24px 58px 21px 58px; min-height: 78px; }
+            .latin-word { font-size: 1.15rem; margin: 3px 4px; padding: 3px 6px; }
+        }
 
         .instruction-line {
             text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--roman-gold);
