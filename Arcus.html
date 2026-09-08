@@ -84,11 +84,7 @@
         .progress-bar { width: 0%; background: var(--gold); height: 100%; transition: width 0.4s ease; }
 
         /* --- Der Bogen ---
-           Der Bogen liegt als ein Bild vor. Die drei Teile, die der Schüler
-           bestimmen muss, tragen einen hellen Schleier mit clip-path; er hebt
-           sich, sobald der Teil gelöst ist. Die Beschnittbereiche sind am Bild
-           abgelesen (600x440) und in Prozent angegeben, damit sie mitskalieren. */
-        /* Der Abstand unten trägt die beiden Beschriftungen, die unter den
+           Der Abstand unten trägt die beiden Beschriftungen, die unter den
            Pfeilern hängen - mit den früheren 10 px lagen sie unter der Schriftrolle. */
         .arch-area {
             display: flex; justify-content: center; margin-bottom: 28px;
@@ -233,8 +229,14 @@
 <body>
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
+    <!-- Reiner Zierrat: hinter dem Inhalt, ohne Klickfläche, auf schmalen Schirmen aus -->
+    <div class="saeule-links" aria-hidden="true"></div>
+    <div class="saeule-rechts" aria-hidden="true"></div>
+
     <h1>🏛️ Arcus</h1>
     <div class="subtitle">Der AcI-Bogen</div>
+
+    <div class="trenner" aria-hidden="true"></div>
 
     <div class="game-container">
 

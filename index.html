@@ -87,7 +87,20 @@
             background: rgba(244, 236, 219, 0.9);
             border: 1px solid var(--wand-tief); border-top: none;
             border-radius: 0 0 8px 8px;
-            padding: 9px 16px 11px; margin-bottom: 22px;
+            padding: 9px 16px 11px; margin-bottom: 0;
+        }
+
+        /* Jede der vier Säulen trägt ihr Kapitell. Die Kopfplatte darüber ist
+           der Architrav, das Kapitell der Säulenkopf, der ihn trägt - deshalb
+           steht es UNTER der Platte und nicht darauf. Der negative Rand oben
+           schiebt den Abakus unter die Plattenkante, damit die beiden Teile
+           zusammenhängen statt übereinander zu schweben. */
+        .pillar-kapitell {
+            display: block; height: 78px;
+            margin: -5px auto 20px;
+        }
+        @media (max-width: 520px) {
+            .pillar-kapitell { height: 56px; margin-bottom: 16px; }
         }
 
         .games-grid {
@@ -202,20 +215,8 @@
         .vocab-ampel .ampel-seg.yellow { background: #c99a25; }
         .vocab-ampel .ampel-seg.green { background: #2f6b3a; }
 
-        /* Säulen am Seitenrand. Vorher standen sie halbdurchsichtig und auf
-           78 % Höhe da - das las sich als Schemen, nicht als Architektur.
-           Jetzt deckend und über die volle Höhe: Sie werden oben angeschnitten,
-           tragen also sichtbar weiter, statt in der Luft zu enden. */
-        .saeule-links, .saeule-rechts {
-            position: fixed; bottom: 0; width: 130px; height: 100vh;
-            background: url('assets/ui/saeule.png') bottom center / contain no-repeat;
-            pointer-events: none; z-index: -1;
-        }
-        .saeule-links { left: 0; }
-        .saeule-rechts { right: 0; transform: scaleX(-1); }
-        @media (max-width: 1240px) {
-            .saeule-links, .saeule-rechts { display: none; }
-        }
+        /* Die Säulen am Seitenrand stehen jetzt in theme.css - sie hängen auf
+           jeder Spielseite im selben Markup. */
     </style>
 </head>
 <body>
@@ -258,6 +259,7 @@
             <span class="pillar-title">Wortschatz</span>
         </div>
         <div class="pillar-desc">Wörter kennen und ihre Bedeutung sicher abrufen.</div>
+        <img class="pillar-kapitell" src="assets/ui/kapitell.png" alt="" aria-hidden="true">
 
         <div class="games-grid">
 
@@ -316,6 +318,7 @@
             <span class="pillar-title">Formenlehre</span>
         </div>
         <div class="pillar-desc">Die richtige Form bilden: Deklination, Konjugation, Kongruenz.</div>
+        <img class="pillar-kapitell" src="assets/ui/kapitell.png" alt="" aria-hidden="true">
 
         <div class="games-grid">
 
@@ -351,6 +354,7 @@
             <span class="pillar-title">Syntax</span>
         </div>
         <div class="pillar-desc">Wörter im Satz richtig verbinden und verstehen.</div>
+        <img class="pillar-kapitell" src="assets/ui/kapitell.png" alt="" aria-hidden="true">
 
         <div class="games-grid">
 
@@ -408,6 +412,7 @@
             <span class="pillar-title">Römische Kultur</span>
         </div>
         <div class="pillar-desc">Wissen über das Leben im alten Rom - keine Sprachkompetenz, sondern Sachwissen.</div>
+        <img class="pillar-kapitell" src="assets/ui/kapitell.png" alt="" aria-hidden="true">
 
         <div class="games-grid">
 

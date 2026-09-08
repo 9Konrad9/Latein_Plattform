@@ -188,11 +188,32 @@ body {
 
 .trenner {
     width: 100%;
+    max-width: 700px;   /* Breite der meisten Spielcontainer; Seiten mit anderem
+                           Container setzen sie per style-Attribut um */
     height: 20px;
     background: url('assets/ui/maeander.jpg') left center / auto 100% repeat-x;
     border-top: 1px solid var(--bronze);
     border-bottom: 1px solid var(--bronze);
-    margin: 4px 0 16px;
+    margin: 4px auto 16px;
+}
+
+/* ---------- Säulen am Seitenrand ----------
+   Reiner Zierrat: hinter dem Inhalt (z-index -1), ohne Klickfläche. Sie werden
+   oben angeschnitten, tragen also sichtbar weiter, statt in der Luft zu enden.
+   Unter 1240 px bleibt kein Rand mehr übrig, auf den sie passen - dort aus.
+
+   Die Regeln standen vorher nur in index.html; sie liegen hier, weil jede
+   Spielseite dieselben zwei <div> einhängt. */
+
+.saeule-links, .saeule-rechts {
+    position: fixed; bottom: 0; width: 130px; height: 100vh;
+    background: url('assets/ui/saeule.png') bottom center / contain no-repeat;
+    pointer-events: none; z-index: -1;
+}
+.saeule-links  { left: 0; }
+.saeule-rechts { right: 0; transform: scaleX(-1); }
+@media (max-width: 1240px) {
+    .saeule-links, .saeule-rechts { display: none; }
 }
 
 /* ---------- Fortschrittsbalken ---------- */
