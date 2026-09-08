@@ -181,6 +181,20 @@ body {
     color: var(--pompeji);
 }
 
+/* ---------- Mäander-Trenner ----------
+   Kachelt waagerecht. Die Vorlage hatte keine echte Periode (jedes Steinchen
+   sitzt anders, beste Übereinstimmung lag bei 129 von 765), deshalb ist die
+   Kachel gespiegelt aufgebaut - dadurch ist die Naht per Konstruktion exakt. */
+
+.trenner {
+    width: 100%;
+    height: 20px;
+    background: url('assets/ui/maeander.jpg') left center / auto 100% repeat-x;
+    border-top: 1px solid var(--bronze);
+    border-bottom: 1px solid var(--bronze);
+    margin: 4px 0 16px;
+}
+
 /* ---------- Fortschrittsbalken ---------- */
 
 .progress-bar-container {

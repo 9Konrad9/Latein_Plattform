@@ -83,21 +83,49 @@
         .progress-bar-container { width: 100%; background: var(--wand-tief); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
         .progress-bar { width: 0%; background: var(--gold); height: 100%; transition: width 0.4s ease; }
 
-        /* --- Der Bogen --- */
-        .arch-area { display: flex; justify-content: center; margin-bottom: 10px; }
-        #arch { width: 240px; height: 118px; overflow: visible; }
-        /* Ruhezustand ist ein leerer, blasser Steinumriss - vorher war er fast
-           schwarz, was auf dem hellen Rahmen als Klotz wirkte. Gesetzte Teile
-           füllen sich mit warmem Stein, der Schlussstein mit Gold. */
-        .arch-part {
-            fill: var(--putz-hell); stroke: var(--wand-tief); stroke-width: 2;
-            stroke-dasharray: 5 4;
-            transition: fill 0.35s ease, stroke 0.35s ease;
+        /* --- Der Bogen ---
+           Der Bogen liegt als ein Bild vor. Die drei Teile, die der Schüler
+           bestimmen muss, tragen einen hellen Schleier mit clip-path; er hebt
+           sich, sobald der Teil gelöst ist. Die Beschnittbereiche sind am Bild
+           abgelesen (600x440) und in Prozent angegeben, damit sie mitskalieren. */
+        /* Der Abstand unten trägt die beiden Beschriftungen, die unter den
+           Pfeilern hängen - mit den früheren 10 px lagen sie unter der Schriftrolle. */
+        .arch-area {
+            display: flex; justify-content: center; margin-bottom: 28px;
+            position: relative; z-index: 11;   /* über dem Rückmeldungs-Schleier */
         }
-        .arch-part.set { fill: var(--stone); stroke: var(--bronze); stroke-dasharray: none; }
-        .arch-part.keystone.set { fill: var(--gold); stroke: var(--bronze); }
-        .arch-label { font-family: var(--font-body); font-size: 9px; fill: var(--ink-soft); text-anchor: middle; letter-spacing: 0.5px; }
-        .arch-label.set { fill: var(--ink); font-weight: bold; }
+        /* Vier Lagen desselben Bildes: die unterste blass und grau als „hier
+           entsteht ein Bogen", darüber drei farbige Kopien, jede auf ihr Bauteil
+           beschnitten und zunächst unsichtbar. Kopien statt einer Schleier-Fläche,
+           weil das Bild grosse durchsichtige Bereiche hat - ein heller Schleier
+           läge dort als Kasten über der Seite.
+           Die Prozentwerte sind am Bild gemessen (600x464): Der Schlussstein misst
+           oben 39,6-59,6 %, unten (an der Bogenlaibung, 34 % Höhe) 45,2-54,0 %. */
+        #arch { position: relative; width: 300px; }
+        #arch img { display: block; width: 100%; }
+
+        .arch-ghost { opacity: 0.22; filter: grayscale(1); }
+
+        .arch-teil {
+            position: absolute; top: 0; left: 0;
+            opacity: 0;
+            transition: opacity 0.45s ease;
+            pointer-events: none;
+        }
+        .arch-teil.set { opacity: 1; }
+        .arch-teil.links   { clip-path: polygon(0 0, 39.6% 0, 45.2% 34%, 45.2% 100%, 0 100%); }
+        .arch-teil.rechts  { clip-path: polygon(59.6% 0, 100% 0, 100% 100%, 54.0% 100%, 54.0% 34%); }
+        .arch-teil.schluss { clip-path: polygon(39.6% 0, 59.6% 0, 54.0% 34%, 45.2% 34%); }
+
+        .arch-label {
+            position: absolute; bottom: -16px;
+            font-family: var(--font-body); font-size: 0.68rem;
+            color: var(--ink-soft); letter-spacing: 0.5px;
+            transition: color 0.35s ease;
+        }
+        #lbl-left  { left: 2%; }
+        #lbl-right { right: 2%; }
+        .arch-label.set { color: var(--ink); font-weight: bold; }
 
         /* --- Der Satz auf der Schriftrolle ---
            Dreiteilig: Das Pergamentband dehnt sich per border-image (nur die wellige
@@ -186,10 +214,13 @@
         .time-btn.wrong { border-image-source: url('assets/ui/plaque-falsch.png'); }
 
         /* --- Feedback --- */
+        /* Der Schleier deckt die Karte zu, der Bogen liegt darüber (z-index 11):
+           Sonst verschwände genau in dem Moment, in dem er fertig ist, das
+           Bauwerk hinter der Erklärung. Der Text setzt sich deshalb nach unten ab. */
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(244, 236, 219, 0.96); border-radius: 12px;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
+            display: none; flex-direction: column; align-items: center; justify-content: flex-end;
             padding: 25px; text-align: center; z-index: 10;
         }
         .feedback-title { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 15px; }
@@ -226,18 +257,17 @@
             <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
 
             <div class="arch-area">
-                <svg id="arch" viewBox="0 0 240 118" aria-hidden="true">
-                    <!-- Pfeiler links: Subjektsakkusativ -->
-                    <rect id="arch-left" class="arch-part" x="26" y="52" width="34" height="56" rx="2"></rect>
-                    <!-- Pfeiler rechts: Infinitiv -->
-                    <rect id="arch-right" class="arch-part" x="180" y="52" width="34" height="56" rx="2"></rect>
-                    <!-- Bogenläufe -->
-                    <path id="arch-span" class="arch-part" d="M26 52 A 94 94 0 0 1 214 52 L 196 52 A 76 76 0 0 0 44 52 Z"></path>
-                    <!-- Schlussstein: Zeitverhältnis -->
-                    <path id="arch-key" class="arch-part keystone" d="M112 14 L128 14 L131 34 L109 34 Z"></path>
-                    <text class="arch-label" id="lbl-left" x="43" y="116">Akkusativ</text>
-                    <text class="arch-label" id="lbl-right" x="197" y="116">Infinitiv</text>
-                </svg>
+                <!-- Der Bogen ist ein Bild, viermal übereinander: einmal blass als
+                     Umriss, dreimal auf je ein Bauteil beschnitten. Ein Bild statt
+                     acht, und die Teile passen zwangsläufig zusammen. -->
+                <div id="arch" aria-hidden="true">
+                    <img class="arch-ghost" src="assets/ui/bogen.png" alt="">
+                    <img class="arch-teil links"   id="arch-left"  src="assets/ui/bogen.png" alt="">
+                    <img class="arch-teil rechts"  id="arch-right" src="assets/ui/bogen.png" alt="">
+                    <img class="arch-teil schluss" id="arch-key"   src="assets/ui/bogen.png" alt="">
+                    <span class="arch-label" id="lbl-left">Akkusativ</span>
+                    <span class="arch-label" id="lbl-right">Infinitiv</span>
+                </div>
             </div>
 
             <div class="sentence-box"><div id="sentence-words"></div></div>
@@ -373,10 +403,11 @@
         document.getElementById('time-choice').style.display = 'none';
     }
 
+    // Den Bogenlauf trägt jetzt das Bild selbst - es gibt nur noch die drei
+    // Schleier über den Teilen, die bestimmt werden müssen.
     function resetArch() {
-        ['arch-left', 'arch-right', 'arch-span', 'arch-key'].forEach(id =>
+        ['arch-left', 'arch-right', 'arch-key', 'lbl-left', 'lbl-right'].forEach(id =>
             document.getElementById(id).classList.remove('set'));
-        ['lbl-left', 'lbl-right'].forEach(id => document.getElementById(id).classList.remove('set'));
     }
 
     function renderSentence() {
@@ -436,8 +467,7 @@
                 currentStep = 'aciInf';
                 updateInstruction();
             } else {
-                // Beide Pfeiler stehen - der Bogen schließt sich
-                document.getElementById('arch-span').classList.add('set');
+                // Beide Pfeiler stehen - es fehlt nur noch der Schlussstein
                 currentRound.tokens.forEach((t, i) => {
                     if (t.role === 'sub' || t.role === 'praed') {
                         document.querySelector('.latin-word[data-idx="' + i + '"]').classList.add('rest');
