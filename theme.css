@@ -104,10 +104,30 @@ body {
     text-align: center;
 }
 
-/* ---------- Knöpfe ---------- */
+/* ---------- Knöpfe ----------
+
+   Die roten Handlungsflächen tragen Porphyr - den purpurroten Stein aus
+   Ägypten, der in Rom den Kaisern vorbehalten war. Die Kachel liegt bei
+   260 px, also etwa eine Kachel je Knopf; so wiederholt sich innerhalb
+   eines Knopfes nichts sichtbar.
+
+   WICHTIG: Wer diese Flächen in einer Spieldatei überschreibt, muss
+   `background-color:` schreiben, nicht die Kurzschreibweise `background:`
+   - die würde das Bild hier wieder entfernen.
+
+   Marmorcreme auf dem Porphyr kommt auf 6,7; die frühere flache Farbe
+   lag bei 6,0. */
+
+.start-btn,
+.play-btn,
+.nav-btn:not(.zweitrangig) {
+    background-image: url('assets/ui/porphyr.jpg');
+    background-size: 260px auto;
+    background-position: center;
+}
 
 .start-btn {
-    background: var(--pompeji);
+    background-color: var(--pompeji);
     color: var(--marmor);
     font-family: var(--font-display);
     font-weight: bold;
@@ -122,7 +142,12 @@ body {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
-.start-btn:not(:disabled):hover { background: #8a2626; }
+/* Aufhellen statt Farbwechsel: Unter der Porphyr-Textur wäre eine andere
+   Hintergrundfarbe unsichtbar, und die Kurzschreibweise `background:` würde
+   das Bild sogar entfernen. */
+.start-btn:not(:disabled):hover,
+.play-btn:hover,
+.nav-btn:not(.zweitrangig):hover { filter: brightness(1.14); }
 .start-btn:not(:disabled):active { transform: translateY(2px); }
 
 /* ---------- Hinweiskasten ---------- */
