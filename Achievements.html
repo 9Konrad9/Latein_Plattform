@@ -5,17 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Trophäensammlung - Lūdī Rōmānī</title>
     <script src="progress.js"></script>
+    <link rel="stylesheet" href="theme.css">
     <style>
         :root {
-            --roman-gold: #d4af37;
-            --roman-bronze: #8c7853;
-            --roman-marble: #f0e6d2;
-            --roman-red: #800000;
-            --bg-dark: #121212;
-            --card-bg: #222;
-            --text-light: #f5f5f5;
-            --font-display: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'Verdana', sans-serif;
             --tier-bronze: #b08d57;
             --tier-silver: #c8ccd0;
             --tier-gold: #e5c34d;
@@ -23,8 +15,8 @@
         }
         * { box-sizing: border-box; }
         body {
-            background: var(--bg-dark);
-            color: var(--text-light);
+            background: var(--wand);
+            color: var(--ink);
             font-family: var(--font-body);
             margin: 0;
             padding: 20px;
@@ -35,30 +27,30 @@
         .header-section { text-align: center; margin-bottom: 10px; }
         h1 {
             font-family: var(--font-display);
-            color: var(--roman-gold);
+            color: var(--pompeji);
             font-size: 2.2rem;
             margin-bottom: 4px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            text-shadow: 2px 2px 4px rgba(80, 60, 30, 0.22);
         }
-        .subtitle { color: #ccc; font-style: italic; margin-bottom: 6px; }
+        .subtitle { color: var(--ink-soft); font-style: italic; margin-bottom: 6px; }
 
         .home-link {
-            display: inline-block; margin-bottom: 20px; color: var(--roman-gold);
-            text-decoration: none; border: 1px solid var(--roman-gold); border-radius: 6px;
+            display: inline-block; margin-bottom: 20px; color: var(--pompeji);
+            text-decoration: none; border: 1px solid var(--gold); border-radius: 6px;
             padding: 6px 14px; font-size: 0.9rem; touch-action: manipulation;
         }
         .home-link:active { background: rgba(212,175,55,0.15); }
 
         .total-badge {
-            font-family: var(--font-display); font-size: 1.1rem; color: var(--roman-marble);
-            background: rgba(212,175,55,0.1); border: 1px solid var(--roman-bronze);
+            font-family: var(--font-display); font-size: 1.1rem; color: var(--ink);
+            background: rgba(212,175,55,0.1); border: 1px solid var(--bronze);
             border-radius: 10px; padding: 10px 20px; margin-bottom: 24px; text-align: center;
         }
 
         .section-title {
             width: 100%; max-width: 1000px; font-family: var(--font-display);
-            color: var(--roman-gold); font-size: 1.3rem; margin: 20px 0 10px;
-            border-bottom: 2px solid var(--roman-bronze); padding-bottom: 6px;
+            color: var(--pompeji); font-size: 1.3rem; margin: 20px 0 10px;
+            border-bottom: 2px solid var(--bronze); padding-bottom: 6px;
         }
 
         .achievement-grid {
@@ -71,37 +63,37 @@
         }
 
         .achievement-card {
-            background: var(--card-bg);
-            border: 2px solid var(--roman-bronze);
+            background: var(--putz);
+            border: 2px solid var(--bronze);
             border-radius: 12px;
             padding: 16px;
             display: flex;
             gap: 14px;
             align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 10px rgba(80, 60, 30, 0.22);
         }
         .achievement-card.locked { opacity: 0.55; filter: grayscale(0.6); }
 
         .badge-img { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; }
 
         .achievement-info { flex: 1; min-width: 0; }
-        .achievement-title { font-weight: bold; color: var(--roman-marble); font-size: 1rem; margin-bottom: 2px; }
+        .achievement-title { font-weight: bold; color: var(--ink); font-size: 1rem; margin-bottom: 2px; }
         .achievement-tier-label { font-size: 0.8rem; margin-bottom: 6px; }
         .tier-bronze-text { color: var(--tier-bronze); }
         .tier-silver-text { color: var(--tier-silver); }
         .tier-gold-text { color: var(--tier-gold); }
         .tier-diamond-text { color: var(--tier-diamond); }
-        .tier-none-text { color: #888; }
+        .tier-none-text { color: var(--ink-soft); }
 
         .progress-track {
-            background: #333; border-radius: 5px; height: 10px; overflow: hidden; margin-bottom: 4px;
+            background: var(--putz-hell); border-radius: 5px; height: 10px; overflow: hidden; margin-bottom: 4px;
         }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--roman-bronze), var(--roman-gold)); border-radius: 5px; }
-        .progress-text { font-size: 0.75rem; color: #aaa; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--bronze), var(--gold)); border-radius: 5px; }
+        .progress-text { font-size: 0.75rem; color: var(--ink-soft); }
 
         .empty-note {
-            width: 100%; max-width: 1000px; text-align: center; color: #999;
-            font-style: italic; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 10px;
+            width: 100%; max-width: 1000px; text-align: center; color: var(--ink-soft);
+            font-style: italic; padding: 20px; background: rgba(90, 70, 40, 0.07); border-radius: 10px;
         }
     </style>
 </head>

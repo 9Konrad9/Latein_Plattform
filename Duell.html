@@ -8,24 +8,15 @@
     <script src="progress.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        :root {
-            --roman-gold: #d4af37;
-            --roman-bronze: #8c7853;
-            --roman-red: #800000;
-            --bg-dark: #121212;
-            --card-bg: #2d2d2d;
-            --text-light: #f5f5f5;
-            --font-display: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'Verdana', sans-serif;
-        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font-body);
-            background-color: var(--bg-dark);
-            color: var(--text-light);
+            background-color: var(--wand);
+            color: var(--ink);
             height: 100dvh; /* Nutzt die dynamische iPad-Bildschirmhöhe! */
             display: flex;
             flex-direction: column;
@@ -35,9 +26,9 @@
 
         .divider {
             height: 4px;
-            background: var(--roman-gold);
+            background: var(--gold);
             width: 100%;
-            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            box-shadow: 0 0 10px rgba(80, 60, 30, 0.22);
             z-index: 10;
         }
 
@@ -48,17 +39,17 @@
             justify-content: space-between;
             padding: 8px 12px; /* Etwas kompakter für iPads */
             position: relative;
-            background-color: #1a1a1a;
+            background-color: var(--putz-hell);
             transition: background-color 0.2s ease;
         }
 
-        #player1 { transform: rotate(180deg); background-color: #221515; }
-        #player2 { background-color: #151522; }
+        #player1 { transform: rotate(180deg); background-color: #221515; color: #fff; }
+        #player2 { background-color: #151522; color: #fff; }
 
         .header-bar {
             display: flex; justify-content: space-between; align-items: center;
-            font-family: var(--font-display); font-size: 0.95rem; color: var(--roman-gold);
-            border-bottom: 1px solid #444; padding-bottom: 4px;
+            font-family: var(--font-display); font-size: 0.95rem; color: var(--pompeji);
+            border-bottom: 1px solid var(--wand-tief); padding-bottom: 4px;
         }
 
         .health-display { font-size: 1.1rem; letter-spacing: 2px; }
@@ -68,49 +59,49 @@
             margin: 2px 0;
         }
 
-        .gladiator-img { height: 92px; width: auto; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5)); }
+        .gladiator-img { height: 92px; width: auto; filter: drop-shadow(2px 2px 4px rgba(80, 60, 30, 0.22)); }
 
         .question-container {
             flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
-            text-align: center; padding: 6px; background: rgba(0,0,0,0.4);
-            border-radius: 6px; border-left: 4px solid var(--roman-gold); margin-bottom: 6px; min-height: 65px;
+            text-align: center; padding: 6px; background: rgba(80, 60, 30, 0.12);
+            border-radius: 6px; border-left: 4px solid var(--gold); margin-bottom: 6px; min-height: 65px;
         }
 
-        .q-type { font-size: 0.75rem; text-transform: uppercase; color: var(--roman-gold); font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
-        .q-text { font-family: var(--font-body); font-size: 1.1rem; color: var(--roman-marble); line-height: 1.2; }
+        .q-type { font-size: 0.75rem; text-transform: uppercase; color: var(--pompeji); font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
+        .q-text { font-family: var(--font-body); font-size: 1.1rem; color: var(--ink); line-height: 1.2; }
 
         .answers-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
         }
 
         .arena-btn {
-            background: var(--card-bg); border: 2px solid var(--roman-bronze);
-            color: white; padding: 12px 4px; font-size: 1rem; font-weight: bold;
+            background: var(--putz); border: 2px solid var(--bronze);
+            color: var(--ink); padding: 12px 4px; font-size: 1rem; font-weight: bold;
             border-radius: 6px; cursor: pointer; text-align: center;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
-        .arena-btn:not(:disabled):active { background: #444; }
+        .arena-btn:not(:disabled):active { background: var(--wand); }
 
         .countdown-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,15,15,0.92); display: flex; flex-direction: column;
+            background: rgba(244, 236, 219, 0.97); display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 20;
-            font-family: var(--font-display); font-size: 3rem; color: var(--roman-gold);
+            font-family: var(--font-display); font-size: 3rem; color: var(--pompeji);
             font-weight: bold; text-transform: uppercase;
         }
 
-        .flash-correct { background-color: #4CAF50 !important; }
-        .flash-wrong { background-color: #F44336 !important; }
+        .flash-correct { background-color: var(--richtig) !important; color: #fff; }
+        .flash-wrong { background-color: var(--falsch) !important; color: #fff; }
 
         .end-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: none; flex-direction: column;
+            background: rgba(244, 236, 219, 0.97); display: none; flex-direction: column;
             align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px;
         }
 
-        .end-title { font-family: var(--font-display); font-size: 2.2rem; color: var(--roman-gold); margin-bottom: 15px; }
+        .end-title { font-family: var(--font-display); font-size: 2.2rem; color: var(--pompeji); margin-bottom: 15px; }
         .end-btn {
-            background: var(--roman-gold); color: var(--roman-red);
+            background: var(--pompeji); color: var(--marmor);
             font-family: var(--font-display); font-weight: bold; padding: 12px 35px;
             border: none; border-radius: 20px; font-size: 1.2rem; cursor: pointer;
             text-transform: uppercase; text-decoration: none; margin-top: 15px; display: inline-block;
@@ -119,14 +110,7 @@
     </style>
 </head>
 <body>
-<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" style="
-    position: fixed; top: 10px; left: 10px; z-index: 100000;
-    width: 42px; height: 42px; border-radius: 50%;
-    background: rgba(20,15,10,0.85); border: 2px solid #d4af37; color: #d4af37;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    touch-action: manipulation;
-" title="Zurück zum Hauptmenü">🏠</a>
+<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <div class="player-zone" id="player1">
         <div class="countdown-overlay" id="p1-countdown">5</div>

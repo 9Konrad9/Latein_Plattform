@@ -11,25 +11,15 @@
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
+    <link rel="stylesheet" href="theme.css">
     <style>
-        :root {
-            --roman-gold: #d4af37;
-            --roman-bronze: #8c7853;
-            --roman-marble: #f0e6d2;
-            --roman-red: #800000;
-            --bg-dark: #121212;
-            --card-bg: #2d2d2d;
-            --text-light: #f5f5f5;
-            --font-display: 'Georgia', 'Times New Roman', serif;
-            --font-body: 'Verdana', sans-serif;
-        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
         body {
             font-family: var(--font-body);
-            background-color: var(--bg-dark);
-            color: var(--text-light);
+            background-color: var(--wand);
+            color: var(--ink);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -38,24 +28,24 @@
         }
 
         h1 {
-            color: var(--roman-gold);
+            color: var(--pompeji);
             font-family: var(--font-display);
             text-transform: uppercase;
             font-size: 1.8rem;
             margin-bottom: 5px;
             text-align: center;
             letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(80, 60, 30, 0.22);
         }
 
         .game-container {
             width: 100%;
             max-width: 700px;
-            background: var(--card-bg);
-            border: 4px solid var(--roman-bronze);
+            background: var(--putz);
+            border: 4px solid var(--bronze);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+            box-shadow: 0 8px 25px rgba(80, 60, 30, 0.22);
             position: relative;
             min-height: 480px;
             display: flex;
@@ -66,7 +56,7 @@
 
         .notice-box {
             background: rgba(212, 175, 55, 0.1);
-            border: 2px solid var(--roman-gold);
+            border: 2px solid var(--gold);
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
@@ -75,7 +65,7 @@
         }
 
         .notice-box h3 {
-            color: var(--roman-gold);
+            color: var(--pompeji);
             font-family: var(--font-display);
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -88,13 +78,13 @@
             background-image: url('assets/kastell/battlefield_bg.jpg');
             background-size: cover;
             background-position: center bottom;
-            border: 4px solid #333;
+            border: 4px solid var(--wand-tief);
             border-radius: 8px;
             height: 220px;
             padding: 10px;
             position: relative;
             overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 20px rgba(80, 60, 30, 0.22);
             margin-bottom: 15px;
         }
 
@@ -107,7 +97,7 @@
             object-position: bottom;
             flex-shrink: 0;
             z-index: 2;
-            filter: drop-shadow(-4px 0 6px rgba(0,0,0,0.4));
+            filter: drop-shadow(-4px 0 6px rgba(80, 60, 30, 0.12));
         }
 
         .stone-path {
@@ -145,14 +135,12 @@
 
         .health-bar-container {
             width: 100%; background: #cc0000; height: 12px;
-            border-radius: 6px; overflow: hidden; margin-bottom: 15px; border: 1px solid #222;
-        }
+            border-radius: 6px; overflow: hidden; margin-bottom: 15px; border: 1px solid var(--wand-tief); color: #fff; }
         .health-bar {
-            width: 100%; background: #4CAF50; height: 100%; transition: width 0.4s ease;
-        }
+            width: 100%; background: var(--richtig); height: 100%; transition: width 0.4s ease; color: #fff; }
 
         .gram-clue {
-            text-align: center; font-size: 1.1rem; color: #ffcc00; margin-bottom: 15px; font-weight: bold;
+            text-align: center; font-size: 1.1rem; color: var(--pompeji); margin-bottom: 15px; font-weight: bold;
         }
 
         .options-grid {
@@ -161,13 +149,13 @@
 
         .shield-btn {
             background: linear-gradient(#800000, #5a0000);
-            border: 3px solid var(--roman-gold); color: var(--roman-marble);
+            border: 3px solid var(--gold); color: var(--marmor);
             padding: 15px 5px; font-size: 1.1rem; font-weight: bold; font-family: var(--font-body);
-            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            transition: background 0.1s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(80, 60, 30, 0.12);
+            transition: background 0.1s; text-shadow: 1px 1px 3px rgba(80, 60, 30, 0.22);
             text-align: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
-        .shield-btn:not(:disabled):active { background: #4a0000; }
+        .shield-btn:not(:disabled):active { background: #4a0000; color: #fff; }
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -179,25 +167,18 @@
         .feedback-explanation { font-size: 1.2rem; line-height: 1.5; margin-bottom: 25px; max-width: 500px; }
         
         .start-btn {
-            background: var(--roman-gold); color: var(--roman-red);
+            background: var(--pompeji); color: var(--marmor);
             font-family: var(--font-display); font-weight: bold; padding: 15px 40px;
             border: none; border-radius: 30px; font-size: 1.3rem; cursor: pointer; text-transform: uppercase;
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
         }
 
-        .correct { background: #4CAF50 !important; border-color: #fff !important; }
-        .wrong { background: #F44336 !important; border-color: #fff !important; }
+        .correct { background: var(--richtig) !important; border-color: #fff !important; color: #fff; }
+        .wrong { background: var(--falsch) !important; border-color: #fff !important; color: #fff; }
     </style>
 </head>
 <body>
-<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" style="
-    position: fixed; top: 10px; left: 10px; z-index: 100000;
-    width: 42px; height: 42px; border-radius: 50%;
-    background: rgba(20,15,10,0.85); border: 2px solid #d4af37; color: #d4af37;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    touch-action: manipulation;
-" title="Zurück zum Hauptmenü">🏠</a>
+<a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>Formen-Kastell</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
@@ -208,7 +189,7 @@
         
         <!-- ANLEITUNG VOR DEM SPIELSTART -->
         <div id="start-screen" class="start-screen">
-            <h2 style="font-family: var(--font-display); color: var(--roman-marble);">Zenturio, an die Mauern!</h2>
+            <h2 style="font-family: var(--font-display); color: var(--ink);">Zenturio, an die Mauern!</h2>
             <div class="notice-box">
                 <h3>📜 Modus 1: Substantiv-Formen</h3>
                 <p>Bei dieser Verteidigung dreht sich alles um <strong>Substantive</strong>.</p>
@@ -250,7 +231,7 @@
                 <img src="assets/kastell/wall.png" alt="Kastell-Mauer" class="castle-wall-graphics">
             </div>
 
-            <div style="text-align:center; font-family: var(--font-display); font-size: 1.15rem; color: var(--roman-gold); margin-bottom: 4px;" id="question-prompt">Bestimme die Form.</div>
+            <div style="text-align:center; font-family: var(--font-display); font-size: 1.15rem; color: var(--pompeji); margin-bottom: 4px;" id="question-prompt">Bestimme die Form.</div>
             <div class="gram-clue" id="target-clue">Welle 1 von 10</div>
 
             <div class="options-grid">
@@ -263,7 +244,7 @@
 
         <!-- Endbildschirm -->
         <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
-            <h2 id="end-title" style="font-size: 2.2rem; color: var(--roman-gold); font-family: var(--font-display); margin-bottom: 20px;">SIEG!</h2>
+            <h2 id="end-title" style="font-size: 2.2rem; color: var(--pompeji); font-family: var(--font-display); margin-bottom: 20px;">SIEG!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
             <p id="box-summary" style="margin: 10px 0 20px; font-size: 1rem; color: #ccc;"></p>
             <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
@@ -691,7 +672,7 @@
             document.getElementById('box-summary').innerText = '';
 
             title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
-            title.style.color = "var(--roman-gold)";
+            title.style.color = "var(--pompeji)";
             msg.innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig beantwortet.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel automatisch häufiger dran.`;
         }
 
