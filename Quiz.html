@@ -14,8 +14,10 @@
         .question { font-family: 'Georgia', serif; font-size: 1.3rem; margin-bottom: 20px; color: var(--pompeji); }
         .btn-opt { display: block; width: 100%; padding: 15px; margin-bottom: 10px; background: var(--putz-hell); border: 1px solid var(--wand-tief); color: var(--ink); border-radius: 6px; cursor: pointer; text-align: left; }
         .btn-opt:active { background: var(--wand); }
-        .correct { background: #1b4d24 !important; border-color: var(--richtig) !important; color: #fff; }
-        .wrong { background: #5c1b1b !important; border-color: var(--falsch) !important; color: #fff; }
+        /* Rückmeldung in den Farben des Themes statt in zwei eigenen, dunkleren
+           Tönen aus der Zeit davor. Weiss darauf: 5,96 bzw. 5,31. */
+        .correct { background: var(--richtig) !important; border-color: var(--richtig) !important; color: #fff; }
+        .wrong { background: var(--falsch) !important; border-color: var(--falsch) !important; color: #fff; }
     </style>
 </head>
 <body>
