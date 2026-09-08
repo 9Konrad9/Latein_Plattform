@@ -99,41 +99,62 @@
         .arch-label { font-family: var(--font-body); font-size: 9px; fill: #888; text-anchor: middle; letter-spacing: 0.5px; }
         .arch-label.set { fill: var(--roman-marble); }
 
-        /* --- Der Satz auf der Bronzetafel ---
-           border-image statt background-size, damit die Griffe und der genietete
-           Rahmen beim Dehnen ihre Form behalten. Die Schnittwerte sind am Bild
-           gemessen (900x354, inneres Feld ab x=131 bzw. y=45) - beim Austausch des
-           Bildes also neu messen, sie sind Bildpixel und skalieren nicht mit.
-           Das innere Feld ist #66543b - dazu cremefarbene Schrift (Kontrast 5,85). */
+        /* --- Der Satz auf der Schriftrolle ---
+           Dreiteilig: Das Pergamentband dehnt sich per border-image (nur die wellige
+           Kante bleibt formstabil), die beiden Holzwalzen sitzen als ::before/::after
+           an den Enden und ragen bewusst etwas über das Blatt hinaus.
+           Schnittwerte am Bild gemessen (900x190, wellige Kante 8 bzw. 6 px) - sie sind
+           Bildpixel und skalieren NICHT mit, bei neuem Bild also neu messen.
+           Inneres Feld #f6e8cb, dazu Tintenbraun: Kontrast 11,3. */
         .sentence-box {
+            position: relative;
             border-style: solid;
-            border-width: 37px 95px 32px 95px;
-            border-image: url('assets/ui/tabula.png') 45 131 44 131 fill stretch;
+            /* Rand schmaler als der Schnitt: Er muss nur die wellige Kante tragen,
+               kein Rahmen. Das lässt dem Satz rund 40 px mehr Breite. */
+            border-width: 12px 24px 10px 24px;
+            border-image: url('assets/ui/pergament.png') 12 42 10 42 fill stretch;
             background: none;
-            color: var(--roman-marble);
-            padding: 10px 6px;
-            margin-bottom: 15px;
+            color: #3b2a18;
+            padding: 12px 6px;
+            margin: 0 40px 18px;
             text-align: center;
-            min-height: 96px;
+            min-height: 92px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        .sentence-box::before,
+        .sentence-box::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 132%;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none;
+        }
+        .sentence-box::before { left: -36px; background-image: url('assets/ui/rolle-links.png'); }
+        .sentence-box::after { right: -36px; background-image: url('assets/ui/rolle-rechts.png'); }
+
         .latin-word {
             font-family: var(--font-display); font-size: 1.4rem; font-weight: bold;
             display: inline-block; margin: 4px 6px; padding: 4px 9px; border-radius: 6px;
             cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.55);
         }
-        .latin-word:hover { background: rgba(240,230,210,0.14); }
+        .latin-word:hover { background: rgba(128,0,0,0.10); }
         .latin-word.found-aciSub { background: #8e44ad; color: #fff; cursor: default; }
         .latin-word.found-aciInf { background: #2980b9; color: #fff; cursor: default; }
-        .latin-word.rest { color: #a2937a; cursor: default; text-shadow: none; }
+        .latin-word.rest { color: #9c8a6e; cursor: default; }
         .latin-word.wrong-flash { background: #F44336; color: #fff; }
 
-        /* Auf schmalen Geräten fressen die Griffe sonst den Textbereich auf */
         @media (max-width: 560px) {
-            .sentence-box { border-width: 24px 58px 21px 58px; min-height: 78px; }
+            .sentence-box { margin: 0 26px 15px; min-height: 76px; border-width: 10px 28px 8px 28px; }
+            .sentence-box::before, .sentence-box::after { width: 30px; }
+            .sentence-box::before { left: -25px; }
+            .sentence-box::after { right: -25px; }
             .latin-word { font-size: 1.15rem; margin: 3px 4px; padding: 3px 6px; }
         }
 
@@ -145,17 +166,24 @@
 
         /* --- Zeitverhältnis --- */
         .time-choice { display: none; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        /* Drei Zustände derselben Tafel: stumpfe Bronze im Ruhezustand, goldene mit
+           Lorbeer bei richtig, gesprungener Stein bei falsch. Nur die Bildquelle
+           wechselt, Form und Maße bleiben - dadurch springt beim Umschalten nichts. */
         .time-btn {
-            background: linear-gradient(#800000, #5a0000);
-            border: 3px solid var(--roman-gold); color: var(--roman-marble);
-            padding: 14px 22px; font-size: 1.05rem; font-weight: bold; font-family: var(--font-display);
-            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            border-style: solid;
+            border-width: 13px 19px;
+            border-image: url('assets/ui/plaque.png') 40 55 40 55 fill stretch;
+            background: none;
+            color: #2a2118;
+            padding: 6px 10px; min-width: 150px;
+            font-size: 1.05rem; font-weight: bold; font-family: var(--font-display);
+            cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            text-shadow: 0 1px 0 rgba(255,245,220,0.35);
         }
-        .time-btn:not(:disabled):active { background: #4a0000; }
-        .time-btn small { display: block; font-family: var(--font-body); font-weight: normal; font-size: 0.72rem; color: #d8c9a8; margin-top: 3px; }
-        .time-btn.correct { background: #4CAF50 !important; border-color: #fff !important; }
-        .time-btn.wrong { background: #F44336 !important; border-color: #fff !important; }
+        .time-btn:not(:disabled):active { transform: translateY(2px); }
+        .time-btn small { display: block; font-family: var(--font-body); font-weight: normal; font-size: 0.72rem; color: #4a3a26; margin-top: 3px; text-shadow: none; }
+        .time-btn.correct { border-image-source: url('assets/ui/plaque-richtig.png'); }
+        .time-btn.wrong { border-image-source: url('assets/ui/plaque-falsch.png'); }
 
         /* --- Feedback --- */
         .feedback-overlay {

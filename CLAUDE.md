@@ -108,9 +108,22 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   `background-size` – sonst verzerren Rahmen und Griffe beim Dehnen. **Die Schnittwerte in
   `border-image-slice` sind Bildpixel und skalieren NICHT mit**: Wird ein Asset ausgetauscht oder
   neu skaliert, müssen sie neu gemessen werden (inneres Feld suchen, Randbreiten ablesen).
-  Vor dem Einbau den Kontrast des inneren Feldes gegen die Schriftfarbe prüfen – die Tabula
-  (`#66543b`) trägt cremefarbene Schrift mit 5,85, die Plaque (`#aa754a`) liegt mit 3,2–3,7
-  in einem Mittelton, auf dem weder helle noch dunkle Schrift gut steht.
+  Vor dem Einbau den **Kontrast des inneren Feldes** gegen die Schriftfarbe messen. Gemessen:
+
+  | Asset | inneres Feld | bester Kontrast | Verwendung |
+  |---|---|---|---|
+  | `pergament.png` + `rolle-links/rechts.png` | `#f6e8cb` | 11,3 mit `#3b2a18` | Satzfeld (Arcus) |
+  | `tabula.png` | `#66543b` | 5,85 mit Creme | frei – gut für Überschriften |
+  | `plaque.png` | `#aa754a` | 3,66 mit Dunkel | Knopf, Ruhezustand |
+  | `plaque-richtig.png` | `#a6904f` | 4,60 | Knopf, richtig |
+  | `plaque-falsch.png` | `#a39375` | 4,78 | Knopf, falsch |
+
+  Die Plaques liegen in einem Mittelton, auf dem weder helle noch dunkle Schrift wirklich gut
+  steht – für kurze fette Knopfbeschriftung reicht es, für Fließtext nicht. Das Pergament ist
+  der klar beste Lesegrund.
+  Die Schriftrolle ist dreiteilig: Das Pergamentband dehnt sich per `border-image`, die beiden
+  Walzen sitzen als `::before`/`::after` an den Enden. Der Rand darf schmaler sein als der
+  Schnitt – er muss nur die wellige Kante tragen, das schafft Platz für den Satz.
 - **Lektions-Gating**: Jede Engine-Fähigkeit hat eine feste Einführungs-Lektion. Die
   verbindlichen Nummern stehen im Abschnitt „Lehrgang: was wann drankommt“ weiter unten –
   dort nachschlagen, nicht schätzen. Beim Ergänzen einer neuen Fähigkeit gehört die Nummer
