@@ -89,14 +89,20 @@
         }
 
         .notice-box {
-            background: rgba(212, 175, 55, 0.1); border: 2px solid var(--gold);
+            background-color: rgba(212, 175, 55, 0.1); border: 2px solid var(--gold);
             border-radius: 8px; padding: 20px; margin: 15px 0; text-align: left; line-height: 1.5; max-width: 500px;
         }
+        /* Emblem über der Überschrift, nach dem Vorbild der Trophäenseite:
+           ein Gegenstand, der zum Spiel gehört, statt eines Emojis. */
+        .emblem { display: block; height: 68px; margin: 0 auto 4px; }
+        @media (max-width: 520px) { .emblem { height: 52px; } }
+
     </style>
 </head>
 <body>
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
+    <img class="emblem" src="assets/ui/amphore.png" alt="" aria-hidden="true">
     <h1>Aedificium Rōmānum</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: var(--ink-soft); margin-bottom: 15px; text-align: center;">
         KNG-Kongruenz: Meistere die Adjektive!

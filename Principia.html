@@ -55,7 +55,7 @@
         .start-screen { text-align: center; padding: 10px; }
 
         .notice-box {
-            background: rgba(212, 175, 55, 0.1);
+            background-color: rgba(212, 175, 55, 0.1);
             border: 2px solid var(--gold);
             border-radius: 8px;
             padding: 20px;
@@ -161,12 +161,18 @@
         .end-treasury-grid .coin-wrap { text-align: center; width: 62px; }
         .end-treasury-grid .coin { width: 44px; height: 44px; font-size: 0.85rem; margin: 0 auto; }
         .end-treasury-grid .coin-label { font-size: 0.65rem; color: var(--ink-soft); margin-top: 3px; word-break: break-word; }
+        /* Emblem über der Überschrift, nach dem Vorbild der Trophäenseite:
+           ein Gegenstand, der zum Spiel gehört, statt eines Emojis. */
+        .emblem { display: block; height: 68px; margin: 0 auto 4px; }
+        @media (max-width: 520px) { .emblem { height: 52px; } }
+
     </style>
 </head>
 <body>
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
-    <h1>🪙 Prīncipia!</h1>
+    <img class="emblem" src="assets/ui/wachstafel.png" alt="" aria-hidden="true">
+    <h1>Prīncipia!</h1>
     <div class="subtitle">Die Münzprägerei</div>
 
     <div class="game-container">

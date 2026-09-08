@@ -152,8 +152,11 @@ body {
 
 /* ---------- Hinweiskasten ---------- */
 
+/* Die Öllampe steht am Hinweiskasten für „hier wird etwas erklärt". Sie sitzt
+   als Hintergrundbild oben rechts, damit sie den Text nicht verdrängt, und ist
+   zurückgenommen - sie soll den Kasten kennzeichnen, nicht bespielen. */
 .notice-box {
-    background: var(--putz);
+    background: var(--putz) url('assets/ui/lampe.png') right 14px top 12px / 34px auto no-repeat;
     border: 2px solid var(--bronze);
     border-left: 6px solid var(--pompeji);
     border-radius: 8px;
