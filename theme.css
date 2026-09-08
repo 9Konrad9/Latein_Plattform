@@ -57,9 +57,20 @@
 
 body {
     font-family: var(--font-body);
-    background-color: var(--wand);
     color: var(--ink);
     min-height: 100vh;
+
+    /* Steinwand als Grund, durch eine Lage Wandfarbe stark zurückgenommen -
+       sie soll Textur geben, nicht mit dem Inhalt konkurrieren.
+       Die Kachel ist senkrecht gespiegelt aufgebaut (Original + Spiegelung
+       untereinander), weil die Vorlage waagerecht kachelte, senkrecht aber
+       nicht: Die Naht lag bei 378 von 765 und ist so auf 11 gefallen. */
+    background-color: var(--wand);
+    background-image:
+        linear-gradient(rgba(230, 217, 191, 0.82), rgba(230, 217, 191, 0.82)),
+        url('assets/ui/wand.jpg');
+    background-size: auto, 520px auto;
+    background-repeat: repeat, repeat;
 }
 
 /* ---------- Der Haus-Knopf, in elf Dateien identisch ---------- */
