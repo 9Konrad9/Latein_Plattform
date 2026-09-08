@@ -42,9 +42,14 @@
             background-color: var(--putz-hell);
             transition: background-color 0.2s ease;
         }
-
-        #player1 { transform: rotate(180deg); background-color: #221515; color: #fff; }
-        #player2 { background-color: #151522; color: #fff; }
+        /* Jede Hälfte trägt die Farbe ihrer Fraktion, aber nur als Hauch auf dem
+           Putz: russata warm, veneta kühl. Tintenschrift kommt darauf auf 12,3
+           bzw. 12,25. Vorher waren beide Hälften fast schwarz mit weisser
+           Schrift - in sich lesbar, deshalb hat die Kontrastprüfung nie etwas
+           gemeldet, aber eben noch das alte Theme.
+           Spieler 1 sitzt dem Gerät gegenüber, seine Hälfte steht auf dem Kopf. */
+        #player1 { background-color: #f7ebe6; color: var(--ink); transform: rotate(180deg); }
+        #player2 { background-color: #e9edf5; color: var(--ink); }
 
         .header-bar {
             display: flex; justify-content: space-between; align-items: center;
@@ -394,8 +399,10 @@
             ["p1", "p2"].forEach(p => {
                 document.getElementById(`${p}-qtype`).innerText = categoryText;
                 document.getElementById(`${p}-qtext`).innerText = questionText;
-                const targetZoneId = p === "p1" ? "player1" : "player2";
-                document.getElementById(targetZoneId).style.backgroundColor = p === "p1" ? "#221515" : "#151522";
+                // Die Fraktionstönung der beiden Hälften steht jetzt im CSS - sie
+                // ändert sich ja nie. Hier wurde sie in jeder Runde neu gesetzt,
+                // und zwar mit den fast schwarzen Werten des alten Themes: Die
+                // Spielhälften wurden dunkel, sobald die erste Frage erschien.
                 finalOptions.forEach((opt, idx) => {
                     document.getElementById(`${p}-opt${idx}`).innerText = opt;
                 });

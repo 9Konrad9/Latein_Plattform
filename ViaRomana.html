@@ -7,16 +7,21 @@
     <link rel="stylesheet" href="theme.css">
     <style>
         :root {
-            --highlight-cyan: #00d2d3;
-            --leather-brown: #5c3d2e;
+            /* Das markierte Wort trägt die Farbe der Formenlehre-Säule: ein
+               echtes Blau, wie es der Auftragstext verspricht („blau markiert"),
+               und mit 6,4 auf dem Satzfeld lesbar. Vorher stand hier ein
+               Neon-Cyan aus dem alten Dunkel-Theme - auf hellem Pergament
+               kam es auf 1,7 und war praktisch unsichtbar. */
+            --markiert: var(--pillar-formenlehre);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
         body {
             font-family: var(--font-body);
-            background-color: var(--wand);
-            background-image: linear-gradient(135deg, #111 0%, #222 100%);
+            /* Kein eigener Hintergrund: Die Steinwand kommt aus theme.css. Hier
+               stand ein schwarzer Verlauf aus dem alten Theme - er hat die Wand
+               übermalt und die dunkle Tintenschrift auf Schwarz gesetzt. */
             color: var(--ink);
             height: 100dvh;
             display: flex;
@@ -58,8 +63,8 @@
         }
 
         .highlight {
-            color: var(--highlight-cyan);
-            border-bottom: 4px dashed var(--highlight-cyan);
+            color: var(--markiert);
+            border-bottom: 4px dashed var(--markiert);
             padding-bottom: 2px;
             font-weight: bold;
         }
@@ -101,14 +106,14 @@
         }
         .milestones-track {
             display: flex; justify-content: space-between; align-items: center;
-            position: relative; background: var(--putz-hell); height: 6px; border-radius: 3px; margin: 15px 10px 5px 10px;
+            position: relative; background: var(--wand-tief); height: 6px; border-radius: 3px; margin: 15px 10px 5px 10px;
         }
         .stone {
             width: 20px; height: 20px; background: var(--wand-tief);
             border-radius: 50%; border: 2px solid var(--wand-tief);
             position: relative; z-index: 2; transition: background 0.3s;
         }
-        .stone.active { background: var(--gold); border-color: #fff; box-shadow: 0 0 8px var(--gold); }
+        .stone.active { background: var(--gold); border-color: var(--bronze); box-shadow: 0 0 8px rgba(184,145,47,0.55); }
         
         /* Der Reisewagen (Carpentum) */
         .carpentum {
@@ -123,22 +128,38 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(244, 236, 219, 0.97); display: none; align-items: center; justify-content: center; z-index: 100;
         }
+        /* Der Kasten stand als dunkles Schiefergrau auf dem hellen Schleier, und
+           Titel wie Text trugen die dunklen Themefarben - beides war darauf
+           nicht zu lesen. */
         .feedback-box {
-            background: #2f3640; width: 90%; max-width: 500px;
-            border: 5px solid var(--gold); border-radius: 8px; padding: 25px; text-align: center; color: #fff; }
+            background: var(--putz); width: 90%; max-width: 500px;
+            border: 4px solid var(--bronze); border-radius: 8px; padding: 25px;
+            text-align: center; color: var(--ink); box-shadow: var(--schatten-tief); }
         .feedback-title { color: var(--pompeji); font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 15px; }
         .feedback-text { font-size: 1.1rem; line-height: 1.5; color: var(--ink-soft); margin-bottom: 25px; }
-        .btn-close {
-            background: var(--gold); color: #000; border: none; padding: 12px 35px;
-            font-size: 1.1rem; font-weight: bold; border-radius: 20px; cursor: pointer;
+        /* Die beiden Handlungsknöpfe trugen noch Gold mit schwarzer Schrift. Sie
+           tragen jetzt denselben Porphyr wie überall sonst - als background-color
+           plus background-image, nicht als Kurzschreibweise: Die würde das Bild
+           gleich wieder entfernen. */
+        .btn-close, .btn-main {
+            background-color: var(--pompeji);
+            background-image: url('assets/ui/porphyr.jpg');
+            background-size: 260px auto; background-position: center;
+            color: var(--marmor); border: 2px solid #6d1f1f;
+            font-family: var(--font-display); font-weight: bold;
+            border-radius: 30px; cursor: pointer; text-decoration: none;
+            text-transform: uppercase; box-shadow: var(--schatten);
+            touch-action: manipulation;
         }
+        .btn-close { padding: 12px 35px; font-size: 1.1rem; }
+        .btn-main  { padding: 15px 40px; font-size: 1.2rem; margin-top: 20px; }
+        .btn-close:hover, .btn-main:hover { filter: brightness(1.14); }
 
         /* Endbildschirm */
         .end-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--wand); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center;
         }
-        .btn-main { background: var(--gold); color: #000; border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 30px; cursor: pointer; text-decoration: none; margin-top: 20px; text-transform: uppercase; }
 
         .notice-box {
             background-color: rgba(212, 175, 55, 0.1);
@@ -164,7 +185,7 @@
         <h1 style="color: var(--pompeji); font-size: 2.2rem; margin-bottom: 15px; font-family: 'Georgia', serif; text-transform: uppercase;">Via Rōmāna</h1>
         <div class="notice-box">
             <h3>📜 Der Auftrag:</h3>
-            <p>Du siehst einen lateinischen Satz. Ein Wort ist <span style="color: var(--highlight-cyan); font-weight: bold;">blau markiert</span> - bestimme, welches Satzglied es ist: <strong>Subjekt</strong>, <strong>Prädikat</strong>, <strong>Akkusativ-Objekt</strong> oder <strong>Genitiv-Attribut</strong>.</p>
+            <p>Du siehst einen lateinischen Satz. Ein Wort ist <span style="color: var(--markiert); font-weight: bold;">blau markiert</span> - bestimme, welches Satzglied es ist: <strong>Subjekt</strong>, <strong>Prädikat</strong>, <strong>Akkusativ-Objekt</strong> oder <strong>Genitiv-Attribut</strong>.</p>
             <p style="margin-top: 10px; font-weight: bold; color: var(--pompeji);">Achtung: Die Satzglieder werden ab und zu durcheinandergewürfelt! Verlass dich auf die Endung, nicht auf die Position im Satz.</p>
             <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch bestimmte Sätze direkt nochmal üben.</p>
         </div>
