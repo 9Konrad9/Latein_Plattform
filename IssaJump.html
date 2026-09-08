@@ -45,7 +45,10 @@
         .overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: rgba(10, 15, 25, 0.94); padding: 20px; text-align: center; z-index: 20;
+            /* War rgba(10,15,25,0.94) - fast schwarz. Die Schrift darauf wurde beim
+               Theme-Wechsel auf dunkle Tinte umgestellt, also dunkel auf dunkel.
+               Jetzt heller Putz wie die Rückmeldungs-Overlays der anderen Spiele. */
+            background: rgba(244, 236, 219, 0.96); padding: 20px; text-align: center; z-index: 20;
             overflow-y: auto;
         }
         .overlay h2 { font-family: var(--font-display); color: var(--pompeji); font-size: 1.5rem; margin-bottom: 12px; }
@@ -99,7 +102,7 @@
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>🐕 Issa Springt!</h1>
-    <div id="error-banner" style="display:none; background:#c0392b; color:#fff; padding:8px 14px; font-size:0.85rem; text-align:center; max-width:90%; border-radius:6px; margin-bottom:6px;"></div>
+    <div id="error-banner" style="display:none; background: var(--falsch); color:#fff; padding:8px 14px; font-size:0.85rem; text-align:center; max-width:90%; border-radius:6px; margin-bottom:6px;"></div>
     <div class="subtitle">Vokabel-Jump'n'Run</div>
 
     <div class="stage-wrapper">
@@ -126,7 +129,7 @@
             <h2>Issa ist ausgebüxt!</h2>
             <p>Hilf Issa, immer höher zu springen! Oben siehst du die aktuelle Vokabel, z. B. <span class="example">canis</span> - lenke Issa auf die Plattform mit der richtigen Bedeutung.</p>
             <p><strong>Steuerung:</strong> Pfeiltasten/A+D am Computer, Tipp-Tasten am iPad. Issa springt automatisch.</p>
-            <p style="color:#ff6b5b; font-weight:bold;">Achtung: Eine falsche Plattform lässt Issa durchfallen und kostet ein Herz!</p>
+            <p style="color: var(--falsch); font-weight:bold;">Achtung: Eine falsche Plattform lässt Issa durchfallen und kostet ein Herz!</p>
             <button class="start-btn" id="btn-start">Los geht's!</button>
         </div>
 

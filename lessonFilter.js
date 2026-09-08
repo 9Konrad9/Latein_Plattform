@@ -30,7 +30,7 @@ const LessonFilter = (() => {
         const overlay = document.createElement('div');
         overlay.id = 'lesson-filter-overlay';
         overlay.style.cssText = `
-            position: fixed; inset: 0; background: rgba(10, 8, 6, 0.94);
+            position: fixed; inset: 0; background: rgba(60, 45, 25, 0.55);
             z-index: 99999; display: flex; justify-content: center;
             font-family: inherit; padding: 20px; box-sizing: border-box;
             overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -38,43 +38,43 @@ const LessonFilter = (() => {
 
         const tilesHtml = lessons.map(l => `
             <button class="lf-tile" data-lesson="${l}" style="
-                padding: 14px 8px; border-radius: 8px; border: 2px solid #d4af37;
-                background: transparent; color: #d4af37; font-size: 1rem;
+                padding: 14px 8px; border-radius: 8px; border: 2px solid var(--bronze, #8c7853);
+                background: var(--putz-hell, #fbf6ec); color: var(--ink, #33281c); font-size: 1rem;
                 cursor: pointer; font-weight: bold; transition: all 0.15s;
             ">${lessonLabel(l)}</button>
         `).join('');
 
         overlay.innerHTML = `
-            <div style="background:#1a1410; border:2px solid #d4af37; border-radius:14px;
+            <div style="background:var(--putz, #f4ecdb); border:3px solid var(--bronze, #8c7853); border-radius:14px;
                         padding:30px; max-width:480px; width:100%; text-align:center;
                         box-shadow: 0 0 40px rgba(212,175,55,0.2);
                         margin: auto; box-sizing:border-box;">
-                <h2 style="color:#d4af37; margin-top:0; font-size:1.4rem;">Welche Lektionen möchtest du üben?</h2>
+                <h2 style="color:var(--pompeji, #9b2c2c); margin-top:0; font-size:1.4rem;">Welche Lektionen möchtest du üben?</h2>
 
                 <div style="display:flex; align-items:center; justify-content:center; gap:10px;
                             margin-bottom:20px; padding:14px; background:rgba(212,175,55,0.08);
                             border-radius:8px; border:1px solid rgba(212,175,55,0.3);">
-                    <label for="lf-upto-input" style="color:#ccc; font-size:0.9rem;">Bis Lektion:</label>
+                    <label for="lf-upto-input" style="color:var(--ink-soft, #6b5a44); font-size:0.9rem;">Bis Lektion:</label>
                     <input type="number" id="lf-upto-input" min="${lessons[0]}" max="${lessons[lessons.length-1]}"
-                           style="width:60px; padding:6px; border-radius:6px; border:1px solid #d4af37;
-                                  background:#0d0a07; color:#d4af37; font-size:1rem; text-align:center;">
+                           style="width:60px; padding:6px; border-radius:6px; border:1px solid var(--bronze, #8c7853);
+                                  background:var(--putz-hell, #fbf6ec); color:var(--ink, #33281c); font-size:1rem; text-align:center;">
                     <button id="lf-upto-btn" style="padding:8px 16px; border-radius:6px; border:none;
-                                background:#d4af37; color:#1a1410; font-weight:bold; cursor:pointer;
+                                background:var(--bronze, #8c7853); color:var(--marmor, #f0e6d2); font-weight:bold; cursor:pointer;
                                 font-size:0.9rem;">Übernehmen</button>
                 </div>
 
-                <p style="color:#ccc; font-size:0.9rem; margin-bottom:12px;">... oder wähle einzelne Lektionen direkt aus:</p>
+                <p style="color:var(--ink-soft, #6b5a44); font-size:0.9rem; margin-bottom:12px;">... oder wähle einzelne Lektionen direkt aus:</p>
                 <div id="lf-tiles" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(90px,1fr));
                             gap:10px; margin-bottom:20px;">
                     ${tilesHtml}
                 </div>
-                <button id="lf-all-btn" style="background:none; border:none; color:#aaa;
+                <button id="lf-all-btn" style="background:none; border:none; color:var(--ink-soft, #6b5a44);
                             text-decoration:underline; cursor:pointer; font-size:0.9rem; margin-bottom:22px;">
                     Alle Lektionen auswählen (große Wiederholung)
                 </button>
                 <div>
                     <button id="lf-confirm-btn" disabled style="padding:13px 34px; border-radius:8px;
-                                border:none; background:#555; color:#fff; font-size:1.1rem;
+                                border:none; background:var(--wand-tief, #d8c8a6); color:var(--ink-soft, #6b5a44); font-size:1.1rem;
                                 cursor:not-allowed; font-weight:bold;">Los geht's!</button>
                 </div>
             </div>
@@ -89,8 +89,8 @@ const LessonFilter = (() => {
         function refreshConfirmButton() {
             const active = selected.size > 0;
             confirmBtn.disabled = !active;
-            confirmBtn.style.background = active ? '#d4af37' : '#555';
-            confirmBtn.style.color = active ? '#1a1410' : '#fff';
+            confirmBtn.style.background = active ? 'var(--pompeji, #9b2c2c)' : 'var(--wand-tief, #d8c8a6)';
+            confirmBtn.style.color = active ? 'var(--marmor, #f0e6d2)' : 'var(--ink-soft, #6b5a44)';
             confirmBtn.style.cursor = active ? 'pointer' : 'not-allowed';
         }
 
@@ -99,11 +99,11 @@ const LessonFilter = (() => {
             if (selected.has(lesson)) {
                 selected.delete(lesson);
                 tile.style.background = 'transparent';
-                tile.style.color = '#d4af37';
+                tile.style.color = 'var(--ink, #33281c)';
             } else {
                 selected.add(lesson);
-                tile.style.background = '#d4af37';
-                tile.style.color = '#1a1410';
+                tile.style.background = 'var(--pompeji, #9b2c2c)';
+                tile.style.color = 'var(--marmor, #f0e6d2)';
             }
             refreshConfirmButton();
         }

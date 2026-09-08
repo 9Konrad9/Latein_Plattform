@@ -77,18 +77,27 @@
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3); touch-action: manipulation;
         }
 
-        .round-number { text-align: center; font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 1px; }
-        .progress-bar-container { width: 100%; background: var(--putz-hell); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+        /* Der Balken saß so dicht unter der Rundenanzeige, dass sein Rand wie ein
+           Durchstreichen wirkte - und auf hellem Putz war seine Bahn unsichtbar. */
+        .round-number { text-align: center; font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 12px; letter-spacing: 1px; }
+        .progress-bar-container { width: 100%; background: var(--wand-tief); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
         .progress-bar { width: 0%; background: var(--gold); height: 100%; transition: width 0.4s ease; }
 
         /* --- Der Bogen --- */
         .arch-area { display: flex; justify-content: center; margin-bottom: 10px; }
         #arch { width: 240px; height: 118px; overflow: visible; }
-        .arch-part { fill: #3a3a3a; stroke: var(--wand-tief); stroke-width: 2; transition: fill 0.35s ease; }
-        .arch-part.set { fill: var(--stone); }
-        .arch-part.keystone.set { fill: var(--gold); }
-        .arch-label { font-family: var(--font-body); font-size: 9px; fill: #888; text-anchor: middle; letter-spacing: 0.5px; }
-        .arch-label.set { fill: var(--putz); }
+        /* Ruhezustand ist ein leerer, blasser Steinumriss - vorher war er fast
+           schwarz, was auf dem hellen Rahmen als Klotz wirkte. Gesetzte Teile
+           füllen sich mit warmem Stein, der Schlussstein mit Gold. */
+        .arch-part {
+            fill: var(--putz-hell); stroke: var(--wand-tief); stroke-width: 2;
+            stroke-dasharray: 5 4;
+            transition: fill 0.35s ease, stroke 0.35s ease;
+        }
+        .arch-part.set { fill: var(--stone); stroke: var(--bronze); stroke-dasharray: none; }
+        .arch-part.keystone.set { fill: var(--gold); stroke: var(--bronze); }
+        .arch-label { font-family: var(--font-body); font-size: 9px; fill: var(--ink-soft); text-anchor: middle; letter-spacing: 0.5px; }
+        .arch-label.set { fill: var(--ink); font-weight: bold; }
 
         /* --- Der Satz auf der Schriftrolle ---
            Dreiteilig: Das Pergamentband dehnt sich per border-image (nur die wellige
@@ -179,7 +188,7 @@
         /* --- Feedback --- */
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            background: rgba(244, 236, 219, 0.96); border-radius: 12px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             padding: 25px; text-align: center; z-index: 10;
         }
@@ -206,7 +215,7 @@
                 <p style="margin-top:10px;"><span class="step">1</span> den <strong>Subjektsakkusativ</strong> — er steht im Akkusativ, ist aber <em>kein Objekt</em>, sondern das Subjekt des AcI.</p>
                 <p style="margin-top:6px;"><span class="step">2</span> den <strong>Infinitiv</strong> — das Prädikat des AcI.</p>
                 <p style="margin-top:10px;">Ab Lektion 10 kommt der <strong>Schlussstein</strong> dazu: Ist die Handlung <em>gleichzeitig</em> oder <em>vorzeitig</em>?</p>
-                <p style="margin-top:10px; color:#aaa; font-size:0.92rem;">Der AcI wird in Lektion 8 eingeführt — wähle also mindestens Lektion 8 mit aus.</p>
+                <p style="margin-top:10px; color: var(--ink-soft); font-size:0.92rem;">Der AcI wird in Lektion 8 eingeführt — wähle also mindestens Lektion 8 mit aus.</p>
             </div>
             <button class="start-btn" id="btn-start">Bogen bauen</button>
         </div>

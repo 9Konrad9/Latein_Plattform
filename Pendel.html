@@ -125,7 +125,7 @@
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            background: rgba(244, 236, 219, 0.96); border-radius: 12px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             padding: 25px; text-align: center; z-index: 10;
         }
@@ -153,7 +153,7 @@
                 <p style="margin-top: 6px;"><span class="step">2</span> Von dort geht's nach hinten zum <strong>Prädikat</strong>.</p>
                 <p style="margin-top: 6px;"><span class="step">3</span> Und wieder zurück zum <strong>Objekt</strong> (falls vorhanden - Akkusativ oder Dativ, je nach Verb).</p>
                 <p style="margin-top: 6px;"><span class="step">4</span> Übrige Wörter (Genitiv-Attribut, Adverbialien) werden dir am Ende erklärt.</p>
-                <p style="margin-top: 10px; color: #ccc;">Die Sätze werden aus eurem echten Wortschatz erzeugt, passend zu den Lektionen, die du auswählst - je mehr Lektionen, desto mehr Tempora und Satzglieder können vorkommen.</p>
+                <p style="margin-top: 10px; color: var(--ink-soft);">Die Sätze werden aus eurem echten Wortschatz erzeugt, passend zu den Lektionen, die du auswählst - je mehr Lektionen, desto mehr Tempora und Satzglieder können vorkommen.</p>
             </div>
             <button class="start-btn" id="btn-start-game">Pendeln starten</button>
         </div>
@@ -203,11 +203,11 @@
             <h2 id="end-title" style="font-size: 2.2rem; color: var(--pompeji); font-family: var(--font-display); margin-bottom: 15px;">GESCHAFFT!</h2>
             <p id="end-msg" style="margin: 10px 0; font-size: 1.15rem; line-height: 1.6;"></p>
             <p class="end-treasury-grid" id="box-summary"></p>
-            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin: 15px 0 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background: var(--falsch); color:#fff; display:none; margin: 15px 0 12px;" id="btn-review">📚 Fehler wiederholen</button>
             <br>
             <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Sätze</button>
             <br>
-            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: var(--wand-tief); color: var(--ink); margin-top: 15px;">Zurück zum Menü</a>
         </div>
     </div>
 

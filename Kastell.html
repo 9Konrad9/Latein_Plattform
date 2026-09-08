@@ -159,7 +159,7 @@
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 20, 20, 0.95); border-radius: 12px;
+            background: rgba(244, 236, 219, 0.96); border-radius: 12px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             padding: 20px; text-align: center; z-index: 10;
         }
@@ -181,7 +181,7 @@
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>Formen-Kastell</h1>
-    <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
+    <div style="font-family: var(--font-display); font-style: italic; color: var(--ink-soft); margin-bottom: 15px; text-align: center;">
         Mission: Die Formen-Abwehr
     </div>
 
@@ -194,7 +194,7 @@
                 <h3>📜 Modus 1: Substantiv-Formen</h3>
                 <p>Bei dieser Verteidigung dreht sich alles um <strong>Substantive</strong>.</p>
                 <p style="margin-top: 10px;">Die feindlichen Katapulte werfen deklinierte Substantivformen auf unsere Mauern (z. B. <em>rēgum</em>). Bestimme Kasus <strong>und</strong> Numerus (z. B. <em>Genitiv Plural</em>).</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Jedes Substantiv hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Wort sofort zurück auf Rot.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Jedes Substantiv hat eine Ampel wie im Vokabelkasten: Rot = wird häufig abgefragt, Grün = sitzt schon gut und taucht seltener auf. Bei Fehlern springt ein Wort sofort zurück auf Rot.</p>
             </div>
             <button class="start-btn" id="btn-start-noun">Substantiv-Formen üben</button>
 
@@ -202,7 +202,7 @@
                 <h3>📜 Modus 2: Verb-Formen</h3>
                 <p>Bei dieser Verteidigung dreht sich alles um <strong>Verben</strong>.</p>
                 <p style="margin-top: 10px;">Die feindlichen Katapulte werfen konjugierte Verbformen auf unsere Mauern. Bestimme Person <strong>und</strong> Numerus (z. B. <em>3. Person Plural</em>) – sobald du weitere Lektionen ausgewählt hast, kommt zusätzlich das <strong>Tempus</strong> mit ins Spiel (z. B. <em>3. Person Plural, Perfekt</em>).</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">Welche Tempora schon auftauchen, richtet sich automatisch nach deiner Lektionsauswahl: Präsens von Anfang an, Perfekt ab Lektion 10, Imperfekt ab Lektion 12, Futur I ab Lektion 13, Plusquamperfekt ab Lektion 14.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">Welche Tempora schon auftauchen, richtet sich automatisch nach deiner Lektionsauswahl: Präsens von Anfang an, Perfekt ab Lektion 10, Imperfekt ab Lektion 12, Futur I ab Lektion 13, Plusquamperfekt ab Lektion 14.</p>
             </div>
             <button class="start-btn" id="btn-start-verb">Verb-Formen üben</button>
         </div>
@@ -216,7 +216,7 @@
 
         <!-- Haupt-Spielfeld -->
         <div id="combat-box" style="display: none; flex-grow: 1; flex-direction: column;">
-            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #aaa; text-align: center;">MAUERSTÄRKE DES KASTELLS</div>
+            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--ink-soft); text-align: center;">MAUERSTÄRKE DES KASTELLS</div>
             <div class="health-bar-container">
                 <div class="health-bar" id="wall-health"></div>
             </div>
@@ -246,12 +246,12 @@
         <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
             <h2 id="end-title" style="font-size: 2.2rem; color: var(--pompeji); font-family: var(--font-display); margin-bottom: 20px;">SIEG!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
-            <p id="box-summary" style="margin: 10px 0 20px; font-size: 1rem; color: #ccc;"></p>
-            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <p id="box-summary" style="margin: 10px 0 20px; font-size: 1rem; color: var(--ink-soft);"></p>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background: var(--falsch); color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
             <br>
             <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Kohorte abwehren</button>
             <br>
-            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: var(--wand-tief); color: var(--ink); margin-top: 15px;">Zurück zum Menü</a>
         </div>
     </div>
 

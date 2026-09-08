@@ -31,24 +31,24 @@ const AchievementToast = (() => {
             .achievement-toast {
                 position: fixed; top: 20px; left: 50%;
                 z-index: 999999;
-                background: linear-gradient(135deg, #2a2410, #1a1608);
-                border: 2px solid #d4af37;
+                background: linear-gradient(135deg, var(--putz-hell, #fbf6ec), var(--putz, #f4ecdb));
+                border: 2px solid var(--gold, #b8912f);
                 border-radius: 14px;
                 padding: 14px 22px 14px 14px;
                 display: flex; align-items: center; gap: 14px;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.6), 0 0 20px rgba(212,175,55,0.3);
+                box-shadow: 0 8px 25px rgba(80,60,30,0.28), 0 0 18px rgba(184,145,47,0.35);
                 font-family: 'Verdana', sans-serif;
-                color: #f5f5f5;
+                color: var(--ink, #33281c);
                 max-width: 90vw;
                 animation: achToastIn 0.4s ease-out;
             }
             .achievement-toast.leaving { animation: achToastOut 0.35s ease-in forwards; }
             .achievement-toast img { width: 56px; height: 56px; flex-shrink: 0; }
             .achievement-toast .ach-toast-title {
-                font-family: 'Georgia', serif; color: #d4af37; font-weight: bold;
+                font-family: 'Georgia', serif; color: var(--pompeji, #9b2c2c); font-weight: bold;
                 font-size: 0.95rem; margin-bottom: 2px;
             }
-            .achievement-toast .ach-toast-desc { font-size: 0.85rem; color: #ddd; }
+            .achievement-toast .ach-toast-desc { font-size: 0.85rem; color: var(--ink-soft, #6b5a44); }
         `;
         document.head.appendChild(style);
     }

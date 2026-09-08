@@ -162,7 +162,7 @@
             <h3>📜 Der Auftrag:</h3>
             <p>Du siehst einen lateinischen Satz. Ein Wort ist <span style="color: var(--highlight-cyan); font-weight: bold;">blau markiert</span> - bestimme, welches Satzglied es ist: <strong>Subjekt</strong>, <strong>Prädikat</strong>, <strong>Akkusativ-Objekt</strong> oder <strong>Genitiv-Attribut</strong>.</p>
             <p style="margin-top: 10px; font-weight: bold; color: var(--pompeji);">Achtung: Die Satzglieder werden ab und zu durcheinandergewürfelt! Verlass dich auf die Endung, nicht auf die Position im Satz.</p>
-            <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch bestimmte Sätze direkt nochmal üben.</p>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch bestimmte Sätze direkt nochmal üben.</p>
         </div>
         <button class="btn-main" id="btn-start-game">Reise beginnen!</button>
     </div>
@@ -188,7 +188,7 @@
     </div>
 
     <div class="road-container">
-        <div style="font-size: 0.8rem; color: #ccc; text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Weg nach Rom (Meilensteine)</div>
+        <div style="font-size: 0.8rem; color: var(--ink-soft); text-align: center; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Weg nach Rom (Meilensteine)</div>
         <div class="milestones-track">
             <div class="carpentum" id="wagon">🐎</div>
             <div class="stone active" id="st0"></div>
@@ -217,10 +217,10 @@
     <div class="end-screen" id="end-screen">
         <h1 style="color: var(--pompeji); font-size: 3rem; margin-bottom: 20px; font-family: 'Georgia', serif;" id="end-title">Roma erreicht!</h1>
         <p style="font-size: 1.3rem; max-width: 600px; line-height: 1.5; margin-bottom: 15px; padding: 0 20px;" id="end-msg"></p>
-        <p id="box-summary" style="font-size: 1rem; color: #ccc; margin-bottom: 15px;"></p>
-        <button class="btn-main" id="btn-review" style="background: #c9302c; color: #fff; display: none;">📚 Fehler wiederholen</button>
+        <p id="box-summary" style="font-size: 1rem; color: var(--ink-soft); margin-bottom: 15px;"></p>
+        <button class="btn-main" id="btn-review" style="background: var(--falsch); color: #fff; display: none;">📚 Fehler wiederholen</button>
         <button class="btn-main" onclick="location.reload()">Neue Reise starten</button>
-        <a href="index.html" class="btn-main" style="background: #444; color: #fff; font-size: 1rem;">Zurück zur Übersicht</a>
+        <a href="index.html" class="btn-main" style="background: var(--wand-tief); color: var(--ink); font-size: 1rem;">Zurück zur Übersicht</a>
     </div>
 
     <script src="vocabulary.js"></script>

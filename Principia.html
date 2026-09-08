@@ -138,7 +138,7 @@
 
         .feedback-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(20, 20, 20, 0.96); border-radius: 12px;
+            background: rgba(244, 236, 219, 0.96); border-radius: 12px;
             display: none; flex-direction: column; align-items: center; justify-content: center;
             padding: 25px; text-align: center; z-index: 10;
         }
@@ -178,7 +178,7 @@
                 <h3>📜 Der Auftrag:</h3>
                 <p>Du siehst die <strong>Grundform</strong> eines Wortes (Nominativ bei Nomen, Infinitiv bei Verben). Präge die passende <strong>mittlere Wörterbuch-Spalte</strong> dazu: bei Nomen den Genitiv + Geschlecht (z. B. <em>patris, m.</em>), bei Verben die 1. Person Singular (z. B. <em>videō</em>).</p>
                 <p style="margin-top: 10px;">Jede richtige Zuordnung prägt eine Münze für deine Schatzkammer. Falsche Prägungen zerbrechen und werden ausgemustert.</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch geprägte Münzen direkt nochmal prägen.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch geprägte Münzen direkt nochmal prägen.</p>
             </div>
             <div class="treasury-stat" id="overall-treasury">Lade Schatzkammer...</div>
             <button class="start-btn" id="btn-start-game">Prägerei eröffnen!</button>
@@ -215,12 +215,12 @@
             <h2 id="end-title" style="font-size: 2.2rem; color: var(--pompeji); font-family: var(--font-display); margin-bottom: 15px;">SCHATZKAMMER GEFÜLLT!</h2>
             <p id="end-msg" style="margin: 10px 0; font-size: 1.1rem; line-height: 1.6;"></p>
             <div class="end-treasury-grid" id="end-treasury-grid"></div>
-            <p id="box-summary" style="margin: 5px 0 20px; font-size: 1rem; color: #ccc;"></p>
-            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background:#c9302c; color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <p id="box-summary" style="margin: 5px 0 20px; font-size: 1rem; color: var(--ink-soft);"></p>
+            <button class="start-btn" style="font-size:1.1rem; padding:10px 25px; background: var(--falsch); color:#fff; display:none; margin-bottom: 12px;" id="btn-review">📚 Fehler wiederholen</button>
             <br>
             <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Neue Prägerunde</button>
             <br>
-            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: #444; color:#fff; margin-top: 15px;">Zurück zum Menü</a>
+            <a href="index.html" class="start-btn" style="text-decoration: none; display: inline-block; font-size:1rem; background: var(--wand-tief); color: var(--ink); margin-top: 15px;">Zurück zum Menü</a>
         </div>
     </div>
 

@@ -98,7 +98,7 @@
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1>Aedificium Rōmānum</h1>
-    <div style="font-family: var(--font-display); font-style: italic; color: #aaa; margin-bottom: 15px; text-align: center;">
+    <div style="font-family: var(--font-display); font-style: italic; color: var(--ink-soft); margin-bottom: 15px; text-align: center;">
         KNG-Kongruenz: Meistere die Adjektive!
     </div>
 
@@ -111,7 +111,7 @@
                 <h3 style="color: var(--pompeji); margin-bottom: 8px;">Taktik-Befehl:</h3>
                 <p>Der Kaiser fordert den Bau einer neuen Villa. Das Baumaterial erhältst du nur durch makellose Grammatik!</p>
                 <p style="margin-top: 10px;">Dir wird ein Substantiv im Nominativ, Genitiv oder Akkusativ gezeigt. Deine Aufgabe: Wähle das Adjektiv aus, das sich in <strong>Fall, Zahl und Geschlecht (KNG)</strong> perfekt anpasst!</p>
-                <p style="margin-top: 10px; font-size: 0.9rem; color: #ccc;"><em>Tipp: Achte auf das Geschlecht der Vokabel. Nicht jedes Wort auf -us ist maskulin, nicht jedes auf -a ist feminin!</em></p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);"><em>Tipp: Achte auf das Geschlecht der Vokabel. Nicht jedes Wort auf -us ist maskulin, nicht jedes auf -a ist feminin!</em></p>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px;">
@@ -119,7 +119,7 @@
                 <button class="main-btn" id="btn-start-i">i-Deklination (ab Lektion 17)</button>
                 <button class="main-btn" id="btn-start-mixed">Gemischt</button>
             </div>
-            <a href="index.html" class="main-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 10px 20px;">Zurück zum Menü</a>
+            <a href="index.html" class="main-btn" style="background: var(--wand-tief); color: var(--ink); font-size: 0.9rem; padding: 10px 20px;">Zurück zum Menü</a>
         </div>
 
         <!-- Endbildschirm -->
@@ -127,18 +127,18 @@
             <h2 style="font-family: var(--font-display); color: var(--pompeji); font-size: 2.5rem; margin-bottom: 10px;">OPUS PERFECTUM!</h2>
             <p style="font-size: 1.2rem; max-width: 500px; line-height: 1.6;">Die Villa erstrahlt in vollem Glanz! Deine Beherrschung der KNG-Kongruenz ist wahrlich kaiserlich.</p>
             <button class="main-btn" id="btn-restart">Neue Villa bauen</button>
-            <a href="index.html" class="main-btn" style="background: #444; color: #fff; font-size: 0.9rem; padding: 10px 20px;">Zurück zum Menü</a>
+            <a href="index.html" class="main-btn" style="background: var(--wand-tief); color: var(--ink); font-size: 0.9rem; padding: 10px 20px;">Zurück zum Menü</a>
         </div>
 
         <!-- Spielfeld -->
-        <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #aaa; text-align: center;">BAUFORTSCHRITT</div>
+        <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--ink-soft); text-align: center;">BAUFORTSCHRITT</div>
         <div class="progress-bar-container">
             <div class="progress-bar" id="build-progress"></div>
         </div>
 
         <div class="building-site">
             <img id="villa-image" src="" alt="Baufortschritt der Villa" style="width:100%; height:auto; display:none; border-radius:8px;">
-            <div id="villa-placeholder" style="width:100%; aspect-ratio:1000/558; background:#2a2a2a; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#888; font-style:italic; text-align:center; padding:20px;">
+            <div id="villa-placeholder" style="width:100%; aspect-ratio:1000/558; background:var(--wand-tief); border-radius:8px; display:flex; align-items:center; justify-content:center; color: var(--ink); font-style:italic; text-align:center; padding:20px;">
                 Der Bauplatz wartet auf den ersten Spatenstich ...
             </div>
         </div>
@@ -330,7 +330,7 @@
             let declinedNoun = declineNoun(noun, caseIdx, numIdx);
             currentCorrectAnswer = declineAdjective(adj, nounGender, caseIdx, numIdx);
 
-            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${adj.latin}</strong> für:<br><span class="q-highlight">${declinedNoun} <span style="font-size:1rem; color:#aaa;">(${noun.latin}, ${noun.middle})</span></span>`;
+            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${adj.latin}</strong> für:<br><span class="q-highlight">${declinedNoun} <span style="font-size:1rem; color: var(--ink-soft);">(${noun.latin}, ${noun.middle})</span></span>`;
 
             // Intelligente Distraktoren: Gleiches Adjektiv, aber falsche KNG-Kombinationen (ebenfalls nur aus erlaubten Fällen)
             let wrongPool = [];
