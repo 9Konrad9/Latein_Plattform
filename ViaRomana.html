@@ -23,6 +23,9 @@
                stand ein schwarzer Verlauf aus dem alten Theme - er hat die Wand
                übermalt und die dunkle Tintenschrift auf Schwarz gesetzt. */
             color: var(--ink);
+            /* 100vh zuerst als Rückfall: Safari vor 15.4 kennt dvh nicht und
+               würfe die einzige Höhenangabe sonst weg. */
+            height: 100vh;
             height: 100dvh;
             display: flex;
             flex-direction: column;
