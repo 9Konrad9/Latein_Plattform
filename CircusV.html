@@ -150,6 +150,40 @@
         .race-btn:not(:disabled):hover { background: #fff; border-color: var(--pompeji); }
         .race-btn:disabled { opacity: 0.55; cursor: default; }
 
+        /* ---- Kartenmodus ----
+           Keine Antwortmöglichkeiten: erst aufdecken, dann selbst einschätzen.
+           Die beiden Urteilsknöpfe tragen die Rückmeldefarben des Themes, damit
+           sie ohne Lesen auseinanderzuhalten sind. */
+        .karten-steuerung { display: flex; flex-direction: column; gap: 12px; }
+        .karten-urteil { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .race-btn.gewusst { border-color: var(--richtig); color: var(--richtig); }
+        .race-btn.nicht-gewusst { border-color: var(--falsch); color: var(--falsch); }
+        .karten-loesung {
+            font-family: var(--font-display); font-size: 1.5rem; font-weight: bold;
+            color: var(--pompeji); margin-top: 8px;
+        }
+
+        /* ---- Kartenuhr im Herausforderungsmodus ----
+           Der Balken läuft von voll auf leer. Die letzten Sekunden färben sich,
+           damit der Druck sichtbar wird, ohne dass man auf eine Zahl schauen muss. */
+        .karten-uhr {
+            height: 8px; background: var(--wand-tief); border-radius: 4px;
+            overflow: hidden; margin-bottom: 12px; border: 1px solid var(--bronze);
+        }
+        .karten-uhr > div {
+            height: 100%; width: 100%; background: var(--richtig);
+            transition: width 0.1s linear, background-color 0.3s ease;
+        }
+        .karten-uhr > div.knapp { background: var(--falsch); }
+
+        /* Die Modusauswahl im Startbildschirm */
+        .modus-wahl { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 6px; }
+        .modus-reihe { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .modus-titel {
+            font-family: var(--font-display); color: var(--ink-soft); font-size: 0.85rem;
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 6px;
+        }
+
         .correct { background: var(--richtig) !important; border-color: #1d4a26 !important; color: #fff !important; }
         .wrong { background: var(--falsch) !important; border-color: #7d2020 !important; color: #fff !important; }
 
@@ -208,8 +242,16 @@
                 Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten um die Arena. Doch Vorsicht: Die rote KI (Factio Russata) nutzt jeden Fehler aus, um an dir vorbeizuziehen!
             </p>
             <!-- onclick entfernt, wird via JavaScript sicher gebunden -->
-            <button class="nav-btn" id="start-action-btn">Rennen starten!</button>
-            <br>
+            <div class="modus-wahl">
+                <button class="nav-btn" data-modus="mc">Rennen starten!</button>
+                <button class="nav-btn zweitrangig" data-modus="karten">Karten lernen</button>
+                <div class="modus-titel">Herausforderung — Zeit je Karte</div>
+                <div class="modus-reihe">
+                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="10">I · 10 s</button>
+                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="7">II · 7 s</button>
+                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="5">III · 5 s</button>
+                </div>
+            </div>
             <a href="index.html" class="nav-btn zweitrangig" id="back-menu-btn" style="display:none;">Zurück zum Menü</a>
         </div>
 
@@ -245,12 +287,24 @@
                 <div class="q-category" id="category-display">WORTARTEN-PRÜFUNG</div>
                 <div class="q-text" id="question-display">Klicke auf den Button, um das Rennen zu eröffnen!</div>
             </div>
-            <div class="options-grid">
+            <!-- Läuft nur im Herausforderungsmodus -->
+            <div class="karten-uhr" id="karten-uhr" style="display:none;"><div id="karten-uhr-balken"></div></div>
+
+            <div class="options-grid" id="options-grid">
                 <!-- onclick entfernt, wird via JavaScript sicher gebunden -->
                 <button class="race-btn" id="opt0" disabled>-</button>
                 <button class="race-btn" id="opt1" disabled>-</button>
                 <button class="race-btn" id="opt2" disabled>-</button>
                 <button class="race-btn" id="opt3" disabled>-</button>
+            </div>
+
+            <!-- Kartenmodus: erst aufdecken, dann selbst einschätzen -->
+            <div class="karten-steuerung" id="karten-steuerung" style="display:none;">
+                <button class="race-btn" id="btn-aufdecken">Aufdecken</button>
+                <div class="karten-urteil" id="karten-urteil" style="display:none;">
+                    <button class="race-btn gewusst" id="btn-gewusst">Gewusst</button>
+                    <button class="race-btn nicht-gewusst" id="btn-nicht-gewusst">Nicht gewusst</button>
+                </div>
             </div>
         </div>
     </div>
@@ -265,6 +319,18 @@
         let currentCorrectAnswer = "";
         let currentVocabItem = null;
         let activePool = [];
+
+        /* ============ DREI MODI ============
+           'mc'         - das klassische Rennen mit vier Antworten, ohne Zeit je Karte
+           'karten'     - reines Karteikartenlernen: aufdecken, selbst einschätzen.
+                          Kein Zeitlimit, kein Gegner. Auf Wunsch der Klasse.
+           'wettkampf'  - wie 'mc', aber mit einer Uhr je Karte. Wer zu langsam ist,
+                          lässt die KI vorrücken - wie bei einer falschen Antwort. */
+        let spielModus = 'mc';
+        let sekundenProKarte = 0;
+        let kartenUhr = null;        // Intervall der Kartenuhr
+        let kartenRest = 0;          // verbleibende Zehntelsekunden
+        let kartenZaehler = 0;       // gelernte Karten im Kartenmodus
 
         /* ============ ARENA-GRÖSSE (Breite UND Höhe berücksichtigen, wichtig im Querformat) ============ */
         function resizeArena() {
@@ -293,17 +359,27 @@
         window.onload = function() {
             resizeArena();
             // Start-Button ankoppeln: erst Lektionsauswahl, dann Rennen starten
-            document.getElementById('start-action-btn').addEventListener('click', function() {
-                if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
-                    alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
-                    return;
-                }
-                LessonFilter.show(globalVocabularyPool, function(filteredPool) {
-                    activePool = filteredPool;
-                    startRace();
-                    setTimeout(resizeArena, 100);
+            // Jeder Modusknopf trägt seinen Modus als data-Attribut - so braucht es
+            // keine fünf gleichartigen Handler.
+            document.querySelectorAll('[data-modus]').forEach(function (knopf) {
+                knopf.addEventListener('click', function () {
+                    if (typeof globalVocabularyPool === 'undefined' || globalVocabularyPool.length === 0) {
+                        alert("Kritischer Fehler: Die Datei 'vocabulary.js' konnte nicht geladen werden!");
+                        return;
+                    }
+                    spielModus = knopf.getAttribute('data-modus');
+                    sekundenProKarte = parseInt(knopf.getAttribute('data-sekunden'), 10) || 0;
+                    LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                        activePool = filteredPool;
+                        startRace();
+                        setTimeout(resizeArena, 100);
+                    });
                 });
             });
+
+            document.getElementById('btn-aufdecken').addEventListener('click', deckeAuf);
+            document.getElementById('btn-gewusst').addEventListener('click', function () { beurteileKarte(true); });
+            document.getElementById('btn-nicht-gewusst').addEventListener('click', function () { beurteileKarte(false); });
             
             // Antwort-Buttons ankoppeln
             for (let i = 0; i < 4; i++) {
@@ -331,15 +407,23 @@
             aiProgress = 0;
             playerLaps = 0;
             aiLaps = 0;
+            kartenZaehler = 0;
 
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('back-menu-btn').style.display = 'inline-block';
-            
+
+            // Im Kartenmodus gibt es weder Uhr noch Gegner - beides würde nur
+            // Druck machen, und genau den soll dieser Modus nicht haben.
+            const imKartenmodus = (spielModus === 'karten');
+            document.querySelector('.factio-russata').style.visibility = imKartenmodus ? 'hidden' : 'visible';
+            document.getElementById('svg-ai').style.display = imKartenmodus ? 'none' : '';
+            document.getElementById('karten-uhr').style.display = (spielModus === 'wettkampf') ? 'block' : 'none';
+
             updateDashboard();
             updatePositions();
-            
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(tickTimer, 1000);
+
+            if (timerInterval) clearInterval(timerInterval);
+            if (!imKartenmodus) timerInterval = setInterval(tickTimer, 1000);
 
             nextQuestion();
         }
@@ -354,11 +438,21 @@
         }
 
         function updateDashboard() {
+            const timerEl = document.getElementById('timer-display');
+
+            // Im Kartenmodus läuft keine Uhr - dort steht an ihrer Stelle, wie
+            // viele Karten schon durch sind.
+            if (spielModus === 'karten') {
+                timerEl.innerText = kartenZaehler + (kartenZaehler === 1 ? ' Karte' : ' Karten');
+                timerEl.classList.remove('timer-crit');
+                document.getElementById('p-laps').innerText = playerLaps;
+                return;
+            }
+
             let minutes = Math.floor(timeLeft / 60);
             let seconds = timeLeft % 60;
             let displayString = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-            
-            const timerEl = document.getElementById('timer-display');
+
             timerEl.innerText = displayString;
 
             if (timeLeft <= 60) {
@@ -422,14 +516,28 @@
         }
 
         function nextQuestion() {
-            if(timeLeft <= 0) return;
+            if (spielModus !== 'karten' && timeLeft <= 0) return;
 
-            const item = activePool[Math.floor(Math.random() * activePool.length)];
+            stoppeKartenUhr();
+
+            // Der Vokabelkasten bestimmt, was drankommt: Wörter, die noch nicht
+            // sitzen, erscheinen häufiger. Circus war das einzige Vokabelspiel,
+            // das stattdessen gleichverteilt gewürfelt hat - Kastell, Principia
+            // und Issa nutzen weightedPick seit jeher.
+            const item = LudiProgress.weightedPick(activePool)
+                      || activePool[Math.floor(Math.random() * activePool.length)];
             currentVocabItem = item;
 
             const categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
             const questionText = `Was bedeutet das Wort „${item.latin}“?`;
             currentCorrectAnswer = item.meaning;
+
+            if (spielModus === 'karten') {
+                zeigeKarte(item, categoryText, questionText);
+                return;
+            }
+            document.getElementById('options-grid').style.display = 'grid';
+            document.getElementById('karten-steuerung').style.display = 'none';
 
             let wrongPool = activePool
                 .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
@@ -450,11 +558,106 @@
                 const btn = document.getElementById('opt' + i);
                 btn.textContent = finalOptions[i];
                 btn.className = "race-btn";
-                btn.disabled = false; 
+                btn.disabled = false;
             }
+
+            if (spielModus === 'wettkampf') starteKartenUhr();
+        }
+
+        /* ---------- Kartenmodus ----------
+           Aufdecken, selbst einschätzen, weiter. Die Selbsteinschätzung geht
+           genauso in den Vokabelkasten wie eine angeklickte Antwort - wer ehrlich
+           ist, bekommt die Wörter wieder, die noch nicht sitzen. */
+        function zeigeKarte(item, categoryText, questionText) {
+            document.getElementById('category-display').innerText = categoryText;
+            document.getElementById('question-display').innerHTML = questionText;
+            document.getElementById('options-grid').style.display = 'none';
+            document.getElementById('karten-steuerung').style.display = 'flex';
+            document.getElementById('karten-urteil').style.display = 'none';
+            const aufdecken = document.getElementById('btn-aufdecken');
+            aufdecken.style.display = 'block';
+            aufdecken.disabled = false;
+        }
+
+        function deckeAuf() {
+            document.getElementById('question-display').innerHTML =
+                `Was bedeutet das Wort „${currentVocabItem.latin}“?` +
+                `<div class="karten-loesung">${currentVocabItem.meaning}</div>`;
+            document.getElementById('btn-aufdecken').style.display = 'none';
+            document.getElementById('karten-urteil').style.display = 'grid';
+        }
+
+        function beurteileKarte(gewusst) {
+            LudiProgress.recordVocabAttempt(currentVocabItem.latin, gewusst);
+            const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[currentVocabItem.type];
+            if (kategorie) {
+                const unlock = LudiProgress.recordCategoryAttempt(kategorie, gewusst);
+                if (unlock) AchievementToast.show(unlock);
+            }
+
+            kartenZaehler++;
+            // Der eigene Wagen zieht weiter, wenn das Wort saß. Es gibt keinen
+            // Gegner - der Wagen ist hier nur die Anzeige des eigenen Fortschritts.
+            if (gewusst) {
+                playerProgress += 10;
+                if (playerProgress >= 100) { playerLaps++; playerProgress -= 100; }
+            }
+            updateDashboard();
+            updatePositions();
+            nextQuestion();
+        }
+
+        /* ---------- Kartenuhr (Herausforderungsmodus) ----------
+           Zehntelsekunden, damit der Balken ruhig läuft und nicht springt. */
+        function starteKartenUhr() {
+            kartenRest = sekundenProKarte * 10;
+            const balken = document.getElementById('karten-uhr-balken');
+            balken.classList.remove('knapp');
+            balken.style.width = '100%';
+            kartenUhr = setInterval(function () {
+                kartenRest--;
+                const anteil = Math.max(0, kartenRest / (sekundenProKarte * 10));
+                balken.style.width = (anteil * 100) + '%';
+                if (anteil <= 0.3) balken.classList.add('knapp');
+                if (kartenRest <= 0) {
+                    stoppeKartenUhr();
+                    zeitAbgelaufen();
+                }
+            }, 100);
+        }
+
+        function stoppeKartenUhr() {
+            if (kartenUhr) { clearInterval(kartenUhr); kartenUhr = null; }
+        }
+
+        /* Zu langsam zählt wie falsch: Die KI rückt vor, die richtige Antwort
+           wird gezeigt, und das Wort wandert im Vokabelkasten zurück auf Anfang.
+           Wer eine Bedeutung nicht in fünf Sekunden abrufen kann, hat sie eben
+           noch nicht sicher. */
+        function zeitAbgelaufen() {
+            for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
+
+            LudiProgress.recordVocabAttempt(currentVocabItem.latin, false);
+            const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[currentVocabItem.type];
+            if (kategorie) LudiProgress.recordCategoryAttempt(kategorie, false);
+
+            const ziel = currentCorrectAnswer.trim();
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById('opt' + i);
+                if (btn.textContent.trim() === ziel) btn.classList.add('correct');
+            }
+            document.getElementById('category-display').innerText = '⏱ Zu langsam!';
+
+            aiProgress += 15;
+            if (aiProgress >= 100) { aiLaps++; aiProgress -= 100; }
+
+            updateDashboard();
+            updatePositions();
+            setTimeout(function () { if (timeLeft > 0) nextQuestion(); }, 1200);
         }
 
         function checkAnswer(selectedIdx) {
+            stoppeKartenUhr();
             for (let i = 0; i < 4; i++) {
                 document.getElementById('opt' + i).disabled = true;
             }
@@ -514,15 +717,14 @@
         }
 
         function endGame() {
+            stoppeKartenUhr();
             const overlay = document.getElementById('end-screen');
             const title = document.getElementById('end-title');
             const msg = document.getElementById('end-msg');
-            const actionBtn = document.getElementById('start-action-btn');
 
             LudiProgress.saveGameResult('circus', playerLaps, null);
 
             overlay.style.display = 'flex';
-            actionBtn.innerText = "Erneut antreten";
             title.innerText = "⏱️ FINIS SPATIĪ!";
             
             if (playerLaps > aiLaps) {
