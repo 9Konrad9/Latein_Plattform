@@ -247,9 +247,9 @@
                 <button class="nav-btn zweitrangig" data-modus="karten">Karten lernen</button>
                 <div class="modus-titel">Herausforderung — Zeit je Karte</div>
                 <div class="modus-reihe">
-                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="10">I · 10 s</button>
-                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="7">II · 7 s</button>
-                    <button class="nav-btn" data-modus="wettkampf" data-sekunden="5">III · 5 s</button>
+                    <button class="nav-btn" data-modus="wettkampf" data-denkzeit="4">I · ~7 s</button>
+                    <button class="nav-btn" data-modus="wettkampf" data-denkzeit="1.9">II · ~5 s</button>
+                    <button class="nav-btn" data-modus="wettkampf" data-denkzeit="0.8">III · ~4 s</button>
                 </div>
             </div>
             <a href="index.html" class="nav-btn zweitrangig" id="back-menu-btn" style="display:none;">Zurück zum Menü</a>
@@ -327,10 +327,31 @@
            'wettkampf'  - wie 'mc', aber mit einer Uhr je Karte. Wer zu langsam ist,
                           lässt die KI vorrücken - wie bei einer falschen Antwort. */
         let spielModus = 'mc';
-        let sekundenProKarte = 0;
+        let denkzeitProKarte = 0;    // Sekunden zum Nachdenken, je Stufe
         let kartenUhr = null;        // Intervall der Kartenuhr
         let kartenRest = 0;          // verbleibende Zehntelsekunden
+        let kartenGesamt = 0;        // Zehntelsekunden, die diese Karte bekommen hat
         let kartenZaehler = 0;       // gelernte Karten im Kartenmodus
+
+        /* Wie viel Zeit bekommt eine Karte?
+           Nicht einfach eine feste Zahl je Stufe - eine Runde zeigt VIER
+           Bedeutungen, und die sind mal zwei, mal vierzehn Wörter lang. Im
+           Wortschatz gemessen: eine typische Runde zeigt 8 Wörter, das oberste
+           Zehntel 16. Bei festen 5 Sekunden ist eine lange Karte deshalb
+           unabhängig vom Können nicht zu schaffen - die Zeit reicht nicht einmal
+           zum Lesen.
+           Die Stufe legt darum die DENKZEIT fest; die Lesezeit kommt aus dem,
+           was wirklich auf der Karte steht (3 Wörter je Sekunde, stilles Lesen
+           eines Zwölfjährigen). Eine typische Karte bekommt damit rund 7, 5 bzw.
+           4 Sekunden, eine lange entsprechend mehr. */
+        const WOERTER_JE_SEKUNDE = 3;
+
+        function kartenzeitSekunden() {
+            const felder = [];
+            for (let i = 0; i < 4; i++) felder.push(document.getElementById('opt' + i).textContent || '');
+            const woerter = felder.join(' ').split(/[\s,;]+/).filter(Boolean).length;
+            return denkzeitProKarte + woerter / WOERTER_JE_SEKUNDE;
+        }
 
         /* ============ ARENA-GRÖSSE (Breite UND Höhe berücksichtigen, wichtig im Querformat) ============ */
         function resizeArena() {
@@ -368,7 +389,7 @@
                         return;
                     }
                     spielModus = knopf.getAttribute('data-modus');
-                    sekundenProKarte = parseInt(knopf.getAttribute('data-sekunden'), 10) || 0;
+                    denkzeitProKarte = parseFloat(knopf.getAttribute('data-denkzeit')) || 0;
                     LessonFilter.show(globalVocabularyPool, function(filteredPool) {
                         activePool = filteredPool;
                         startRace();
@@ -610,13 +631,14 @@
         /* ---------- Kartenuhr (Herausforderungsmodus) ----------
            Zehntelsekunden, damit der Balken ruhig läuft und nicht springt. */
         function starteKartenUhr() {
-            kartenRest = sekundenProKarte * 10;
+            kartenGesamt = Math.round(kartenzeitSekunden() * 10);
+            kartenRest = kartenGesamt;
             const balken = document.getElementById('karten-uhr-balken');
             balken.classList.remove('knapp');
             balken.style.width = '100%';
             kartenUhr = setInterval(function () {
                 kartenRest--;
-                const anteil = Math.max(0, kartenRest / (sekundenProKarte * 10));
+                const anteil = Math.max(0, kartenRest / kartenGesamt);
                 balken.style.width = (anteil * 100) + '%';
                 if (anteil <= 0.3) balken.classList.add('knapp');
                 if (kartenRest <= 0) {
