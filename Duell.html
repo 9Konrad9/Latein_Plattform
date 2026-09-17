@@ -22,6 +22,10 @@
         /* 100vh zuerst als Rückfall: Safari vor 15.4 kennt dvh nicht und würfe
            die einzige Höhenangabe sonst weg - die Seite hätte dann gar keine
            feste Höhe mehr. */
+        /* Auch das Wurzelelement darf nicht scrollen: Sonst kann das Dokument,
+           wenn es doch einmal zu hoch gerät, nach oben weggeschoben werden. */
+        html { height: 100%; overflow: hidden; }
+
         body {
             font-family: var(--font-body);
             background-color: var(--wand);
@@ -237,10 +241,29 @@
               wie lang die Antworten sind oder wie gross die Schrift steht.
 
            Ohne JavaScript bleibt das CSS mit seinen vh-Werten als Rückfall. */
+        /* Die kleinste Höhe nehmen, die das Gerät nennt. iOS meldet je nach
+           Zustand der Safari-Leisten verschiedene Werte; wer sich auf einen
+           verlässt, baut die Seite irgendwann 120 px zu hoch - genau das ist im
+           Unterricht passiert. Die kleinste ist immer die sichere. */
+        function sichtbareHoehe() {
+            const kandidaten = [];
+            if (window.visualViewport) kandidaten.push(window.visualViewport.height);
+            if (document.documentElement) kandidaten.push(document.documentElement.clientHeight);
+            kandidaten.push(window.innerHeight);
+            const brauchbar = kandidaten.filter(function (h) { return h > 200; });
+            return brauchbar.length ? Math.round(Math.min.apply(null, brauchbar)) : 0;
+        }
+
         function passeAnGeraet() {
-            const sicht = window.visualViewport;
-            const hoehe = Math.round(sicht ? sicht.height : window.innerHeight);
+            const hoehe = sichtbareHoehe();
             if (hoehe > 200) document.body.style.height = hoehe + 'px';
+
+            /* Falls das Dokument zwischenzeitlich zu hoch war und verschoben
+               wurde, wieder nach oben holen. Sonst bleibt die obere Hälfte hinter
+               der Adressleiste - und weil Spieler 1 auf dem Kopf steht, sind das
+               ausgerechnet seine Antwortknöpfe. Ein scroll-Ereignis abzuwarten
+               hilft nicht: Bei `overflow: hidden` feuert keines. */
+            if (window.scrollY || document.documentElement.scrollTop) window.scrollTo(0, 0);
 
             const wurzel = document.documentElement;
             const zonen = [document.getElementById('player1'), document.getElementById('player2')]
@@ -271,7 +294,28 @@
         }
         window.addEventListener('resize', passeAnGeraet);
         window.addEventListener('orientationchange', function () { setTimeout(passeAnGeraet, 250); });
-        if (window.visualViewport) window.visualViewport.addEventListener('resize', passeAnGeraet);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', passeAnGeraet);
+            window.visualViewport.addEventListener('scroll', passeAnGeraet);
+        }
+        // Safari blendet seine Leisten erst nach dem Laden ein. Die zuerst
+        // gemessene Höhe stimmt dann nicht mehr, und ein Ereignis dafür kommt
+        // nicht zuverlässig. Deshalb in den ersten Sekunden mehrfach nachmessen.
+        [250, 800, 2000].forEach(function (ms) { setTimeout(passeAnGeraet, ms); });
+
+        /* Wachhund. Die Ereignisse oben sind der schnelle Weg, aber sie sind
+           nicht verlässlich - beim Ein- und Ausblenden der Safari-Leisten bleibt
+           die Meldung auf manchen Geräten schlicht aus, und dann steht die Seite
+           mit einer veralteten Höhe da. Genau so ist die obere Hälfte im
+           Unterricht hinter der Adressleiste verschwunden.
+           Zweimal je Sekunde nachzusehen, ob die gemessene Höhe noch zur
+           gesetzten passt, kostet nichts und macht die Seite unabhängig davon,
+           ob ein Gerät seine Ereignisse schickt. */
+        setInterval(function () {
+            const soll = sichtbareHoehe();
+            if (soll > 200 && Math.abs(soll - document.body.clientHeight) > 2) passeAnGeraet();
+        }, 500);
+
 
         window.onload = function() {
             passeAnGeraet();
