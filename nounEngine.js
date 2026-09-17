@@ -6,6 +6,30 @@
 
 const NounEngine = (() => {
 
+    /* ---------- Lektions-Gating ----------
+       Welcher Kasus ab wann geübt werden darf. Die Zahlen stammen aus dem
+       Inhaltsverzeichnis von Pontes (CLAUDE.md, Abschnitt „Lehrgang"):
+       Nominativ und Akkusativ ab L1, Genitiv ab L6, Ablativ ab L7, Dativ ab L9;
+       der Plural kommt in L2 dazu.
+
+       Diese Prüfung hat lange gefehlt: Während die VerbEngine ihre Fähigkeiten
+       sauber gattert, boten Kastell und Villa einfach alle fünf Kasus an. Eine
+       siebte Klasse in Lektion 5 bekam dort Ablative zu bestimmen, die im
+       Unterricht noch gar nicht vorgekommen waren. */
+    const KASUS_LESSON = { nom: 1, akk: 1, gen: 6, abl: 7, dat: 9 };
+    const PLURAL_LESSON = 2;
+
+    /** Welche Kasus darf ich bis zu dieser Lektion abfragen? ['nom','akk',...] */
+    function getKnownCases(maxLesson) {
+        const bis = (maxLesson == null) ? 999 : maxLesson;
+        return Object.keys(KASUS_LESSON).filter(k => KASUS_LESSON[k] <= bis);
+    }
+
+    /** Ist der Plural schon eingeführt? */
+    function isPluralKnown(maxLesson) {
+        return ((maxLesson == null) ? 999 : maxLesson) >= PLURAL_LESSON;
+    }
+
     // ---- Hart zu automatisierende Einzelfälle (echte Unregelmäßigkeiten) ----
     // Diese Wörter weichen so stark vom regulären Muster ab, dass eine Herleitung
     // aus Genitiv + Deklinationsklasse nicht sinnvoll/korrekt möglich ist.
@@ -127,5 +151,8 @@ const NounEngine = (() => {
         ];
     }
 
-    return { decline, getForm, getAllForms };
+    return {
+        decline, getForm, getAllForms,
+        KASUS_LESSON, PLURAL_LESSON, getKnownCases, isPluralKnown
+    };
 })();

@@ -356,13 +356,21 @@
             };
         }
 
+        /* Nur Kasus und Numeri anbieten, die bis zur gewählten Lektion auch
+           drangekommen sind - die Verbseite tut das über VerbEngine längst, die
+           Nomenseite bot bisher stur alle fünf Kasus an. Weil die Distraktoren
+           aus denselben Feldern kommen, verschwinden die zu frühen Formen damit
+           auch aus den falschen Antwortmöglichkeiten. */
         function buildNounRound(nounObj) {
             const table = NounEngine.decline(nounObj);
+            const erlaubteKasus = NounEngine.getKnownCases(maxSelectedLesson);
+            const numeri = NounEngine.isPluralKnown(maxSelectedLesson) ? ['Sg', 'Pl'] : ['Sg'];
             const slots = [];
             CASE_KEYS.forEach(c => {
-                ['Sg', 'Pl'].forEach(n => {
+                const caseKey = { Nom: 'nom', Gen: 'gen', Dat: 'dat', Akk: 'akk', Abl: 'abl' }[c];
+                if (erlaubteKasus.indexOf(caseKey) === -1) return;
+                numeri.forEach(n => {
                     const numKey = n === 'Sg' ? 'sg' : 'pl';
-                    const caseKey = { Nom: 'nom', Gen: 'gen', Dat: 'dat', Akk: 'akk', Abl: 'abl' }[c];
                     const form = table[numKey] ? table[numKey][caseKey] : null;
                     if (form) {
                         slots.push({ form: form, label: CASE_LABELS[c] + ' ' + (n === 'Sg' ? 'Singular' : 'Plural') });

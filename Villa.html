@@ -164,7 +164,19 @@
     <script>
         // --- GRAMMATIK ENGINE (KNG) ---
         // Definition der möglichen Fälle. 0=Nom, 1=Gen, 2=Dat, 3=Akk, 4=Abl
-        const allowedCases = [0, 1, 3]; // Nur Nom, Gen und Akk erlaubt!
+        // Nur Kasus, die bis zur gewählten Lektion drangekommen sind. Nominativ
+        // und Akkusativ gibt es ab L1, der Genitiv erst ab L6 - in Lektion 5
+        // bekamen die Schüler hier also Genitive, die noch nicht dran waren.
+        // Dativ und Ablativ waren hier schon immer ausgenommen.
+        let maxSelectedLesson = 999;
+        function erlaubteFaelle() {
+            const bekannt = NounEngine.getKnownCases(maxSelectedLesson);
+            const paare = [[0, "nom"], [1, "gen"], [3, "akk"]];
+            return paare.filter(p => bekannt.indexOf(p[1]) !== -1).map(p => p[0]);
+        }
+        function erlaubteNumeri() {
+            return NounEngine.isPluralKnown(maxSelectedLesson) ? 2 : 1;
+        }
 
         // Adapter: liefert dieselbe (caseIdx, numIdx)-Aufrufkonvention wie zuvor,
         // nutzt aber intern NounEngine (deckt jetzt auch e-/u-Deklination korrekt ab,
@@ -267,8 +279,9 @@
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js fehlt!"); return;
             }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedNums) {
                 activePool = filteredPool;
+                maxSelectedLesson = (selectedNums && selectedNums.length) ? Math.max.apply(null, selectedNums) : 999;
                 initGame();
             });
         }
@@ -327,8 +340,9 @@
             currentVillaAdj = adj;
 
             // Nur erlaubte Fälle (Nom, Gen, Akk) auswählen
-            let caseIdx = allowedCases[Math.floor(Math.random() * allowedCases.length)];
-            let numIdx = Math.floor(Math.random() * 2);
+            const faelle = erlaubteFaelle();
+            let caseIdx = faelle[Math.floor(Math.random() * faelle.length)];
+            let numIdx = Math.floor(Math.random() * erlaubteNumeri());
 
             let nounGender = noun.middle.split(" ")[1] || "m.";
             
@@ -342,8 +356,8 @@
             let safety = 0;
             while(wrongPool.length < 3 && safety < 50) {
                 safety++;
-                let randCase = allowedCases[Math.floor(Math.random() * allowedCases.length)];
-                let randNum = Math.floor(Math.random() * 2);
+                let randCase = faelle[Math.floor(Math.random() * faelle.length)];
+                let randNum = Math.floor(Math.random() * erlaubteNumeri());
                 let randGen = ["m.", "f.", "n."][Math.floor(Math.random() * 3)];
                 
                 let fakeForm = declineAdjective(adj, randGen, randCase, randNum);
