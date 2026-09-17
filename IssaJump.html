@@ -169,11 +169,21 @@
     </div>
 
     <script>
-        window.addEventListener('error', function(e) {
+        /* Der Banner ist die einzige Spur, die von einem Fehler auf einem fremden
+           Gerät bleibt. Deshalb sammelt er die Meldungen (die erste ist die
+           interessante, danach wiederholt sich meist dieselbe in jedem Frame) und
+           bittet ausdrücklich darum, den Text weiterzugeben - eine Meldung, die
+           niemand notiert, hilft beim Suchen nicht. */
+        window.__fehlerListe = [];
+        window.addEventListener('error', function (e) {
+            const text = (e.message || 'unbekannter Fehler') + ' (Zeile ' + (e.lineno || '?') + ')';
+            if (window.__fehlerListe.indexOf(text) === -1) window.__fehlerListe.push(text);
             const banner = document.getElementById('error-banner');
             if (banner) {
                 banner.style.display = 'block';
-                banner.innerText = '⚠️ Fehler: ' + e.message + ' (Zeile ' + e.lineno + ')';
+                banner.innerText = '⚠️ Fehler: ' + window.__fehlerListe[0] +
+                    (window.__fehlerListe.length > 1 ? '  (und ' + (window.__fehlerListe.length - 1) + ' weitere)' : '') +
+                    ' — bitte diesen Text der Lehrkraft zeigen.';
             }
         });
 
@@ -256,6 +266,14 @@
         /* ============ SPIELZUSTAND ============ */
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
 
+        /* Jede Antwort-Reihe bekommt eine Nummer. Daran erkennt die Anzeige, welche
+           Reihe schon beantwortet ist - sie soll das Wort der nächsten OFFENEN
+           Reihe zeigen, nicht das der Reihe, über der Issa gerade zufällig steht. */
+        let reiheZaehler = 0;
+        let beantworteteReihen = new Set();
+        let hudHalten = 0;          // Frames, die das beantwortete Wort noch stehen bleibt
+        const HUD_HALTEN_FRAMES = 45;   // gut dreiviertel Sekunde
+
         function resetGame() {
             issa = { x: CW / 2 - ISSA_W / 2, y: CH - 120, vx: 0, vy: BOUNCE_VELOCITY, facing: 1, animT: 0 };
             platforms = [];
@@ -269,6 +287,9 @@
             wrongCount = 0;
             currentHudLatin = '';
             startledFrames = 0;
+            reiheZaehler = 0;
+            beantworteteReihen = new Set();
+            hudHalten = 0;
 
             platforms.push({ x: CW / 2 - NEUTRAL_W / 2, y: CH - 80, w: NEUTRAL_W, type: 'neutral' });
 
@@ -285,14 +306,20 @@
         function spawnRow(y, cycle) {
             const gap = ROW_GAP_MIN + Math.random() * (ROW_GAP_MAX - ROW_GAP_MIN);
             if (cycle % 3 === 2) {
-                const target = LudiProgress.weightedPick(activePool);
+                // weightedPick gibt bei leerem Pool null zurück - dann lieber irgendein
+                // Wort als ein Absturz mitten im Lauf.
+                const target = LudiProgress.weightedPick(activePool)
+                            || activePool[Math.floor(Math.random() * activePool.length)];
+                if (!target) return y - gap;
                 const { correct, options } = buildAnswerSet(target);
                 const slotW = CW / 4;
+                const reihe = ++reiheZaehler;
                 for (let i = 0; i < 4; i++) {
                     const px = i * slotW + (slotW - ANSWER_W) / 2 + (Math.random() * 10 - 5);
                     platforms.push({
                         x: Math.max(4, Math.min(CW - ANSWER_W - 4, px)), y: y, w: ANSWER_W, type: 'answer',
-                        text: options[i], isCorrect: options[i] === correct, targetLatin: target.latin
+                        text: options[i], isCorrect: options[i] === correct, targetLatin: target.latin,
+                        reiheId: reihe
                     });
                 }
             } else {
@@ -303,11 +330,37 @@
         }
 
         // Sucht das nächste noch nicht erreichte Antwort-Cluster (höchstes y-, also am wenigsten weit oben, das noch über Issa liegt) und zeigt dessen Wort in der HUD.
+        /* Zeigt das Wort der nächsten NOCH OFFENEN Antwort-Reihe.
+
+           Vorher hing die Auswahl allein an Issas Höhe (`p.y <= issa.y + 40`).
+           Das ging schief, sobald Issa auf einer Antwort-Reihe auf und ab
+           hüpfte: Sobald sie zehn Pixel über der Reihe stand, fiel diese aus
+           der Auswahl, und angezeigt wurde das Wort der Reihe darüber. Das
+           richtige Wort erschien erst zwei Frames vor dem Aufsetzen und war
+           zwei Frames danach wieder weg - gemessen ganze vier Frames, also rund
+           70 Millisekunden. Praktisch stand also die ganze Zeit das falsche
+           Wort da.
+
+           Jetzt entscheidet nicht die Höhe, sondern ob die Reihe beantwortet
+           ist. Nach dem Aufsetzen bleibt das Wort noch einen Moment stehen,
+           damit man sieht, worauf man gesprungen ist. Die Höhe kommt nur noch
+           als Filter dazu, damit eine übersprungene Reihe die Anzeige nicht
+           festhält: Reihen, die mehr als eine Sprunghöhe unter Issa liegen,
+           zählen nicht mehr. */
+        const SPRUNGHOEHE = 210;   // (BOUNCE_VELOCITY^2) / (2 * GRAVITY), aufgerundet
+
         function updateHudWord() {
-            const upcoming = platforms.filter(p => p.type === 'answer' && p.y <= issa.y + 40);
-            if (upcoming.length === 0) return;
-            upcoming.sort((a, b) => b.y - a.y);
-            const latin = upcoming[0].targetLatin;
+            if (hudHalten > 0) { hudHalten--; return; }
+
+            const offen = platforms.filter(p =>
+                p.type === 'answer' &&
+                !beantworteteReihen.has(p.reiheId) &&
+                p.y <= issa.y + SPRUNGHOEHE);
+            if (offen.length === 0) return;
+
+            // Die unterste der offenen Reihen ist die, auf die Issa als Nächstes trifft.
+            offen.sort((a, b) => b.y - a.y);
+            const latin = offen[0].targetLatin;
             if (latin !== currentHudLatin) {
                 currentHudLatin = latin;
                 document.getElementById('hud-word').innerText = latin;
@@ -392,6 +445,11 @@
         function handlePlatformLanding(p) {
             if (p.type === 'neutral') { issa.vy = BOUNCE_VELOCITY; return; }
             if (invulnFrames > 0) { issa.vy = BOUNCE_VELOCITY; return; }
+
+            // Diese Reihe ist beantwortet. Das Wort bleibt noch kurz stehen,
+            // damit man sieht, worauf man gesprungen ist.
+            beantworteteReihen.add(p.reiheId);
+            hudHalten = HUD_HALTEN_FRAMES;
             if (p.isCorrect) {
                 issa.vy = BOUNCE_VELOCITY;
                 correctCount++;
@@ -438,7 +496,12 @@
             ctx.arcTo(x, y, x + w, y, r);
             ctx.closePath();
         }
-        function truncateText(s, n) { return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+        // Verträgt auch fehlenden Text: Ein undefined hier würde in jedem Frame neu
+        // werfen und den Fehlerbanner fluten, statt einmal aufzufallen.
+        function truncateText(s, n) {
+            const t = (s == null) ? '' : String(s);
+            return t.length > n ? t.slice(0, n - 1) + '…' : t;
+        }
 
         function drawPlatform(p) {
             if (p.type === 'neutral') {
