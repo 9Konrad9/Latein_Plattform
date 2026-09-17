@@ -13,6 +13,12 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* Alle platzkostenden Maße hängen an diesem Faktor. Das JavaScript misst
+           nach dem Aufbau nach, ob beide Hälften wirklich ins Bild passen, und
+           dreht ihn herunter, bis sie es tun - siehe passeAnGeraet(). So braucht
+           die Seite keine Annahme über Gerät, Browserleiste oder Schriftgröße. */
+        :root { --dichte: 1; }
+
         /* 100vh zuerst als Rückfall: Safari vor 15.4 kennt dvh nicht und würfe
            die einzige Höhenangabe sonst weg - die Seite hätte dann gar keine
            feste Höhe mehr. */
@@ -81,7 +87,7 @@
            Antwortknöpfe am wenigsten. Auf einem hohen Schirm bleiben die alten
            Maße die Obergrenze, es sieht dort also aus wie vorher. */
         .gladiator-img {
-            height: clamp(42px, 11vh, 92px); width: auto;
+            height: calc(clamp(30px, 11vh, 92px) * var(--dichte)); width: auto;
             filter: drop-shadow(2px 2px 4px rgba(80, 60, 30, 0.22));
         }
 
@@ -92,8 +98,8 @@
             min-height: 0;   /* darf mitschrumpfen; flex-grow füllt auf hohen Schirmen auf */
         }
 
-        .q-type { font-size: 0.75rem; text-transform: uppercase; color: var(--pompeji); font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
-        .q-text { font-family: var(--font-body); font-size: clamp(0.9rem, 2.2vh, 1.1rem); color: var(--ink); line-height: 1.2; }
+        .q-type { font-size: calc(0.75rem * var(--dichte)); text-transform: uppercase; color: var(--pompeji); font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
+        .q-text { font-family: var(--font-body); font-size: calc(clamp(0.8rem, 2.2vh, 1.1rem) * var(--dichte)); color: var(--ink); line-height: 1.2; }
 
         .answers-grid {
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
@@ -102,8 +108,8 @@
         .arena-btn {
             background: var(--putz); border: 2px solid var(--bronze);
             color: var(--ink);
-            padding: clamp(6px, 1.7vh, 12px) 4px;
-            font-size: clamp(0.85rem, 2vh, 1rem);
+            padding: calc(clamp(5px, 1.7vh, 12px) * var(--dichte)) 4px;
+            font-size: calc(clamp(0.78rem, 2vh, 1rem) * var(--dichte));
             font-weight: bold;
             border-radius: 6px; cursor: pointer; text-align: center;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent;
@@ -217,7 +223,58 @@
             });
         }
 
+        /* ============ PASST DAS SPIEL AUF DIESEN BILDSCHIRM? ============
+           Statt auf CSS-Einheiten zu vertrauen, wird nachgemessen. Das ist der
+           einzige Weg, der ohne Wissen über das Gerät auskommt:
+
+           1. Die Höhe kommt aus visualViewport - das ist der WIRKLICH sichtbare
+              Bereich. Er berücksichtigt die Safari-Leisten, die geteilte Ansicht
+              und sogar ein versehentliches Aufziehen per Pinch-Geste. 100dvh
+              kennt ältere iPads nicht, innerHeight kennt den Zoom nicht.
+           2. Danach wird geprüft, ob der Inhalt einer Hälfte wirklich
+              hineinpasst. Wenn nicht, sinkt --dichte in kleinen Schritten, bis
+              er es tut. Damit ist es gleichgültig, wie hoch der Bildschirm ist,
+              wie lang die Antworten sind oder wie gross die Schrift steht.
+
+           Ohne JavaScript bleibt das CSS mit seinen vh-Werten als Rückfall. */
+        function passeAnGeraet() {
+            const sicht = window.visualViewport;
+            const hoehe = Math.round(sicht ? sicht.height : window.innerHeight);
+            if (hoehe > 200) document.body.style.height = hoehe + 'px';
+
+            const wurzel = document.documentElement;
+            const zonen = [document.getElementById('player1'), document.getElementById('player2')]
+                .filter(z => z && z.querySelector('.answers-grid'));
+            if (!zonen.length) return;
+
+            // Wie weit hängt die Knopfreihe aus ihrer Hälfte heraus?
+            // NICHT über scrollHeight: Die Hälfte hat `overflow: visible`, dort
+            // meldet scrollHeight dieselbe Zahl wie clientHeight, auch wenn der
+            // Inhalt längst heraushängt.
+            // Und in BEIDE Richtungen: Spieler 1 steht auf dem Kopf, bei ihm
+            // wandert die Knopfreihe nach oben aus dem Bild.
+            const ueberstand = () => zonen.reduce((max, z) => {
+                const zb = z.getBoundingClientRect();
+                const rb = z.querySelector('.answers-grid').getBoundingClientRect();
+                return Math.max(max, (zb.top + 8) - rb.top, rb.bottom - (zb.bottom - 8));
+            }, 0);
+
+            let dichte = 1;
+            wurzel.style.setProperty('--dichte', '1');
+            // Schrittweise verdichten, bis die Knopfreihe in der Hälfte liegt.
+            // Die Schleife ist nach oben begrenzt, damit sie nie hängen bleibt.
+            for (let runde = 0; runde < 14 && ueberstand() > 0; runde++) {
+                dichte -= 0.05;
+                if (dichte < 0.5) break;
+                wurzel.style.setProperty('--dichte', dichte.toFixed(2));
+            }
+        }
+        window.addEventListener('resize', passeAnGeraet);
+        window.addEventListener('orientationchange', function () { setTimeout(passeAnGeraet, 250); });
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', passeAnGeraet);
+
         window.onload = function() {
+            passeAnGeraet();
             document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
             for(let i=0; i<4; i++) {
                 document.getElementById(`p1-opt${i}`).addEventListener('click', function() { playerClick(1, i); });
@@ -431,6 +488,9 @@
                 });
             });
 
+            // Die Antworten sind mal kurz, mal dreizeilig - nach jeder neuen
+            // Frage also erneut nachmessen.
+            passeAnGeraet();
             lockAllButtons(false);
         }
 

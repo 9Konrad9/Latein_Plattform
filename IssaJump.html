@@ -86,6 +86,34 @@
         }
         .touch-btn:active { background: rgba(90, 70, 40, 0.07); }
 
+        /* Querformat: Die Steuerung verlässt die Bühne und rückt an die Ränder
+           des Bildschirms, auf Daumenhöhe.
+           Im Hochformat füllt die Bühne die Seite, unten an ihr kleben die
+           Tasten genau richtig. Im Querformat ist die Bühne dagegen ein schmaler
+           Streifen in der Bildmitte (bei 1080x620 nur 247 px breit) - die Tasten
+           sassen dann mitten auf dem Schirm, wo die Daumen nicht hinreichen.
+           Sie hängen jetzt am Fenster statt an der Bühne, sitzen auf halber Höhe
+           statt ganz unten und sind grösser. Weil sie dort auf der Wand liegen
+           und nicht mehr auf dem hellen Himmel der Bühne, brauchen sie einen
+           deutlichen eigenen Grund. */
+        @media (orientation: landscape) {
+            .touch-controls {
+                position: fixed;
+                left: 0; right: 0; width: 100%;
+                top: 52%; bottom: auto;
+                transform: translateY(-50%);
+                padding: 0 18px;
+            }
+            .touch-btn {
+                width: 76px; height: 76px; font-size: 1.9rem;
+                background: var(--putz);
+                border: 2px solid var(--bronze);
+                color: var(--pompeji);
+                box-shadow: var(--schatten);
+            }
+            .touch-btn:active { background: var(--wand-tief); }
+        }
+
         .feedback-flash {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 12;
             opacity: 0; transition: opacity 0.15s ease;
