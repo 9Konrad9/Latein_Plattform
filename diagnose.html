@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geräte-Diagnose - Lūdī Rōmānī</title>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Diese Seite steht bewusst NICHT im Hauptmenü. Sie wird nur aufgerufen,
+           wenn auf einem Gerät etwas verrutscht ist und wir wissen müssen, was
+           dieses Gerät tatsächlich meldet - raten hilft aus der Ferne nicht. */
+        body { padding: 16px; max-width: 700px; margin: 0 auto; }
+        h1 { font-family: var(--font-display); color: var(--pompeji); font-size: 1.5rem;
+             text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .untertitel { color: var(--ink-soft); font-style: italic; margin-bottom: 16px; }
+
+        .urteil {
+            border: 2px solid var(--bronze); border-left: 6px solid var(--pompeji);
+            border-radius: 8px; padding: 16px; margin-bottom: 18px;
+            background: var(--putz); font-size: 1.05rem; line-height: 1.5;
+        }
+        .urteil b { font-size: 1.2rem; display: block; margin-bottom: 6px; }
+        .gut  { border-left-color: var(--richtig); }
+        .gut b  { color: var(--richtig); }
+        .schlecht { border-left-color: var(--falsch); }
+        .schlecht b { color: var(--falsch); }
+
+        table { width: 100%; border-collapse: collapse; background: var(--putz);
+                border: 2px solid var(--bronze); border-radius: 8px; overflow: hidden; }
+        th { text-align: left; background: var(--wand-tief); color: var(--ink);
+             font-family: var(--font-display); padding: 8px 12px; font-size: 0.9rem; }
+        td { padding: 7px 12px; border-top: 1px solid var(--wand-tief); font-size: 0.95rem; }
+        td:first-child { color: var(--ink-soft); width: 55%; }
+        td:last-child { font-weight: bold; font-variant-numeric: tabular-nums; }
+
+        .hinweis { color: var(--ink-soft); font-size: 0.9rem; margin: 14px 0; line-height: 1.5; }
+        #kopieren { margin: 18px 0 8px; }
+        #kopiert { color: var(--richtig); font-weight: bold; margin-left: 10px; }
+        pre { background: var(--putz-hell); border: 1px solid var(--wand-tief); border-radius: 6px;
+              padding: 10px; font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap;
+              word-break: break-all; color: var(--ink-soft); }
+    </style>
+</head>
+<body>
+
+    <h1>Geräte-Diagnose</h1>
+    <div class="untertitel">Was meldet dieses Gerät wirklich?</div>
+
+    <div class="urteil" id="urteil"><b>Wird gemessen …</b></div>
+
+    <table>
+        <tr><th colspan="2">Fenster</th></tr>
+        <tbody id="werte"></tbody>
+    </table>
+
+    <p class="hinweis">
+        Dreh das Gerät einmal und schau, ob sich die Zahlen ändern – die Seite misst laufend nach.
+    </p>
+
+    <button class="start-btn" id="kopieren">Werte kopieren</button>
+    <span id="kopiert"></span>
+
+    <pre id="roh"></pre>
+
+<script>
+(function () {
+    // Die Mindesthöhe einer Duell-Hälfte, gemessen am echten Aufbau:
+    // Kopfzeile + Gladiator + Frage + vier Knöpfe + Abstände.
+    const HAELFTE_MINDESTENS = 269;
+
+    function zeile(name, wert) {
+        return '<tr><td>' + name + '</td><td>' + wert + '</td></tr>';
+    }
+
+    function messen() {
+        const sicht = window.visualViewport;
+        const sichtbareHoehe = sicht ? Math.round(sicht.height) : window.innerHeight;
+        const zoom = sicht ? (sicht.scale || 1) : 1;
+        const kenntDvh = window.CSS && CSS.supports && CSS.supports('height', '100dvh');
+
+        const werte = [
+            ['Fensterbreite (innerWidth)', window.innerWidth],
+            ['Fensterhöhe (innerHeight)', window.innerHeight],
+            ['Wirklich sichtbare Höhe', sichtbareHoehe + (sicht ? '' : ' (geschätzt)')],
+            ['Zoomstufe', zoom.toFixed(2) + (zoom > 1.01 ? '  ← aufgezogen!' : '')],
+            ['Seitlich verschoben um', sicht ? Math.round(sicht.offsetLeft) + ' px' : 'unbekannt'],
+            ['Bildschirm', screen.width + ' × ' + screen.height],
+            ['Pixelverhältnis', window.devicePixelRatio],
+            ['Ausrichtung', window.innerWidth > window.innerHeight ? 'quer' : 'hoch'],
+            ['Kennt der Browser dvh?', kenntDvh ? 'ja' : 'NEIN'],
+            ['Schriftgröße (1rem)', getComputedStyle(document.documentElement).fontSize]
+        ];
+        document.getElementById('werte').innerHTML = werte.map(w => zeile(w[0], w[1])).join('');
+
+        // Die eigentliche Frage: Passen beide Duell-Hälften auf diesen Schirm?
+        const platzProHaelfte = Math.floor((sichtbareHoehe - 4) / 2);
+        const kasten = document.getElementById('urteil');
+        if (platzProHaelfte >= HAELFTE_MINDESTENS) {
+            kasten.className = 'urteil gut';
+            kasten.innerHTML = '<b>Das Duell passt auf diesen Bildschirm.</b>' +
+                'Jede Hälfte bekommt ' + platzProHaelfte + ' px, gebraucht werden ' +
+                HAELFTE_MINDESTENS + ' px. Wenn es trotzdem verrutscht ist, liegt es an ' +
+                'etwas anderem als der Höhe – bitte ein Bildschirmfoto schicken.';
+        } else {
+            kasten.className = 'urteil schlecht';
+            kasten.innerHTML = '<b>Zu wenig Höhe.</b>' +
+                'Jede Hälfte bekommt nur ' + platzProHaelfte + ' px, gebraucht werden ' +
+                HAELFTE_MINDESTENS + ' px – es fehlen ' + (HAELFTE_MINDESTENS - platzProHaelfte) +
+                ' px. Das Spiel verdichtet sich dann automatisch; wenn es trotzdem klemmt, ' +
+                'bitte diese Zahlen schicken.';
+        }
+
+        document.getElementById('roh').textContent =
+            werte.map(w => w[0] + ': ' + w[1]).join('\n') + '\n\n' + navigator.userAgent;
+    }
+
+    messen();
+    window.addEventListener('resize', messen);
+    window.addEventListener('orientationchange', function () { setTimeout(messen, 300); });
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', messen);
+        window.visualViewport.addEventListener('scroll', messen);
+    }
+
+    document.getElementById('kopieren').addEventListener('click', function () {
+        const text = document.getElementById('roh').textContent;
+        const fertig = function () { document.getElementById('kopiert').textContent = 'kopiert!'; };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(fertig, fertig);
+        else fertig();
+    });
+})();
+</script>
+</body>
+</html>
