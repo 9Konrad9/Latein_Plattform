@@ -88,6 +88,13 @@
             ['Pixelverhältnis', window.devicePixelRatio],
             ['Ausrichtung', window.innerWidth > window.innerHeight ? 'quer' : 'hoch'],
             ['Kennt der Browser dvh?', kenntDvh ? 'ja' : 'NEIN'],
+            ['Kennt der Browser svh?', (window.CSS && CSS.supports && CSS.supports('height', '100svh')) ? 'ja' : 'NEIN'],
+            // Das ist die entscheidende Zeile: Sagt der Browser überhaupt, dass
+            // eine Leiste im Weg steht? Wenn nicht, kann die Seite es nicht wissen
+            // und muss einen Sicherheitsabzug nehmen.
+            ['Meldet er die Leiste? (innerHeight − visualViewport)',
+                sicht ? (Math.round(window.innerHeight - sicht.height) + ' px') : 'kein visualViewport'],
+            ['Tippgerät (maxTouchPoints)', navigator.maxTouchPoints || 0],
             ['Schriftgröße (1rem)', getComputedStyle(document.documentElement).fontSize]
         ];
         document.getElementById('werte').innerHTML = werte.map(w => zeile(w[0], w[1])).join('');

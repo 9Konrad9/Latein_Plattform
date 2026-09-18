@@ -39,6 +39,9 @@
                der Adressleiste. Genau das war auf den iPads zu sehen. */
             height: 100vh;
             height: 100svh;
+            /* Schaltet das min-height: 100vh aus theme.css ab - es wuerde die
+               selbst bestimmte Hoehe ueberstimmen (min-height schlaegt height). */
+            min-height: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -263,13 +266,35 @@
            Zustand der Safari-Leisten verschiedene Werte; wer sich auf einen
            verlässt, baut die Seite irgendwann 120 px zu hoch - genau das ist im
            Unterricht passiert. Die kleinste ist immer die sichere. */
+        /* Wenn visualViewport eine KLEINERE Höhe meldet als innerHeight, kennt der
+           Browser den Unterschied zwischen Bildschirm und sichtbarem Bereich - dann
+           ist die Messung verlässlich und wird genau übernommen.
+           Melden beide dasselbe, weiss die Seite nicht, ob eine Browserleiste im
+           Weg ist. Auf einem Tastatur-Rechner ist das richtig so; auf einem
+           Tablet fast nie - dort steht praktisch immer eine Leiste im Bild, und
+           die Seite baut sich dann um deren Höhe zu hoch. Genau das ist auf den
+           iPads passiert, in Chrome sogar trotz svh.
+           Deshalb: Auf Geräten mit Touch in diesem Fall einen Sicherheitsabzug
+           nehmen. Ein schmaler Streifen Hintergrund unten ist der kleinere
+           Schaden gegenüber einer Knopfreihe, an die niemand herankommt. */
+        const LEISTEN_ABZUG = 0.08;   // 8 % - deckt die Leiste von Safari wie Chrome
+
         function sichtbareHoehe() {
             const kandidaten = [];
-            if (window.visualViewport) kandidaten.push(window.visualViewport.height);
+            const vv = window.visualViewport ? window.visualViewport.height : null;
+            if (vv) kandidaten.push(vv);
             if (document.documentElement) kandidaten.push(document.documentElement.clientHeight);
             kandidaten.push(window.innerHeight);
             const brauchbar = kandidaten.filter(function (h) { return h > 200; });
-            return brauchbar.length ? Math.round(Math.min.apply(null, brauchbar)) : 0;
+            if (!brauchbar.length) return 0;
+
+            let hoehe = Math.min.apply(null, brauchbar);
+
+            const meldetUnterschied = vv && (window.innerHeight - vv) > 2;
+            const tippgeraet = (navigator.maxTouchPoints || 0) > 0;
+            if (!meldetUnterschied && tippgeraet) hoehe = hoehe * (1 - LEISTEN_ABZUG);
+
+            return Math.round(hoehe);
         }
 
         function passeAnGeraet() {

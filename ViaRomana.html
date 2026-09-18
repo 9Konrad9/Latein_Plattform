@@ -27,6 +27,9 @@
                würfe die einzige Höhenangabe sonst weg. */
             height: 100vh;
             height: 100dvh;
+            /* Schaltet das min-height: 100vh aus theme.css ab - es wuerde die
+               selbst bestimmte Hoehe ueberstimmen (min-height schlaegt height). */
+            min-height: 0;
             display: flex;
             flex-direction: column;
             align-items: center;

@@ -58,6 +58,12 @@
 body {
     font-family: var(--font-body);
     color: var(--ink);
+    /* Sorgt dafür, dass die Steinwand auch auf kurzen Seiten den Schirm füllt.
+       ACHTUNG: min-height schlägt height. Eine Seite, die ihre Höhe selbst
+       bestimmt - die drei Vollbild-Spiele tun das -, muss diese Zeile mit
+       `min-height: 0` abschalten, sonst wird sie hier auf 100vh aufgeblasen.
+       Auf einem Tablet ist 100vh die Höhe OHNE Browserleiste, die Seite also
+       um deren Höhe zu hoch. Genau daran ist das Duell dreimal gescheitert. */
     min-height: 100vh;
 
     /* Steinwand als Grund, durch eine Lage Wandfarbe stark zurückgenommen -
