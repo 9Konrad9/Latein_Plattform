@@ -30,8 +30,15 @@
             font-family: var(--font-body);
             background-color: var(--wand);
             color: var(--ink);
+            /* svh, NICHT dvh. Die Reihenfolge ist die Rückfallkette:
+               vh  - alle Browser, aber auf iOS die GROSSE Höhe (ohne Leisten)
+               svh - die kleine Höhe: rechnet immer mit eingeblendeten Leisten
+               Mit dvh (dynamisch) stand die Seite so hoch, wie Safari gerade
+               Platz liess - und sobald die Leisten hereinkamen, war das
+               Dokument 120 px zu hoch und die obere Haelfte verschwand hinter
+               der Adressleiste. Genau das war auf den iPads zu sehen. */
             height: 100vh;
-            height: 100dvh; /* Nutzt die dynamische iPad-Bildschirmhöhe! */
+            height: 100svh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -53,12 +60,19 @@
            eigene Höhe hinaus, und `overflow: hidden` hat den Rest abgeschnitten:
            Spieler 2 kam an seine Antwortknöpfe nicht mehr heran. Ein iPad quer
            mit eingeblendeter Safari-Leiste liegt genau in diesem Bereich. */
+        /* `center` statt `space-between`: Vorher drückte der freie Platz den
+           Inhalt an die beiden Aussenkanten der Hälfte - und weil Spieler 1 auf
+           dem Kopf steht, lagen seine Antwortknöpfe damit genau an der oberen
+           Bildschirmkante, also dort, wo bei zu hohem Dokument abgeschnitten
+           wird. Jetzt sitzt der Inhalt in der Mitte seiner Hälfte, und der freie
+           Platz liegt aussen: Ein Ueberstand frisst dann erst einmal Leerraum. */
         .player-zone {
             flex: 1;
             min-height: 0;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
+            gap: 6px;
             padding: 8px 12px; /* Etwas kompakter für iPads */
             position: relative;
             background-color: var(--putz-hell);
@@ -95,11 +109,15 @@
             filter: drop-shadow(2px 2px 4px rgba(80, 60, 30, 0.22));
         }
 
+        /* Der Kasten wächst nicht mehr mit. Vorher schluckte er den ganzen freien
+           Platz und stand als riesige, fast leere Fläche um eine Zeile Text - der
+           Eindruck, den die Klasse mit „die Fragekästen sind zu gross" gemeint
+           hat. Jetzt ist er so hoch wie sein Inhalt. */
         .question-container {
-            flex-grow: 1; display: flex; flex-direction: column; justify-content: center;
-            text-align: center; padding: 6px; background: rgba(80, 60, 30, 0.12);
-            border-radius: 6px; border-left: 4px solid var(--gold); margin-bottom: 6px;
-            min-height: 0;   /* darf mitschrumpfen; flex-grow füllt auf hohen Schirmen auf */
+            flex: 0 0 auto; display: flex; flex-direction: column; justify-content: center;
+            text-align: center; padding: 8px 6px; background: rgba(80, 60, 30, 0.12);
+            border-radius: 6px; border-left: 4px solid var(--gold);
+            min-height: 0;
         }
 
         .q-type { font-size: calc(0.75rem * var(--dichte)); text-transform: uppercase; color: var(--pompeji); font-weight: bold; margin-bottom: 2px; letter-spacing: 1px; }
@@ -255,8 +273,14 @@
         }
 
         function passeAnGeraet() {
+            /* Nur VERKLEINERN, nie vergrössern. Das CSS setzt mit 100svh bereits
+               die sichere Höhe; wenn die Messung einen grösseren Wert liefert -
+               und genau das tut iOS, solange die Safari-Leisten eingeklappt sind -
+               darf sie ihn nicht überschreiben. Vorher hat das JavaScript die
+               gute CSS-Höhe durch die schlechte gemessene ersetzt. */
             const hoehe = sichtbareHoehe();
-            if (hoehe > 200) document.body.style.height = hoehe + 'px';
+            const jetzt = document.body.clientHeight;
+            if (hoehe > 200 && hoehe < jetzt) document.body.style.height = hoehe + 'px';
 
             /* Falls das Dokument zwischenzeitlich zu hoch war und verschoben
                wurde, wieder nach oben holen. Sonst bleibt die obere Hälfte hinter
@@ -313,7 +337,7 @@
            ob ein Gerät seine Ereignisse schickt. */
         setInterval(function () {
             const soll = sichtbareHoehe();
-            if (soll > 200 && Math.abs(soll - document.body.clientHeight) > 2) passeAnGeraet();
+            if (soll > 200 && soll < document.body.clientHeight - 2) passeAnGeraet();
         }, 500);
 
 
