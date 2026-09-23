@@ -60,6 +60,21 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **Achievements.html** – Trophäensammlung-Übersichtsseite.
 - **index.html** – Hauptmenü.
 
+Zwei davon sind **Gruppenspiele** und folgen deshalb anderen Regeln als der Rest: Sie gehören
+keiner Person, tragen im Hauptmenü **kein `progress-badge`**, und ihre Vollbild-Layouts schalten
+das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstricke unten).
+
+- **Fliegenklatsche.html** – Brettspiel am Beamer für die ganze Klasse. Nicht überlappende
+  Wortkacheln auf Marmortafeln (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**,
+  damit der Rahmen von 9 bis 64 px Schrift mitwächst). Zwei Teams, Punkte von Hand.
+  Kein Richtig/Falsch, deshalb **kein** `recordVocabAttempt`.
+- **Bomba.html** – ein geteiltes Gerät wandert im Kreis. Multiple Choice, falsch heißt Gerät
+  behalten; wer die Bomba bei abgebrannter Lunte hält, verliert. Luntendauer je Runde gewürfelt
+  (40–85 s) und **ohne Zahlenanzeige** – mit einer Sekundenanzeige rechnet die Gruppe das Ende
+  aus. Nur der ERSTE Versuch je Karte geht in den Vokabelkasten. Die Bestleistung steht unter
+  einem eigenen `localStorage`-Schlüssel (`ludi_bomba_best`), nicht in `saveGameResult`: Sie
+  gehört der Gruppe, nicht dem Gerät. Ticken und Knall über WebAudio, abschaltbar.
+
 Gelöscht/nicht mehr vorhanden (bewusst entfernt, falls in altem Stand noch auftauchend):
 Bollwerk.html, Kastell_backup.html, Adventura.html, Possessiv.html, Tabularium.html,
 LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichhaltigeren Spielen.
@@ -211,9 +226,7 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Der Witz: Das braucht trotz fehlendem Backend keine Abstimmung – alle ziehen aus
     demselben Topf, mehr als „bis Lektion 12" muss nicht synchron sein. Erstes Spiel der
     Arena, bei dem die ganze Klasse gleichzeitig mit eigenem Gerät spielt.
-  - **Bomba** (vom Fachlehrer besonders gewünscht). Karte beantworten, Gerät weitergeben;
-    wer die brennende Lunte hält, wenn sie abläuft, verliert. Laufzeit zufällig, damit
-    niemand mitzählen kann.
+  - ~~Bomba~~ – **gebaut**, siehe „Aktive Spiele" oben.
   - **Memory.** Latein ↔ Deutsch, zu zweit an einem iPad. Das ruhige Gegenstück zur
     Fliegenklatsche.
   - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
