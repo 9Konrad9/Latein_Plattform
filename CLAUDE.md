@@ -196,9 +196,11 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     nicht zehnmal dasselbe entsteht.
   - `getWeakVocab()` gibt es schon, liefert aber die dauerhaft schwachen Wörter über alle
     Sitzungen, nicht die dieser Runde. Für den Wunsch ist das etwas anderes.
-  - Offen und **vor dem Bau zu klären**: Zählt die Wiederholung nochmal in den Leitner-Kasten
-    ein (dann kann man sich gesundwiederholen) oder nicht? Und: eine feste zweite Runde
-    oder so lange, bis alles einmal richtig war?
+  - **Entschieden (Fachlehrer):** Die Wiederholungsrunde zählt **nicht** in den Leitner-Kasten
+    ein. Begründung: Sonst ginge der Fortschritt zu schnell – wer ein Wort erst im zweiten
+    Anlauf und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.
+    Technisch heißt das: in der zweiten Runde **kein** `recordVocabAttempt`.
+  - Noch offen: feste zweite Runde, oder so lange, bis alles einmal richtig war?
 
 - **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
   die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:
