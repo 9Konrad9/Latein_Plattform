@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Fliegenklatsche - Lūdī Rōmānī</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Palette und geteilte Bausteine stehen in theme.css.
+           Hier nur, was die Fliegenklatsche allein braucht.
+
+           Das Spiel läuft am Beamer oder Smartboard: Es füllt den Schirm, hat
+           grosse Schrift und keine Bedienung, die auf Hover angewiesen wäre. */
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html { height: 100%; overflow: hidden; }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--ink);
+            /* vh zuerst als Rückfall, dann svh: die kleine Bildschirmhöhe rechnet
+               immer mit eingeblendeter Browserleiste.
+               min-height: 0 schaltet das min-height: 100vh aus theme.css ab - es
+               würde die eigene Höhe sonst überstimmen (min-height schlägt height). */
+            height: 100vh;
+            height: 100svh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* ---------- Kopfleiste ---------- */
+
+        .leiste {
+            flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 10px;
+            padding: 8px 14px 8px 60px;   /* links Platz für den Haus-Knopf */
+            background: rgba(244, 236, 219, 0.92);
+            border-bottom: 3px solid var(--bronze);
+        }
+
+        .leiste h1 {
+            font-family: var(--font-display); color: var(--pompeji);
+            font-size: 1.25rem; text-transform: uppercase; letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .werkzeuge { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        /* Umschalter Latein <-> Deutsch. Zwei Knöpfe statt eines Schalters, damit
+           auf einen Blick zu sehen ist, welche Richtung gerade läuft - am Beamer
+           aus fünf Metern Entfernung zählt das. */
+        .richtung { display: flex; border: 2px solid var(--bronze); border-radius: 8px; overflow: hidden; }
+        .richtung button {
+            border: none; background: var(--putz-hell); color: var(--ink-soft);
+            font-family: var(--font-body); font-weight: bold; font-size: 0.95rem;
+            padding: 8px 14px; cursor: pointer; touch-action: manipulation;
+        }
+        .richtung button.aktiv { background: var(--pompeji); color: var(--marmor); }
+        .richtung button + button { border-left: 2px solid var(--bronze); }
+
+        .werkzeug-btn {
+            background-color: var(--pompeji);
+            background-image: url('assets/ui/porphyr.jpg');
+            background-size: 260px auto; background-position: center;
+            color: var(--marmor); border: 2px solid #6d1f1f; border-radius: 8px;
+            font-family: var(--font-display); font-weight: bold; font-size: 1rem;
+            padding: 9px 18px; cursor: pointer; text-transform: uppercase;
+            touch-action: manipulation; box-shadow: var(--schatten);
+        }
+        .werkzeug-btn:active { filter: brightness(0.94); transform: translateY(1px); }
+
+        /* ---------- Punktestand ---------- */
+
+        .teams { display: flex; align-items: stretch; gap: 10px; }
+
+        .team {
+            display: flex; align-items: center; gap: 8px;
+            border: 3px solid; border-radius: 10px; padding: 4px 6px 4px 12px;
+            background: var(--putz-hell);
+        }
+        .team-a { border-color: #a8331a; }
+        .team-b { border-color: #14567f; }
+
+        .team-name {
+            font-family: var(--font-display); font-weight: bold; font-size: 0.95rem;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .team-a .team-name { color: #a8331a; }   /* kontrast-ok: 6,18 auf --putz-hell */
+        .team-b .team-name { color: #14567f; }   /* kontrast-ok: 7,31 auf --putz-hell */
+
+        .punkte {
+            font-family: var(--font-display); font-weight: bold;
+            font-size: 2rem; line-height: 1; min-width: 2ch; text-align: center;
+            font-variant-numeric: tabular-nums; color: var(--ink);
+        }
+
+        .zaehler { display: flex; flex-direction: column; gap: 3px; }
+        .plus, .minus {
+            /* kontrast-ok: Der Grund steht in den Team-Regeln darunter -
+               Marmorcreme kommt auf 5,38 (Team A) bzw. 6,36 (Team B). */
+            border: none; border-radius: 6px; cursor: pointer;
+            font-family: var(--font-display); font-weight: bold;
+            touch-action: manipulation; color: var(--marmor);
+        }
+        /* Gross genug zum Tippen mit dem Finger, auch im Eifer des Gefechts. */
+        .plus { font-size: 1.3rem; padding: 8px 16px; }
+        .minus { font-size: 0.8rem; padding: 3px 16px; opacity: 0.75; }
+        .team-a .plus, .team-a .minus { background: #a8331a; }  /* kontrast-ok: 5,38 mit --marmor */
+        .team-b .plus, .team-b .minus { background: #14567f; }  /* kontrast-ok: 6,36 mit --marmor */
+        .plus:active, .minus:active { filter: brightness(1.2); }
+
+        /* ---------- Das Brett ---------- */
+
+        #brett {
+            flex: 1 1 auto;
+            min-height: 0;              /* darf schrumpfen, sonst quillt es unten heraus */
+            display: grid;
+            padding: 8px;
+            gap: 0;                     /* der Abstand steckt im Innenrand der Zellen */
+        }
+
+        /* Jedes Wort sitzt in seiner eigenen Rasterzelle. Dadurch KANN sich nichts
+           überschneiden - auch nicht bei sehr unterschiedlich langen Texten und
+           auch nicht durch Versatz oder Drehung, weil beides auf den Innenrand
+           der Zelle begrenzt wird und die Kachel vorher so weit verkleinert wird,
+           bis ihr gedrehtes Rechteck hineinpasst. */
+        .zelle {
+            display: flex; align-items: center; justify-content: center;
+            padding: var(--luft, 10px);
+            overflow: hidden;
+        }
+
+        .kachel {
+            background: var(--putz-hell);
+            border: 3px solid var(--bronze);
+            border-radius: 10px;
+            color: var(--ink);          /* kontrast-ok: 13,34 auf --putz-hell */
+            font-family: var(--font-display);
+            font-weight: bold;
+            text-align: center;
+            padding: 6px 12px;
+            box-shadow: var(--schatten);
+            cursor: pointer;
+            transition: opacity 0.15s ease, background-color 0.15s ease;
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+
+        /* Getroffene Wörter lassen sich wegtippen, damit auf dem Brett zu sehen
+           bleibt, was noch offen ist. Nochmal tippen holt sie zurück. */
+        .kachel.erledigt {
+            background: var(--wand-tief);
+            color: var(--ink);           /* kontrast-ok: 8,71 auf --wand-tief */
+            text-decoration: line-through;
+            opacity: 0.55;
+            box-shadow: none;
+        }
+
+        .kachel:active { filter: brightness(0.96); }
+
+        /* ---------- Startbildschirm ---------- */
+
+        .start-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(244, 236, 219, 0.97);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 24px;
+        }
+        .start-overlay h2 {
+            font-family: var(--font-display); color: var(--pompeji);
+            font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
+        }
+        .start-overlay .notice-box { max-width: 620px; }
+
+        @media (max-width: 720px) {
+            .leiste h1 { font-size: 1rem; letter-spacing: 1px; }
+            .punkte { font-size: 1.5rem; }
+            .leiste { padding-left: 56px; }
+        }
+    </style>
+</head>
+<body>
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏠</a>
+
+    <div class="leiste">
+        <h1>🪰 Fliegenklatsche</h1>
+
+        <div class="werkzeuge">
+            <div class="richtung">
+                <button id="btn-lat" class="aktiv">Latein → Deutsch</button>
+                <button id="btn-de">Deutsch → Latein</button>
+            </div>
+            <button class="werkzeug-btn" id="btn-mischen">Neu mischen</button>
+            <button class="werkzeug-btn" id="btn-lektionen">Lektionen</button>
+        </div>
+
+        <div class="teams">
+            <div class="team team-a">
+                <span class="team-name">Team A</span>
+                <span class="punkte" id="punkte-a">0</span>
+                <span class="zaehler">
+                    <button class="plus" data-team="a" data-wert="1">+1</button>
+                    <button class="minus" data-team="a" data-wert="-1">−1</button>
+                </span>
+            </div>
+            <div class="team team-b">
+                <span class="team-name">Team B</span>
+                <span class="punkte" id="punkte-b">0</span>
+                <span class="zaehler">
+                    <button class="plus" data-team="b" data-wert="1">+1</button>
+                    <button class="minus" data-team="b" data-wert="-1">−1</button>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="brett"></div>
+
+    <div class="start-overlay" id="start-overlay">
+        <h2>Fliegenklatsche</h2>
+        <div class="notice-box">
+            <h3>🪰 So läuft's</h3>
+            <p>Auf dem Brett stehen Wörter, gut verteilt und in alle Richtungen gedreht.
+               Zwei Teams treten mit echten Fliegenklatschen an: Du rufst ein Wort,
+               wer zuerst draufschlägt, bekommt den Punkt.</p>
+            <p style="margin-top: 10px;">Die Punkte zählst du oben mit <span class="step">+1</span> selbst -
+               das Spiel mischt sich da nicht ein. Ein Tipp auf eine Kachel streicht sie durch,
+               damit zu sehen bleibt, was noch offen ist.</p>
+            <p style="margin-top: 10px;">Mit <strong>Latein → Deutsch</strong> stehen die lateinischen
+               Wörter auf dem Brett und du rufst die Bedeutung. Andersherum genauso.</p>
+        </div>
+        <button class="start-btn" id="btn-start">Brett aufbauen</button>
+    </div>
+
+<script>
+    /* ============ ZUSTAND ============ */
+    let aktiverPool = [];          // Wörter der gewählten Lektionen
+    let brettWoerter = [];         // die Auswahl, die gerade auf dem Brett liegt
+    let richtung = 'lat';          // 'lat' = Latein auf dem Brett, 'de' = Deutsch
+    const punkte = { a: 0, b: 0 };
+
+    /* Wie viele Wörter aufs Brett? Am Beamer sind zwanzig gut lesbar; mehr wird
+       zur Suchaufgabe, weniger ist als Wettkampf zu schnell vorbei. */
+    const WOERTER_AUFS_BRETT = 20;
+
+    /* ============ ANZEIGETEXT ============ */
+
+    /* Nur die erste Bedeutung. Die Datenbank führt oft mehrere durch Komma
+       getrennt ("rufen, laut rufen"); auf einer Kachel wäre das zu viel Text,
+       und für das Zurufen reicht die erste. */
+    function deutscheSeite(eintrag) { return eintrag.meaning.split(';')[0].split(',')[0].trim(); }
+    function lateinischeSeite(eintrag) { return eintrag.latin; }
+    function brettText(eintrag) {
+        return richtung === 'lat' ? lateinischeSeite(eintrag) : deutscheSeite(eintrag);
+    }
+
+    /* ============ AUSWAHL ============ */
+
+    function waehleWoerter() {
+        // Der Vokabelkasten steuert die Auswahl wie in den anderen Spielen:
+        // Wörter, die noch nicht sitzen, kommen häufiger aufs Brett.
+        const genommen = [];
+        /* Beide Seiten getrennt merken. Zwei verschiedene lateinische Wörter
+           können dieselbe erste Bedeutung tragen ("sagen" für dīcere und
+           nārrāre) - auf dem deutschen Brett stünde dasselbe Wort dann zweimal,
+           und welche Kachel gemeint ist, wäre nicht zu entscheiden. Ein Paar
+           fliegt deshalb raus, sobald EINE seiner Seiten schon vergeben ist. */
+        const lateinVergeben = new Set();
+        const deutschVergeben = new Set();
+        let schutz = 0;
+        while (genommen.length < Math.min(WOERTER_AUFS_BRETT, aktiverPool.length) && schutz++ < 800) {
+            const kandidat = (typeof LudiProgress !== 'undefined' && LudiProgress.weightedPick)
+                ? LudiProgress.weightedPick(aktiverPool)
+                : aktiverPool[Math.floor(Math.random() * aktiverPool.length)];
+            if (!kandidat) break;
+            const lat = kandidat.latin;
+            const de = deutscheSeite(kandidat);
+            if (lateinVergeben.has(lat) || deutschVergeben.has(de)) continue;
+            lateinVergeben.add(lat);
+            deutschVergeben.add(de);
+            genommen.push(kandidat);
+        }
+        return genommen;
+    }
+
+    /* ============ VERTEILUNG AUF DEM BRETT ============
+
+       Raster statt Zufallswurf: Jedes Wort bekommt eine eigene Zelle, und
+       Versatz wie Drehung bleiben innerhalb dieser Zelle. Damit ist eine
+       Überschneidung ausgeschlossen - nicht unwahrscheinlich, sondern unmöglich,
+       und zwar unabhängig davon, wie lang die Wörter sind.
+
+       Die Zellen sind gross genug, dass die Verteilung trotzdem zufällig wirkt:
+       Versatz und Drehung reichen bis an den Zellenrand. */
+
+    function rasterMasse(anzahl, breite, hoehe) {
+        // Spaltenzahl so wählen, dass die Zellen ungefähr doppelt so breit wie
+        // hoch werden - das passt zu einzeiligen Wörtern.
+        let beste = 1, besterFehler = Infinity;
+        for (let spalten = 1; spalten <= anzahl; spalten++) {
+            const zeilen = Math.ceil(anzahl / spalten);
+            const seitenverhaeltnis = (breite / spalten) / (hoehe / zeilen);
+            const fehler = Math.abs(Math.log(seitenverhaeltnis / 2.2));
+            if (fehler < besterFehler) { besterFehler = fehler; beste = spalten; }
+        }
+        return { spalten: beste, zeilen: Math.ceil(anzahl / beste) };
+    }
+
+    /* Passt ein Rechteck w×h, um winkel gedreht, in maxW×maxH? */
+    function passtGedreht(w, h, winkel, maxW, maxH) {
+        const r = Math.abs(winkel) * Math.PI / 180;
+        const bw = w * Math.cos(r) + h * Math.sin(r);
+        const bh = w * Math.sin(r) + h * Math.cos(r);
+        return bw <= maxW && bh <= maxH;
+    }
+
+    /* Zwei Schwellen. WUNSCH_SCHRIFT ist die Grösse, die am Beamer noch aus der
+       letzten Reihe zu lesen ist; wird sie öfter unterschritten, kommen weniger
+       Wörter aufs Brett. NOT_SCHRIFT ist die harte Untergrenze: Lieber ein
+       einzelnes sehr langes Wort klein setzen als es von der Zelle abschneiden
+       lassen - ein halbes Wort kann niemand treffen. */
+    const WUNSCH_SCHRIFT = 15;
+    const NOT_SCHRIFT = 9;
+
+    function baueBrett(anzahl) {
+        const brett = document.getElementById('brett');
+        brett.innerHTML = '';
+        if (!brettWoerter.length) return;
+
+        const woerter = brettWoerter.slice(0, anzahl || brettWoerter.length);
+
+        const breite = brett.clientWidth;
+        const hoehe = brett.clientHeight;
+        if (breite < 50 || hoehe < 50) return;
+
+        const { spalten, zeilen } = rasterMasse(woerter.length, breite, hoehe);
+        brett.style.gridTemplateColumns = 'repeat(' + spalten + ', 1fr)';
+        brett.style.gridTemplateRows = 'repeat(' + zeilen + ', 1fr)';
+
+        const zelleB = breite / spalten;
+        const zelleH = hoehe / zeilen;
+        // Innenrand: trägt Versatz und Drehung. Nach unten begrenzt, damit auf
+        // kleinen Schirmen noch Platz für Text bleibt.
+        const luft = Math.max(6, Math.min(18, Math.round(Math.min(zelleB, zelleH) * 0.12)));
+        brett.style.setProperty('--luft', luft + 'px');
+
+        const maxW = zelleB - 2 * luft;
+        const maxH = zelleH - 2 * luft;
+
+        // Startgrösse aus der Zellenhöhe; die Feinanpassung folgt je Kachel.
+        const startGroesse = Math.max(14, Math.min(64, Math.floor(maxH * 0.52)));
+
+        let amBoden = 0;
+
+        woerter.forEach(eintrag => {
+            const zelle = document.createElement('div');
+            zelle.className = 'zelle';
+
+            const kachel = document.createElement('div');
+            kachel.className = 'kachel';
+            kachel.textContent = brettText(eintrag);
+            kachel.style.fontSize = startGroesse + 'px';
+
+            zelle.appendChild(kachel);
+            brett.appendChild(zelle);
+
+            // Drehung und Versatz würfeln ...
+            const winkel = (Math.random() * 2 - 1) * 7;          // ±7 Grad
+            const versatzX = (Math.random() * 2 - 1) * luft * 0.7;
+            const versatzY = (Math.random() * 2 - 1) * luft * 0.7;
+            const platzW = maxW - 2 * Math.abs(versatzX);
+            const platzH = maxH - 2 * Math.abs(versatzY);
+
+            // ... und die Kachel so weit verkleinern, bis sie gedreht hineinpasst.
+            let groesse = startGroesse;
+            let schutz = 0;
+            while (schutz++ < 60 && groesse > NOT_SCHRIFT &&
+                   !passtGedreht(kachel.offsetWidth, kachel.offsetHeight, winkel, platzW, platzH)) {
+                // Grob schätzen statt Pixel für Pixel: Die Breite wächst ungefähr
+                // linear mit der Schriftgrösse, das spart Durchläufe.
+                const zuBreit = kachel.offsetWidth / Math.max(1, platzW);
+                const zuHoch = kachel.offsetHeight / Math.max(1, platzH);
+                const faktor = Math.max(zuBreit, zuHoch, 1.02);
+                groesse = Math.max(NOT_SCHRIFT, Math.floor(groesse / Math.min(faktor, 1.6)));
+                kachel.style.fontSize = groesse + 'px';
+            }
+            // Musste die Kachel unter die Wunschgrösse, ist das Brett zu voll.
+            if (groesse < WUNSCH_SCHRIFT) amBoden++;
+
+            kachel.style.transform =
+                'translate(' + versatzX.toFixed(1) + 'px,' + versatzY.toFixed(1) + 'px) ' +
+                'rotate(' + winkel.toFixed(1) + 'deg)';
+
+            kachel.addEventListener('click', function () {
+                kachel.classList.toggle('erledigt');
+            });
+        });
+
+        /* Wenn mehr als eine Handvoll Kacheln selbst bei Mindestschrift nicht in
+           ihre Zelle passt, ist der Schirm für so viele Wörter zu klein. Dann
+           lieber weniger Wörter zeigen als unlesbare - ein Brett mit zwölf gut
+           lesbaren Wörtern ist im Unterricht mehr wert als eines mit zwanzig
+           winzigen. Der Aufruf verkleinert sich selbst und endet bei acht. */
+        if (amBoden > Math.max(1, woerter.length * 0.15) && woerter.length > 8) {
+            baueBrett(Math.max(8, Math.floor(woerter.length * 0.75)));
+        }
+    }
+
+    /* ============ BEDIENUNG ============ */
+
+    function setzeRichtung(neu) {
+        if (richtung === neu) return;
+        richtung = neu;
+        document.getElementById('btn-lat').classList.toggle('aktiv', neu === 'lat');
+        document.getElementById('btn-de').classList.toggle('aktiv', neu === 'de');
+        // Dieselben Wörter, andere Seite - so kann dieselbe Runde zweimal
+        // gespielt werden, einmal je Richtung.
+        baueBrett();
+    }
+
+    function mischen() {
+        brettWoerter = waehleWoerter();
+        baueBrett();
+    }
+
+    function zeigePunkte() {
+        document.getElementById('punkte-a').textContent = punkte.a;
+        document.getElementById('punkte-b').textContent = punkte.b;
+    }
+
+    function lektionenWaehlen(danach) {
+        if (typeof globalVocabularyPool === 'undefined' || !globalVocabularyPool.length) {
+            alert('Kritischer Fehler: vocabulary.js konnte nicht geladen werden.');
+            return;
+        }
+        LessonFilter.show(globalVocabularyPool, function (gefiltert) {
+            // Mehrteilige Lemmata ("patrēs cōnscrīptī") passen schlecht auf eine
+            // Kachel und sind zum Zurufen unhandlich.
+            aktiverPool = gefiltert.filter(v => v.meaning && v.latin);
+            if (aktiverPool.length < 4) {
+                alert('Für diese Lektionsauswahl gibt es zu wenig Wortschatz. Bitte mehr Lektionen wählen.');
+                return;
+            }
+            danach();
+        });
+    }
+
+    window.onload = function () {
+        document.getElementById('btn-lat').addEventListener('click', () => setzeRichtung('lat'));
+        document.getElementById('btn-de').addEventListener('click', () => setzeRichtung('de'));
+        document.getElementById('btn-mischen').addEventListener('click', mischen);
+        document.getElementById('btn-lektionen').addEventListener('click', function () {
+            lektionenWaehlen(mischen);
+        });
+
+        document.querySelectorAll('[data-team]').forEach(knopf => {
+            knopf.addEventListener('click', function () {
+                const team = knopf.getAttribute('data-team');
+                const wert = parseInt(knopf.getAttribute('data-wert'), 10);
+                punkte[team] = Math.max(0, punkte[team] + wert);
+                zeigePunkte();
+            });
+        });
+
+        document.getElementById('btn-start').addEventListener('click', function () {
+            lektionenWaehlen(function () {
+                document.getElementById('start-overlay').style.display = 'none';
+                mischen();
+            });
+        });
+
+        // Neu verteilen, wenn sich die Fläche ändert - Drehen des iPads, andere
+        // Beamer-Auflösung. Entprellt, damit es beim Ziehen nicht flackert.
+        let warten = null;
+        function neuVerteilen() {
+            clearTimeout(warten);
+            warten = setTimeout(baueBrett, 150);
+        }
+        window.addEventListener('resize', neuVerteilen);
+        window.addEventListener('orientationchange', function () { setTimeout(baueBrett, 300); });
+
+        zeigePunkte();
+    };
+</script>
+</body>
+</html>
