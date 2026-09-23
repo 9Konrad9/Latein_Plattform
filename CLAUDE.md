@@ -202,6 +202,30 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Technisch heißt das: in der zweiten Runde **kein** `recordVocabAttempt`.
   - Noch offen: feste zweite Runde, oder so lange, bis alles einmal richtig war?
 
+- **Klassische Vokabelspiele digitalisieren.** Vom Fachlehrer ausgewählt (September 2026),
+  noch nichts davon gebaut, Reihenfolge offen. Der harte Filter für alle: kein Server, kein
+  Login – nichts darf Geräte untereinander abstimmen müssen. Jedes Spiel läuft entweder an
+  EINEM Gerät oder am Beamer für alle.
+  - **Vokabel-Bingo.** Jedes Gerät erzeugt sich selbst eine 4×4-Karte mit Bedeutungen aus der
+    gewählten Lektionsspanne, die Lehrkraft ruft vom Beamer die lateinischen Wörter auf.
+    Der Witz: Das braucht trotz fehlendem Backend keine Abstimmung – alle ziehen aus
+    demselben Topf, mehr als „bis Lektion 12" muss nicht synchron sein. Erstes Spiel der
+    Arena, bei dem die ganze Klasse gleichzeitig mit eigenem Gerät spielt.
+  - **Bomba** (vom Fachlehrer besonders gewünscht). Karte beantworten, Gerät weitergeben;
+    wer die brennende Lunte hält, wenn sie abläuft, verliert. Laufzeit zufällig, damit
+    niemand mitzählen kann.
+  - **Memory.** Latein ↔ Deutsch, zu zweit an einem iPad. Das ruhige Gegenstück zur
+    Fliegenklatsche.
+  - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
+    aus den Umschreibungen erraten.
+  - **Quartett.** Vier Wörter eines Sachfelds sammeln. **Hängt an den Sachfeldern an den
+    Nomen, die auch „Semantik Stufe 2" unten braucht** – ein Datenbestand, zwei Zwecke.
+    Wenn eines von beiden gebaut wird, lohnt es, die Felder gleich für beide anzulegen.
+  - Noch in der Diskussion: **Montagsmaler**. Das Hindernis ist die Wortauswahl – nur ein
+    Teil des Wortschatzes ist zeichenbar. `belebt` hilft dabei NICHT: unter `belebt: "sache"`
+    stehen *culīna*, *tunica* und *statua* neben *ōtium*, *labor*, *mors* und *gaudium*.
+    Auch hier wären die Sachfelder die eigentliche Lösung.
+
 - **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
   die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:
   rund 49 % der Aktivsätze haben eines, und *poēta vulnus legit* ist weiterhin möglich. Dafür
