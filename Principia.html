@@ -352,8 +352,37 @@
         }
 
         // Nomen: Genitiv-Endung je Deklinationsklasse
-        const nounGenEndings = { "o-Deklination": "ī", "a-Deklination": "ae", "konsonantische Deklination": "is" };
+        /* Die Genitivendungen je Deklinationsklasse. Die Tabelle kannte lange nur
+           drei Klassen - für die 15 Wörter der u- und die 7 der e-Deklination
+           lieferte sie `undefined`, und die Zeile darunter stürzte mit
+           "Cannot read properties of undefined" ab. Das traf rund 7 % aller
+           Nomen und damit jede dritte kurze Runde.
+           Die e-Deklination hat zwei Varianten (reī, aber diēī), deshalb je
+           Klasse eine Liste: Genommen wird die, auf die der Genitiv wirklich
+           endet. */
+        const nounGenEndings = {
+            "o-Deklination": ["ī"],
+            "a-Deklination": ["ae"],
+            "konsonantische Deklination": ["is"],
+            "u-Deklination": ["ūs"],
+            "e-Deklination": ["ēī", "eī"]
+        };
+        // Längste zuerst, damit "ēī" vor "ī" greift.
+        const alleGenEndungen = ["ēī", "eī", "ūs", "ae", "is", "ī"];
         const allGenders = ["m", "f", "n"];
+
+        /* Welche Endung trägt dieser Genitiv wirklich? Erst in der eigenen Klasse
+           suchen, dann in allen. Mehrteilige Lemmata ("reī pūblicae") folgen
+           keinem Schema - dort bleibt der Notnagel, die letzten zwei Zeichen zu
+           nehmen. Das ergibt einen etwas schiefen Stamm, aber Distraktoren müssen
+           nur falsch und plausibel sein; die richtige Antwort kommt unverändert
+           aus dem Wörterbuchfeld. Abstürzen darf hier jedenfalls nichts. */
+        function genitivEndung(gramClass, genitive) {
+            const eigene = nounGenEndings[gramClass] || [];
+            for (const e of eigene) if (genitive.endsWith(e)) return e;
+            for (const e of alleGenEndungen) if (genitive.endsWith(e)) return e;
+            return genitive.slice(-2) || genitive;
+        }
 
         function parseNounMiddle(middleStr) {
             const m = middleStr.match(/^(.*?)\s*(m|f|n)\.\s*$/);
@@ -363,12 +392,15 @@
         // Nomen-Distraktoren: dieselbe Wurzel wie die richtige Antwort, aber mit falscher
         // Endung (aus einer ANDEREN Deklinationsklasse) oder falschem Genus - nie ein anderes Wort.
         function buildNounDistractors(target) {
-            const { gender: correctGender } = parseNounMiddle(target.middle);
-            const correctEnding = nounGenEndings[target.gram_class];
-            const genitive = parseNounMiddle(target.middle).genitive;
+            const { gender: correctGender, genitive } = parseNounMiddle(target.middle);
+            const correctEnding = genitivEndung(target.gram_class, genitive);
             const stem = genitive.slice(0, genitive.length - correctEnding.length);
 
-            const wrongEndings = Object.values(nounGenEndings).filter(e => e !== correctEnding);
+            // Aus allen Klassen schöpfen, nicht nur aus dreien - und gemischt,
+            // damit nicht immer dieselben beiden falschen Endungen erscheinen.
+            const wrongEndings = alleGenEndungen
+                .filter(e => e !== correctEnding)
+                .sort(() => Math.random() - 0.5);
             const wrongGenders = allGenders.filter(g => g !== correctGender).sort(() => Math.random() - 0.5);
 
             return [
