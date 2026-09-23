@@ -184,6 +184,22 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
 
 ## Offene Punkte / auf der Liste
 
+- **Falsch beantwortetes am Rundenende wiederholen.** Von den Schüler:innen gewünscht
+  (September 2026). Nach der letzten Frage nicht einfach zur Auswertung, sondern die
+  danebengegangenen Vokabeln noch einmal durchgehen.
+  Betrifft die zehn Spiele mit `recordVocabAttempt`: Arcus, CircusV, Duell, IssaJump,
+  Kastell, Pendel, Principia, Pronomina, ViaRomana, Villa. **Nicht** die Fliegenklatsche –
+  dort gibt es kein Richtig/Falsch, die Lehrkraft zählt von Hand.
+  Was dafür fehlt und was nicht:
+  - `progress.js` hält den Leitner-Kasten dauerhaft, aber **keine Liste der Fehler dieser
+    Runde**. Die müsste jedes Spiel selbst mitführen – oder besser einmal zentral, damit
+    nicht zehnmal dasselbe entsteht.
+  - `getWeakVocab()` gibt es schon, liefert aber die dauerhaft schwachen Wörter über alle
+    Sitzungen, nicht die dieser Runde. Für den Wunsch ist das etwas anderes.
+  - Offen und **vor dem Bau zu klären**: Zählt die Wiederholung nochmal in den Leitner-Kasten
+    ein (dann kann man sich gesundwiederholen) oder nicht? Und: eine feste zweite Runde
+    oder so lange, bis alles einmal richtig war?
+
 - **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
   die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:
   rund 49 % der Aktivsätze haben eines, und *poēta vulnus legit* ist weiterhin möglich. Dafür
