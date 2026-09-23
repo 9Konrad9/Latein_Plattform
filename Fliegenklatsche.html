@@ -138,33 +138,52 @@
             overflow: hidden;
         }
 
+        /* Jedes Wort steht auf einer Marmortafel (assets/ui/marmor.png, 900x356).
+           Der Schnitt ist 54 statt der 44 aus CircusV: Die gold-rote Zierlinie
+           endet gemessen bei 50 px (unten 53). Mit 44 läge ihr inneres Drittel
+           im Mittelfeld und würde über die ganze Tafel gezogen.
+
+           Die Randbreiten stehen in em, NICHT in Pixeln. Die Kacheln reichen von
+           9 px bis 64 px Schrift - ein fester Rand wäre auf der kleinsten Kachel
+           der halbe Platz und auf der grössten ein Fädchen. In em wächst der
+           Rahmen mit dem Wort mit und trifft ungefähr die Proportion des Bildes
+           (54/356 = 15 % der Höhe). Die Schnittwerte selbst sind Bildpixel und
+           skalieren nicht mit - beim Austausch des Assets neu messen.
+
+           Kein box-shadow: Die Tafel hat abgeschlagene Ecken und ist daneben
+           durchsichtig, ein rechteckiger Schatten schaute dort hervor. Den
+           Abstand zum Grund trägt die gezeichnete Kontur der Tafel selbst. */
         .kachel {
-            background: var(--putz-hell);
-            border: 3px solid var(--bronze);
-            border-radius: 10px;
-            color: var(--ink);          /* kontrast-ok: 13,34 auf --putz-hell */
+            border-style: solid;
+            border-width: 0.34em 0.42em;
+            border-image: url('assets/ui/marmor.png') 54 54 54 54 fill stretch;
+            background: none;
+            color: var(--ink);          /* kontrast-ok: 12,11 auf dem Marmorfeld #f1ebdf,
+                                           5,25 auf der dunkelsten Ader #9f9c97 */
             font-family: var(--font-display);
             font-weight: bold;
             text-align: center;
-            padding: 6px 12px;
-            box-shadow: var(--schatten);
+            padding: 0.04em 0.14em;
             cursor: pointer;
-            transition: opacity 0.15s ease, background-color 0.15s ease;
+            transition: opacity 0.15s ease, filter 0.15s ease;
             max-width: 100%;
             overflow-wrap: break-word;
         }
 
         /* Getroffene Wörter lassen sich wegtippen, damit auf dem Brett zu sehen
-           bleibt, was noch offen ist. Nochmal tippen holt sie zurück. */
+           bleibt, was noch offen ist. Nochmal tippen holt sie zurück.
+           Kein eigener Hintergrund mehr - der läge hinter dem Bild und bliebe
+           unsichtbar. Stattdessen blasst die ganze Tafel aus. */
         .kachel.erledigt {
-            background: var(--wand-tief);
-            color: var(--ink);           /* kontrast-ok: 8,71 auf --wand-tief */
             text-decoration: line-through;
             opacity: 0.55;
-            box-shadow: none;
+            filter: saturate(0.3);
+            /* kontrast-ok: 3,61 - die durchsichtige Tafel über der Wand gerechnet.
+               Das ist Absicht, erledigt soll zurücktreten; für die fette
+               Display-Schrift ab 15 px (Grosstext) verlangt AA nur 3,0. */
         }
 
-        .kachel:active { filter: brightness(0.96); }
+        .kachel:active { filter: brightness(0.94); }
 
         /* ---------- Startbildschirm ---------- */
 
