@@ -331,29 +331,122 @@
             }
             const target = slots[targetIdx];
 
-            // Distraktoren: andere Formen UND andere Label (keine homonymen Formen als "falsch" anbieten,
-            // z.B. Nom./Akk. Plural bei Neutra sind identisch und daher beide korrekt)
-            let candidates = slots.filter((s, i) => i !== targetIdx && s.form !== target.form && s.label !== target.label);
-            candidates = candidates.sort(() => Math.random() - 0.5);
-
-            const seenLabels = new Set([target.label]);
-            const distractors = [];
-            for (const c of candidates) {
-                if (seenLabels.has(c.label)) continue;
-                seenLabels.add(c.label);
-                distractors.push(c.label);
-                if (distractors.length === 3) break;
-            }
-            // Sicherheitsnetz, falls ein sehr kleines Paradigma nicht genug eindeutige Distraktoren hergibt
-            while (distractors.length < 3) {
-                distractors.push((distractors[distractors.length - 1] || target.label) + '\u200b');
-            }
-
             return {
                 targetForm: target.form,
                 correctLabel: target.label,
-                options: [target.label, ...distractors].sort(() => Math.random() - 0.5)
+                options: [target.label, ...waehleDistraktoren(slots, targetIdx)].sort(() => Math.random() - 0.5)
             };
+        }
+
+        /* ========== DISTRAKTOREN ==========
+
+           Vorher wurden die drei falschen Antworten rein zuf\u00e4llig aus dem
+           gesamten Paradigma gezogen - gefiltert nur nach \u201eandere Form, anderes
+           Label". Das f\u00fchrte dazu, dass sie im Schnitt umso weiter vom Ziel
+           weglagen, je gr\u00f6sser das Paradigma wurde. Gemessen am Anteil echter
+           Minimalpaare (genau eine Achse weicht ab): L5 36 %, L10 26 %,
+           L15 14 %, L31 7 %. Umgekehrt wichen bei L31 42 % der Distraktoren auf
+           vier oder f\u00fcnf Achsen ab - die liessen sich streichen, ohne die Form
+           \u00fcberhaupt anzusehen. Wer auf L15 gezielt Passiv \u00fcbte, \u00fcbte nichts.
+
+           Jetzt gilt: zwei echte Minimalpaare auf VERSCHIEDENEN Achsen, dazu
+           einer, der zwei Achsen entfernt liegt. Die zwei Minimalpaare machen
+           die Frage diagnostisch, der dritte h\u00e4lt sie auch f\u00fcr schw\u00e4chere
+           Sch\u00fcler:innen spielbar - im Kastell kostet Falschliegen Mauer.
+
+           Welche Achse zuerst? Die j\u00fcngste. Wer bis Lektion 15 w\u00e4hlt, \u00fcbt
+           Passiv, also muss sich ein Distraktor genau in der Diathese
+           unterscheiden. */
+
+        const ACHSEN = ['genus', 'modus', 'tempus', 'person', 'numerus', 'kasus', 'art'];
+
+        /* Ab welcher Lektion ist eine Achse \u00fcberhaupt kontrastierbar? Die Zahlen
+           stehen bewusst NICHT hier, sondern werden aus verbEngine.js abgeleitet
+           - zwei Stellen mit denselben Zahlen driften auseinander.
+           `test-gating.js` pr\u00fcft sie gegen die Pontes-Tabelle. */
+        function achsenEinfuehrung() {
+            const kleinste = obj => Math.min.apply(null, Object.keys(obj).map(k => obj[k]));
+            const p = VerbEngine.PERSON_LESSON;   // [1.Sg, 2.Sg, 3.Sg, 1.Pl, 2.Pl, 3.Pl]
+            return {
+                kasus:   1,                                            // Nom./Akk. beide ab L1
+                numerus: Math.min(p[3], p[4], p[5]),                   // erster Plural
+                art:     kleinste(VerbEngine.INFINITIV_LESSON),        // Infinitiv neben finiter Form
+                person:  Math.min(p[0], p[1], p[3], p[4]),             // erste Person ausser der 3.
+                tempus:  kleinste(VerbEngine.TEMPUS_LESSON_AKTIV),     // erstes zweites Tempus
+                genus:   VerbEngine.TEMPUS_LESSON_PASSIV['Pr\u00e4sens'],   // Passiv
+                modus:   kleinste(VerbEngine.KONJUNKTIV_LESSON)        // Konjunktiv
+            };
+        }
+
+        // J\u00fcngste Achse zuerst - das ist die, die gerade gelernt wird.
+        function achsenNachNeuheit() {
+            const ein = achsenEinfuehrung();
+            return ACHSEN.filter(a => ein[a] !== undefined && ein[a] <= maxSelectedLesson)
+                         .sort((a, b) => ein[b] - ein[a]);
+        }
+
+        function abweichendeAchsen(a, b) {
+            return ACHSEN.filter(k => (a[k] || '\u2014') !== (b[k] || '\u2014'));
+        }
+
+        // Ein- oder zweiteilig? Ab L15 ist das Perfekt Passiv zweiteilig
+        // (am\u0101tus est), das Pr\u00e4sens Passiv einteilig (am\u0101tur). Ein zweiteiliger
+        // Distraktor neben einer einteiligen Zielform ist auf einen Blick zu
+        // streichen - deshalb wird die Gestalt angeglichen.
+        function wortzahl(form) { return String(form).trim().split(/\s+/).length; }
+
+        function waehleDistraktoren(slots, targetIdx) {
+            const ziel = slots[targetIdx];
+            const zielMerkmale = ziel.merkmale || {};
+            const zielWorte = wortzahl(ziel.form);
+
+            // Keine homonymen Formen als "falsch" anbieten: Nom./Akk. Plural bei
+            // Neutra sind identisch und damit beide richtig.
+            const kandidaten = slots
+                .filter((s, i) => i !== targetIdx && s.form !== ziel.form && s.label !== ziel.label)
+                .map(s => ({ slot: s, achsen: abweichendeAchsen(zielMerkmale, s.merkmale || {}) }))
+                .sort((a, b) => {
+                    const ga = Math.abs(wortzahl(a.slot.form) - zielWorte);
+                    const gb = Math.abs(wortzahl(b.slot.form) - zielWorte);
+                    if (ga !== gb) return ga - gb;          // gleiche Gestalt zuerst
+                    return Math.random() - 0.5;
+                });
+
+            const gewaehlt = [];
+            const belegtesLabel = new Set([ziel.label]);
+            const belegteAchse = new Set();
+            const nimm = k => {
+                if (belegtesLabel.has(k.slot.label)) return;
+                belegtesLabel.add(k.slot.label);
+                k.achsen.forEach(a => belegteAchse.add(a));
+                gewaehlt.push(k.slot.label);
+            };
+
+            // 1. Zwei Minimalpaare, jedes auf einer anderen Achse, j\u00fcngste zuerst.
+            for (const achse of achsenNachNeuheit()) {
+                if (gewaehlt.length >= 2) break;
+                if (belegteAchse.has(achse)) continue;
+                const treffer = kandidaten.find(k => k.achsen.length === 1 && k.achsen[0] === achse);
+                if (treffer) nimm(treffer);
+            }
+
+            // 2. Einer weiter weg, damit die Frage spielbar bleibt.
+            const weiter = kandidaten.find(k => k.achsen.length === 2 && !belegtesLabel.has(k.slot.label));
+            if (weiter) nimm(weiter);
+
+            // 3. Auff\u00fcllen, wenn das Paradigma nicht genug hergibt - dann die
+            //    N\u00c4CHSTGELEGENEN, nie die entferntesten.
+            if (gewaehlt.length < 3) {
+                kandidaten.slice()
+                    .sort((a, b) => a.achsen.length - b.achsen.length)
+                    .forEach(k => { if (gewaehlt.length < 3) nimm(k); });
+            }
+
+            // Sicherheitsnetz f\u00fcr sehr kleine Paradigmen (z.B. nur Pr\u00e4sens bekannt)
+            while (gewaehlt.length < 3) {
+                gewaehlt.push((gewaehlt[gewaehlt.length - 1] || ziel.label) + '\u200b');
+            }
+            return gewaehlt.slice(0, 3);
         }
 
         /* Nur Kasus und Numeri anbieten, die bis zur gewählten Lektion auch
@@ -373,15 +466,31 @@
                     const numKey = n === 'Sg' ? 'sg' : 'pl';
                     const form = table[numKey] ? table[numKey][caseKey] : null;
                     if (form) {
-                        slots.push({ form: form, label: CASE_LABELS[c] + ' ' + (n === 'Sg' ? 'Singular' : 'Plural') });
+                        const numerus = n === 'Sg' ? 'Singular' : 'Plural';
+                        slots.push({ form: form, label: CASE_LABELS[c] + ' ' + numerus, merkmale: {
+                            art: 'nomen', kasus: CASE_LABELS[c], numerus
+                        } });
                     }
                 });
             });
             return buildRoundFromSlots(slots);
         }
 
+        // Die sechs Formen aus getFormsForTempus in ihre Merkmale übersetzt.
+        const PERSON_NR   = ['1', '2', '3', '1', '2', '3'];
+        const NUMERUS_VON = ['Singular', 'Singular', 'Singular', 'Plural', 'Plural', 'Plural'];
+
+        /* Aufgeteilt, damit auch anderswo nachgesehen werden kann, WELCHE Formen
+           eine Lektionsauswahl ueberhaupt hergibt - ohne gleich eine Runde zu bauen. */
         function buildVerbRound(verbObj) {
+            return buildRoundFromSlots(verbSlots(verbObj));
+        }
+
+        function verbSlots(verbObj) {
             const knownCombos = VerbEngine.getKnownCombinations(maxSelectedLesson); // [{tempus, genus}, ...]
+            // L1 kennt nur die 3. Person Singular, L2 dazu die 3. Plural, ab L3
+            // alle - sonst stehen Formen im Spiel, die nie drankamen.
+            const bekanntePersonen = VerbEngine.getKnownPersonIndices(maxSelectedLesson);
             const knownTempora = [...new Set(knownCombos.map(c => c.tempus))];
             const passivKnown = knownCombos.some(c => c.genus === 'Passiv') && VerbEngine.isGenusApplicable(verbObj, 'Passiv');
             const showTempus = knownTempora.length > 1; // Solange nur Präsens bekannt ist, Tempus nicht extra nennen
@@ -400,18 +509,24 @@
                     ? FORM_WEIGHT.hoch
                     : (tempus === 'Plusquamperfekt') ? FORM_WEIGHT.niedrig : FORM_WEIGHT.mittel;
                 forms.forEach((form, i) => {
+                    if (bekanntePersonen.indexOf(i) === -1) return;
                     let label = persons[i];
                     if (showTempus) label += ', ' + tLabel;
                     if (passivKnown && genus === 'Passiv') label += ', Passiv';
-                    slots.push({ form, label, weight });
+                    slots.push({ form, label, weight, merkmale: {
+                        art: 'finit', modus: 'Indikativ', tempus, genus,
+                        person: PERSON_NR[i], numerus: NUMERUS_VON[i]
+                    } });
                 });
             });
 
             // --- Imperativ ---
             if (VerbEngine.isImperativeKnown(maxSelectedLesson) && VerbEngine.isImperativeApplicable(verbObj)) {
                 const imp = VerbEngine.getImperative(verbObj);
-                slots.push({ form: imp.sg, label: '2. Person Singular (Imperativ)', weight: FORM_WEIGHT.mittel });
-                slots.push({ form: imp.pl, label: '2. Person Plural (Imperativ)', weight: FORM_WEIGHT.mittel });
+                slots.push({ form: imp.sg, label: '2. Person Singular (Imperativ)', weight: FORM_WEIGHT.mittel,
+                    merkmale: { art: 'Imperativ', modus: 'Imperativ', tempus: 'Präsens', genus: 'Aktiv', person: '2', numerus: 'Singular' } });
+                slots.push({ form: imp.pl, label: '2. Person Plural (Imperativ)', weight: FORM_WEIGHT.mittel,
+                    merkmale: { art: 'Imperativ', modus: 'Imperativ', tempus: 'Präsens', genus: 'Aktiv', person: '2', numerus: 'Plural' } });
             }
 
             // --- Infinitive (4 Kombinationen) ---
@@ -420,7 +535,9 @@
                 if (!VerbEngine.isInfinitiveKnown(t, g, maxSelectedLesson)) return;
                 if (!VerbEngine.isInfinitiveApplicable(verbObj, t, g)) return;
                 const form = VerbEngine.getInfinitive(verbObj, t, g);
-                slots.push({ form, label: `Infinitiv ${t} ${g}`, weight: w });
+                slots.push({ form, label: `Infinitiv ${t} ${g}`, weight: w, merkmale: {
+                    art: 'Infinitiv', modus: 'Infinitiv', tempus: t, genus: g, person: null, numerus: null
+                } });
             });
 
             // --- PPA (vollständige Deklination) ---
@@ -433,7 +550,11 @@
                     [d.pl.gen, 'PPA Genitiv Plural'], [d.pl.dat, 'PPA Dativ Plural'],
                     [d.pl.akkM, 'PPA Akkusativ Plural (m./f.)'], [d.pl.abl, 'PPA Ablativ Plural']
                 ];
-                ppaSlots.forEach(([form, label]) => slots.push({ form, label, weight: FORM_WEIGHT.niedrig }));
+                ppaSlots.forEach(([form, label]) => slots.push({ form, label, weight: FORM_WEIGHT.niedrig, merkmale: {
+                    art: 'PPA', modus: 'PPA', tempus: null, genus: null, person: null,
+                    numerus: /Plural/.test(label) ? 'Plural' : 'Singular',
+                    kasus: (label.match(/(Nominativ|Genitiv|Dativ|Akkusativ|Ablativ)/) || [])[1] || null
+                } }));
             }
 
             // --- Konjunktiv (4 Tempora x Aktiv/Passiv) ---
@@ -450,9 +571,13 @@
                         const tLabel = t === 'FuturI' ? 'Futur I' : t;
                         const weight = (t === 'Perfekt' || t === 'Plusquamperfekt') && g === 'Passiv' ? FORM_WEIGHT.selten : FORM_WEIGHT.niedrig;
                         forms.forEach((form, i) => {
+                            if (bekanntePersonen.indexOf(i) === -1) return;
                             let label = `Konjunktiv, ${persons[i]}, ${tLabel}`;
                             if (passivKnown && g === 'Passiv') label += ', Passiv';
-                            slots.push({ form, label, weight });
+                            slots.push({ form, label, weight, merkmale: {
+                                art: 'finit', modus: 'Konjunktiv', tempus: t, genus: g,
+                                person: PERSON_NR[i], numerus: NUMERUS_VON[i]
+                            } });
                         });
                     });
                 });
@@ -463,21 +588,27 @@
             if (VerbEngine.isGerundiveApplicable(verbObj)) {
                 if (VerbEngine.isGerundiumKnown(maxSelectedLesson)) {
                     const g = VerbEngine.getGerundium(verbObj);
-                    slots.push({ form: g.gen, label: 'Gerundium Genitiv', weight: FORM_WEIGHT.selten });
-                    slots.push({ form: g.dat, label: 'Gerundium Dativ', weight: FORM_WEIGHT.selten });
-                    slots.push({ form: g.akk, label: 'Gerundium Akkusativ', weight: FORM_WEIGHT.selten });
-                    slots.push({ form: g.abl, label: 'Gerundium Ablativ', weight: FORM_WEIGHT.selten });
+                    [['gen', 'Genitiv'], ['dat', 'Dativ'], ['akk', 'Akkusativ'], ['abl', 'Ablativ']].forEach(([k, name]) => {
+                        slots.push({ form: g[k], label: 'Gerundium ' + name, weight: FORM_WEIGHT.selten, merkmale: {
+                            art: 'Gerundium', modus: 'Gerundium', tempus: null, genus: null,
+                            person: null, numerus: 'Singular', kasus: name
+                        } });
+                    });
                 }
 
                 if (VerbEngine.isGerundivumKnown(maxSelectedLesson)) {
                     const gd = VerbEngine.getGerundivumDeclension(verbObj);
-                    slots.push({ form: gd.sg.nom, label: 'Gerundivum Nominativ Singular', weight: FORM_WEIGHT.selten });
-                    slots.push({ form: gd.sg.akk, label: 'Gerundivum Akkusativ Singular', weight: FORM_WEIGHT.selten });
-                    slots.push({ form: gd.pl.nom, label: 'Gerundivum Nominativ Plural', weight: FORM_WEIGHT.selten });
+                    [[gd.sg.nom, 'Nominativ', 'Singular'], [gd.sg.akk, 'Akkusativ', 'Singular'],
+                     [gd.pl.nom, 'Nominativ', 'Plural']].forEach(([form, kasus, numerus]) => {
+                        slots.push({ form, label: 'Gerundivum ' + kasus + ' ' + numerus, weight: FORM_WEIGHT.selten, merkmale: {
+                            art: 'Gerundivum', modus: 'Gerundivum', tempus: null, genus: null,
+                            person: null, numerus, kasus
+                        } });
+                    });
                 }
             }
 
-            return buildRoundFromSlots(slots);
+            return slots;
         }
 
         function startDefense() {
@@ -497,6 +628,22 @@
                 targetPool = activePool.filter(v => v.type === 'verb' && VerbEngine.isSupported(v));
                 if (targetPool.length < 4) {
                     alert("Für diese Lektionsauswahl gibt es noch zu wenige geeignete Verben. Bitte mehr Lektionen wählen.");
+                    return;
+                }
+                /* Nicht nur genug VERBEN, sondern auch genug FORMEN: Seit die
+                   Personen gestaffelt sind, gibt es in Lektion 1 nur die
+                   3. Person Singular und in Lektion 2 dazu die 3. Plural und den
+                   Infinitiv. Vier Antwortmöglichkeiten sind damit nicht zu
+                   füllen - das Spiel böte dann Scheinoptionen an.
+                   Nachgesehen statt eine Lektionszahl hingeschrieben: Die
+                   Staffelung steht in verbEngine.js und soll nur dort stehen. */
+                const meisteFormen = targetPool.slice(0, 25).reduce((max, v) => {
+                    let n = 0;
+                    try { n = new Set(verbSlots(v).map(s => s.label)).size; } catch (e) { n = 0; }
+                    return Math.max(max, n);
+                }, 0);
+                if (meisteFormen < 4) {
+                    alert("Für die Verbformen reicht diese Lektionsauswahl noch nicht aus: Bis Lektion 2 gibt es nur die 3. Person und den Infinitiv, also zu wenige Formen für vier Antwortmöglichkeiten.\n\nAb Lektion 3 kommen die 1. und 2. Person dazu. Wähle bitte mehr Lektionen - oder übe solange die Substantive.");
                     return;
                 }
             }

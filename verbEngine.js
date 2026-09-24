@@ -457,6 +457,29 @@ const VerbEngine = (() => {
     }
 
     // ============================================================
+    // PERSONEN-STAFFELUNG
+    // ============================================================
+    // Die Personen kommen nicht auf einmal. Aus dem Pontes-Inhaltsverzeichnis:
+    //   L1  Verben 3. Person Singular
+    //   L2  Verben 3. Person Plural
+    //   L3  Verben 1. und 2. Person
+    // getFormsForTempus() liefert weiterhin alle sechs Formen - die Engine soll
+    // rechnen, nicht auswählen. Wer abfragt, filtert mit getKnownPersonIndices().
+    //
+    // Ohne das bot das Formen-Kastell schon in Lektion 1 alle sechs Personen an,
+    // genau wie es auf der Nomenseite vorher alle fünf Kasus tat.
+    // Reihenfolge wie in getFormsForTempus: [1.Sg, 2.Sg, 3.Sg, 1.Pl, 2.Pl, 3.Pl]
+    const PERSON_LESSON = [3, 3, 1, 3, 3, 2];
+
+    function getKnownPersonIndices(maxSelectedLesson) {
+        const indices = [];
+        PERSON_LESSON.forEach(function (lektion, i) {
+            if (maxSelectedLesson >= lektion) indices.push(i);
+        });
+        return indices;
+    }
+
+    // ============================================================
     // IMPERATIV PRÄSENS (2. Sg. und 2. Pl.) - eigene, kleinere Formen-Menge,
     // deshalb bewusst getrennt von getFormsForTempus() statt diese zu überladen.
     // ============================================================
@@ -919,7 +942,9 @@ const VerbEngine = (() => {
         TEMPORA,
         GENERA,
         TEMPUS_LESSON_AKTIV,
-        TEMPUS_LESSON_PASSIV
+        TEMPUS_LESSON_PASSIV,
+        PERSON_LESSON,
+        getKnownPersonIndices
     };
 })();
 

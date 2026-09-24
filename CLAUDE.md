@@ -43,6 +43,25 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.
+  **Die Distraktoren folgen einer Regel, nicht dem Zufall** (September 2026, nach Rückmeldung
+  des Fachlehrers beim Passiv-Üben in L15):
+  - Jede Form trägt ihre Merkmale mit (`merkmale`: art, modus, tempus, genus, person, numerus,
+    kasus). Zwei Formen unterscheiden sich auf diesen **Achsen**.
+  - Angeboten werden **zwei Minimalpaare auf verschiedenen Achsen** plus **einer zwei Achsen
+    entfernt**. Die zwei Minimalpaare machen die Frage diagnostisch, der dritte hält sie für
+    schwächere Schüler:innen spielbar – im Kastell kostet Falschliegen Mauer.
+  - **Die jüngste Achse zuerst.** Wer bis L15 wählt, übt Passiv, also muss sich ein Distraktor
+    genau in der Diathese unterscheiden. Die Einführungslektionen werden in
+    `achsenEinfuehrung()` aus `verbEngine.js` ABGELEITET, nicht dort hingeschrieben – zwei
+    Stellen mit denselben Zahlen driften auseinander.
+  - **Gestalt angleichen**: Ab L15 ist Perfekt Passiv zweiteilig (*amātus est*), Präsens Passiv
+    einteilig (*amātur*). Ein zweiteiliger Distraktor neben einer einteiligen Zielform ist auf
+    einen Blick zu streichen.
+  - Vorher wurden die drei falschen Antworten rein zufällig aus dem Paradigma gezogen. Anteil
+    echter Minimalpaare gemessen: **vorher** L5 36 % / L15 14 % / L31 7 %, **nachher** überall
+    um 65 %. Weite Distraktoren gibt es nur noch, wo das Paradigma keinen näheren hergibt
+    (z. B. der Infinitiv bei L5 – dort ist „*amāre* oder *amat*?" gerade die Lernfrage).
+    `test-kastell.js` prüft genau das: kein Distraktor weiter weg **als nötig**.
 - **Villa.html** (Aedificium Rōmānum) – KNG-Kongruenz. Drei Adjektiv-Modi (regulär -us/-a/-um,
   i-Deklination, gemischt). Sechs Bild-Stufen für den Baufortschritt in `assets/villa/`.
 - **ViaRomana.html** – Satzglieder bestimmen: Subjekt, Prädikat, Akk-/Dativobjekt, Genitiv-Attribut,
@@ -166,6 +185,13 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   Die Schriftrolle ist dreiteilig: Das Pergamentband dehnt sich per `border-image`, die beiden
   Walzen sitzen als `::before`/`::after` an den Enden. Der Rand darf schmaler sein als der
   Schnitt – er muss nur die wellige Kante tragen, das schafft Platz für den Satz.
+- **Personen sind gestaffelt wie die Kasus.** `VerbEngine.PERSON_LESSON` / `getKnownPersonIndices()`:
+  L1 nur 3. Sg., L2 dazu 3. Pl., ab L3 alle. `getFormsForTempus()` liefert weiterhin alle sechs –
+  die Engine rechnet, wer abfragt, filtert. Dieselbe Lücke wie vorher bei den Kasus: Das Kastell
+  bot in L1 alle sechs Personen an.
+  **Folge, die leicht übersehen wird:** In L1 gibt es damit nur EINE Verbform, in L2 drei. Für
+  vier Antwortmöglichkeiten reicht das nicht – `startDefense()` fängt das ab und verweist auf
+  L3. Wer am Gating dreht, muss diese Sperre mitdenken.
 - **Lektions-Gating**: Jede Engine-Fähigkeit hat eine feste Einführungs-Lektion. Die
   verbindlichen Nummern stehen im Abschnitt „Lehrgang: was wann drankommt“ weiter unten –
   dort nachschlagen, nicht schätzen. Beim Ergänzen einer neuen Fähigkeit gehört die Nummer
