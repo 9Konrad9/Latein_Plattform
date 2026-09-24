@@ -161,11 +161,12 @@
             flex: 1 1 auto; min-height: 0;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            gap: 6px; padding: 10px 14px;
+            gap: 6px; padding: 10px 14px 15px;   /* unten Platz fuer die Kartenuhr */
             background: var(--putz-hell);
             border: 3px solid var(--bronze); border-radius: 12px;
             box-shadow: var(--schatten);
             overflow: hidden;
+            position: relative;      /* traegt die Kartenuhr am Fuss */
         }
         .frage-art {
             font-size: clamp(0.7rem, 2vh, 0.95rem);
@@ -180,6 +181,21 @@
             color: var(--ink);                 /* kontrast-ok: 13,34 auf --putz-hell */
             overflow-wrap: break-word;
         }
+
+        /* Die Zeit fuer DIESE Karte, am Fuss der Frage-Karte. Bewusst anders
+           platziert und anders gefaerbt als alles oben in der Kopfleiste: Sie
+           darf nicht mit der Bombe verwechselt werden. */
+        .kartenuhr {
+            position: absolute; left: 0; right: 0; bottom: 0; height: 7px;
+            background: var(--wand-tief);
+            border-radius: 0 0 9px 9px; overflow: hidden;
+        }
+        .kartenuhr-rest {
+            height: 100%; width: 100%;
+            background: var(--bronze);
+            transition: background-color 0.25s linear;
+        }
+        .kartenuhr-rest.knapp { background: var(--pompeji); }
 
         .band {
             flex: 0 0 auto;
@@ -327,6 +343,10 @@
         <div class="frage-karte">
             <div class="frage-art" id="frage-art">Was bedeutet</div>
             <div class="frage-wort" id="frage-wort">…</div>
+            <!-- Zeit fuer DIESE Karte. Darf sichtbar sein: Sie sagt nichts ueber
+                 den Stand der Bombe. Sitzt am Fuss der Karte, nicht oben bei
+                 der Bombe, damit klar bleibt, worauf sie sich bezieht. -->
+            <div class="kartenuhr"><div class="kartenuhr-rest" id="kartenuhr-rest"></div></div>
         </div>
         <!-- Warnung nach einem überstandenen Fehlschuss. Steht zwischen Frage
              und Antworten, damit sie im Blick liegt, ohne die Knöpfe zu
@@ -368,6 +388,10 @@
                Die Bomba geht mit einer Wahrscheinlichkeit von eins zu zwei sofort hoch.
                Überstehst du ihn, musst du dieselbe Karte richtig beantworten — der zweite
                Fehler zündet sicher. Also lieber kurz überlegen als schnell raten.</p>
+            <p style="margin-top: 10px;">Liegenlassen hilft nicht: Unter der Karte läuft ein
+               Balken ab. Ist er leer, zählt das wie eine falsche Antwort — auch das ist ein
+               Fehlschuss. Die Zeit richtet sich danach, wie viel auf der Karte steht, und
+               reicht zum Lesen und Nachdenken.</p>
             <p style="margin-top: 10px;">Wer die Bomba in der Hand hält, wenn sie hochgeht,
                hat verloren. Wie lange die Lunte brennt, ist jede Runde anders, und
                <strong>sehen kann man es nicht</strong> — es gibt keine Anzeige und keinen
@@ -412,6 +436,28 @@
        Gezählt wird je KARTE, nicht je Runde. Das Gerät wandert - wer eine
        Karte bekommt, darf nicht für den Fehler einer anderen Person haften. */
     const FEHLSCHUSS_RISIKO = 0.5;
+
+    /* ---- Kartenuhr ----
+       Ohne Zeitgrenze lohnt sich Trödeln: Wer das Wort nicht weiss, steht beim
+       Tippen vor 37,5 % Sofortverlust (75 % daneben × 50 % Zündung). Abwarten
+       war dagegen billig, solange die Lunte frisch sein konnte - das Gerät
+       blieb liegen, und die Runde schlief ein.
+
+       Läuft die Zeit ab, zählt das wie eine falsche Antwort: erster Fehler auf
+       der Karte = Fehlschuss mit Münzwurf, zweiter = sicher. Eine Regel, zwei
+       Auslöser.
+
+       Die Zeit ist NICHT knapp bemessen. Sie soll nur das Liegenlassen
+       verhindern, nicht zum Schnellraten drängen - Raten ist hier teuer, und
+       das soll es bleiben. Bemessen wie im Circus: feste Denkzeit plus
+       Lesezeit aus dem, was wirklich auf der Karte steht. Eine typische Karte
+       zeigt 8 Wörter (gemessen), eine lange 16. */
+    const KARTEN_DENKZEIT = 8000;      // ms zum Nachdenken
+    const WOERTER_JE_SEKUNDE = 3;      // stilles Lesen eines Zwölfjährigen
+
+    let kartenRest = 0;
+    let kartenGesamt = 0;
+    let karteLaeuft = false;           // wartet gerade eine Karte auf eine Antwort?
 
     /* ---- Lunte ---- */
     let luntenDauer = 0;           // ms, je Runde gewürfelt
@@ -619,54 +665,113 @@
             btn.className = 'antwort-btn';
             btn.disabled = alle[i] === undefined;
         });
+
+        // Erst jetzt, denn die Zeit haengt an dem, was wirklich auf der Karte steht.
+        starteKartenUhr();
     }
 
     /* ============ ANTWORT ============ */
 
+    /* Nur der ERSTE Versuch je Karte geht in den Vokabelkasten. Wer beim
+       zweiten Tippen trifft, hat das Wort nicht gewusst - dieselbe Überlegung
+       wie bei der geplanten Wiederholungsrunde. */
+    function werte(stimmt) {
+        if (schonGewertet) return;
+        schonGewertet = true;
+        if (typeof LudiProgress === 'undefined') return;
+        LudiProgress.recordVocabAttempt(aktuell.latin, stimmt);
+        const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[aktuell.type];
+        if (kategorie) {
+            const neu = LudiProgress.recordCategoryAttempt(kategorie, stimmt);
+            if (neu && typeof AchievementToast !== 'undefined') AchievementToast.show(neu);
+        }
+    }
+
+    /* Die Folge eines Fehlers - egal ob danebengetippt oder die Zeit verstrichen.
+       Beides läuft durch dieselbe Regel, sonst gäbe es zwei Spiele in einem. */
+    function fehlerBehandeln(ersterGrund) {
+        // Zweiter Fehler auf derselben Karte: Schluss.
+        if (fehlschuss) { explodiere('zweiter'); return; }
+
+        fehlschuss = true;
+        if (Math.random() < FEHLSCHUSS_RISIKO) { explodiere(ersterGrund); return; }
+
+        // Überstanden - aber jetzt muss die Karte sitzen. Die Kartenuhr fängt
+        // von vorn an: Der Münzwurf war Strafe genug, und mit dem Rest der
+        // alten Zeit wäre der zweite Anlauf oft gar nicht zu schaffen.
+        klick();
+        zeigeBand(ersterGrund === 'zeit'
+            ? 'Zeit um — Fehlschuss! Sie hat nicht gezündet. Der nächste Fehler ist der letzte.'
+            : 'Fehlschuss! Sie hat nicht gezündet — der nächste Fehler ist der letzte.');
+        document.querySelectorAll('.antwort-btn').forEach(b => {
+            if (!b.classList.contains('falsch')) b.disabled = false;
+        });
+        starteKartenUhr();
+    }
+
     function antworte(btn) {
         if (!laeuft || btn.disabled) return;
         const stimmt = btn.textContent === richtigeAntwort;
-
-        /* Nur der erste Versuch je Karte geht in den Vokabelkasten. Wer beim
-           zweiten Tippen trifft, hat das Wort nicht gewusst - dieselbe
-           Überlegung wie bei der Wiederholungsrunde. */
-        if (!schonGewertet) {
-            schonGewertet = true;
-            if (typeof LudiProgress !== 'undefined') {
-                LudiProgress.recordVocabAttempt(aktuell.latin, stimmt);
-                const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[aktuell.type];
-                if (kategorie) {
-                    const neu = LudiProgress.recordCategoryAttempt(kategorie, stimmt);
-                    if (neu && typeof AchievementToast !== 'undefined') AchievementToast.show(neu);
-                }
-            }
-        }
+        werte(stimmt);
 
         if (!stimmt) {
             btn.classList.add('falsch');
             btn.disabled = true;
-
-            // Zweiter Fehler auf derselben Karte: Schluss.
-            if (fehlschuss) { explodiere('zweiter'); return; }
-
-            // Erster Fehler: Fehlschuss. Münzwurf.
-            fehlschuss = true;
-            if (Math.random() < FEHLSCHUSS_RISIKO) { explodiere('fehlschuss'); return; }
-
-            // Überstanden - aber jetzt muss die Karte sitzen.
-            klick();
-            zeigeBand('Fehlschuss! Sie hat nicht gezündet — der nächste Fehler ist der letzte.');
+            stoppeKartenUhr();
+            fehlerBehandeln('fehlschuss');
             return;
         }
 
         btn.classList.add('richtig');
         document.querySelectorAll('.antwort-btn').forEach(b => { b.disabled = true; });
+        stoppeKartenUhr();
         versteckeBand();
         piep(880, 0.1, 0.13);
         geschafft++;
         document.getElementById('zaehler').textContent = geschafft;
         clearTimeout(wartUhr);
         wartUhr = setTimeout(zeigeUebergabe, 480);
+    }
+
+    /* ============ KARTENUHR ============ */
+
+    function kartenzeitMs() {
+        const felder = [...document.querySelectorAll('.antwort-btn')].map(b => b.textContent || '');
+        felder.push(document.getElementById('frage-wort').textContent || '');
+        const woerter = felder.join(' ').split(/[\s,;]+/).filter(Boolean).length;
+        return KARTEN_DENKZEIT + (woerter / WOERTER_JE_SEKUNDE) * 1000;
+    }
+
+    function starteKartenUhr() {
+        kartenGesamt = kartenzeitMs();
+        kartenRest = kartenGesamt;
+        karteLaeuft = true;
+        zeichneKartenUhr();
+    }
+
+    function stoppeKartenUhr() {
+        karteLaeuft = false;
+        zeichneKartenUhr();
+    }
+
+    /* Anders als die Lunte DARF diese Uhr zu sehen sein: Sie sagt nichts über
+       den Stand der Bombe, nur über die eigene Karte. Unsichtbar wäre sie eine
+       Falle statt einer Regel. Sie sitzt deshalb am Fuss der Frage-Karte, nicht
+       oben bei der Bombe - damit klar bleibt, worauf sie sich bezieht. */
+    function zeichneKartenUhr() {
+        const balken = document.getElementById('kartenuhr-rest');
+        if (!balken) return;
+        const anteil = karteLaeuft && kartenGesamt > 0 ? Math.max(0, kartenRest / kartenGesamt) : 0;
+        balken.style.width = (anteil * 100).toFixed(1) + '%';
+        balken.classList.toggle('knapp', karteLaeuft && anteil < 0.34);
+    }
+
+    function zeitAbgelaufen() {
+        stoppeKartenUhr();
+        // Keine Antwort ist eine falsche Antwort - wer nichts tippt, weiss es nicht.
+        werte(false);
+        document.querySelectorAll('.antwort-btn').forEach(b => { b.disabled = true; });
+        fehlerBehandeln('zeit');
     }
 
     function zeigeBand(text) {
@@ -710,6 +815,15 @@
         luntenRest -= 50;
         if (luntenRest <= 0) { explodiere('lunte'); return; }
 
+        // Die Kartenuhr laeuft im selben Takt mit. Sie steht still, sobald die
+        // Karte beantwortet ist - sonst fraeße die Uebergabe die Zeit der
+        // naechsten Person.
+        if (karteLaeuft) {
+            kartenRest -= 50;
+            if (kartenRest <= 0) { zeitAbgelaufen(); return; }
+            zeichneKartenUhr();
+        }
+
         const anteil = luntenRest / luntenDauer;
         const abstand = 130 + anteil * 720;
         letzterTick += 50;
@@ -726,6 +840,7 @@
     const KNALL_GRUND = {
         lunte:       'Die Lunte war abgebrannt.',
         fehlschuss:  'Ein Fehlschuss hat sie gezündet.',
+        zeit:        'Die Zeit für die Karte war um — Fehlschuss.',
         zweiter:     'Zweiter Fehler auf derselben Karte.'
     };
 
@@ -733,6 +848,7 @@
         clearInterval(luntenUhr);
         clearTimeout(wartUhr);
         laeuft = false;
+        stoppeKartenUhr();
         document.getElementById('lunte-feld').classList.add('aus');
         document.getElementById('uebergabe').style.display = 'none';
         versteckeBand();
@@ -744,7 +860,7 @@
         zeigeBest();
 
         let text = KNALL_GRUND[grund] || KNALL_GRUND.lunte;
-        if (grund === 'fehlschuss' || grund === 'zweiter') {
+        if (grund === 'fehlschuss' || grund === 'zweiter' || grund === 'zeit') {
             text += '<br>Richtig war: <strong>' + richtigeAntwort + '</strong>';
         }
         text += '<br><br><span class="zahl">' + geschafft + '</span><br>' +

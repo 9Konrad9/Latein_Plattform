@@ -80,6 +80,14 @@ das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstrick
     Karte sicher. Ohne diese Regel war ein Fehler folgenlos: Man klapperte alle vier Felder ab
     und lag am Ende immer richtig – Nichtwissen war gratis. Gezählt wird je **Karte**, nicht je
     Runde: Das Gerät wandert, niemand darf für den Fehler einer anderen Person haften.
+  - **Kartenuhr.** Läuft die Zeit für eine Karte ab, zählt das wie eine falsche Antwort –
+    dieselbe Fehlschuss-Regel, zwei Auslöser. Ohne sie lohnte sich Trödeln: Wer das Wort nicht
+    weiß, steht beim Tippen vor 37,5 % Sofortverlust (75 % daneben × 50 % Zündung), Abwarten
+    war dagegen billig. Bemessen wie im Circus (feste Denkzeit + Lesezeit aus dem, was auf der
+    Karte steht, 3 Wörter/Sekunde): gemessen 10,4 s für kurze, 14,2 s für lange Karten. Sie ist
+    absichtlich NICHT knapp – Raten ist hier teuer und soll es bleiben.
+    Diese Uhr **darf** sichtbar sein, anders als die Lunte: Sie sagt nichts über den Stand der
+    Bombe. Sie sitzt deshalb am Fuß der Frage-Karte, nicht oben bei der Bombe.
   - **Nur der ERSTE Versuch je Karte geht in den Vokabelkasten.**
   Die Bestleistung steht unter einem eigenen `localStorage`-Schlüssel (`ludi_bomba_best`), nicht
   in `saveGameResult`: Sie gehört der Gruppe, nicht dem Gerät.
