@@ -281,6 +281,15 @@
             font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
         }
         .start-overlay .notice-box { max-width: 640px; }
+
+        .ton-hinweis {
+            max-width: 640px; margin-top: 14px;
+            padding: 10px 14px; border-radius: 9px;
+            background: var(--wand-tief);
+            border: 2px solid var(--bronze);
+            color: var(--ink);                 /* kontrast-ok: 8,71 auf --wand-tief */
+            font-size: 0.9rem; line-height: 1.45; text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -366,6 +375,17 @@
             <p style="margin-top: 10px;">Oben zählt mit, wie viele Karten die Gruppe bis zum
                Knall geschafft hat. Das ist die Zahl, die ihr schlagen wollt.</p>
         </div>
+
+        <!-- Steht hier und nicht im Hinweistext am Knopf, weil genau hier der
+             Moment ist, in dem es zählt: Auf dem iPad gilt der Ton dieses Spiels
+             als Umgebungston und wird vom Lautlos-Schalter abgewürgt, während
+             Videos und Musik weiterlaufen. Schul-iPads stehen fast immer auf
+             lautlos - das kommt also bei jeder Klasse wieder. -->
+        <p class="ton-hinweis">
+            🔇 <strong>Kein Ticken zu hören?</strong> Auf dem iPad ist das fast immer der
+            Lautlos-Schalter im Kontrollzentrum — er schaltet diesen Ton stumm, obwohl
+            Videos und Musik weiter laufen.
+        </p>
         <button class="start-btn" id="btn-start">Lunte anzünden</button>
     </div>
 

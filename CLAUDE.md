@@ -82,8 +82,17 @@ das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstrick
     Runde: Das Gerät wandert, niemand darf für den Fehler einer anderen Person haften.
   - **Nur der ERSTE Versuch je Karte geht in den Vokabelkasten.**
   Die Bestleistung steht unter einem eigenen `localStorage`-Schlüssel (`ludi_bomba_best`), nicht
-  in `saveGameResult`: Sie gehört der Gruppe, nicht dem Gerät. Ticken und Knall über WebAudio,
-  abschaltbar.
+  in `saveGameResult`: Sie gehört der Gruppe, nicht dem Gerät.
+  **Ton, zwei Fallen – beide am iPad aufgetreten:**
+  - iOS gibt die Tonausgabe erst frei, wenn INNERHALB einer Berührung etwas abgespielt wurde.
+    Einen `AudioContext` nur anzulegen reicht nicht – es braucht `resume()` **und** einen
+    stummen Puffer in derselben Geste (`tonFreischalten()`).
+  - **Der Lautlos-Schalter würgt WebAudio ab**, weil Safari es als Umgebungston führt, während
+    Videos und Musik weiterlaufen. Bestätigte Ursache beim ersten Klassentest. Von der Seite aus
+    weder erkennbar noch umgehbar: Der Kontext meldet brav `running`. Deshalb der Hinweis auf
+    dem Startbildschirm. Wer das wirklich beheben will, muss den Ton über ein `<audio>`-Element
+    statt über WebAudio erzeugen – dann läuft er über den Medienkanal, an dem der Schalter
+    nichts ändert. Das hiesse Tondateien ins Projekt zu legen (oder als Daten-URI einzubetten).
 
 Gelöscht/nicht mehr vorhanden (bewusst entfernt, falls in altem Stand noch auftauchend):
 Bollwerk.html, Kastell_backup.html, Adventura.html, Possessiv.html, Tabularium.html,
