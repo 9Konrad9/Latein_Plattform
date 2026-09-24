@@ -181,6 +181,16 @@
             overflow-wrap: break-word;
         }
 
+        .band {
+            flex: 0 0 auto;
+            display: none;
+            text-align: center; padding: 9px 12px; border-radius: 9px;
+            background: var(--falsch); color: var(--marmor);   /* kontrast-ok: 5,12 */
+            border: 2px solid #7d2020;
+            font-family: var(--font-display); font-weight: bold;
+            font-size: clamp(0.8rem, 2.3vh, 1.1rem); line-height: 1.3;
+        }
+
         .antworten {
             flex: 0 0 auto;
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -309,6 +319,10 @@
             <div class="frage-art" id="frage-art">Was bedeutet</div>
             <div class="frage-wort" id="frage-wort">…</div>
         </div>
+        <!-- Warnung nach einem überstandenen Fehlschuss. Steht zwischen Frage
+             und Antworten, damit sie im Blick liegt, ohne die Knöpfe zu
+             verdecken. Sie kostet die Frage-Karte Höhe, nie die Knöpfe. -->
+        <div class="band" id="band"></div>
         <div class="antworten" id="antworten">
             <button class="antwort-btn" data-i="0"></button>
             <button class="antwort-btn" data-i="1"></button>
@@ -340,8 +354,11 @@
         <div class="notice-box">
             <h3>💣 So läuft's</h3>
             <p>Ein Gerät wandert im Kreis. Wer es hat, bekommt eine Vokabel und vier
-               Antworten. Richtig getippt? <span class="step">Weitergeben.</span>
-               Falsch? Du bleibst dran, bis du sie hast — und die Lunte brennt weiter.</p>
+               Antworten. Richtig getippt? <span class="step">Weitergeben.</span></p>
+            <p style="margin-top: 10px;">Falsch getippt ist ein <strong>Fehlschuss</strong>:
+               Die Bomba geht mit einer Wahrscheinlichkeit von eins zu zwei sofort hoch.
+               Überstehst du ihn, musst du dieselbe Karte richtig beantworten — der zweite
+               Fehler zündet sicher. Also lieber kurz überlegen als schnell raten.</p>
             <p style="margin-top: 10px;">Wer die Bomba in der Hand hält, wenn sie hochgeht,
                hat verloren. Wie lange die Lunte brennt, ist jede Runde anders, und
                <strong>sehen kann man es nicht</strong> — es gibt keine Anzeige und keinen
@@ -359,8 +376,22 @@
     let aktuell = null;            // der Vokabeleintrag der laufenden Karte
     let richtigeAntwort = '';
     let schonGewertet = false;     // nur der ERSTE Versuch je Karte zählt
+    let fehlschuss = false;        // wurde auf DIESER Karte schon danebengetippt?
     let geschafft = 0;             // Karten in dieser Runde
     let laeuft = false;
+    let wartUhr = null;            // laufender Übergabe-/Fehlschuss-Wartelauf
+
+    /* Der erste Fehler auf einer Karte ist ein Fehlschuss: Die Bombe geht mit
+       dieser Wahrscheinlichkeit sofort hoch. Übersteht man ihn, muss die Karte
+       richtig beantwortet werden - der zweite Fehler zündet sicher.
+
+       Vorher war ein Fehler folgenlos: Man konnte alle vier Felder abklappern
+       und lag am Ende immer richtig, was einen Tipp kostete. Nichtwissen war
+       gratis, und damit war die Frage keine.
+
+       Gezählt wird je KARTE, nicht je Runde. Das Gerät wandert - wer eine
+       Karte bekommt, darf nicht für den Fehler einer anderen Person haften. */
+    const FEHLSCHUSS_RISIKO = 0.5;
 
     /* ---- Lunte ---- */
     let luntenDauer = 0;           // ms, je Runde gewürfelt
@@ -431,6 +462,14 @@
         } catch (e) { /* siehe oben */ }
     }
 
+    /* Der überstandene Fehlschuss: ein trockenes Doppelklicken wie bei einer
+       Waffe, die nicht losgeht. Bewusst kein Belohnungston - überstanden ist
+       nicht geschafft. */
+    function klick() {
+        piep(110, 0.05, 0.13);
+        setTimeout(function () { piep(85, 0.06, 0.11); }, 110);
+    }
+
     function setzeTon(an) {
         tonAn = an;
         document.getElementById('btn-ton').textContent = an ? '🔔 Ton' : '🔕 Ton';
@@ -483,6 +522,9 @@
 
         richtigeAntwort = loesungsSeite(aktuell);
         schonGewertet = false;
+        fehlschuss = false;         // jede Karte fängt mit einem freien Schuss an
+        clearTimeout(wartUhr);
+        versteckeBand();
 
         document.getElementById('frage-art').textContent =
             (richtung === 'lat' ? 'Was bedeutet' : 'Wie heißt auf Latein') +
@@ -532,19 +574,39 @@
         }
 
         if (!stimmt) {
-            // Falsch heisst: Du behältst das Gerät. Die Strafe ist die Zeit.
             btn.classList.add('falsch');
             btn.disabled = true;
-            piep(180, 0.12, 0.09);
+
+            // Zweiter Fehler auf derselben Karte: Schluss.
+            if (fehlschuss) { explodiere('zweiter'); return; }
+
+            // Erster Fehler: Fehlschuss. Münzwurf.
+            fehlschuss = true;
+            if (Math.random() < FEHLSCHUSS_RISIKO) { explodiere('fehlschuss'); return; }
+
+            // Überstanden - aber jetzt muss die Karte sitzen.
+            klick();
+            zeigeBand('Fehlschuss! Sie hat nicht gezündet — der nächste Fehler ist der letzte.');
             return;
         }
 
         btn.classList.add('richtig');
         document.querySelectorAll('.antwort-btn').forEach(b => { b.disabled = true; });
+        versteckeBand();
         piep(880, 0.09, 0.07);
         geschafft++;
         document.getElementById('zaehler').textContent = geschafft;
-        setTimeout(zeigeUebergabe, 480);
+        clearTimeout(wartUhr);
+        wartUhr = setTimeout(zeigeUebergabe, 480);
+    }
+
+    function zeigeBand(text) {
+        const band = document.getElementById('band');
+        band.textContent = text;
+        band.style.display = 'block';
+    }
+    function versteckeBand() {
+        document.getElementById('band').style.display = 'none';
     }
 
     function zeigeUebergabe() {
@@ -577,7 +639,7 @@
        Ticken heisst „bald", nicht „in acht Sekunden". */
     function luntenSchritt() {
         luntenRest -= 50;
-        if (luntenRest <= 0) { explodiere(); return; }
+        if (luntenRest <= 0) { explodiere('lunte'); return; }
 
         const anteil = luntenRest / luntenDauer;
         const abstand = 130 + anteil * 720;
@@ -588,11 +650,23 @@
         }
     }
 
-    function explodiere() {
+    /* Warum es geknallt hat, gehört auf den Schlussbildschirm: Eine abgebrannte
+       Lunte ist Pech, ein Fehlschuss war eine Antwort. Beim Fehlschuss steht
+       die richtige Lösung dabei - sonst geht das Wort in der Aufregung unter,
+       und genau das wäre schade. */
+    const KNALL_GRUND = {
+        lunte:       'Die Lunte war abgebrannt.',
+        fehlschuss:  'Ein Fehlschuss hat sie gezündet.',
+        zweiter:     'Zweiter Fehler auf derselben Karte.'
+    };
+
+    function explodiere(grund) {
         clearInterval(luntenUhr);
+        clearTimeout(wartUhr);
         laeuft = false;
         document.getElementById('lunte-feld').classList.add('aus');
         document.getElementById('uebergabe').style.display = 'none';
+        versteckeBand();
         knallTon();
 
         const best = holeBest();
@@ -600,17 +674,24 @@
         if (neuerRekord) setzeBest(geschafft);
         zeigeBest();
 
-        document.getElementById('knall-text').innerHTML = neuerRekord
-            ? 'Neue Bestleistung: <span class="zahl">' + geschafft + '</span><br>Karten bis zum Knall.'
-            : '<span class="zahl">' + geschafft + '</span><br>Karten geschafft. Bestleistung: ' + (best > 0 ? best : geschafft) + '.';
+        let text = KNALL_GRUND[grund] || KNALL_GRUND.lunte;
+        if (grund === 'fehlschuss' || grund === 'zweiter') {
+            text += '<br>Richtig war: <strong>' + richtigeAntwort + '</strong>';
+        }
+        text += '<br><br><span class="zahl">' + geschafft + '</span><br>' +
+            (neuerRekord ? 'Karten — neuer Rekord!' : 'Karten geschafft. Rekord: ' + (best > 0 ? best : geschafft) + '.');
+
+        document.getElementById('knall-text').innerHTML = text;
         document.getElementById('knall').style.display = 'flex';
     }
 
     /* ============ RUNDE ============ */
 
     function neueRunde() {
+        clearTimeout(wartUhr);      // ein Wartelauf der alten Runde darf nicht nachklappern
         document.getElementById('knall').style.display = 'none';
         document.getElementById('uebergabe').style.display = 'none';
+        versteckeBand();
         geschafft = 0;
         document.getElementById('zaehler').textContent = '0';
         laeuft = true;

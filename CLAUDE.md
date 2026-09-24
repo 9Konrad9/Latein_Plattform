@@ -68,12 +68,22 @@ das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstrick
   Wortkacheln auf Marmortafeln (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**,
   damit der Rahmen von 9 bis 64 px Schrift mitwächst). Zwei Teams, Punkte von Hand.
   Kein Richtig/Falsch, deshalb **kein** `recordVocabAttempt`.
-- **Bomba.html** – ein geteiltes Gerät wandert im Kreis. Multiple Choice, falsch heißt Gerät
-  behalten; wer die Bomba bei abgebrannter Lunte hält, verliert. Luntendauer je Runde gewürfelt
-  (40–85 s) und **ohne Zahlenanzeige** – mit einer Sekundenanzeige rechnet die Gruppe das Ende
-  aus. Nur der ERSTE Versuch je Karte geht in den Vokabelkasten. Die Bestleistung steht unter
-  einem eigenen `localStorage`-Schlüssel (`ludi_bomba_best`), nicht in `saveGameResult`: Sie
-  gehört der Gruppe, nicht dem Gerät. Ticken und Knall über WebAudio, abschaltbar.
+- **Bomba.html** – ein geteiltes Gerät wandert im Kreis, Multiple Choice; wer die Bomba bei
+  abgebrannter Lunte hält, verliert. Drei Regeln tragen das Spiel, alle drei nach Rückmeldung
+  des Fachlehrers so entstanden – nicht ohne Not daran drehen:
+  - **Die Lunte ist unsichtbar.** Keine Zahlen, aber auch **kein Balken**: Dort stand zuerst
+    einer, und der war genau die Uhr, die es nicht geben darf – wer sieht, dass ein Viertel
+    übrig ist, passt das Ende ab. Dauer je Runde gewürfelt (40–85 s). `luntenRest` darf das
+    DOM an keiner Stelle erreichen; `test-bomba.js` prüft das, indem es die Kopfleiste bei
+    voller und bei fast abgebrannter Lunte Zeichen für Zeichen vergleicht.
+  - **Fehlschuss.** Der erste Fehler auf einer Karte zündet mit 50 %, der zweite auf derselben
+    Karte sicher. Ohne diese Regel war ein Fehler folgenlos: Man klapperte alle vier Felder ab
+    und lag am Ende immer richtig – Nichtwissen war gratis. Gezählt wird je **Karte**, nicht je
+    Runde: Das Gerät wandert, niemand darf für den Fehler einer anderen Person haften.
+  - **Nur der ERSTE Versuch je Karte geht in den Vokabelkasten.**
+  Die Bestleistung steht unter einem eigenen `localStorage`-Schlüssel (`ludi_bomba_best`), nicht
+  in `saveGameResult`: Sie gehört der Gruppe, nicht dem Gerät. Ticken und Knall über WebAudio,
+  abschaltbar.
 
 Gelöscht/nicht mehr vorhanden (bewusst entfernt, falls in altem Stand noch auftauchend):
 Bollwerk.html, Kastell_backup.html, Adventura.html, Possessiv.html, Tabularium.html,
