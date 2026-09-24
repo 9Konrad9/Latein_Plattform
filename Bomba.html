@@ -425,21 +425,67 @@
         return klang;
     }
 
+    /* Auf iOS reicht es NICHT, den AudioContext in der Berührung anzulegen -
+       es muss darin auch etwas abgespielt werden, und sei es ein Puffer aus
+       einem einzigen stummen Abtastwert. Vorher stand hier nur ein Aufruf von
+       tonKontext(), und auf dem iPad blieb es still.
+
+       Was das NICHT löst: Safari behandelt WebAudio als Umgebungston. Steht das
+       Gerät im Kontrollzentrum auf lautlos, bleibt es stumm, obwohl der Kontext
+       sauber läuft - von hier aus ist das nicht zu erkennen und nicht zu
+       umgehen. Deshalb der Hinweistext am Knopf. */
+    function tonFreischalten() {
+        const ctx = tonKontext();
+        if (!ctx) { zeigeTonZustand(); return; }
+        try {
+            if (ctx.state !== 'running') ctx.resume();
+            const quelle = ctx.createBufferSource();
+            quelle.buffer = ctx.createBuffer(1, 1, 22050);
+            quelle.connect(ctx.destination);
+            quelle.start(0);
+        } catch (e) { /* Ton ist Beiwerk */ }
+        setTimeout(zeigeTonZustand, 250);
+    }
+
+    function zeigeTonZustand() {
+        const knopf = document.getElementById('btn-ton');
+        if (!knopf) return;
+        if (!tonAn) {
+            knopf.textContent = '🔕 Ton';
+            knopf.title = 'Ticken einschalten';
+        } else if (klang === false) {
+            knopf.textContent = '🔕 kein Ton';
+            knopf.title = 'Dieser Browser kann keinen Ton erzeugen.';
+        } else if (klang && klang.state !== 'running') {
+            knopf.textContent = '🔇 Ton stumm';
+            knopf.title = 'Der Browser gibt gerade keinen Ton aus. Einmal auf den Knopf tippen hilft oft.';
+        } else {
+            knopf.textContent = '🔔 Ton';
+            knopf.title = 'Ticken ausschalten. Kein Ton trotz 🔔? Auf dem iPad ist das fast immer der Lautlos-Schalter im Kontrollzentrum - WebAudio gilt dort als Umgebungston.';
+        }
+    }
+
+    /* Lautstärken: Der Tick lag zuerst bei 35 ms und 5 % - auf iPad-Lautsprechern
+       in einem vollen Klassenzimmer praktisch nicht zu hören. Dazu ein kurzer
+       Anstieg über 6 ms statt eines harten Einsatzes; das klingt sauberer und
+       wirkt bei gleichem Pegel lauter. */
     function piep(frequenz, dauer, lautstaerke) {
         if (!tonAn) return;
         const ctx = tonKontext();
         if (!ctx) return;
         try {
-            if (ctx.state === 'suspended') ctx.resume();
+            if (ctx.state !== 'running') ctx.resume();
             const o = ctx.createOscillator();
             const g = ctx.createGain();
+            const t = ctx.currentTime;
             o.type = 'square';
-            o.frequency.setValueAtTime(frequenz, ctx.currentTime);
-            g.gain.setValueAtTime(lautstaerke, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dauer);
+            o.frequency.setValueAtTime(frequenz, t);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(lautstaerke, t + 0.006);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dauer);
             o.connect(g); g.connect(ctx.destination);
             o.start();
-            o.stop(ctx.currentTime + dauer + 0.02);
+            o.stop(t + dauer + 0.02);
         } catch (e) { /* Ton ist Beiwerk, nie das Spiel daran scheitern lassen */ }
     }
 
@@ -466,13 +512,16 @@
        Waffe, die nicht losgeht. Bewusst kein Belohnungston - überstanden ist
        nicht geschafft. */
     function klick() {
-        piep(110, 0.05, 0.13);
-        setTimeout(function () { piep(85, 0.06, 0.11); }, 110);
+        piep(110, 0.07, 0.2);
+        setTimeout(function () { piep(85, 0.08, 0.17); }, 110);
     }
 
+    /* Einschalten gibt gleich eine Hörprobe: Sonst merkt man erst mitten in der
+       Runde, dass nichts kommt - und weiß dann nicht, ob es am Gerät liegt. */
     function setzeTon(an) {
         tonAn = an;
-        document.getElementById('btn-ton').textContent = an ? '🔔 Ton' : '🔕 Ton';
+        zeigeTonZustand();
+        if (an) { tonFreischalten(); setTimeout(function () { piep(660, 0.09, 0.16); }, 60); }
     }
 
     /* ============ BESTLEISTUNG ============ */
@@ -593,7 +642,7 @@
         btn.classList.add('richtig');
         document.querySelectorAll('.antwort-btn').forEach(b => { b.disabled = true; });
         versteckeBand();
-        piep(880, 0.09, 0.07);
+        piep(880, 0.1, 0.13);
         geschafft++;
         document.getElementById('zaehler').textContent = geschafft;
         clearTimeout(wartUhr);
@@ -646,7 +695,7 @@
         letzterTick += 50;
         if (letzterTick >= abstand) {
             letzterTick = 0;
-            piep(anteil < 0.2 ? 1000 : 640, 0.035, 0.05);
+            piep(anteil < 0.2 ? 1000 : 660, 0.07, anteil < 0.2 ? 0.18 : 0.14);
         }
     }
 
@@ -746,7 +795,7 @@
                 document.getElementById('start-overlay').style.display = 'none';
                 // Der erste Ton muss aus einer Berührung kommen, sonst lässt
                 // der Browser die Tonausgabe gar nicht erst zu.
-                tonKontext();
+                tonFreischalten();
                 neueRunde();
             });
         });
