@@ -39,7 +39,7 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        /* ---------- Kopfleiste mit der Lunte ---------- */
+        /* ---------- Kopfleiste mit der Bombe ---------- */
 
         .kopf {
             flex: 0 0 auto;
@@ -49,13 +49,18 @@
             border-bottom: 3px solid var(--bronze);
         }
 
-        /* Die Lunte brennt von rechts auf die Bombe links zu. Bewusst OHNE
-           Zahlen: Sobald eine Sekundenanzeige dasteht, rechnet die Gruppe aus,
-           wann es knallt, und schiebt das Gerät gezielt weiter. Genau das soll
-           nicht gehen - deshalb ist auch die Gesamtdauer je Runde gewürfelt. */
+        /* Die Bombe zeigt NICHT, wie weit die Lunte schon heruntergebrannt ist.
+           Hier stand zuerst ein schrumpfender Balken - und der war genau die
+           Uhr, die es nicht geben darf: Wer sieht, dass nur noch ein Viertel
+           übrig ist, schiebt das Gerät gezielt weiter. Eine Sekundenanzeige
+           wäre dasselbe in Ziffern.
+           Was bleibt, ist ein Funke, der immer gleich flackert - er sagt „es
+           brennt", nicht „wie lange noch". Die Restzeit hört man allenfalls am
+           Ticken, und auch das nur ungefähr, weil die Gesamtdauer je Runde
+           gewürfelt wird. */
         .lunte-feld {
-            flex: 1 1 260px; min-width: 200px;
-            display: flex; align-items: center; gap: 6px;
+            flex: 0 0 auto;
+            display: flex; align-items: center; gap: 2px;
         }
 
         .bombe {
@@ -74,32 +79,28 @@
             background: #4a4038;
         }
 
+        /* Ein Stummel Lunte, der nie kürzer wird. */
         .lunte {
-            flex: 1 1 auto; height: 10px; position: relative;
-            border-radius: 5px;
-            background: var(--wand-tief);        /* der schon verbrannte Teil */
-        }
-        .lunte-rest {
-            position: absolute; left: 0; top: 0; bottom: 0;
-            width: 100%; border-radius: 5px;
+            width: 22px; height: 8px;
+            border-radius: 4px;
             background: var(--bronze);
         }
+        /* Der Funke flackert immer gleich schnell. Würde er zum Schluss hin
+           schneller zucken, wäre er wieder eine Anzeige. */
         .flamme {
-            position: absolute; top: 50%; left: 100%;
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem; line-height: 1;
+            font-size: 1.4rem; line-height: 1;
             pointer-events: none;
+            animation: zucken 0.42s infinite alternate;
         }
-        /* Kurz vor Schluss zittert die Flamme - das ist die einzige Warnung,
-           die das Spiel gibt, und sie ist absichtlich ungenau. */
-        .lunte-feld.knapp .flamme { animation: zucken 0.18s infinite alternate; }
         @keyframes zucken {
-            from { transform: translate(-50%, -50%) scale(1); }
-            to   { transform: translate(-50%, -62%) scale(1.25); }
+            from { transform: scale(1)    rotate(-6deg); }
+            to   { transform: scale(1.18) rotate(6deg); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .lunte-feld.knapp .flamme { animation: none; }
+            .flamme { animation: none; }
         }
+        /* Zwischen den Runden brennt nichts. */
+        .lunte-feld.aus .flamme { visibility: hidden; }
 
         .werkzeuge { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
@@ -276,12 +277,11 @@
 <a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏠</a>
 
     <div class="kopf">
-        <div class="lunte-feld" id="lunte-feld">
+        <!-- Bewusst ohne Fortschritt: siehe den Vermerk bei .lunte-feld im CSS. -->
+        <div class="lunte-feld aus" id="lunte-feld">
             <div class="bombe"></div>
-            <div class="lunte">
-                <div class="lunte-rest" id="lunte-rest"></div>
-                <div class="flamme" id="flamme">🔥</div>
-            </div>
+            <div class="lunte"></div>
+            <div class="flamme" id="flamme">🔥</div>
         </div>
 
         <div class="werkzeuge">
@@ -296,7 +296,10 @@
         <div class="zaehler-feld">
             <span class="zaehler-label">Karten</span>
             <span class="zaehler" id="zaehler">0</span>
-            <span class="zaehler-label">Best</span>
+            <!-- "Rekord", nicht "Best": In Versalien steht "BEST" neben einer Zahl
+                 einen Blick von "REST" entfernt - und die Restzeit ist genau das,
+                 was hier niemand sehen soll. -->
+            <span class="zaehler-label">Rekord</span>
             <span class="zaehler best" id="bestwert">–</span>
         </div>
     </div>
@@ -340,8 +343,9 @@
                Antworten. Richtig getippt? <span class="step">Weitergeben.</span>
                Falsch? Du bleibst dran, bis du sie hast — und die Lunte brennt weiter.</p>
             <p style="margin-top: 10px;">Wer die Bomba in der Hand hält, wenn sie hochgeht,
-               hat verloren. Wie lange die Lunte brennt, ist jede Runde anders und steht
-               nirgends — mitzählen hilft also nicht.</p>
+               hat verloren. Wie lange die Lunte brennt, ist jede Runde anders, und
+               <strong>sehen kann man es nicht</strong> — es gibt keine Anzeige und keinen
+               Balken. Nur hören: Das Ticken wird schneller, je knapper es wird.</p>
             <p style="margin-top: 10px;">Oben zählt mit, wie viele Karten die Gruppe bis zum
                Knall geschafft hat. Das ist die Zahl, die ihr schlagen wollt.</p>
         </div>
@@ -559,18 +563,22 @@
         luntenDauer = LUNTE_MIN + Math.random() * (LUNTE_MAX - LUNTE_MIN);
         luntenRest = luntenDauer;
         letzterTick = 0;
-        zeichneLunte();
+        document.getElementById('lunte-feld').classList.remove('aus');
         clearInterval(luntenUhr);
         luntenUhr = setInterval(luntenSchritt, 50);
     }
 
+    /* Hier wird bewusst NICHTS gezeichnet. luntenRest darf den Bildschirm
+       nicht erreichen - weder als Balken noch als Zahl noch als Farbe. Sobald
+       der Rest irgendwo sichtbar wird, kann die Gruppe das Ende abpassen, und
+       das Spiel verliert seinen einzigen Reiz.
+       Zu hören ist er: Das Ticken wird schneller, je kürzer die Lunte. Das
+       bleibt ungefähr, weil die Gesamtdauer je Runde gewürfelt wird - schnelles
+       Ticken heisst „bald", nicht „in acht Sekunden". */
     function luntenSchritt() {
         luntenRest -= 50;
         if (luntenRest <= 0) { explodiere(); return; }
-        zeichneLunte();
 
-        // Das Ticken wird schneller, je kürzer die Lunte - von knapp einer
-        // Sekunde bis fast im Zehntelstakt.
         const anteil = luntenRest / luntenDauer;
         const abstand = 130 + anteil * 720;
         letzterTick += 50;
@@ -580,19 +588,10 @@
         }
     }
 
-    function zeichneLunte() {
-        const anteil = Math.max(0, luntenRest / luntenDauer);
-        const prozent = (anteil * 100).toFixed(1) + '%';
-        document.getElementById('lunte-rest').style.width = prozent;
-        document.getElementById('flamme').style.left = prozent;
-        document.getElementById('lunte-feld').classList.toggle('knapp', anteil < 0.2);
-    }
-
     function explodiere() {
         clearInterval(luntenUhr);
         laeuft = false;
-        document.getElementById('lunte-rest').style.width = '0%';
-        document.getElementById('flamme').style.left = '0%';
+        document.getElementById('lunte-feld').classList.add('aus');
         document.getElementById('uebergabe').style.display = 'none';
         knallTon();
 
