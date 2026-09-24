@@ -423,6 +423,21 @@
         }
 
         // Vollständige, hochirreguläre Deklinationstabellen (keine Ableitungsformel möglich).
+        /* Bis hierher hatte Pronomina KEINE Lektionssperre: Wer „bis Lektion 5"
+           wählte und den Demonstrativmodus startete, bekam is/hic/ille in allen
+           fünf Kasus - ein Pronomen aus Lektion 9 bzw. 11, in Kasus, die teils
+           erst ab Lektion 9 drankommen. Dieselbe Lücke wie vorher im Kastell
+           beim Ablativ und bei den Personen.
+           Die Zahlen werden aus vocabulary.js GEZOGEN, nicht hier hingeschrieben:
+           Dort steht is,ea,id auf L9, hic und ille auf L11, quī,quae,quod auf L16. */
+        let maxSelectedLesson = 999;
+
+        function lektionVon(lemma) {
+            if (typeof globalVocabularyPool === 'undefined') return 0;
+            const e = globalVocabularyPool.find(v => v.latin === lemma);
+            return e ? e.lesson : 0;
+        }
+
         const DEMONSTRATIVE_PRONOUNS = {
             hic: {
                 label: 'hic, haec, hoc',
@@ -453,8 +468,13 @@
         const GENDER_LABELS = { m: 'maskulin', f: 'feminin', n: 'neutrum' };
 
         /** Demonstrativpronomen (hic/ille/is): reine KNG-Kongruenz-Übung, wie bei einem Adjektiv. */
+        function verfuegbareDemonstrativa() {
+            return ['hic', 'ille', 'is'].filter(k =>
+                lektionVon(DEMONSTRATIVE_PRONOUNS[k].label) <= maxSelectedLesson);
+        }
+
         function generateDemonstrativRound(nounPool) {
-            const pronounKeys = ['hic', 'ille', 'is'];
+            const pronounKeys = verfuegbareDemonstrativa();
             const pronounKey = pronounKeys[Math.floor(Math.random() * pronounKeys.length)];
             const table = DEMONSTRATIVE_PRONOUNS[pronounKey];
 
@@ -551,10 +571,16 @@
 
         function promptLessonsAndStartDemonstrativ() {
             if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js nicht gefunden!"); return; }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers && selectedLessonNumbers.length ? Math.max.apply(null, selectedLessonNumbers) : 999;
                 const nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
                 if (nounPool.length < 1) { alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive. Bitte wähle weitere Lektionen mit aus."); return; }
+                if (!verfuegbareDemonstrativa().length) {
+                    alert("Demonstrativpronomina kommen erst später dran: is, ea, id ab Lektion " + lektionVon('is, ea, id') +
+                          ", hic und ille ab Lektion " + lektionVon('hic, haec, hoc') + ".\n\nBitte wähle die Lektionen entsprechend - oder übe solange die Personalpronomina.");
+                    return;
+                }
                 currentMode = 'demonstrativ';
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateDemonstrativRound(nounPool));
@@ -568,10 +594,15 @@
 
         function promptLessonsAndStartRelativ() {
             if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js nicht gefunden!"); return; }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers && selectedLessonNumbers.length ? Math.max.apply(null, selectedLessonNumbers) : 999;
                 const nounPool = activePool.filter(v => v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.'));
                 if (nounPool.length < 1) { alert("In den ausgewählten Lektionen gibt es noch zu wenige Substantive. Bitte wähle weitere Lektionen mit aus."); return; }
+                if (maxSelectedLesson < lektionVon('quī, quae, quod')) {
+                    alert("Relativsätze kommen erst in Lektion " + lektionVon('quī, quae, quod') + " dran.\n\nBitte wähle die Lektionen entsprechend.");
+                    return;
+                }
                 currentMode = 'relativ';
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateRelativeRound(nounPool));
@@ -587,8 +618,9 @@
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
+                maxSelectedLesson = selectedLessonNumbers && selectedLessonNumbers.length ? Math.max.apply(null, selectedLessonNumbers) : 999;
                 startPersonal();
             });
         }

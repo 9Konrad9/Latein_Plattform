@@ -197,6 +197,23 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   dort nachschlagen, nicht schätzen. Beim Ergänzen einer neuen Fähigkeit gehört die Nummer
   als benannte Konstante in die Engine und in `test-gating.js`.
 
+  **Der wiederkehrende Fehler sitzt NICHT in den Engines.** Drei Gating-Lücken sind gefunden
+  worden, alle drei nach demselben Muster: Die Engine kannte die richtige Zahl, das Spiel hat
+  sie nur nicht gefragt.
+  1. Kastell bot in L5 Ablative an (Nomenseite hatte gar kein Gating) – im Unterricht aufgefallen.
+  2. Kastell bot in L1 alle sechs Personen an – beim Umbau der Distraktoren aufgefallen.
+  3. Pronomina liess Demonstrativ- und Relativmodus in jeder Lektion starten. Das Spiel
+     **fragte nach Lektionen und ignorierte die Antwort** – gefunden vom systematischen Test.
+
+  Deshalb prüft `test-gating.js` seit September 2026 nicht nur die Konstanten, sondern **was
+  die Spiele anzeigen**: Runden bauen lassen, jede sichtbare Bezeichnung nachschlagen.
+  Der Schiedsrichter dafür steht in `latein-tests/lehrgang.js` und **leitet seine Zahlen aus
+  den Engines ab** – das ist kein Zirkelschluss, denn Engine gegen Lehrbuch prüft der
+  Konstantenblock, hier geht es um Spiel gegen Engine. Der Schiedsrichter hat einen eigenen
+  Selbsttest mit 28 Bezeichnungen; ein Prüfer, der falsch einordnet, meldet sonst Unsinn.
+  Beide historischen Kastell-Lücken wurden testweise wieder eingebaut – beide werden gefunden.
+  **Wer ein neues Formenspiel baut, hängt es dort mit an.**
+
 ## Lehrgang: was wann drankommt
 
 Aus dem Inhaltsverzeichnis von *Pontes* übernommen – **die verbindliche Quelle für jedes
