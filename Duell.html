@@ -130,14 +130,11 @@
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
         }
 
+        /* Aussehen steht in theme.css. Hier nur die Maße: Das Duell stapelt
+           zwei Spielfelder übereinander und rechnet die Dichte selbst aus. */
         .arena-btn {
-            background: var(--putz); border: 2px solid var(--bronze);
-            color: var(--ink);
             padding: calc(clamp(5px, 1.7vh, 12px) * var(--dichte)) 4px;
             font-size: calc(clamp(0.78rem, 2vh, 1rem) * var(--dichte));
-            font-weight: bold;
-            border-radius: 6px; cursor: pointer; text-align: center;
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
         .arena-btn:not(:disabled):active { background: var(--wand); }
 

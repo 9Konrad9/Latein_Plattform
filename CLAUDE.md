@@ -180,6 +180,28 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   Generatoren liefern oft ein abweichendes Magenta (gemessen 322° und 333°). Ausgabe ist
   palettiertes PNG mit 128 Farben; bei diesen flachen Flächen spart das rund 85 % ohne
   sichtbaren Verlust.
+- **Es gibt genau ZWEI Knöpfe im Projekt**, beide vollständig in `theme.css` (September 2026).
+  Die Unterscheidung ist nicht dekorativ, sondern eine Rolle:
+  - **Porphyrrot heißt: hier wird gehandelt.** Runde starten, weiter, zurück, Werkzeug.
+    Klassen `.start-btn .play-btn .nav-btn .btn-main .btn-close .end-btn .main-btn .werkzeug-btn`.
+  - **Hell auf `--putz-hell` heißt: hier wird geantwortet.** Vier rote Flächen nebeneinander
+    erschlügen die Frage darüber. Klassen `.race-btn .build-btn .antwort-btn .shield-btn
+    .opt-btn .btn-opt .arena-btn .btn-syntax`.
+  Dazu drei Zusatzklassen: `.zweitrangig` (der stille Knopf daneben), `.wiederholen`
+  („Fehler wiederholen"), `.correct`/`.wrong` bzw. `.richtig`/`.falsch` am Antwortknopf.
+  **Ein neues Spiel nimmt `.start-btn` und den passenden Antwortknopf-Namen** – die vielen
+  anderen Namen sind Altlast, kein Angebot.
+
+  Warum das hier steht: Derselbe rote Knopf stand unter **acht** Namen im Projekt, derselbe
+  Antwortknopf unter **acht** weiteren – mit Radien von 6 bis 30 px, Rändern von 0 bis 3 px und
+  in zwei Spielen noch dunkelrot mit Goldrand aus dem alten Theme. Geteilt war davon nur die
+  Porphyrtextur, und auch die nur bei dreien: Wer `class="nav-btn"` schrieb, bekam die Textur
+  und sonst nichts. `pruefe-theme.js` meldet seitdem zweierlei – eine Spieldatei, die Farbe
+  oder Rand dieser Selektoren erneut setzt (Regel 5), und einen **neuen Knopfnamen**, den
+  `theme.css` nicht kennt (Regel 6, mit begründeter Ausnahmeliste für die drei Knöpfe, die
+  wirklich anders aussehen: Principias Antwortmünze, Arcus' Bronzetafel, IssaJumps Steuerpfeile).
+  Maße darf ein Spiel weiterhin anpassen, Farbe und Rand nicht.
+
 - **UI-Assets in `assets/ui/`** werden per `border-image` eingebunden, nicht per
   `background-size` – sonst verzerren Rahmen und Griffe beim Dehnen. **Die Schnittwerte in
   `border-image-slice` sind Bildpixel und skalieren NICHT mit**: Wird ein Asset ausgetauscht oder

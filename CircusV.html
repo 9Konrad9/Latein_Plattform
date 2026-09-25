@@ -125,24 +125,6 @@
             gap: 12px;
         }
 
-        /* Bewusst schlichte Knöpfe statt Bronzetafeln: Vier Bildtafeln
-           nebeneinander würden erschlagen, und die Antwort muss klar lesbar
-           bleiben - Tinte auf hellem Putz kommt auf 12,2. */
-        .race-btn {
-            background: var(--putz-hell);
-            border: 2px solid var(--bronze);
-            color: var(--ink);
-            padding: 18px 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.1s, border-color 0.1s;
-            text-align: center;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .race-btn:not(:disabled):hover { background: #fff; border-color: var(--pompeji); }
         .race-btn:disabled { opacity: 0.55; cursor: default; }
 
         /* ---- Kartenmodus ----
@@ -179,8 +161,6 @@
             text-transform: uppercase; letter-spacing: 1px; margin-top: 6px;
         }
 
-        .correct { background: var(--richtig) !important; border-color: #1d4a26 !important; color: #fff !important; }
-        .wrong { background: var(--falsch) !important; border-color: #7d2020 !important; color: #fff !important; }
 
         .end-overlay {
             position: absolute;

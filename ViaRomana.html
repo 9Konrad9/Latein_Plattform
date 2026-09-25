@@ -82,19 +82,11 @@
             flex-grow: 1; margin-bottom: 25px;
         }
 
+        /* Aussehen steht in theme.css. Hier nur Anordnung und Maß: Die
+           Satzglied-Knöpfe zentrieren ihre Beschriftung über zwei Zeilen. */
         .btn-syntax {
-            background: var(--putz);
-            border: 2px solid var(--wand-tief);
-            color: var(--ink-soft);
             font-size: 1.3rem;
-            font-family: var(--font-display);
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 5px 12px rgba(80, 60, 30, 0.12);
             display: flex; align-items: center; justify-content: center;
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-            transition: background 0.1s, border-color 0.1s;
         }
         .btn-syntax:not(:disabled):active {
             background: var(--wand);

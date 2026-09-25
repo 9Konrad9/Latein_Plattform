@@ -234,6 +234,110 @@ body {
 .end-btn:active,
 .main-btn:active { transform: translateY(2px); }
 
+/* ---------- Antwortknöpfe ----------
+
+   Der zweite Knopf im Projekt, und der mit der anderen Aufgabe: Hier wird
+   nicht gehandelt, sondern geantwortet. Deshalb hell - vier rote Flächen
+   nebeneinander erschlügen die Frage darüber, und gelesen werden muss die
+   Antwort, nicht der Knopf.
+
+   Auch ihn gab es achtmal: .race-btn (CircusV), .build-btn (Villa),
+   .antwort-btn (Bomba), .btn-opt (Quiz), .arena-btn (Duell) und
+   .btn-syntax (ViaRomana) hell - mit Rändern von 1 und 2 px, Radien von
+   6, 8 und 10 px und vier verschiedenen Flächen -, dazu .shield-btn
+   (Kastell) und .opt-btn (Pronomina) dunkelrot mit Goldrand, der letzte
+   Rest des alten Dunkel-Themes. Die zwei waren die einzigen Stellen im
+   Projekt, an denen noch ein anderes Rot stand als der Porphyr - und
+   ausgerechnet da, wo gar nicht gehandelt wird.
+
+   NICHT dabei ist Principias .coin-btn: Die Antwortmünze ist ein Bild-Asset
+   mit rundem Prägefeld, kein Kasten.
+
+   Gemessen: Tinte auf --putz-hell 13,34 - der beste Lesegrund im Projekt.
+   Weiß auf --richtig 6,39, auf --falsch 6,34. */
+
+.race-btn,
+.build-btn,
+.antwort-btn,
+.shield-btn,
+.btn-opt,
+.opt-btn ,
+.arena-btn,
+.btn-syntax {
+    background-color: var(--putz-hell);
+    border: 2px solid var(--bronze);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 16px 8px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(80, 60, 30, 0.12);
+    transition: background-color 0.1s, border-color 0.1s;
+    overflow-wrap: break-word;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.race-btn:not(:disabled):hover,
+.build-btn:not(:disabled):hover,
+.antwort-btn:not(:disabled):hover,
+.shield-btn:not(:disabled):hover,
+.btn-opt:not(:disabled):hover,
+.opt-btn:not(:disabled):hover ,
+.arena-btn:not(:disabled):hover,
+.btn-syntax:not(:disabled):hover { background-color: #fff; border-color: var(--pompeji); }
+
+.race-btn:not(:disabled):active,
+.build-btn:not(:disabled):active,
+.antwort-btn:not(:disabled):active,
+.shield-btn:not(:disabled):active,
+.btn-opt:not(:disabled):active,
+.opt-btn:not(:disabled):active ,
+.arena-btn:not(:disabled):active,
+.btn-syntax:not(:disabled):active { background-color: var(--wand); }
+
+.race-btn:disabled,
+.build-btn:disabled,
+.antwort-btn:disabled,
+.shield-btn:disabled,
+.btn-opt:disabled,
+.opt-btn:disabled ,
+.arena-btn:disabled,
+.btn-syntax:disabled { cursor: default; }
+
+/* Richtig und falsch. Stand in fünf Spielen fast wortgleich, jeweils mit
+   !important, weil die eigene Knopfregel in derselben Datei danach kam.
+   Hier steht sie danach, das reicht - und !important entfällt.
+   Bomba benennt dieselben zwei Zustände deutsch; beide Namen gelten.
+
+   BEWUSST an die Knopfklassen gebunden, nicht als blankes .correct/.wrong:
+   Arcus hängt dieselben zwei Namen an seine Bronzetafeln (dort wechselt das
+   Bild) und Principia an seine Antwortmünzen (dort kommt ein Ring um den
+   Rand). Eine pauschale Regel würde beiden die Fläche übermalen.
+
+   Der weiße Rand von früher ist weg: Auf hellem Grund umrandet er die
+   Fläche nicht, er frisst sie an. Stattdessen je eine dunklere Fassung
+   der Zustandsfarbe. */
+.race-btn.correct,
+.build-btn.correct,
+.shield-btn.correct,
+.opt-btn.correct,
+.btn-opt.correct,
+.arena-btn.correct,
+.btn-syntax.correct,
+.antwort-btn.richtig { background-color: var(--richtig); border-color: #24512c; color: #fff; }
+.race-btn.wrong,
+.build-btn.wrong,
+.shield-btn.wrong,
+.opt-btn.wrong,
+.btn-opt.wrong,
+.arena-btn.wrong,
+.btn-syntax.wrong,
+.antwort-btn.falsch  { background-color: var(--falsch);  border-color: #7d2020; color: #fff; }
+
 /* ---------- Hinweiskasten ---------- */
 
 /* Die Öllampe steht am Hinweiskasten für „hier wird etwas erklärt". Sie sitzt

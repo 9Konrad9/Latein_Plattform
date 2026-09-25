@@ -197,22 +197,14 @@
             flex: 0 0 auto;
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
         }
+        /* Aussehen steht in theme.css. Hier nur, was am geteilten Gerät
+           gemessen wurde: fingergerechte Mindesthöhe und eine Schrift,
+           die mit der Schirmhöhe mitwächst. */
         .antwort-btn {
-            background: var(--putz-hell);
-            border: 3px solid var(--bronze); border-radius: 10px;
-            color: var(--ink);                 /* kontrast-ok: 13,34 auf --putz-hell */
-            font-family: var(--font-display); font-weight: bold;
             font-size: clamp(0.85rem, 2.5vh, 1.25rem);
-            /* Fingergerecht: mindestens gut 50 px hoch, auch auf kurzen Schirmen. */
             min-height: clamp(50px, 9vh, 78px);
-            padding: 8px 10px; cursor: pointer;
-            touch-action: manipulation; box-shadow: var(--schatten);
-            overflow-wrap: break-word;
+            padding: 8px 10px;
         }
-        .antwort-btn:active { filter: brightness(0.96); }
-        .antwort-btn.richtig { background: var(--richtig); color: var(--marmor); border-color: #24512c; }  /* kontrast-ok: 5,16 */
-        .antwort-btn.falsch  { background: var(--falsch);  color: var(--marmor); border-color: #7d2020; }  /* kontrast-ok: 5,12 */
-        .antwort-btn:disabled { cursor: default; }
 
         /* Im Hochformat stehen vier lange Bedeutungen nebeneinander zu eng. */
         @media (max-width: 520px) {
