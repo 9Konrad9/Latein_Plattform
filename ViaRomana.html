@@ -143,23 +143,8 @@
             text-align: center; color: var(--ink); box-shadow: var(--schatten-tief); }
         .feedback-title { color: var(--pompeji); font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 15px; }
         .feedback-text { font-size: 1.1rem; line-height: 1.5; color: var(--ink-soft); margin-bottom: 25px; }
-        /* Die beiden Handlungsknöpfe trugen noch Gold mit schwarzer Schrift. Sie
-           tragen jetzt denselben Porphyr wie überall sonst - als background-color
-           plus background-image, nicht als Kurzschreibweise: Die würde das Bild
-           gleich wieder entfernen. */
-        .btn-close, .btn-main {
-            background-color: var(--pompeji);
-            background-image: url('assets/ui/porphyr.jpg');
-            background-size: 260px auto; background-position: center;
-            color: var(--marmor); border: 2px solid #6d1f1f;
-            font-family: var(--font-display); font-weight: bold;
-            border-radius: 30px; cursor: pointer; text-decoration: none;
-            text-transform: uppercase; box-shadow: var(--schatten);
-            touch-action: manipulation;
-        }
-        .btn-close { padding: 12px 35px; font-size: 1.1rem; }
-        .btn-main  { padding: 15px 40px; font-size: 1.2rem; margin-top: 20px; }
-        .btn-close:hover, .btn-main:hover { filter: brightness(1.14); }
+        /* Aussehen steht in theme.css - hier nur der Abstand nach oben. */
+        .btn-main { margin-top: 20px; }
 
         /* Endbildschirm */
         .end-screen {
@@ -258,9 +243,9 @@
         <h1 style="color: var(--pompeji); font-size: 3rem; margin-bottom: 20px; font-family: 'Georgia', serif;" id="end-title">Roma erreicht!</h1>
         <p style="font-size: 1.3rem; max-width: 600px; line-height: 1.5; margin-bottom: 15px; padding: 0 20px;" id="end-msg"></p>
         <p id="box-summary" style="font-size: 1rem; color: var(--ink-soft); margin-bottom: 15px;"></p>
-        <button class="btn-main" id="btn-review" style="background: var(--falsch); color: #fff; display: none;">📚 Fehler wiederholen</button>
+        <button class="btn-main wiederholen" id="btn-review" style="display: none;">📚 Fehler wiederholen</button>
         <button class="btn-main" onclick="location.reload()">Neue Reise starten</button>
-        <a href="index.html" class="btn-main" style="background: var(--wand-tief); color: var(--ink); font-size: 1rem;">Zurück zur Übersicht</a>
+        <a href="index.html" class="btn-main zweitrangig">Zurück zur Übersicht</a>
     </div>
 
     <script src="vocabulary.js"></script>

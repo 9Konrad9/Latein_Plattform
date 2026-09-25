@@ -54,12 +54,7 @@
         .overlay h2 { font-family: var(--font-display); color: var(--pompeji); font-size: 1.5rem; margin-bottom: 12px; }
         .overlay p { color: var(--ink-soft); line-height: 1.5; margin-bottom: 10px; font-size: 0.95rem; }
         .overlay .example { color: var(--pompeji); font-weight: bold; }
-        .start-btn { padding: 13px 34px; border-radius: 26px; font-size: 1.1rem; margin-top: 10px; }
-        .small-btn {
-            background: var(--putz-hell); color: var(--ink-soft); font-family: var(--font-body); font-weight: bold;
-            padding: 9px 20px; border: none; border-radius: 20px; font-size: 0.85rem; cursor: pointer; margin-top: 10px;
-            text-decoration: none; display: inline-block;
-        }
+        .start-btn:not(.zweitrangig) { padding: 13px 34px; font-size: 1.1rem; margin-top: 10px; }
 
         /* HUD */
         .hud {
@@ -163,7 +158,7 @@
             <p id="end-stats"></p>
             <button class="start-btn" id="btn-restart">Nochmal springen</button>
             <br>
-            <a href="index.html" class="small-btn">Zurück zum Menü</a>
+            <a href="index.html" class="start-btn zweitrangig" style="margin-top: 10px;">Zurück zum Menü</a>
         </div>
     </div>
     </div>

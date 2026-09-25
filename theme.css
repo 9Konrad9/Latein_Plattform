@@ -112,49 +112,127 @@ body {
 
 /* ---------- Knöpfe ----------
 
+   EIN Handlungsknopf, in drei Größen.
+
+   Bis September 2026 gab es ihn ACHTMAL unter verschiedenen Namen: .start-btn
+   hier, .play-btn nur in index.html, .nav-btn nur in CircusV.html, .end-btn nur
+   in Duell, .main-btn nur in Villa, .werkzeug-btn wortgleich zweimal (Bomba,
+   Fliegenklatsche), .btn-close und .btn-main in ViaRomana. Geteilt war davon
+   nur die Porphyr-Textur, und auch die nur bei dreien - Farbe, Rand, Radius und
+   Polsterung standen je Datei erneut da, mit den Radien 6, 8, 20, 25 und 30 px
+   nebeneinander, zweimal ganz ohne Rand und in Villa noch mit dem goldenen
+   Schein des alten Themes. Wer in einem neuen Spiel class="nav-btn" schrieb,
+   bekam die Textur und sonst nichts: kein Rot, keinen Rand, keine Polsterung.
+
+   Die Namen bleiben, damit die Spiele nicht alle angefasst werden müssen -
+   was sie bedeuten, ist jetzt aber nur noch die Größe:
+     Pille (30 px)   .start-btn .nav-btn .btn-main .btn-close .end-btn
+                     .main-btn - der Knopf, der für sich steht: Runde
+                     starten, weiter, zurück.
+     Leiste (8 px)   .play-btn .werkzeug-btn - der Knopf in einer Reihe oder
+                     am Fuß einer Karte, wo eine Pille fremd aussähe.
+
+   Ein neues Spiel nimmt .start-btn und .zweitrangig. Die übrigen Namen sind
+   Altlast, kein Angebot.
+
    Die roten Handlungsflächen tragen Porphyr - den purpurroten Stein aus
    Ägypten, der in Rom den Kaisern vorbehalten war. Die Kachel liegt bei
    260 px, also etwa eine Kachel je Knopf; so wiederholt sich innerhalb
    eines Knopfes nichts sichtbar.
 
+   Zwei Abweichungen sind gewollt. Sie stehen als Zusatzklasse hier, nicht
+   mehr als style-Attribut in den Spielen:
+     .zweitrangig - der stille Knopf daneben ("Zurück zum Menü"). Stand in
+                    sieben Spielen als style-Attribut und in IssaJump als
+                    eigene Klasse .small-btn.
+     .wiederholen - "Fehler wiederholen" am Rundenende. Stand in vier Spielen
+                    als Inline-Stil, in Arcus gar nicht.
+
    WICHTIG: Wer diese Flächen in einer Spieldatei überschreibt, muss
    `background-color:` schreiben, nicht die Kurzschreibweise `background:`
-   - die würde das Bild hier wieder entfernen.
+   - die würde das Bild hier wieder entfernen. Maße (Größe, Abstände) darf
+   ein Spiel anpassen, Farbe und Rand nicht; `pruefe-theme.js` meldet das.
 
    Marmorcreme auf dem Porphyr kommt auf 6,7; die frühere flache Farbe
    lag bei 6,0. */
 
 .start-btn,
 .play-btn,
-.nav-btn:not(.zweitrangig) {
+.nav-btn,
+.werkzeug-btn,
+.btn-close,
+.btn-main,
+.end-btn,
+.main-btn {
+    background-color: var(--pompeji);
     background-image: url('assets/ui/porphyr.jpg');
     background-size: 260px auto;
     background-position: center;
-}
-
-.start-btn {
-    background-color: var(--pompeji);
     color: var(--marmor);
-    font-family: var(--font-display);
-    font-weight: bold;
-    padding: 15px 40px;
     border: 2px solid #6d1f1f;
     border-radius: 30px;
+    font-family: var(--font-display);
+    font-weight: bold;
     font-size: 1.2rem;
-    cursor: pointer;
+    padding: 15px 40px;
+    display: inline-block;
+    text-align: center;
     text-transform: uppercase;
     text-decoration: none;
+    cursor: pointer;
     box-shadow: var(--schatten);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
+
+/* Größen - nur Maße, keine Farbe. */
+.btn-close { padding: 12px 35px; font-size: 1.1rem; }
+.play-btn,
+.werkzeug-btn { padding: 9px 18px; font-size: 0.95rem; border-radius: 8px; }
+.werkzeug-btn.gross { padding: 14px 28px; font-size: 1.15rem; }
+
+/* Der stille Knopf. Steht zuletzt, damit er die Größen oben schlägt -
+   gleiche Spezifität, spätere Regel gewinnt. */
+.zweitrangig {
+    background-color: var(--wand);
+    background-image: none;
+    color: var(--ink);
+    border-color: var(--bronze);
+    font-size: 0.9rem;
+    padding: 8px 20px;
+    box-shadow: none;
+}
+/* kontrast-ok: 6,34 - Weiß auf --falsch (#b03030), gemessen. */
+.wiederholen {
+    background-color: var(--falsch);
+    background-image: none;
+    border-color: #7d2020;
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 10px 25px;
+}
+
 /* Aufhellen statt Farbwechsel: Unter der Porphyr-Textur wäre eine andere
    Hintergrundfarbe unsichtbar, und die Kurzschreibweise `background:` würde
    das Bild sogar entfernen. */
-.start-btn:not(:disabled):hover,
-.play-btn:hover,
-.nav-btn:not(.zweitrangig):hover { filter: brightness(1.14); }
-.start-btn:not(:disabled):active { transform: translateY(2px); }
+.start-btn:not(.zweitrangig):not(:disabled):hover,
+.play-btn:not(.zweitrangig):not(:disabled):hover,
+.nav-btn:not(.zweitrangig):not(:disabled):hover,
+.werkzeug-btn:not(.zweitrangig):not(:disabled):hover,
+.btn-close:not(.zweitrangig):not(:disabled):hover,
+.btn-main:not(.zweitrangig):not(:disabled):hover,
+.end-btn:not(.zweitrangig):not(:disabled):hover,
+.main-btn:not(.zweitrangig):not(:disabled):hover { filter: brightness(1.14); }
+.zweitrangig:hover { background-color: var(--wand-tief); }
+
+.start-btn:not(:disabled):active,
+.play-btn:active,
+.nav-btn:active,
+.werkzeug-btn:active,
+.btn-close:active,
+.btn-main:active,
+.end-btn:active,
+.main-btn:active { transform: translateY(2px); }
 
 /* ---------- Hinweiskasten ---------- */
 
