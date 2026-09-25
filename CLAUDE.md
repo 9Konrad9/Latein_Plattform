@@ -193,6 +193,22 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   | `plaque.png` | `#aa754a` | 3,66 mit Dunkel | Knopf, Ruhezustand |
   | `plaque-richtig.png` | `#a6904f` | 4,60 | Knopf, richtig |
   | `plaque-falsch.png` | `#a39375` | 4,78 | Knopf, falsch |
+  | `pergament-bogen.png` | `#fcebcd` | 12,25 mit `--ink` | Grundfläche `.game-container` |
+
+  **`pergament-bogen.png` ist der Bogen, `pergament.png` das Band.** Nicht verwechseln:
+  Das Band (900×175) ist für die Schriftrolle in Arcus, seine linken und rechten Ränder sind
+  Schnittkanten, die dort hinter den Walzen verschwinden – auf einer hohen Fläche kämen sie
+  zum Vorschein. Der Bogen (900×672) ist ein Blatt mit gerissenen Rändern und eingerollten
+  oberen Ecken, Schnitt `107 100 157 114 fill`.
+  Bei der Aufbereitung wurde die **Mitte absichtlich flach gemacht** (`latein-tests/pergament-aufbereiten.js`):
+  Der Generator legt einen weichen Verlauf hinein, der beim `border-image` je nach Kastengrösse
+  anders breitgezogen würde – und er hebelte die PNG-Kompression aus (600 KB statt 156).
+  Die Randbreiten stehen in `clamp()`, nicht fest: Bei festen Pixeln frass der Rand auf einem
+  320-px-Schirm 42 % der Breite (gemessen), jetzt sind es 26 %.
+  **Achtung bei Karten AUF dem Pergament:** `--putz` steht zum Pergamentfeld bei **1,00** –
+  die Füllung der `.notice-box` ist darauf farblich nicht mehr zu sehen, sichtbar bleibt sie
+  nur durch Rand und Schatten. Wer dort eine Fläche absetzen will, braucht `--wand-tief` (1,41)
+  oder dunkler.
 
   Die Plaques liegen in einem Mittelton, auf dem weder helle noch dunkle Schrift wirklich gut
   steht – für kurze fette Knopfbeschriftung reicht es, für Fließtext nicht. Das Pergament ist

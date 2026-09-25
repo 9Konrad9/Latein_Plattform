@@ -169,12 +169,31 @@ body {
    Änderungen, und eine davon vergisst man.
    Grösse und Innenabstand bleiben Sache des einzelnen Spiels - der Circus
    braucht 980 px für seine Arena, Pronomina kommt mit 650 aus. */
+/* Ein grosses Stück Pergament statt einer beigen Fläche.
+   Schnittwerte an `pergament-bogen.png` (900x672) GEMESSEN, nicht geschätzt:
+   Die gerissene Kante samt eingerollter Ecke reicht oben 107, rechts 100,
+   unten 157 und links 114 Bildpixel weit herein. Bildpixel skalieren NICHT
+   mit - wird das Asset getauscht, muss neu gemessen werden.
+
+   Die Randbreiten stehen im selben Verhältnis (Faktor 0,38), damit keine
+   Seite stärker gestaucht wird als die andere. Sie kosten Platz nach innen,
+   deshalb nicht grösser - das Pergament soll Rahmen sein, nicht Inhalt.
+
+   Kein border-radius und kein Rand mehr: Ein Bogen mit gerissenen Rändern in
+   einem Bronzerechteck sähe aus wie ein Bild im Rahmen. Die gezeichnete Kante
+   IST der Rand. Der Schatten folgt jetzt der Kontur (drop-shadow statt
+   box-shadow), sonst läge ein Rechteck hinter einem unregelmässigen Bogen. */
 .game-container {
     width: 100%;
-    background: var(--putz);
-    border: 4px solid var(--bronze);
-    border-radius: 12px;
-    box-shadow: var(--schatten-tief);
+    border-style: solid;
+    /* Mitwachsend, nicht fest: Bei festen 41/38/60/43 px frass der Rand auf
+       einem 320-px-Schirm 42 % der Breite - der Inhalt schrumpfte auf 169 px.
+       Gemessen; die Verhaeltnisse untereinander bleiben gleich. */
+    border-width: clamp(18px, 5vw, 41px) clamp(17px, 4.6vw, 38px)
+                  clamp(26px, 7.3vw, 60px) clamp(19px, 5.2vw, 43px);
+    border-image: url('assets/ui/pergament-bogen.png') 107 100 157 114 fill stretch;
+    background: none;
+    filter: drop-shadow(0 6px 14px rgba(80, 60, 30, 0.28));
     position: relative;
     display: flex;
     flex-direction: column;
