@@ -64,9 +64,24 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     `test-kastell.js` prüft genau das: kein Distraktor weiter weg **als nötig**.
 - **Villa.html** (Aedificium Rōmānum) – KNG-Kongruenz. Drei Adjektiv-Modi (regulär -us/-a/-um,
   i-Deklination, gemischt). Sechs Bild-Stufen für den Baufortschritt in `assets/villa/`.
-- **ViaRomana.html** – Satzglieder bestimmen: Subjekt, Prädikat, Akk-/Dativobjekt, Genitiv-Attribut,
-  Ablativ-Handlungsträger, adverbiale Bestimmungen (Zeit/Ort/Herkunft/Mittel/Begleitung ab L7).
-  Volle Tempus-/Genus-Vielfalt.
+- **ViaRomana.html** – **zwei Modi.**
+  1. *Satzglieder bestimmen*: Subjekt, Prädikat, Akk-/Dativobjekt, Genitiv-Attribut,
+     Ablativ-Handlungsträger, adverbiale Bestimmung. Volle Tempus-/Genus-Vielfalt.
+     Die Knöpfe sind **gestaffelt** – L3 vier, ab L6 das Genitiv-Attribut, ab L9 das
+     Dativ-Objekt, ab L15 der Handlungsträger. Vorher standen immer alle sieben da, und
+     eine 7. Klasse las dort vier Begriffe, die sie nie brauchte.
+  2. *Nur Ablativ: Welche Funktion?* (September 2026, gewünscht für eine 7. Klasse, die den
+     Ablativ neu hatte). Gefragt wird mit dem **Fragewort** – Wann? Wo? Wohin? Woher? Womit?
+     Mit wem? –, der Fachbegriff steht in der Erklärung. Ab L7 (`ADVERBIAL_LESSON`); davor
+     gäbe es nur die Richtungsangabe, also nichts zu unterscheiden.
+     Zwei Dinge tragen diesen Modus:
+     - **Der Kontrast *in urbem* (wohin?) gegen *in urbe* (wo?)** – dieselbe Präposition,
+       anderer Kasus. Dafür baut `SentenceEngine` seit jetzt auch die **Richtungsangabe im
+       Akkusativ** (`in`/`ad` + Akk., Pontes L3 – die Engine hielt sie vorher bis L7 zurück).
+     - **Reihum statt Zufall.** Der Modus gibt der Engine über `advKey` vor, WELCHE Funktion
+       sie bauen soll. Würfelte man den Satz einfach aus, käme die Richtungsangabe gemessen
+       in 2,5 % der Runden vor statt in 17 % – sie braucht ein Bewegungsverb und muss sich
+       gegen fünf andere Funktionen durchsetzen.
 - **Pendel.html** – klassische Pendelmethode (Subjekt → Prädikat → Objekt schrittweise), generiert
   aus echtem Wortschatz, mit Erklärung statt Übersetzungsauswahl am Ende.
 - **Arcus.html** – AcI (ab L8). Zwei Schritte: Subjektsakkusativ und Infinitiv im Satz anklicken,
@@ -204,6 +219,13 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   2. Kastell bot in L1 alle sechs Personen an – beim Umbau der Distraktoren aufgefallen.
   3. Pronomina liess Demonstrativ- und Relativmodus in jeder Lektion starten. Das Spiel
      **fragte nach Lektionen und ignorierte die Antwort** – gefunden vom systematischen Test.
+  4. ViaRomana zeigte immer alle sieben Satzglied-Knöpfe. Milder als die drei anderen –
+     falsch antworten konnte man deswegen nicht –, aber vier unbekannte Begriffe auf dem
+     Schirm einer 7. Klasse.
+
+  Und einmal in die andere Richtung: Die `SentenceEngine` hielt die **Richtungsangabe**
+  (`in`/`ad` + Akk.) bis L7 zurück, obwohl Pontes sie in **L3** einführt. Zu viel Gating ist
+  genauso falsch wie zu wenig – nur fällt es niemandem auf, weil nichts Verbotenes erscheint.
 
   Deshalb prüft `test-gating.js` seit September 2026 nicht nur die Konstanten, sondern **was
   die Spiele anzeigen**: Runden bauen lassen, jede sichtbare Bezeichnung nachschlagen.

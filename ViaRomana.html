@@ -185,7 +185,14 @@
             <p style="margin-top: 10px; font-weight: bold; color: var(--pompeji);">Achtung: Die Satzglieder werden ab und zu durcheinandergewürfelt! Verlass dich auf die Endung, nicht auf die Position im Satz.</p>
             <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">🔴🟡🟢 Auch hier gilt der Vokabelkasten: Wörter, die noch nicht sitzen, kommen häufiger dran. Am Ende kannst du falsch bestimmte Sätze direkt nochmal üben.</p>
         </div>
-        <button class="btn-main" id="btn-start-game">Reise beginnen!</button>
+        <button class="btn-main" id="btn-start-game">Satzglieder bestimmen</button>
+        <button class="btn-main" id="btn-start-abl" style="margin-top: 10px;">Nur Ablativ: Welche Funktion?</button>
+        <p style="margin-top: 8px; font-size: 0.85rem; color: var(--ink-soft); max-width: 42ch;">
+            Der zweite Modus geht eine Ebene tiefer: Der Ablativ kann sehr vieles,
+            und hier bestimmst du, <em>was</em> er im Satz tut. Dabei ist auch die
+            Richtungsangabe im Akkusativ mit von der Partie &mdash; <em>in urbem</em>
+            (wohin?) gegen <em>in urbe</em> (wo?). Ab Lektion 7.
+        </p>
     </div>
 
     <div id="game-area" style="display: none; width: 100%; flex-direction: column; align-items: center; height: 100%;">
@@ -205,7 +212,19 @@
         <button class="btn-syntax" id="btn-dat">Dativ-Objekt</button>
         <button class="btn-syntax" id="btn-attr">Genitiv-Attribut</button>
         <button class="btn-syntax" id="btn-abl">Ablativ (Handlungsträger)</button>
-        <button class="btn-syntax" id="btn-adv">Adverbiale Bestimmung (Ablativ)</button>
+        <button class="btn-syntax" id="btn-adv">Adverbiale Bestimmung</button>
+    </div>
+
+    <!-- Zweite Reihe: der Ablativ-Modus fragt nicht nach dem Satzglied, sondern
+         nach der FUNKTION - und zwar mit dem Fragewort, das man im Unterricht
+         stellt. Der Fachbegriff steht danach in der Erklärung. -->
+    <div class="syntax-grid" id="abl-grid" style="display: none;">
+        <button class="btn-syntax" data-adv="zeit">Wann?</button>
+        <button class="btn-syntax" data-adv="ort">Wo?</button>
+        <button class="btn-syntax" data-adv="richtung">Wohin?</button>
+        <button class="btn-syntax" data-adv="herkunft">Woher?</button>
+        <button class="btn-syntax" data-adv="mittel">Womit?</button>
+        <button class="btn-syntax" data-adv="begleitung">Mit wem?</button>
     </div>
 
     <div class="road-container">
@@ -282,6 +301,9 @@
         let verbPool = [];
         let activePool = [];
         let maxSelectedLesson = 0;
+        let modus = 'satzglied';        // 'satzglied' oder 'ablativ'
+        let currentAdvKey = null;       // im Ablativ-Modus: welche Funktion ist gesucht?
+        let advReihum = 0;              // reihum über die Funktionen, damit keine untergeht
 
         let missedItems = [];
         let isReviewMode = false;
@@ -290,7 +312,11 @@
         let reviewCorrectCount = 0;
 
         window.onload = function() {
-            document.getElementById('btn-start-game').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-start-game').addEventListener('click', () => promptLessonsAndStart('satzglied'));
+            document.getElementById('btn-start-abl').addEventListener('click', () => promptLessonsAndStart('ablativ'));
+            document.querySelectorAll('#abl-grid [data-adv]').forEach(b => {
+                b.onclick = () => checkAnswer(b.getAttribute('data-adv'));
+            });
             document.getElementById('btn-sub').onclick = () => checkAnswer("sub");
             document.getElementById('btn-praed').onclick = () => checkAnswer("praed");
             document.getElementById('btn-obj').onclick = () => checkAnswer("obj");
@@ -301,15 +327,32 @@
             document.getElementById('btn-review').addEventListener('click', startReview);
         };
 
-        function promptLessonsAndStart() {
+        function promptLessonsAndStart(gewaehlterModus) {
             if (typeof globalVocabularyPool === 'undefined') {
                 alert("Fehler: vocabulary.js nicht gefunden!"); return;
             }
             LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                 activePool = filteredPool;
                 maxSelectedLesson = selectedLessonNumbers ? Math.max(...selectedLessonNumbers) : 999;
+                modus = gewaehlterModus || 'satzglied';
+                // Der Ablativ-Modus lebt von den Ablativ-Funktionen; vor L7 gäbe
+                // es nur die Richtungsangabe, und dann wäre nichts zu entscheiden.
+                if (modus === 'ablativ' && maxSelectedLesson < SentenceEngine.ADVERBIAL_LESSON) {
+                    alert("Die Funktionen des Ablativs kommen ab Lektion " + SentenceEngine.ADVERBIAL_LESSON + " dran.\n\n" +
+                          "Bis dahin gibt es als adverbiale Bestimmung nur die Richtungsangabe im Akkusativ - da wäre nichts zu unterscheiden. " +
+                          "Wähle bitte mehr Lektionen, oder übe solange die Satzglieder.");
+                    return;
+                }
                 startGame();
             });
+        }
+
+        /* Welche Funktionen stehen bei dieser Lektionsauswahl zur Wahl? Kommt aus
+           der Engine, damit die Knöpfe nicht eigene Lektionszahlen mitschleppen. */
+        function verfuegbareAdvKeys() {
+            return SentenceEngine.ADVERBIALE
+                .filter(t => t.lektion <= maxSelectedLesson)
+                .map(t => t.key);
         }
 
         function startGame() {
@@ -330,6 +373,27 @@
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('game-area').style.display = 'flex';
 
+            // Nur die Knöpfe zeigen, die zum Modus UND zur Lektion passen.
+            // Vorher standen immer alle sieben Satzglieder da - eine siebte
+            // Klasse las dort "Dativ-Objekt" (L9) und "Handlungsträger" (L15),
+            // obwohl beide nie die richtige Antwort sein konnten.
+            const satzgliedGrid = document.querySelector('.syntax-grid');
+            satzgliedGrid.style.display = modus === 'satzglied' ? '' : 'none';
+            document.getElementById('abl-grid').style.display = modus === 'ablativ' ? '' : 'none';
+
+            const ROLLE_AB = { sub: 1, praed: 1, obj: 1, attr: SentenceEngine.ATTRIBUT_LESSON,
+                               adv: SentenceEngine.RICHTUNG_LESSON, dat: SentenceEngine.DATIVOBJEKT_LESSON,
+                               abl: SentenceEngine.PASSIV_LESSON };
+            Object.keys(ROLLE_AB).forEach(r => {
+                const btn = document.getElementById('btn-' + r);
+                if (btn) btn.style.display = maxSelectedLesson >= ROLLE_AB[r] ? '' : 'none';
+            });
+            const erlaubt = verfuegbareAdvKeys();
+            document.querySelectorAll('#abl-grid [data-adv]').forEach(b => {
+                b.style.display = erlaubt.indexOf(b.getAttribute('data-adv')) !== -1 ? '' : 'none';
+            });
+            advReihum = 0;
+
             resetWagon();
             nextQuestion();
         }
@@ -347,6 +411,7 @@
         // direkt hinter seinem Bezugswort, worauf sich auch die Erklärung bezieht.
         function buildRound(forced) {
             if (forced) return forced;
+            if (modus === 'ablativ') return buildAblativRound();
 
             for (let versuch = 0; versuch < 10; versuch++) {
                 const satz = SentenceEngine.build({
@@ -370,18 +435,61 @@
             return null;
         }
 
+        /* Im Ablativ-Modus wird die gesuchte Funktion REIHUM vorgegeben und dann
+           so lange gebaut, bis sie im Satz steht. Würfelte man den Satz einfach
+           aus, käme heraus, was die Engine gerade häufig baut - gemessen kam die
+           Richtungsangabe dabei nur in 14 % der Fälle vor, und genau sie ist der
+           Kontrast, um den es hier geht. */
+        function buildAblativRound() {
+            const keys = verfuegbareAdvKeys();
+            if (!keys.length) return null;
+            const gewuenscht = keys[advReihum % keys.length];
+            advReihum++;
+
+            let ersatz = null;
+            for (let versuch = 0; versuch < 30; versuch++) {
+                // advKey sagt der Engine, WELCHE Funktion sie bauen soll - und sie
+                // schränkt dafür auch den Verbtopf ein, wo es nötig ist (eine
+                // Richtungsangabe braucht ein Bewegungsverb). Ohne das kam die
+                // Richtungsangabe gemessen in 2,5 % der Runden vor statt in 17 %.
+                const satz = SentenceEngine.build({
+                    nounPool: nounPool, verbPool: verbPool,
+                    maxLesson: maxSelectedLesson, wordOrder: 'natural',
+                    advKey: gewuenscht
+                });
+                if (!satz) continue;
+                const idx = satz.tokens.findIndex(t => t.role === 'adv');
+                if (idx === -1) continue;
+
+                const runde = {
+                    words: satz.tokens.map(t => ({ w: t.text, role: t.role, lemma: t.lemma, exp: t.exp })),
+                    targetIdx: idx,
+                    role: satz.tokens[idx].role,
+                    advKey: satz.tokens[idx].advKey,
+                    explanation: satz.tokens[idx].exp,
+                    trackLemma: satz.tokens[idx].lemma
+                };
+                if (runde.advKey === gewuenscht) return runde;
+                if (!ersatz) ersatz = runde;   // falls die Wunschfunktion nicht kommt
+            }
+            return ersatz;
+        }
+
         function nextQuestion(forced) {
             roundLocked = false;
             const round = buildRound(forced);
             currentWords = round.words;
             currentTargetIdx = round.targetIdx;
             currentTargetRole = round.role;
+            currentAdvKey = round.advKey || null;
             currentExplanation = round.explanation;
             currentTrackLemma = round.trackLemma;
 
             document.getElementById('task-instruction').innerText = isReviewMode
                 ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
-                : `Satz ${currentRoundIdx + 1} von ${totalRounds} - bestimme das markierte Satzglied!`;
+                : (modus === 'ablativ'
+                    ? `Satz ${currentRoundIdx + 1} von ${totalRounds} - welche Frage beantwortet das markierte Wort?`
+                    : `Satz ${currentRoundIdx + 1} von ${totalRounds} - bestimme das markierte Satzglied!`);
 
             let htmlOutput = "";
             currentWords.forEach((item, idx) => {
@@ -393,6 +501,7 @@
             for (const id of ['btn-sub', 'btn-praed', 'btn-obj', 'btn-dat', 'btn-attr', 'btn-abl', 'btn-adv']) {
                 document.getElementById(id).disabled = false;
             }
+            document.querySelectorAll('#abl-grid [data-adv]').forEach(b => { b.disabled = false; });
         }
 
         function checkAnswer(chosenRole) {
@@ -401,8 +510,12 @@
             for (const id of ['btn-sub', 'btn-praed', 'btn-obj', 'btn-dat', 'btn-attr', 'btn-abl', 'btn-adv']) {
                 document.getElementById(id).disabled = true;
             }
+            document.querySelectorAll('#abl-grid [data-adv]').forEach(b => { b.disabled = true; });
 
-            const isCorrect = (chosenRole === currentTargetRole);
+            // Im Ablativ-Modus wird die FUNKTION verglichen, nicht das Satzglied.
+            const isCorrect = modus === 'ablativ'
+                ? (chosenRole === currentAdvKey)
+                : (chosenRole === currentTargetRole);
             LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
 
             // Achievement-Kategorie ist das abgefragte Satzglied selbst.
@@ -432,7 +545,15 @@
             } else {
                 title.innerText = "🧭 Nicht ganz...";
             }
-            showModal(`Das war ${isCorrect ? "" : "nicht "}${roleNames[currentTargetRole]}.\n\n${currentExplanation}`);
+            if (modus === 'ablativ') {
+                // Die Erklärung nennt Funktion und Frage bereits. Bei einer
+                // richtigen Antwort wäre eine zweite Zeile darüber nur Wiederholung.
+                const eintrag = SentenceEngine.ADVERBIALE.find(t => t.key === currentAdvKey);
+                const kopf = isCorrect ? '' : `Gesucht war: ${eintrag ? eintrag.frage : 'eine andere Funktion'}\n\n`;
+                showModal(kopf + currentExplanation);
+            } else {
+                showModal(`Das war ${isCorrect ? "" : "nicht "}${roleNames[currentTargetRole]}.\n\n${currentExplanation}`);
+            }
         }
 
         function updateWagon() {

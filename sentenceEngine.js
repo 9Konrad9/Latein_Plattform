@@ -16,6 +16,7 @@ const SentenceEngine = (() => {
     // ---- Lektions-Gating (Lektionsnummern aus dem Pontes-Inhaltsverzeichnis) ----
     const ATTRIBUT_LESSON  = 6;   // L6: Genitiv als Attribut ("Wessen?")
     const ADVERBIAL_LESSON = 7;   // L7: Ablativ als adverbiale Bestimmung
+    const RICHTUNG_LESSON  = 3;   // L3: Richtungsangabe, Praeposition + Akkusativ
     const DATIVOBJEKT_LESSON = 9; // L9: Dativobjekt (der Dativ selbst wird hier eingeführt)
     const PASSIV_LESSON    = 15;  // L15: Passiv
     // Das Akkusativobjekt kommt in L1 und braucht deshalb kein Gate.
@@ -23,12 +24,48 @@ const SentenceEngine = (() => {
     // ---- Kuratierte Wortlisten für adverbiale Bestimmungen im Ablativ ----
     // Ein zufälliges Nomen zu ziehen ergäbe oft Unsinn ("zur Zeit des Schwertes"),
     // daher pro Funktion eine handverlesene Auswahl.
+    // Jeder Eintrag trägt seinen KASUS und seine Lektion. Der Kasus ist nicht
+    // Zierrat: Die Richtungsangabe steht im Akkusativ, alles andere hier im
+    // Ablativ - und genau dieser Unterschied ist in Lektion 7 die Lernfrage.
+    //   in urbem  (Akk.) - wohin?
+    //   in urbe   (Abl.) - wo?
+    // Dieselbe Präposition, anderer Kasus, andere Bedeutung.
+    /* Eine Richtungsangabe braucht ein Verb, das eine Bewegung bezeichnet.
+       „catellae in hortum verba audiunt" ist zwar formal in Ordnung, aber
+       fachlich Unsinn - niemand hört in den Garten hinein. Deshalb dieselbe
+       Vorsicht wie bei den Nomenlisten oben: handverlesen statt geraten.
+       venīre, currere und intrāre stehen schon in Lektion 0/1, die
+       Richtungsangabe hat ab L3 also von Anfang an genug Verben. */
+    const BEWEGUNGSVERBEN = [
+        'īre', 'venīre', 'currere', 'fugere', 'intrāre', 'properāre', 'redīre',
+        'exīre', 'adīre', 'dūcere', 'portāre', 'mittere', 'nāvigāre', 'ascendere',
+        'pervenīre', 'accēdere', 'discēdere'
+    ];
+
     const ADVERBIALE = [
-        { key: 'zeit',       prep: null,  woerter: ['hōra', 'nox', 'annus', 'diēs', 'lūx'],                     label: 'Zeit (Ablativus temporis)',                  frage: 'Wann?' },
-        { key: 'ort',        prep: 'in',  woerter: ['villa', 'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],  label: 'Ort (Ablativus loci)',                        frage: 'Wo?' },
-        { key: 'herkunft',   prep: 'ex',  woerter: ['urbs', 'prōvincia', 'domus', 'silva', 'terra'],            label: 'Herkunft/Trennung (Ablativus separationis)',  frage: 'Woher?' },
-        { key: 'mittel',     prep: null,  woerter: ['gladius', 'manus', 'nāvis', 'arma', 'dextra'],             label: 'Mittel (Ablativus instrumenti)',              frage: 'Womit?' },
-        { key: 'begleitung', prep: 'cum', woerter: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus'],   label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?' }
+        { key: 'richtung',   kasus: 'akk', lektion: 3, prep: ['in', 'ad'], nurBewegung: true,
+          woerter: ['villa', 'hortus', 'schola', 'forum', 'ātrium', 'culīna', 'peristȳlium',
+                    'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],
+          label: 'Richtung',                                    frage: 'Wohin?' },
+        { key: 'zeit',       kasus: 'abl', lektion: 7, prep: null,
+          woerter: ['hōra', 'aestās', 'nox', 'annus', 'diēs', 'lūx'],
+          label: 'Zeit (Ablativus temporis)',                   frage: 'Wann?' },
+        { key: 'ort',        kasus: 'abl', lektion: 7, prep: 'in',
+          woerter: ['villa', 'hortus', 'schola', 'forum', 'ātrium', 'culīna', 'peristȳlium',
+                    'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],
+          label: 'Ort (Ablativus loci)',                        frage: 'Wo?' },
+        { key: 'herkunft',   kasus: 'abl', lektion: 7, prep: 'ex',
+          woerter: ['villa', 'hortus', 'schola', 'ātrium', 'culīna',
+                    'urbs', 'prōvincia', 'domus', 'silva', 'terra'],
+          label: 'Herkunft/Trennung (Ablativus separationis)',  frage: 'Woher?' },
+        { key: 'mittel',     kasus: 'abl', lektion: 7, prep: null,
+          woerter: ['pecūnia', 'tuba', 'signum', 'vōx', 'aqua', 'tabula', 'verbum',
+                    'gladius', 'manus', 'nāvis', 'arma', 'dextra'],
+          label: 'Mittel (Ablativus instrumenti)',              frage: 'Womit?' },
+        { key: 'begleitung', kasus: 'abl', lektion: 7, prep: 'cum',
+          woerter: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus',
+                    'magister', 'discipulus', 'uxor', 'fīlius', 'fīlia'],
+          label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?' }
     ];
 
     const ACI_LESSON = 8;         // L8: AcI als satzwertige Konstruktion
@@ -152,10 +189,18 @@ const SentenceEngine = (() => {
 
     // ================= Bausteine =================
 
-    /** Baut eine adverbiale Bestimmung im Ablativ, oder null. */
-    function baueAdverbiale(nounPool, belegt) {
+    /** Baut eine adverbiale Bestimmung, oder null.
+     *  `maxLesson` entscheidet, welche Funktionen überhaupt in Frage kommen -
+     *  die Richtungsangabe ab L3, die Ablativ-Funktionen ab L7.
+     *  `nurKey` beschränkt auf eine bestimmte Funktion (für den Ablativ-Modus
+     *  in ViaRomana, der gezielt kontrastieren will). */
+    function baueAdverbiale(nounPool, belegt, maxLesson, nurKey, verb) {
         const frei = belegt ? nounPool.filter(n => !belegt.has(n.latin)) : nounPool;
+        const bewegt = verb ? BEWEGUNGSVERBEN.indexOf(verb.latin) !== -1 : true;
         const moeglich = ADVERBIALE
+            .filter(t => (maxLesson === undefined || t.lektion <= maxLesson))
+            .filter(t => !t.nurBewegung || bewegt)
+            .filter(t => !nurKey || t.key === nurKey)
             .map(t => ({ typ: t, treffer: t.woerter.filter(w => frei.some(n => n.latin === w)) }))
             .filter(x => x.treffer.length > 0);
         if (!moeglich.length) return null;
@@ -163,16 +208,19 @@ const SentenceEngine = (() => {
         const { typ, treffer } = waehle(moeglich);
         const nomen = frei.find(n => n.latin === waehle(treffer));
         if (!nomen) return null;
-        if (belegt) belegt.add(nomen.latin);
 
         const numerus = Math.random() > 0.75 ? 'pl' : 'sg';   // meist Singular, idiomatischer
-        const abl = form(nomen, 'abl', numerus) || form(nomen, 'abl', 'sg');
-        if (!abl) return null;
+        const wortform = form(nomen, typ.kasus, numerus) || form(nomen, typ.kasus, 'sg');
+        if (!wortform) return null;
+        if (belegt) belegt.add(nomen.latin);
 
-        const text = typ.prep ? `${typ.prep} ${abl}` : abl;
+        const prep = Array.isArray(typ.prep) ? waehle(typ.prep) : typ.prep;
+        const text = prep ? `${prep} ${wortform}` : wortform;
+        const kasusName = typ.kasus === 'akk' ? 'Akkusativ' : 'Ablativ';
         return {
             text, role: 'adv', lemma: nomen.latin, head: null,
-            exp: `„${text}“ ist eine adverbiale Bestimmung im Ablativ (${typ.label}) - Frage: ${typ.frage}`
+            advKey: typ.key, advFrage: typ.frage, advKasus: typ.kasus,
+            exp: `„${text}“ ist eine adverbiale Bestimmung im ${kasusName}: ${typ.label} - Frage: ${typ.frage}`
         };
     }
 
@@ -206,8 +254,21 @@ const SentenceEngine = (() => {
         const wortstellung = opt.wordOrder || 'natural';
         const darf = r => erlaubt.indexOf(r) !== -1;
 
+        /* advKey erzwingt eine bestimmte adverbiale Funktion. Gebraucht vom
+           Ablativ-Modus in ViaRomana: Wuerfelt man den Satz einfach aus, kommt
+           die Richtungsangabe fast nie - sie braucht ein Bewegungsverb UND muss
+           sich gegen fuenf andere Funktionen durchsetzen. Gemessen 2,5 % statt
+           der gewuenschten 17 %. Deshalb wird hier auch der Verbtopf passend
+           eingeschraenkt, statt auf die richtige Kombination zu hoffen. */
+        const advKey = opt.advKey || null;
+        const advTyp = advKey ? ADVERBIALE.find(t => t.key === advKey) : null;
+
         const nomen = (opt.nounPool || []).filter(nomenTauglich);
-        const verben = (opt.verbPool || []).filter(verbTauglich);
+        let verben = (opt.verbPool || []).filter(verbTauglich);
+        if (advTyp && advTyp.nurBewegung) {
+            const bewegt = verben.filter(v => BEWEGUNGSVERBEN.indexOf(v.latin) !== -1);
+            if (bewegt.length) verben = bewegt;
+        }
         if (nomen.length < 2 || !verben.length) return null;
 
         const nomNomen = mitKasus(nomen, 'nom');
@@ -230,17 +291,17 @@ const SentenceEngine = (() => {
 
         for (let versuch = 0; versuch < 20; versuch++) {
             const satz = genus === 'Passiv'
-                ? bauePassiv(nomen, nomNomen, transitiv, passivTempora, maxLesson, darf)
-                : baueAktiv(nomen, nomNomen, verben, aktivTempora, maxLesson, darf);
+                ? bauePassiv(nomen, nomNomen, transitiv, passivTempora, maxLesson, darf, advKey)
+                : baueAktiv(nomen, nomNomen, verben, aktivTempora, maxLesson, darf, advKey);
             if (satz) return abschliessen(satz, wortstellung);
         }
 
         // Letzter Ausweg: der einfachste mögliche Satz
-        const einfach = baueAktiv(nomen, nomNomen, verben, ['Präsens'], maxLesson, () => false);
+        const einfach = baueAktiv(nomen, nomNomen, verben, ['Präsens'], maxLesson, () => false, null);
         return einfach ? abschliessen(einfach, wortstellung) : null;
     }
 
-    function baueAktiv(nomen, nomNomen, verben, tempora, maxLesson, darf) {
+    function baueAktiv(nomen, nomNomen, verben, tempora, maxLesson, darf, advKey) {
         const tempus = waehle(tempora);
         const verb = waehleGewichtet(verben);
 
@@ -288,7 +349,7 @@ const SentenceEngine = (() => {
         // Die Spiele haben dafür keine eigene Rolle, und ein Ablativobjekt als
         // "adverbiale Bestimmung" auszugeben wäre fachlich falsch.
 
-        ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf);
+        ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf, verb, advKey);
 
         // Deponentien bilden das Perfekt mit Partizip - das muss zum Subjekt passen.
         const subGenus = NounEngine.decline(subNomen).gender;
@@ -303,7 +364,7 @@ const SentenceEngine = (() => {
         return { tokens, tempus: tLabel, genus: 'Aktiv', verb };
     }
 
-    function bauePassiv(nomen, nomNomen, transitiv, tempora, maxLesson, darf) {
+    function bauePassiv(nomen, nomNomen, transitiv, tempora, maxLesson, darf, advKey) {
         const tempus = waehle(tempora);
         const verb = waehleGewichtet(transitiv);
 
@@ -353,7 +414,7 @@ const SentenceEngine = (() => {
                 }
             }
         } else {
-            ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf);
+            ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf, verb, advKey);
         }
 
         return { tokens, tempus: tLabel, genus: 'Passiv', verb };
@@ -381,7 +442,7 @@ const SentenceEngine = (() => {
      * oder eine adverbiale Bestimmung an. Das Attribut bekommt über `head`
      * sein Bezugswort - ein Attribut ohne Bezugswort wäre keines.
      */
-    function ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf) {
+    function ergaenzeAttributOderAdverbiale(tokens, nomen, belegt, maxLesson, darf, verb, advKey) {
         const bezugsfaehig = tokens
             .map((t, i) => ({ t, i }))
             .filter(x => x.t.role === 'sub' || x.t.role === 'obj' || x.t.role === 'dat');
@@ -403,8 +464,10 @@ const SentenceEngine = (() => {
             }
         }
 
-        if (darf('adv') && maxLesson >= ADVERBIAL_LESSON && Math.random() > 0.4) {
-            const adv = baueAdverbiale(nomen, belegt);
+        // Frueheste adverbiale Funktion ist die Richtungsangabe (L3); welche
+        // davon wirklich in Frage kommt, entscheidet baueAdverbiale selbst.
+        if (darf('adv') && maxLesson >= RICHTUNG_LESSON && (advKey || Math.random() > 0.4)) {
+            const adv = baueAdverbiale(nomen, belegt, maxLesson, advKey, verb);
             if (adv) tokens.push(adv);
         }
     }
@@ -645,6 +708,10 @@ const SentenceEngine = (() => {
         ACI_LESSON,
         ATTRIBUT_LESSON,
         ADVERBIAL_LESSON,
+        RICHTUNG_LESSON,
+        ADVERBIALE,
+        BEWEGUNGSVERBEN,
+        baueAdverbiale,
         DATIVOBJEKT_LESSON,
         PASSIV_LESSON,
         // für Tests und Spiele nützlich:
