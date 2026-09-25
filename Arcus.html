@@ -188,17 +188,12 @@
         /* Der Schleier deckt die Karte zu, der Bogen liegt darüber (z-index 11):
            Sonst verschwände genau in dem Moment, in dem er fertig ist, das
            Bauwerk hinter der Erklärung. Der Text setzt sich deshalb nach unten ab. */
-        .feedback-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(244, 236, 219, 0.96); border-radius: 12px;
-            display: none; flex-direction: column; align-items: center; justify-content: flex-end;
-            padding: 25px; text-align: center; z-index: 10;
-        }
-        .feedback-title { font-family: var(--font-display); font-size: 1.7rem; margin-bottom: 15px; }
-        .feedback-explanation { font-size: 1.05rem; line-height: 1.55; margin-bottom: 25px; max-width: 520px; }
-        .feedback-explanation strong { color: var(--pompeji); }
 
         .end-treasury-grid { font-size: 1rem; color: var(--ink-soft); line-height: 1.7; }
+        /* Der Bogen steht oben im Bild - die Rueckmeldung sitzt deshalb
+           unten, statt mittig darueber zu liegen. */
+        .feedback-overlay { justify-content: flex-end; }
+
     </style>
 </head>
 <body>
