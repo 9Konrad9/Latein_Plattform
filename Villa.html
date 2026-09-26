@@ -22,17 +22,9 @@
             min-height: 100vh; padding: 15px;
         }
 
-        h1 {
-            color: var(--pompeji); font-family: var(--font-display);
-            text-transform: uppercase; font-size: 1.8rem; margin-bottom: 5px;
-            text-align: center; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(80, 60, 30, 0.22);
-        }
-
         .game-container {
-            /* Aussehen steht in theme.css - hier nur die eigenen Masse. */
             max-width: 700px;
-            padding: 20px;
-            min-height: 500px;
+            min-height: 500px;   /* die Baustufen brauchen Hoehe */
         }
 
         /* Bauplatz der Villa: vollformatiges Bild pro Baustufe */
@@ -75,7 +67,7 @@
     <div class="saeule-rechts" aria-hidden="true"></div>
 
     <img class="emblem" src="assets/ui/amphore.png" alt="" aria-hidden="true">
-    <h1>Aedificium Rōmānum</h1>
+    <h1 class="seiten-titel">Aedificium Rōmānum</h1>
     <div style="font-family: var(--font-display); font-style: italic; color: var(--ink-soft); margin-bottom: 15px; text-align: center;">
         KNG-Kongruenz: Meistere die Adjektive!
     </div>

@@ -232,6 +232,17 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   center` und darunter noch einmal `justify-content: safe center`; ältere Browser verwerfen
   die zweite Zeile und behalten die erste.
 
+- **Die Kopfzeile eines Spiels** ist `.seiten-titel` plus `.seiten-untertitel` aus
+  `theme.css` – bewusst als Klasse, nicht als `h1`-Regel: Das Hauptmenü setzt seinen Titel
+  in Marmorcreme auf die Bronzetafel, die Trophäenseite ohne Versalien. Eine `h1`-Regel
+  im Theme würde beiden dazwischenfunken.
+
+  Die zwei Klassen standen dort schon – und **keine einzige Datei hat sie benutzt**,
+  während jedes Spiel seine eigene `h1`-Regel trug, sechs davon Zeichen für Zeichen gleich.
+  Eine tote Regel in `theme.css` ist schlimmer als gar keine: Sie sieht aus, als wäre die
+  Sache geregelt, und der nächste baut daneben seine eigene. `pruefe-theme.js` meldet
+  deshalb seit jetzt auch **Klassen, die kein HTML benutzt** (Regel 7).
+
 - **UI-Assets in `assets/ui/`** werden per `border-image` eingebunden, nicht per
   `background-size` – sonst verzerren Rahmen und Griffe beim Dehnen. **Die Schnittwerte in
   `border-image-slice` sind Bildpixel und skalieren NICHT mit**: Wird ein Asset ausgetauscht oder

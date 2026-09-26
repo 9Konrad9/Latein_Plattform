@@ -96,17 +96,40 @@ body {
 
 /* ---------- Überschriften ---------- */
 
+/* Die Kopfzeile eines Spiels: Name und Untertitel über der Spielfläche.
+
+   Die zwei Klassen gab es hier schon - und KEINE einzige Datei hat sie
+   benutzt. Stattdessen trug jedes Spiel eine eigene h1-Regel, sechs davon
+   Zeichen für Zeichen gleich (Arcus, Kastell, Pendel, Principia, Pronomina,
+   Villa), der Circus dieselbe ohne Schatten, Issa dieselbe kleiner, und die
+   Via Rōmāna schrieb ihre zweimal als style-Attribut ins Markup. Tote
+   Regeln in theme.css sind schlimmer als gar keine: Sie sehen aus, als
+   wäre die Sache geregelt.
+
+   Absichtlich als KLASSE, nicht als h1: Das Hauptmenü setzt seinen Titel
+   in Marmorcreme auf die Bronzetafel, die Trophäenseite ohne Versalien.
+   Eine h1-Regel hier würde beiden dazwischenfunken - und pruefe-theme.js
+   müsste eine Ausnahme dafür bekommen, statt sauber zu melden.
+
+   Genommen sind die Werte der Mehrheit: 1,8 rem, 2 px Sperrung (nicht 3,
+   wie es hier ungenutzt stand). */
+
 .seiten-titel {
     color: var(--pompeji);
     font-family: var(--font-display);
     text-transform: uppercase;
-    letter-spacing: 3px;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
     text-align: center;
+    text-shadow: 2px 2px 4px rgba(80, 60, 30, 0.22);
 }
 
 .seiten-untertitel {
+    font-family: var(--font-display);
     color: var(--ink-soft);
     font-style: italic;
+    margin-bottom: 15px;
     text-align: center;
 }
 
@@ -367,6 +390,12 @@ body {
    box-shadow), sonst läge ein Rechteck hinter einem unregelmässigen Bogen. */
 .game-container {
     width: 100%;
+    /* Innenabstand und Mindesthöhe standen in sieben Dateien einzeln da -
+       20 gegen 25 px, 420 bis 500 px. Der Pergamentrand liefert den
+       sichtbaren Abstand längst; diese Polsterung hält den Inhalt nur von
+       der gerissenen Kante weg. Wer mehr braucht, überschreibt es. */
+    padding: 20px;
+    min-height: 480px;
     border-style: solid;
     /* Mitwachsend, nicht fest: Bei festen 41/38/60/43 px frass der Rand auf
        einem 320-px-Schirm 42 % der Breite - der Inhalt schrumpfte auf 169 px.
