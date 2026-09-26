@@ -98,6 +98,8 @@
         <div class="overlay-screen" id="end-screen">
             <h2 style="font-family: var(--font-display); color: var(--pompeji); font-size: 2.5rem; margin-bottom: 10px;">OPUS PERFECTUM!</h2>
             <p style="font-size: 1.2rem; max-width: 500px; line-height: 1.6;">Die Villa erstrahlt in vollem Glanz! Deine Beherrschung der KNG-Kongruenz ist wahrlich kaiserlich.</p>
+            <p id="end-extra" style="font-size: 1.05rem; max-width: 500px; line-height: 1.6; margin-top: 10px;"></p>
+            <button class="main-btn wiederholen" style="display:none;" id="btn-review">📚 Fehler wiederholen</button>
             <button class="main-btn" id="btn-restart">Neue Villa bauen</button>
             <a href="index.html" class="main-btn zweitrangig">Zurück zum Menü</a>
         </div>
@@ -235,6 +237,21 @@
         const totalStages = 6;
         let currentCorrectAnswer = "";
         let roundLocked = false;
+
+        /* Die feste zweite Runde: Was danebenging, kommt am Ende noch einmal -
+           EIN Durchgang, nicht so lange, bis es sitzt. Sie zaehlt NICHT in den
+           Vokabelkasten (Entscheidung des Fachlehrers); die Achievement-Zaehler
+           laufen weiter.
+           Die Villa braucht dafuer etwas, was sie vorher nicht hatte: eine
+           Runde als Gegenstand. Frueher wurden Nomen, Kasus und Distraktoren
+           in nextQuestion() gewuerfelt und sofort in die Knoepfe geschrieben -
+           damit liess sich keine Frage ein zweites Mal stellen. */
+        let currentRound = null;
+        let missedItems = [];
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+        let isReviewMode = false;
         
         let nounPool = [];
         let adjPool = [];
@@ -257,6 +274,7 @@
             document.getElementById('btn-start-uo').addEventListener('click', function() { promptLessonsAndStart('uo'); });
             document.getElementById('btn-start-i').addEventListener('click', function() { promptLessonsAndStart('i'); });
             document.getElementById('btn-start-mixed').addEventListener('click', function() { promptLessonsAndStart('mixed'); });
+            document.getElementById('btn-review').addEventListener('click', startReview);
             document.getElementById('btn-restart').addEventListener('click', function() { promptLessonsAndStart(); });
             for(let i=0; i<4; i++) {
                 document.getElementById('opt' + i).addEventListener('click', function() { submitAnswer(i); });
@@ -289,6 +307,8 @@
             }
 
             currentStage = 0;
+            missedItems = [];
+            isReviewMode = false;
             updateProgressBar();
             document.getElementById('villa-image').style.display = 'none';
             document.getElementById('villa-placeholder').style.display = 'flex';
@@ -299,45 +319,61 @@
             nextQuestion();
         }
 
-        function nextQuestion() {
-            roundLocked = false;
-
-            let noun = nounPool[Math.floor(Math.random() * nounPool.length)];
-            let adj = adjPool[Math.floor(Math.random() * adjPool.length)];
-            currentVillaAdj = adj;
+        /* Frueher wurden Nomen, Kasus und Distraktoren hier gewuerfelt und
+           sofort in die Knoepfe geschrieben. Damit liess sich keine Frage ein
+           zweites Mal stellen - fuer die Wiederholungsrunde muss eine Runde
+           ein Gegenstand sein, den man aufheben kann. */
+        function baueRunde() {
+            const noun = nounPool[Math.floor(Math.random() * nounPool.length)];
+            const adj = adjPool[Math.floor(Math.random() * adjPool.length)];
 
             // Nur erlaubte Fälle (Nom, Gen, Akk) auswählen
             const faelle = erlaubteFaelle();
-            let caseIdx = faelle[Math.floor(Math.random() * faelle.length)];
-            let numIdx = Math.floor(Math.random() * erlaubteNumeri());
+            const caseIdx = faelle[Math.floor(Math.random() * faelle.length)];
+            const numIdx = Math.floor(Math.random() * erlaubteNumeri());
 
-            let nounGender = noun.middle.split(" ")[1] || "m.";
-            
-            let declinedNoun = declineNoun(noun, caseIdx, numIdx);
-            currentCorrectAnswer = declineAdjective(adj, nounGender, caseIdx, numIdx);
+            const nounGender = noun.middle.split(" ")[1] || "m.";
+            const declinedNoun = declineNoun(noun, caseIdx, numIdx);
+            const korrekt = declineAdjective(adj, nounGender, caseIdx, numIdx);
 
-            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${adj.latin}</strong> für:<br><span class="q-highlight">${declinedNoun} <span style="font-size:1rem; color: var(--ink-soft);">(${noun.latin}, ${noun.middle})</span></span>`;
-
-            // Intelligente Distraktoren: Gleiches Adjektiv, aber falsche KNG-Kombinationen (ebenfalls nur aus erlaubten Fällen)
-            let wrongPool = [];
+            // Intelligente Distraktoren: Gleiches Adjektiv, aber falsche
+            // KNG-Kombinationen (ebenfalls nur aus erlaubten Fällen)
+            const wrongPool = [];
             let safety = 0;
-            while(wrongPool.length < 3 && safety < 50) {
+            while (wrongPool.length < 3 && safety < 50) {
                 safety++;
-                let randCase = faelle[Math.floor(Math.random() * faelle.length)];
-                let randNum = Math.floor(Math.random() * erlaubteNumeri());
-                let randGen = ["m.", "f.", "n."][Math.floor(Math.random() * 3)];
-                
-                let fakeForm = declineAdjective(adj, randGen, randCase, randNum);
-                if(fakeForm !== currentCorrectAnswer && !wrongPool.includes(fakeForm)) {
+                const randCase = faelle[Math.floor(Math.random() * faelle.length)];
+                const randNum = Math.floor(Math.random() * erlaubteNumeri());
+                const randGen = ["m.", "f.", "n."][Math.floor(Math.random() * 3)];
+
+                const fakeForm = declineAdjective(adj, randGen, randCase, randNum);
+                if (fakeForm !== korrekt && !wrongPool.includes(fakeForm)) {
                     wrongPool.push(fakeForm);
                 }
             }
 
-            const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
+            return {
+                adj: adj,
+                noun: noun,
+                declinedNoun: declinedNoun,
+                correct: korrekt,
+                options: [korrekt, ...wrongPool].sort(() => Math.random() - 0.5)
+            };
+        }
+
+        function nextQuestion(forced) {
+            roundLocked = false;
+
+            const r = forced || baueRunde();
+            currentRound = r;
+            currentVillaAdj = r.adj;
+            currentCorrectAnswer = r.correct;
+
+            document.getElementById('q-text').innerHTML = `Finde die passende Form von <strong>${r.adj.latin}</strong> für:<br><span class="q-highlight">${r.declinedNoun} <span style="font-size:1rem; color: var(--ink-soft);">(${r.noun.latin}, ${r.noun.middle})</span></span>`;
 
             for (let i = 0; i < 4; i++) {
                 const btn = document.getElementById('opt' + i);
-                btn.textContent = finalOptions[i];
+                btn.textContent = r.options[i];
                 btn.className = "build-btn";
                 btn.disabled = false;
             }
@@ -351,21 +387,31 @@
 
             const selectedBtn = document.getElementById('opt' + idx);
             const isCorrect = (selectedBtn.textContent === currentCorrectAnswer);
-            LudiProgress.recordVocabAttempt(currentVillaAdj.latin, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentVillaAdj.latin, isCorrect);
 
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
             // Das Spiel übt genau eine Sache, unabhängig vom gewählten Adjektiv-Modus.
             const unlock = LudiProgress.recordCategoryAttempt('KNG-Kongruenz', isCorrect);
             if (unlock) AchievementToast.show(unlock);
 
             if (isCorrect) {
                 selectedBtn.classList.add('correct');
-                currentStage++;
-                updateProgressBar();
-                document.getElementById('villa-placeholder').style.display = 'none';
-                const img = document.getElementById('villa-image');
-                img.style.display = 'block';
-                img.src = 'assets/villa/villa_stage_' + currentStage + '.jpg';
+                if (isReviewMode) {
+                    reviewCorrectCount++;
+                } else {
+                    // Die Villa waechst nur im Spiel, nicht in der Wiederholung -
+                    // sonst waere sie am Ende zweimal fertig.
+                    currentStage++;
+                    updateProgressBar();
+                    document.getElementById('villa-placeholder').style.display = 'none';
+                    const img = document.getElementById('villa-image');
+                    img.style.display = 'block';
+                    img.src = 'assets/villa/villa_stage_' + currentStage + '.jpg';
+                }
             } else {
+                if (!isReviewMode) missedItems.push(currentRound);
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
                     if (document.getElementById('opt' + i).textContent === currentCorrectAnswer) {
@@ -375,13 +421,45 @@
             }
 
             setTimeout(() => {
-                if (currentStage >= totalStages) {
+                if (isReviewMode) {
+                    reviewIdx++;
+                    if (reviewIdx < reviewQueue.length) nextQuestion(reviewQueue[reviewIdx]);
+                    else endReview();
+                } else if (currentStage >= totalStages) {
                     LudiProgress.saveGameResult('villa', currentStage, totalStages);
-                    document.getElementById('end-screen').style.display = 'flex';
+                    zeigeEndbildschirm();
                 } else {
                     nextQuestion();
                 }
             }, 1200);
+        }
+
+        function zeigeEndbildschirm() {
+            const reviewBtn = document.getElementById('btn-review');
+            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
+            if (missedItems.length) reviewBtn.innerText =
+                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'falsche Form' : 'falsche Formen'} wiederholen`;
+            document.getElementById('end-extra').innerText = '';
+            document.getElementById('end-screen').style.display = 'flex';
+        }
+
+        /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss. */
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-screen').style.display = 'none';
+            nextQuestion(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('end-extra').innerHTML =
+                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig bestimmt.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
+            document.getElementById('end-screen').style.display = 'flex';
         }
 
         function updateProgressBar() {

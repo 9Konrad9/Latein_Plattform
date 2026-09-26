@@ -146,6 +146,8 @@
         <div id="end-box" style="display: none; text-align: center; padding: 20px 10px; margin: auto;">
             <h2 id="end-title" style="font-size: 2.2rem; color: var(--pompeji); font-family: var(--font-display); margin-bottom: 20px;">FALL GELÖST!</h2>
             <p id="end-msg" style="margin: 20px 0; font-size: 1.2rem; line-height: 1.6;"></p>
+            <button class="start-btn wiederholen" style="display:none; margin-bottom:12px;" id="btn-review">📚 Fehler wiederholen</button>
+            <br>
             <button class="start-btn" style="font-size:1.1rem; padding:12px 30px;" id="btn-restart">Zur Modus-Auswahl</button>
             <br>
             <a href="index.html" class="start-btn zweitrangig" style="margin-top: 15px;">Zurück zum Menü</a>
@@ -248,6 +250,17 @@
         let roundLocked = false;
         let currentMode = null; // 'possessiv' oder 'personal'
 
+        /* Die feste zweite Runde: Was danebenging, kommt am Ende noch einmal -
+           einmal, nicht so lange, bis es sitzt. Sie zaehlt NICHT in den
+           Vokabelkasten (Entscheidung des Fachlehrers); die Achievement-Zaehler
+           laufen weiter. */
+        let missedItems = [];
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+        let isReviewMode = false;
+        let currentCase = null;
+
         // Modus → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
         const MODE_CATEGORY = {
             possessiv:    'Possessivpronomen',
@@ -340,6 +353,7 @@
             document.getElementById('btn-start-demonstrativ').addEventListener('click', promptLessonsAndStartDemonstrativ);
             document.getElementById('btn-start-relativ').addEventListener('click', promptLessonsAndStartRelativ);
             document.getElementById('btn-restart').addEventListener('click', backToModeSelect);
+            document.getElementById('btn-review').addEventListener('click', startReview);
             document.getElementById('btn-next-case').addEventListener('click', nextCase);
             for (let i = 0; i < 4; i++) {
                 document.getElementById('opt' + i).addEventListener('click', function() { selectOption(i); });
@@ -368,6 +382,8 @@
             orderedCases = [...cases].sort(() => Math.random() - 0.5);
             currentIdx = 0;
             correctCount = 0;
+            missedItems = [];
+            isReviewMode = false;
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -539,6 +555,7 @@
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateDemonstrativRound(nounPool));
                 currentIdx = 0; correctCount = 0;
+                missedItems = []; isReviewMode = false;
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('end-box').style.display = 'none';
                 document.getElementById('combat-box').style.display = 'flex';
@@ -561,6 +578,7 @@
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateRelativeRound(nounPool));
                 currentIdx = 0; correctCount = 0;
+                missedItems = []; isReviewMode = false;
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('end-box').style.display = 'none';
                 document.getElementById('combat-box').style.display = 'flex';
@@ -597,6 +615,8 @@
             }
             currentIdx = 0;
             correctCount = 0;
+            missedItems = [];
+            isReviewMode = false;
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -605,14 +625,19 @@
             showCase();
         }
 
-        function showCase() {
+        function showCase(forced) {
             roundLocked = false;
             document.getElementById('feedback-box').style.display = 'none';
 
-            const c = orderedCases[currentIdx];
+            const c = forced || orderedCases[currentIdx];
+            currentCase = c;
 
-            document.getElementById('case-number').innerText = `FALL ${currentIdx + 1} VON ${orderedCases.length}`;
-            document.getElementById('progress-bar').style.width = (currentIdx / orderedCases.length * 100) + '%';
+            document.getElementById('case-number').innerText = isReviewMode
+                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+                : `FALL ${currentIdx + 1} VON ${orderedCases.length}`;
+            document.getElementById('progress-bar').style.width = isReviewMode
+                ? (reviewIdx / reviewQueue.length * 100) + '%'
+                : (currentIdx / orderedCases.length * 100) + '%';
 
             document.getElementById('latin-sentence').innerHTML = c.latin.replace('___', '<span class="blank">___</span>');
             document.getElementById('translation-hint').innerHTML = c.translation.replace(/\b(EIGENEN|EIGENES|DESSEN|DEREN)\b/, '<span class="blank">$1</span>');
@@ -632,7 +657,7 @@
 
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
-            const c = orderedCases[currentIdx];
+            const c = currentCase;
             const selectedBtn = document.getElementById('opt' + idx);
             const selectedText = selectedBtn.innerText;
             const isCorrect = (selectedText === c.correct);
@@ -643,12 +668,13 @@
             fbBox.style.display = 'flex';
 
             if (isCorrect) {
-                correctCount++;
+                if (isReviewMode) reviewCorrectCount++; else correctCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🔍 FALL GELÖST!";
                 fbTitle.style.color = "var(--richtig)";
                 fbText.innerHTML = c.explanation;
             } else {
+                if (!isReviewMode) missedItems.push(c);
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
                     if (document.getElementById('opt' + i).innerText === c.correct) {
@@ -660,10 +686,13 @@
                 fbText.innerHTML = c.explanation;
             }
 
-            if (currentMode !== 'possessiv' && c._trackWord) {
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode && currentMode !== 'possessiv' && c._trackWord) {
                 LudiProgress.recordVocabAttempt(c._trackWord, isCorrect);
             }
 
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
             // Kategorie ist die Pronomenart. Auch der Possessiv-Modus zählt hier mit -
             // er ist nur beim Vokabel-Tracking ausgenommen, weil er mit handkuratierten
             // Sätzen statt mit einzelnen Lemmata arbeitet.
@@ -672,12 +701,48 @@
         }
 
         function nextCase() {
+            if (isReviewMode) {
+                reviewIdx++;
+                if (reviewIdx < reviewQueue.length) showCase(reviewQueue[reviewIdx]);
+                else endReview();
+                return;
+            }
+
             currentIdx++;
             if (currentIdx >= orderedCases.length) {
                 endGame();
             } else {
                 showCase();
             }
+        }
+
+        /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss.
+           Nicht so lange, bis alles sitzt - das war die Entscheidung. */
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-box').style.display = 'none';
+            document.getElementById('combat-box').style.display = 'flex';
+
+            showCase(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            document.getElementById('combat-box').style.display = 'none';
+            document.getElementById('feedback-box').style.display = 'none';
+            isReviewMode = false;
+
+            document.getElementById('end-box').style.display = 'block';
+            document.getElementById('btn-review').style.display = 'none';
+
+            const title = document.getElementById('end-title');
+            title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            title.style.color = "var(--pompeji)";
+            document.getElementById('end-msg').innerHTML =
+                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Fälle nochmal bearbeitet und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig gelöst.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel häufiger dran.`;
         }
 
         function endGame() {
@@ -688,6 +753,11 @@
             const title = document.getElementById('end-title');
             const msg = document.getElementById('end-msg');
             endBox.style.display = 'block';
+
+            const reviewBtn = document.getElementById('btn-review');
+            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
+            if (missedItems.length) reviewBtn.innerText =
+                `\u{1F4DA} ${missedItems.length} ${missedItems.length === 1 ? 'falschen Fall' : 'falsche Fälle'} wiederholen`;
 
             const saveIds = { personal: 'personalpronomen', possessiv: 'possessiv', demonstrativ: 'demonstrativpronomen', relativ: 'relativpronomen' };
             LudiProgress.saveGameResult(saveIds[currentMode] || currentMode, correctCount, orderedCases.length);
