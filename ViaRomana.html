@@ -37,6 +37,24 @@
             overflow: hidden;
         }
 
+        /* Die zwei Pergamentbögen: der Startbildschirm und die Spielfläche.
+           Das Aussehen kommt aus theme.css, hier steht nur, wie breit und wie
+           hoch sie im Vollbild-Layout stehen dürfen. */
+        .game-container {
+            max-width: 800px;
+            align-items: center;
+        }
+        #game-area { flex: 1 1 auto; min-height: 0; }
+        #start-screen { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+
+        .header-area { margin-bottom: 10px; padding-bottom: 6px; }
+            .sentence-box { margin-bottom: 14px; padding: 18px 14px; min-height: 90px; }
+            .sentence-text { font-size: 1.8rem; }
+            .syntax-grid { gap: 10px; margin-bottom: 14px; }
+            .btn-syntax { font-size: 1rem; padding: 8px 4px; }
+            .road-container { padding: 8px 10px; }
+        }
+
         .header-area {
             width: 100%; max-width: 800px;
             display: flex; justify-content: space-between; align-items: center;
@@ -139,13 +157,15 @@
         .btn-main { margin-top: 20px; }
 
         /* Endbildschirm */
-        .end-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--wand); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center;
-        }
 
         .notice-box { max-width: 600px; }
-    </style>
+        /* Der Pergamentrand kostet oben und unten Platz. Auf kurzen oder
+           schmalen Schirmen ruecken die Teile deshalb enger zusammen, damit
+           die Meilensteine unten im Bild bleiben - sie sind die
+           Fortschrittsanzeige, und unter der Kante nuetzen sie nichts.
+           Gemessen ohne diese Regel: 43 px zu hoch auf 360x740. */
+        @media (max-height: 760px), (max-width: 520px) {
+        </style>
 </head>
 <body>
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
@@ -154,7 +174,7 @@
     <div class="saeule-links" aria-hidden="true"></div>
     <div class="saeule-rechts" aria-hidden="true"></div>
 
-    <div class="end-screen" id="start-screen" style="display: flex; position: relative; height: auto; padding: 20px 15px;">
+    <div class="game-container start-screen" id="start-screen">
         <h1 style="color: var(--pompeji); font-size: 2.2rem; margin-bottom: 15px; font-family: 'Georgia', serif; text-transform: uppercase;">Via Rōmāna</h1>
         <div class="notice-box">
             <h3>📜 Der Auftrag:</h3>
@@ -172,7 +192,7 @@
         </p>
     </div>
 
-    <div id="game-area" style="display: none; width: 100%; flex-direction: column; align-items: center; height: 100%;">
+    <div class="game-container" id="game-area" style="display: none;">
     <div class="header-area">
         <div class="title">Via Rōmāna</div>
         <div class="task-instruction" id="task-instruction">Bestimme das blau markierte Satzglied!</div>

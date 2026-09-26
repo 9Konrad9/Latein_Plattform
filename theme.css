@@ -394,15 +394,16 @@ body {
 
    Via Rōmāna hat bewusst etwas anderes: dort sitzt eine Karte im Overlay
    statt einer vollflächigen Überdeckung. */
-/* Und dieselbe Schicht noch dreimal unter anderem Namen: .start-overlay
-   (Bomba, Fliegenklatsche), .overlay (IssaJump), .overlay-screen (Villa).
-   Vier Namen, dieselbe Sache - eine fast deckende Lage hellen Putzes über
-   dem Spiel, Inhalt mittig in einer Spalte.
+/* Und dieselbe Schicht noch viermal unter anderem Namen: .start-overlay
+   (Bomba, Fliegenklatsche), .overlay (IssaJump), .overlay-screen (Villa),
+   .end-screen (Duell und Via Rōmāna). Sechs Namen, dieselbe Sache - eine fast
+   deckende Lage hellen Putzes über dem Spiel, Inhalt mittig in einer Spalte.
 
    Zwei Unterschiede waren echt und bleiben:
-   - Die drei Vollbildspiele haben keinen positionierten .game-container, über
-     den sie sich legen könnten. Ihre Schicht ist deshalb fest verankert (fixed) und liegt
-     über allem, auch über der Kopfleiste.
+   - Wo es keinen positionierten .game-container gibt, über den sich die
+     Schicht legen könnte, ist sie fest verankert (fixed) und liegt über
+     allem, auch über der Kopfleiste. Das betrifft Bomba, die Fliegenklatsche
+     und die Endbildschirme von Duell und Via Rōmāna.
    - Wer beim Laden schon sichtbar ist (Startbildschirm), wer nicht
      (Rückmeldung, Endbildschirm). Das steht unten.
    Der Rest war Zufall: 0,96 gegen 0,97 Deckung, 20 gegen 24 gegen 25 px
@@ -411,7 +412,8 @@ body {
 .feedback-overlay,
 .start-overlay,
 .overlay,
-.overlay-screen {
+.overlay-screen,
+.end-screen {
     position: absolute;
     inset: 0;
     background: rgba(244, 236, 219, 0.97);
@@ -439,22 +441,30 @@ body {
 .feedback-overlay,
 .start-overlay,
 .overlay,
-.overlay-screen { scrollbar-width: thin; scrollbar-color: var(--bronze) transparent; }
+.overlay-screen,
+.end-screen,
+.game-container { scrollbar-width: thin; scrollbar-color: var(--bronze) transparent; }
 .feedback-overlay::-webkit-scrollbar,
 .start-overlay::-webkit-scrollbar,
 .overlay::-webkit-scrollbar,
-.overlay-screen::-webkit-scrollbar { width: 8px; }
+.overlay-screen::-webkit-scrollbar,
+.end-screen::-webkit-scrollbar,
+.game-container::-webkit-scrollbar { width: 8px; }
 .feedback-overlay::-webkit-scrollbar-thumb,
 .start-overlay::-webkit-scrollbar-thumb,
 .overlay::-webkit-scrollbar-thumb,
-.overlay-screen::-webkit-scrollbar-thumb { background: var(--bronze); border-radius: 4px; }
+.overlay-screen::-webkit-scrollbar-thumb,
+.end-screen::-webkit-scrollbar-thumb,
+.game-container::-webkit-scrollbar-thumb { background: var(--bronze); border-radius: 4px; }
 
 /* Vollbild: kein Vorfahr, über den sich die Schicht legen könnte. */
-.start-overlay { position: fixed; z-index: 500; }
+.start-overlay,
+.end-screen { position: fixed; z-index: 500; }
 
 /* Wer beim Laden unsichtbar ist. Das JavaScript schaltet ihn auf flex. */
 .feedback-overlay,
-.overlay-screen { display: none; }
+.overlay-screen,
+.end-screen { display: none; }
 
 /* Die Überschrift auf der Schicht. Stand in Bomba, Fliegenklatsche und
    IssaJump je einzeln da - 2 gegen 2 gegen 1,5 rem.
