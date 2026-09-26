@@ -512,7 +512,8 @@
             const fbText = document.getElementById('fb-text');
             fbBox.style.display = 'flex';
 
-            LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
 
             // Das Spiel übt Grundformen - bei Nomen Genitiv + Geschlecht, bei Verben die
             // Stammformen. Beides zählt auf denselben Zähler, weil es dieselbe Fähigkeit ist.

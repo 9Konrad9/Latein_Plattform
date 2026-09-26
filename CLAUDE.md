@@ -386,6 +386,21 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     ein. Begründung: Sonst ginge der Fortschritt zu schnell – wer ein Wort erst im zweiten
     Anlauf und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.
     Technisch heißt das: in der zweiten Runde **kein** `recordVocabAttempt`.
+  - **Gebaut in fünf Spielen** (Arcus, Kastell, Pendel, Principia, ViaRomana), es fehlt
+    noch in CircusV, Duell, IssaJump, Pronomina, Villa. Bomba bleibt draußen: Das Gerät
+    wandert im Kreis, die Runde endet mit dem Knall.
+  - **Die Entscheidung stand da, umgesetzt war sie nicht.** Alle fünf riefen
+    `recordVocabAttempt` ungeschützt auf – der Rest der Runde war sauber getrennt
+    (Mauerstärke, Punkte, `missedItems` hingen überall an `!isReviewMode`), nur der
+    Kasten nicht. Kastells Endtext behauptete sogar „Was diesmal wieder falsch war,
+    bleibt auf Rot", was damit nur zufällig stimmte. `test-wiederholung.js` nagelt es
+    jetzt fest, und zwar am Verhalten: Spiel starten, antworten (der Kasten MUSS sich
+    melden), `startReview()` über den echten Weg, wieder antworten (er darf NICHT).
+    Die Gegenprobe gehört dazu – ohne sie wäre der Test auch grün, wenn ein Spiel den
+    Kasten nie bedient.
+  - Noch offen: Ob auch die **Achievement-Zähler** (`recordCategoryAttempt`) in der
+    Wiederholung schweigen sollen. Die Entscheidung des Fachlehrers galt dem
+    Vokabelkasten; die Zähler laufen weiter mit.
   - Noch offen: feste zweite Runde, oder so lange, bis alles einmal richtig war?
 
 - **Klassische Vokabelspiele digitalisieren.** Vom Fachlehrer ausgewählt (September 2026),

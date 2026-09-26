@@ -537,7 +537,8 @@
             const isCorrect = modus === 'ablativ'
                 ? (chosenRole === currentAdvKey)
                 : (chosenRole === currentTargetRole);
-            LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
 
             // Achievement-Kategorie ist das abgefragte Satzglied selbst.
             const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentTargetRole], isCorrect);

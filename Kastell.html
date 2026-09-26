@@ -673,7 +673,8 @@
 
             fbBox.style.display = 'flex';
 
-            LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
             const wordTypeLabel = gameMode === 'noun' ? 'des Substantivs' : 'des Verbs';
             // Kasus-Namen sind im Deutschen maskulin ("der Nominativ"), Person ist feminin ("die 1. Person")
             const article = gameMode === 'noun' ? 'der' : 'die';

@@ -438,7 +438,8 @@
             updateStepPills();
 
             const isCorrect = !roundHadError;
-            LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
 
             const fbBox = document.getElementById('feedback-box');
             const fbTitle = document.getElementById('fb-title');

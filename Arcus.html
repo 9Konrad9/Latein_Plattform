@@ -470,7 +470,11 @@
     }
 
     function melde(kategorie, richtig) {
-        LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
+        // Die Wiederholungsrunde zaehlt NICHT in den Vokabelkasten.
+        // Entscheidung des Fachlehrers: Wer ein Wort erst im zweiten Anlauf
+        // und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt -
+        // sonst ginge der Fortschritt zu schnell.
+        if (!isReviewMode) LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
         const unlock = LudiProgress.recordCategoryAttempt(kategorie, richtig);
         if (unlock) AchievementToast.show(unlock);
     }
