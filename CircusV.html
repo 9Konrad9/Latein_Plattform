@@ -185,6 +185,7 @@
             <p style="font-size: 1.2rem; margin: 15px 0; max-width: 520px; line-height: 1.6;" id="end-msg">
                 Steuere das blaue Gespann (Factio Veneta) durch fehlerfreie Antworten um die Arena. Doch Vorsicht: Die rote KI (Factio Russata) nutzt jeden Fehler aus, um an dir vorbeizuziehen!
             </p>
+            <button class="nav-btn wiederholen" style="display:none;" id="btn-review">📚 Fehler wiederholen</button>
             <!-- onclick entfernt, wird via JavaScript sicher gebunden -->
             <div class="modus-wahl">
                 <button class="nav-btn" data-modus="mc">Rennen starten!</button>
@@ -264,6 +265,19 @@
         let currentVocabItem = null;
         let activePool = [];
 
+        /* Die feste zweite Runde nach dem Rennen: Was danebenging, kommt noch
+           einmal - EIN Durchgang, nicht so lange, bis es sitzt. Sie zaehlt NICHT
+           in den Vokabelkasten (Entscheidung des Fachlehrers); die
+           Achievement-Zaehler laufen weiter.
+           Im Kartenmodus gibt es sie nicht: Der hat kein Ende, sondern laeuft,
+           bis jemand zurueck ins Menue geht - es gaebe also keinen Moment, an
+           dem man die Fehler anbieten koennte. */
+        let missedItems = [];
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+        let isReviewMode = false;
+
         /* ============ DREI MODI ============
            'mc'         - das klassische Rennen mit vier Antworten, ohne Zeit je Karte
            'karten'     - reines Karteikartenlernen: aufdecken, selbst einschätzen.
@@ -342,6 +356,7 @@
                 });
             });
 
+            document.getElementById('btn-review').addEventListener('click', startReview);
             document.getElementById('btn-aufdecken').addEventListener('click', deckeAuf);
             document.getElementById('btn-gewusst').addEventListener('click', function () { beurteileKarte(true); });
             document.getElementById('btn-nicht-gewusst').addEventListener('click', function () { beurteileKarte(false); });
@@ -373,6 +388,9 @@
             playerLaps = 0;
             aiLaps = 0;
             kartenZaehler = 0;
+            missedItems = [];
+            isReviewMode = false;
+            document.getElementById('btn-review').style.display = 'none';
 
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('back-menu-btn').style.display = 'inline-block';
@@ -480,8 +498,10 @@
             document.getElementById('svg-ai').setAttribute('transform', `translate(${aiCoords.x}, ${aiCoords.y}) rotate(${aiCoords.angle})`);
         }
 
-        function nextQuestion() {
-            if (spielModus !== 'karten' && timeLeft <= 0) return;
+        function nextQuestion(forced) {
+            // In der Wiederholung ist die Rennuhr laengst abgelaufen - die
+            // Sperre darf dort nicht greifen.
+            if (!isReviewMode && spielModus !== 'karten' && timeLeft <= 0) return;
 
             stoppeKartenUhr();
 
@@ -489,7 +509,8 @@
             // sitzen, erscheinen häufiger. Circus war das einzige Vokabelspiel,
             // das stattdessen gleichverteilt gewürfelt hat - Kastell, Principia
             // und Issa nutzen weightedPick seit jeher.
-            const item = LudiProgress.weightedPick(activePool)
+            const item = forced
+                      || LudiProgress.weightedPick(activePool)
                       || activePool[Math.floor(Math.random() * activePool.length)];
             currentVocabItem = item;
 
@@ -526,7 +547,9 @@
                 btn.disabled = false;
             }
 
-            if (spielModus === 'wettkampf') starteKartenUhr();
+            // Keine Uhr in der Wiederholung: Dort geht es ums Nachschauen,
+            // nicht ums Tempo.
+            if (spielModus === 'wettkampf' && !isReviewMode) starteKartenUhr();
         }
 
         /* ---------- Kartenmodus ----------
@@ -603,7 +626,11 @@
         function zeitAbgelaufen() {
             for (let i = 0; i < 4; i++) document.getElementById('opt' + i).disabled = true;
 
+            // Zu langsam zaehlt wie falsch - also auch fuer die Wiederholung.
+            // In der Wiederholung selbst laeuft keine Uhr, hier kann also nur
+            // das Rennen stehen.
             LudiProgress.recordVocabAttempt(currentVocabItem.latin, false);
+            missedItems.push(currentVocabItem);
             const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[currentVocabItem.type];
             if (kategorie) LudiProgress.recordCategoryAttempt(kategorie, false);
 
@@ -632,8 +659,14 @@
             const selectedText = selectedButton.textContent.trim();
             const targetAnswer = currentCorrectAnswer.trim();
             const isCorrect = (selectedText === targetAnswer);
-            LudiProgress.recordVocabAttempt(currentVocabItem.latin, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentVocabItem.latin, isCorrect);
+            if (!isCorrect && !isReviewMode) missedItems.push(currentVocabItem);
+            if (isCorrect && isReviewMode) reviewCorrectCount++;
 
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein
+            // Vergessen: Trophaeen zaehlen Fleiss, der Vokabelkasten steuert
+            // die Auswahl.
             const wordTypeToCategory = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' };
             const category = wordTypeToCategory[currentVocabItem.type];
             if (category) {
@@ -643,10 +676,13 @@
 
             if (isCorrect) {
                 selectedButton.classList.add('correct');
-                playerProgress += 10; 
-                if (playerProgress >= 100) {
-                    playerLaps++;
-                    playerProgress -= 100;
+                // Das Rennen ist vorbei - in der Wiederholung faehrt niemand mehr.
+                if (!isReviewMode) {
+                    playerProgress += 10;
+                    if (playerProgress >= 100) {
+                        playerLaps++;
+                        playerProgress -= 100;
+                    }
                 }
             } else {
                 selectedButton.classList.add('wrong');
@@ -656,10 +692,12 @@
                     }
                 }
                 
-                aiProgress += 15; 
-                if (aiProgress >= 100) {
-                    aiLaps++;
-                    aiProgress -= 100;
+                if (!isReviewMode) {
+                    aiProgress += 15;
+                    if (aiProgress >= 100) {
+                        aiLaps++;
+                        aiProgress -= 100;
+                    }
                 }
             }
 
@@ -667,10 +705,46 @@
             updatePositions();
 
             setTimeout(() => {
-                if (timeLeft > 0) {
+                if (isReviewMode) {
+                    reviewIdx++;
+                    if (reviewIdx < reviewQueue.length) nextQuestion(reviewQueue[reviewIdx]);
+                    else endReview();
+                } else if (timeLeft > 0) {
                     nextQuestion();
                 }
             }, 1200);
+        }
+
+        /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss.
+           Ohne Uhr, ohne Gegner - das Rennen ist gelaufen. */
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            if (timerInterval) clearInterval(timerInterval);
+            stoppeKartenUhr();
+            document.getElementById('karten-uhr').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'none';
+
+            nextQuestion(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            stoppeKartenUhr();
+
+            const overlay = document.getElementById('end-screen');
+            const title = document.getElementById('end-title');
+            const msg = document.getElementById('end-msg');
+
+            document.getElementById('btn-review').style.display = 'none';
+            title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            title.style.color = "var(--pompeji)";
+            msg.innerHTML =
+                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Wörter nochmal angeschaut und dabei <strong>${reviewCorrectCount}</strong> davon jetzt gewusst.<br><br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot und kommt beim nächsten Rennen häufiger dran.`;
+            overlay.style.display = 'flex';
         }
 
         function translateType(type) {
@@ -689,6 +763,11 @@
             const msg = document.getElementById('end-msg');
 
             LudiProgress.saveGameResult('circus', playerLaps, null);
+
+            const reviewBtn = document.getElementById('btn-review');
+            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
+            if (missedItems.length) reviewBtn.innerText =
+                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Wort' : 'Wörter'} wiederholen`;
 
             overlay.style.display = 'flex';
             title.innerText = "⏱️ FINIS SPATIĪ!";
