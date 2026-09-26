@@ -398,9 +398,14 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     melden), `startReview()` über den echten Weg, wieder antworten (er darf NICHT).
     Die Gegenprobe gehört dazu – ohne sie wäre der Test auch grün, wenn ein Spiel den
     Kasten nie bedient.
-  - Noch offen: Ob auch die **Achievement-Zähler** (`recordCategoryAttempt`) in der
-    Wiederholung schweigen sollen. Die Entscheidung des Fachlehrers galt dem
-    Vokabelkasten; die Zähler laufen weiter mit.
+  - **Entschieden (Fachlehrer): Die Achievement-Zähler laufen in der Wiederholung
+    WEITER**, anders als der Vokabelkasten. Der Unterschied ist der Zweck: Der Kasten
+    steuert, welches Wort wie oft drankommt – da wäre ein Treffer mit der Antwort noch
+    im Kopf irreführend. Die Trophäen zählen Fleiß, und wer seine Fehler nochmal
+    durchgeht, hat den Fleiß aufgebracht.
+    Das steht als Kommentar an allen fünf `recordCategoryAttempt`-Stellen, direkt unter
+    dem abgeschalteten `recordVocabAttempt` – sonst liest es sich wie ein Vergessen und
+    wird beim nächsten Mal „mitrepariert".
   - Noch offen: feste zweite Runde, oder so lange, bis alles einmal richtig war?
 
 - **Klassische Vokabelspiele digitalisieren.** Vom Fachlehrer ausgewählt (September 2026),

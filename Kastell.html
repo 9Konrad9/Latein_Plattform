@@ -699,6 +699,8 @@
                 const parts = currentCorrectAnswer.split(', ');
                 category = parts.length > 1 ? parts[1].replace('Futur I', 'FuturI') : 'Präsens';
             }
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
             const unlock = LudiProgress.recordCategoryAttempt(category, isCorrect);
             if (unlock) AchievementToast.show(unlock);
 

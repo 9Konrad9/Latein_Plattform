@@ -475,6 +475,12 @@
         // und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt -
         // sonst ginge der Fortschritt zu schnell.
         if (!isReviewMode) LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
+        // Die Achievement-Zaehler laufen in der Wiederholung WEITER - anders als
+        // der Vokabelkasten eine Zeile darueber. Das ist Absicht, kein Vergessen
+        // (Entscheidung des Fachlehrers): Der Kasten steuert, welches Wort wie oft
+        // drankommt - da waere ein Treffer mit der Antwort im Kopf irrefuehrend.
+        // Die Trophaeen zaehlen Fleiss, und wer seine Fehler nochmal durchgeht,
+        // hat den Fleiss aufgebracht.
         const unlock = LudiProgress.recordCategoryAttempt(kategorie, richtig);
         if (unlock) AchievementToast.show(unlock);
     }

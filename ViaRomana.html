@@ -541,6 +541,8 @@
             if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
 
             // Achievement-Kategorie ist das abgefragte Satzglied selbst.
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
             const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentTargetRole], isCorrect);
             if (unlock) AchievementToast.show(unlock);
 

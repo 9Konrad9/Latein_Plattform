@@ -372,6 +372,8 @@
                 // Der Schritt gilt als gekonnt, wenn bis hierhin kein Fehlgriff kam.
                 // Erfasst wird pro Schritt, nicht pro Runde - sonst ginge unter, WELCHES
                 // Satzglied Schwierigkeiten macht.
+                // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+                // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
                 const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentStep], !stepHadError);
                 if (unlock) AchievementToast.show(unlock);
                 stepHadError = false;
