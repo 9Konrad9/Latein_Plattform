@@ -82,12 +82,12 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
        jemand nur „Lektion 15" anklickte, statt einen Bereich zu wählen: Die
        Funktionswörter (hōra, silva, gladius …) verteilen sich über den ganzen
        Lehrgang, der Topf einer einzelnen Lektion enthält oft keines davon,
-        gab  zurück und  las darauf
-       . Gemessen: **28 von 29 Einzellektionen** stürzten ab. Jetzt rückt
-       die Funktion reihum zur nächsten Funktion weiter, und  probt
+       `buildAblativRound()` gab `null` zurück und `nextQuestion()` las darauf
+       `.words`. Gemessen: **28 von 29 Einzellektionen** stürzten ab. Jetzt rückt
+       die Funktion reihum zur nächsten Funktion weiter, und `startGame()` probt
        vorher einmal und lehnt die Auswahl mit einem Hinweis ab, statt mitten im
-       Spiel stehenzubleiben (dasselbe Muster wie  im Kastell).
-       **Warum der Test das nicht sah:** Er hat immer  gefiltert,
+       Spiel stehenzubleiben (dasselbe Muster wie `startDefense()` im Kastell).
+       **Warum der Test das nicht sah:** Er hat immer `v.lesson <= L` gefiltert,
        also einen Bereich. Wer Spiele prüft, muss die Einzelauswahl mitprüfen –
        im Unterricht ist sie der Normalfall, nicht die Ausnahme.
 
