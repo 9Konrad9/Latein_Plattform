@@ -78,6 +78,19 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
      - **Der Kontrast *in urbem* (wohin?) gegen *in urbe* (wo?)** – dieselbe Präposition,
        anderer Kasus. Dafür baut `SentenceEngine` seit jetzt auch die **Richtungsangabe im
        Akkusativ** (`in`/`ad` + Akk., Pontes L3 – die Engine hielt sie vorher bis L7 zurück).
+     - **Eine EINZELNE Lektion ist der Sonderfall.** Der Modus stürzte ab, sobald
+       jemand nur „Lektion 15" anklickte, statt einen Bereich zu wählen: Die
+       Funktionswörter (hōra, silva, gladius …) verteilen sich über den ganzen
+       Lehrgang, der Topf einer einzelnen Lektion enthält oft keines davon,
+        gab  zurück und  las darauf
+       . Gemessen: **28 von 29 Einzellektionen** stürzten ab. Jetzt rückt
+       die Funktion reihum zur nächsten Funktion weiter, und  probt
+       vorher einmal und lehnt die Auswahl mit einem Hinweis ab, statt mitten im
+       Spiel stehenzubleiben (dasselbe Muster wie  im Kastell).
+       **Warum der Test das nicht sah:** Er hat immer  gefiltert,
+       also einen Bereich. Wer Spiele prüft, muss die Einzelauswahl mitprüfen –
+       im Unterricht ist sie der Normalfall, nicht die Ausnahme.
+
      - **Reihum statt Zufall.** Der Modus gibt der Engine über `advKey` vor, WELCHE Funktion
        sie bauen soll. Würfelte man den Satz einfach aus, käme die Richtungsangabe gemessen
        in 2,5 % der Runden vor statt in 17 % – sie braucht ein Bewegungsverb und muss sich

@@ -391,6 +391,19 @@
             });
             advReihum = 0;
 
+            // Probe: Lässt sich mit dieser Auswahl überhaupt EIN Ablativsatz
+            // bauen? Lieber hier sagen, dass die Auswahl zu schmal ist, als
+            // mitten im Spiel. Dasselbe Muster wie startDefense() im Kastell.
+            if (modus === 'ablativ' && !buildAblativRound()) {
+                alert("In dieser Lektionsauswahl findet sich kein Satz mit einer adverbialen Bestimmung.\n\n" +
+                      "Die Wörter dafür (Zeit, Ort, Mittel, Begleitung ...) verteilen sich über den ganzen Lehrgang. " +
+                      "Wähle bitte einen Bereich - „bis Lektion 15“ statt einer einzelnen Lektion.");
+                document.getElementById('game-area').style.display = 'none';
+                document.getElementById('start-screen').style.display = 'flex';
+                return;
+            }
+            advReihum = 0;
+
             resetWagon();
             nextQuestion();
         }
@@ -440,36 +453,47 @@
         function buildAblativRound() {
             const keys = verfuegbareAdvKeys();
             if (!keys.length) return null;
-            const gewuenscht = keys[advReihum % keys.length];
+            const beginn = advReihum % keys.length;
             advReihum++;
 
+            // Reihum, aber nicht stur: Wer eine EINZELNE Lektion auswählt, hat
+            // für manche Funktionen kein einziges passendes Wort im Topf - die
+            // Funktionswörter (hōra, silva, gladius ...) stehen über den ganzen
+            // Lehrgang verstreut. Vorher gab die Funktion in dem Fall null
+            // zurück, und nextQuestion las darauf .words: Das Spiel stürzte ab,
+            // sobald jemand nur L15 anklickte. Jetzt rückt es zur nächsten
+            // Funktion weiter und gibt erst auf, wenn KEINE geht.
             let ersatz = null;
-            for (let versuch = 0; versuch < 30; versuch++) {
-                // advKey sagt der Engine, WELCHE Funktion sie bauen soll - und sie
-                // schränkt dafür auch den Verbtopf ein, wo es nötig ist (eine
-                // Richtungsangabe braucht ein Bewegungsverb). Ohne das kam die
-                // Richtungsangabe gemessen in 2,5 % der Runden vor statt in 17 %.
-                const satz = SentenceEngine.build({
-                    nounPool: nounPool, verbPool: verbPool,
-                    maxLesson: maxSelectedLesson, wordOrder: 'natural',
-                    advKey: gewuenscht
-                });
-                if (!satz) continue;
-                const idx = satz.tokens.findIndex(t => t.role === 'adv');
-                if (idx === -1) continue;
+            for (let n = 0; n < keys.length; n++) {
+                const gewuenscht = keys[(beginn + n) % keys.length];
+                for (let versuch = 0; versuch < 30; versuch++) {
+                    // advKey sagt der Engine, WELCHE Funktion sie bauen soll - und sie
+                    // schränkt dafür auch den Verbtopf ein, wo es nötig ist (eine
+                    // Richtungsangabe braucht ein Bewegungsverb). Ohne das kam die
+                    // Richtungsangabe gemessen in 2,5 % der Runden vor statt in 17 %.
+                    const satz = SentenceEngine.build({
+                        nounPool: nounPool, verbPool: verbPool,
+                        maxLesson: maxSelectedLesson, wordOrder: 'natural',
+                        advKey: gewuenscht
+                    });
+                    if (!satz) continue;
+                    const idx = satz.tokens.findIndex(t => t.role === 'adv');
+                    if (idx === -1) continue;
 
-                const runde = {
-                    words: satz.tokens.map(t => ({ w: t.text, role: t.role, lemma: t.lemma, exp: t.exp })),
-                    targetIdx: idx,
-                    role: satz.tokens[idx].role,
-                    advKey: satz.tokens[idx].advKey,
-                    explanation: satz.tokens[idx].exp,
-                    trackLemma: satz.tokens[idx].lemma
-                };
-                if (runde.advKey === gewuenscht) return runde;
-                if (!ersatz) ersatz = runde;   // falls die Wunschfunktion nicht kommt
+                    const runde = {
+                        words: satz.tokens.map(t => ({ w: t.text, role: t.role, lemma: t.lemma, exp: t.exp })),
+                        targetIdx: idx,
+                        role: satz.tokens[idx].role,
+                        advKey: satz.tokens[idx].advKey,
+                        explanation: satz.tokens[idx].exp,
+                        trackLemma: satz.tokens[idx].lemma
+                    };
+                    if (runde.advKey === gewuenscht) return runde;
+                    if (!ersatz) ersatz = runde;   // falls die Wunschfunktion nicht kommt
+                }
+                if (ersatz) return ersatz;
             }
-            return ersatz;
+            return null;
         }
 
         function nextQuestion(forced) {
