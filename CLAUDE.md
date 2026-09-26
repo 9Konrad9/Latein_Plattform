@@ -370,25 +370,33 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
 
 ## Offene Punkte / auf der Liste
 
-- **Falsch beantwortetes am Rundenende wiederholen.** Von den Schüler:innen gewünscht
-  (September 2026). Nach der letzten Frage nicht einfach zur Auswertung, sondern die
+- **Falsch beantwortetes am Rundenende wiederholen** – GEBAUT (September 2026). Von den
+  Schüler:innen gewünscht: Nach der letzten Frage nicht einfach zur Auswertung, sondern die
   danebengegangenen Vokabeln noch einmal durchgehen.
-  Betrifft die zehn Spiele mit `recordVocabAttempt`: Arcus, CircusV, Duell, IssaJump,
-  Kastell, Pendel, Principia, Pronomina, ViaRomana, Villa. **Nicht** die Fliegenklatsche –
-  dort gibt es kein Richtig/Falsch, die Lehrkraft zählt von Hand.
-  Was dafür fehlt und was nicht:
-  - `progress.js` hält den Leitner-Kasten dauerhaft, aber **keine Liste der Fehler dieser
-    Runde**. Die müsste jedes Spiel selbst mitführen – oder besser einmal zentral, damit
-    nicht zehnmal dasselbe entsteht.
-  - `getWeakVocab()` gibt es schon, liefert aber die dauerhaft schwachen Wörter über alle
-    Sitzungen, nicht die dieser Runde. Für den Wunsch ist das etwas anderes.
+
+  Jedes Spiel führt seine Fehlerliste selbst (`missedItems`), weil `progress.js` nur den
+  dauerhaften Leitner-Kasten hält und keine Liste dieser Runde. `getWeakVocab()` ist etwas
+  anderes: die dauerhaft schwachen Wörter über alle Sitzungen. Zehnmal dasselbe Muster
+  wäre ein Kandidat zum Zusammenlegen – bisher unterscheidet sich aber, WAS ein Spiel sich
+  merken muss (ein Wort, eine ganze Runde, eine Frage samt Fragetyp), und genau daran
+  würde eine gemeinsame Fassung scheitern.
   - **Entschieden (Fachlehrer):** Die Wiederholungsrunde zählt **nicht** in den Leitner-Kasten
     ein. Begründung: Sonst ginge der Fortschritt zu schnell – wer ein Wort erst im zweiten
     Anlauf und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.
     Technisch heißt das: in der zweiten Runde **kein** `recordVocabAttempt`.
-  - **Gebaut in fünf Spielen** (Arcus, Kastell, Pendel, Principia, ViaRomana), es fehlt
-    noch in CircusV, Duell, IssaJump, Pronomina, Villa. Bomba bleibt draußen: Das Gerät
-    wandert im Kreis, die Runde endet mit dem Knall.
+  - **Gebaut in allen zehn Spielen mit Vokabelkasten.** Draußen bleiben Bomba (das Gerät
+    wandert im Kreis, die Runde endet mit dem Knall), die Fliegenklatsche (kein
+    Richtig/Falsch) und Circus' Kartenmodus (der hat kein Ende, sondern läuft, bis jemand
+    zurück ins Menü geht – es gäbe keinen Moment, an dem sich die Fehler anbieten ließen).
+  - **Entschieden (Fachlehrer): feste zweite Runde.** EIN Durchgang durch die Fehler, dann
+    Schluss – nicht so lange, bis alles sitzt. Daraus folgt, dass die Wiederholung sich
+    nicht selbst füttern darf: Jedes `missedItems.push` hängt an `!isReviewMode`, sonst
+    liefe sie im schlimmsten Fall endlos. `test-wiederholung.js` prüft beides.
+  - **Was in der Wiederholung sonst noch ruht**, je Spiel verschieden und jeweils aus
+    demselben Grund – das Spiel ist entschieden, wiederholt wird nur noch:
+    Kastells Mauerstärke, Villas Baufortschritt (sonst wäre sie zweimal fertig), Circus'
+    Wagen und Gegner samt Kartenuhr, Duells Herzen und Countdown, Issas Herzen
+    (mit drei Herzen wäre bei drei Fehlern Schluss, statt die Liste durchzuspielen).
   - **Die Entscheidung stand da, umgesetzt war sie nicht.** Alle fünf riefen
     `recordVocabAttempt` ungeschützt auf – der Rest der Runde war sauber getrennt
     (Mauerstärke, Punkte, `missedItems` hingen überall an `!isReviewMode`), nur der
@@ -406,7 +414,6 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Das steht als Kommentar an allen fünf `recordCategoryAttempt`-Stellen, direkt unter
     dem abgeschalteten `recordVocabAttempt` – sonst liest es sich wie ein Vergessen und
     wird beim nächsten Mal „mitrepariert".
-  - Noch offen: feste zweite Runde, oder so lange, bis alles einmal richtig war?
 
 - **Klassische Vokabelspiele digitalisieren.** Vom Fachlehrer ausgewählt (September 2026),
   noch nichts davon gebaut, Reihenfolge offen. Der harte Filter für alle: kein Server, kein

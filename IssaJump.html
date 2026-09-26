@@ -153,6 +153,8 @@
         <div class="overlay" id="end-overlay" style="display:none;">
             <h2 id="end-title">Issa ist gefallen!</h2>
             <p id="end-stats"></p>
+            <button class="start-btn wiederholen" style="display:none;" id="btn-review">📚 Fehler wiederholen</button>
+            <br>
             <button class="start-btn" id="btn-restart">Nochmal springen</button>
             <br>
             <a href="index.html" class="start-btn zweitrangig" style="margin-top: 10px;">Zurück zum Menü</a>
@@ -267,6 +269,23 @@
         /* ============ SPIELZUSTAND ============ */
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
 
+        /* Die feste zweite Runde: ein kurzer Kletterlauf nur mit den Woertern,
+           die danebengegangen sind - EIN Durchgang, nicht so lange, bis es
+           sitzt. Sie zaehlt NICHT in den Vokabelkasten (Entscheidung des
+           Fachlehrers); die Achievement-Zaehler gibt es hier ohnehin nicht.
+
+           Zwei Dinge sind in der Wiederholung anders als im Lauf:
+           - Kein Herzverlust. Wer die Woerter nochmal sehen soll, soll sie auch
+             alle sehen; mit drei Herzen waere bei acht Fehlern vorher Schluss.
+             Der Sturz nach unten faengt Issa weiterhin auf, nur ohne Abzug.
+           - Der Lauf endet, wenn die Liste durch ist, nicht wenn Issa faellt. */
+        let missedItems = [];
+        let reviewQueue = [];
+        let reviewSpawnIdx = 0;
+        let reviewAnswered = 0;
+        let reviewCorrectCount = 0;
+        let isReviewMode = false;
+
         /* Jede Antwort-Reihe bekommt eine Nummer. Daran erkennt die Anzeige, welche
            Reihe schon beantwortet ist - sie soll das Wort der nächsten OFFENEN
            Reihe zeigen, nicht das der Reihe, über der Issa gerade zufällig steht. */
@@ -309,9 +328,18 @@
             if (cycle % 3 === 2) {
                 // weightedPick gibt bei leerem Pool null zurück - dann lieber irgendein
                 // Wort als ein Absturz mitten im Lauf.
-                const target = LudiProgress.weightedPick(activePool)
-                            || activePool[Math.floor(Math.random() * activePool.length)];
-                if (!target) return y - gap;
+                // In der Wiederholung kommt nicht der Vokabelkasten zu Wort,
+                // sondern die Fehlerliste - der Reihe nach. Ist sie abgespult,
+                // waechst nur noch neutraler Boden nach, bis der Lauf endet.
+                const target = isReviewMode
+                    ? reviewQueue[reviewSpawnIdx++]
+                    : (LudiProgress.weightedPick(activePool)
+                       || activePool[Math.floor(Math.random() * activePool.length)]);
+                if (!target) {
+                    const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
+                    platforms.push({ x: px, y: y, w: NEUTRAL_W, type: 'neutral' });
+                    return y - gap;
+                }
                 const { correct, options } = buildAnswerSet(target);
                 const slotW = CW / 4;
                 const reihe = ++reiheZaehler;
@@ -320,7 +348,7 @@
                     platforms.push({
                         x: Math.max(4, Math.min(CW - ANSWER_W - 4, px)), y: y, w: ANSWER_W, type: 'answer',
                         text: options[i], isCorrect: options[i] === correct, targetLatin: target.latin,
-                        reiheId: reihe
+                        targetEntry: target, reiheId: reihe
                     });
                 }
             } else {
@@ -454,13 +482,26 @@
             if (p.isCorrect) {
                 issa.vy = BOUNCE_VELOCITY;
                 correctCount++;
-                LudiProgress.recordVocabAttempt(p.targetLatin, true);
+                if (isReviewMode) reviewCorrectCount++;
+                // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+                if (!isReviewMode) LudiProgress.recordVocabAttempt(p.targetLatin, true);
                 flashFeedback(true);
             } else {
-                LudiProgress.recordVocabAttempt(p.targetLatin, false);
+                if (!isReviewMode) {
+                    LudiProgress.recordVocabAttempt(p.targetLatin, false);
+                    if (p.targetEntry) missedItems.push(p.targetEntry);
+                }
                 wrongCount++;
                 flashFeedback(false);
-                loseLife();
+                // In der Wiederholung kostet ein Fehler kein Herz - sonst waere
+                // die Liste bei drei Fehlern zu Ende, statt durchgespielt.
+                if (isReviewMode) issa.vy = BOUNCE_VELOCITY;
+                else loseLife();
+            }
+
+            if (isReviewMode) {
+                reviewAnswered++;
+                if (reviewAnswered >= reviewQueue.length) endReview();
             }
         }
 
@@ -471,10 +512,14 @@
         }
 
         function loseLife() {
-            lives--;
-            updateHud();
+            // In der Wiederholung faengt der Sturz Issa genauso auf, kostet aber
+            // kein Herz: Der Lauf endet dort an der Liste, nicht an den Herzen.
+            if (!isReviewMode) {
+                lives--;
+                updateHud();
+            }
             startledFrames = 30;
-            if (lives <= 0) { endGame(); return; }
+            if (!isReviewMode && lives <= 0) { endGame(); return; }
 
             const safeY = cameraY + CH - 90;
             issa.x = CW / 2 - ISSA_W / 2;
@@ -626,6 +671,9 @@
         }
 
         function beginRun() {
+            missedItems = [];
+            isReviewMode = false;
+            document.getElementById('btn-review').style.display = 'none';
             document.getElementById('start-overlay').style.display = 'none';
             document.getElementById('end-overlay').style.display = 'none';
             document.getElementById('hud').style.display = 'flex';
@@ -646,12 +694,51 @@
 
             document.getElementById('end-stats').innerHTML =
                 `Erreichte Höhe: <strong>${score} m</strong><br>Vokabeln richtig: <strong>${correctCount} von ${correctCount + wrongCount}</strong>`;
+
+            const reviewBtn = document.getElementById('btn-review');
+            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
+            if (missedItems.length) reviewBtn.innerText =
+                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Wort' : 'Wörter'} wiederholen`;
+
+            document.getElementById('end-overlay').style.display = 'flex';
+        }
+
+        /* Feste zweite Runde: ein kurzer Kletterlauf nur mit den Fehlern. */
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewSpawnIdx = 0;
+            reviewAnswered = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            document.getElementById('end-overlay').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            document.getElementById('touch-controls').style.display = 'flex';
+            document.getElementById('end-title').innerText = 'Issa ist gefallen!';
+            cameraY = 0; spawnCycle = 0; nextSpawnY = 0;
+            resetGame();
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            gameLoop();
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            running = false;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('touch-controls').style.display = 'none';
+
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('end-title').innerText = '📚 Wiederholung geschafft!';
+            document.getElementById('end-stats').innerHTML =
+                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor verfehlten Wörter nochmal gesehen und dabei <strong>${reviewCorrectCount}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
             document.getElementById('end-overlay').style.display = 'flex';
         }
 
         window.onload = function() {
             document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
             document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
+            document.getElementById('btn-review').addEventListener('click', startReview);
             setupTouchControls();
             loadAssets(() => { /* Assets laufen im Hintergrund; das Spiel selbst startet erst nach Klick */ });
             resizeStage();

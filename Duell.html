@@ -205,6 +205,9 @@
     <div class="end-screen" id="end-overlay">
         <div class="end-title" id="end-winner-text">SIEG!</div>
         <p style="font-size: 1.2rem; margin-bottom: 20px;">Die Arena erzittert vor eurem Ruhm.</p>
+        <p id="end-extra" style="font-size: 1.05rem; max-width: 520px; line-height: 1.6; margin-bottom: 20px;"></p>
+        <button class="end-btn wiederholen" style="display:none;" id="btn-review">📚 Fehler wiederholen</button>
+        <br>
         <button class="end-btn" id="btn-restart">Nächstes Duell</button>
         <br>
         <a href="index.html" class="end-btn zweitrangig">Zurück zur Übersicht</a>
@@ -215,6 +218,26 @@
         let currentCorrectAnswer = "";
         let currentDuelItem = null;
         let currentQType = 0;   // 0 = Bedeutung, 1 = Formen, 2 = Klassen (fuer die Achievement-Kategorie)
+
+        /* Die feste zweite Runde nach dem Duell: Die Fragen, bei denen
+           danebengegriffen wurde, kommen noch einmal - EIN Durchgang. Sie
+           zaehlt NICHT in den Vokabelkasten (Entscheidung des Fachlehrers);
+           die Achievement-Zaehler laufen weiter.
+
+           Im Duell ist "der Fehler" nicht der Fehler EINER Person: Beide sehen
+           dieselbe Frage, und wer zuerst tippt, antwortet fuer die Runde. Die
+           Wiederholung laeuft deshalb genauso - wer zuerst tippt, antwortet -,
+           aber ohne Herzen und ohne Countdown: Das Duell ist entschieden, hier
+           geht es nur noch ums Nachschauen.
+
+           Gemerkt wird die ganze Frage, nicht nur das Wort: Zu einem Wort baut
+           nextRound() je nach Zufall eine Bedeutungs-, Formen- oder
+           Klassenfrage, und wiederholt werden soll die, die danebenging. */
+        let missedItems = [];
+        let reviewQueue = [];
+        let reviewIdx = 0;
+        let reviewCorrectCount = 0;
+        let isReviewMode = false;
 
         // Gleiche Zuordnung wie in Circus Maximus, damit Bedeutungsfragen aus beiden
         // Spielen auf dieselben Zähler einlaufen.
@@ -355,6 +378,7 @@
 
         window.onload = function() {
             passeAnGeraet();
+            document.getElementById('btn-review').addEventListener('click', startReview);
             document.getElementById('btn-restart').addEventListener('click', promptLessonsAndStart);
             for(let i=0; i<4; i++) {
                 document.getElementById(`p1-opt${i}`).addEventListener('click', function() { playerClick(1, i); });
@@ -386,6 +410,9 @@
                 return;
             }
             hp = { p1: 5, p2: 5 };
+            missedItems = [];
+            isReviewMode = false;
+            document.getElementById('btn-review').style.display = 'none';
             document.getElementById('end-overlay').style.display = 'none';
             document.getElementById('player1').classList.remove("flash-correct", "flash-wrong");
             document.getElementById('player2').classList.remove("flash-correct", "flash-wrong");
@@ -422,19 +449,45 @@
             }, 1000);
         }
 
+        /* Feste zweite Runde: EIN Durchgang durch die Fehler, ohne Herzen,
+           ohne Countdown. Wer zuerst tippt, antwortet - wie im Duell. */
+        function startReview() {
+            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            reviewIdx = 0;
+            reviewCorrectCount = 0;
+            isReviewMode = true;
+
+            if (countdownInterval) clearInterval(countdownInterval);
+            ["p1", "p2"].forEach(p => document.getElementById(`${p}-countdown`).style.display = "none");
+            document.getElementById('end-overlay').style.display = 'none';
+
+            nextRound(reviewQueue[reviewIdx]);
+        }
+
+        function endReview() {
+            isReviewMode = false;
+            lockAllButtons(true);
+
+            document.getElementById('btn-review').style.display = 'none';
+            document.getElementById('end-winner-text').innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
+            document.getElementById('end-extra').innerHTML =
+                `Ihr habt alle <strong>${reviewQueue.length}</strong> zuvor verpatzten Fragen nochmal gesehen und dabei <strong>${reviewCorrectCount}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt im Vokabelkasten auf Rot.`;
+            document.getElementById('end-overlay').style.display = "flex";
+        }
+
         function translateType(type) {
             const types = { noun: "Substantiv", verb: "Verb", adjective: "Adjektiv", adverb: "Adverb", preposition: "Präposition", pronoun: "Pronomen", conjunction: "Konjunktion", other: "Partikel" };
             return types[type] || type;
         }
 
-        function nextRound() {
-            const item = activePool[Math.floor(Math.random() * activePool.length)];
+        function nextRound(forced) {
+            const item = forced ? forced.item : activePool[Math.floor(Math.random() * activePool.length)];
             currentDuelItem = item;
-            let allowedTypes = [0]; 
+            let allowedTypes = [0];
             if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
             if (item.type === "adjective") allowedTypes.push(2);
 
-            const qType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+            const qType = forced ? forced.qType : allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
             currentQType = qType;
             let questionText = "";
             let categoryText = "";
@@ -585,8 +638,13 @@
             lockAllButtons(true);
             const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
             const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
-            LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
+            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
+            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
+            if (!isCorrect && !isReviewMode) missedItems.push({ item: currentDuelItem, qType: currentQType });
+            if (isCorrect && isReviewMode) reviewCorrectCount++;
 
+            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
+            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
             // Bedeutungsfragen zählen auf die Wortart-Zähler ein - dieselbe Fähigkeit,
             // die Circus Maximus abfragt. Formen- und Klassenfragen bekommen eigene.
             const kategorie = currentQType === 0
@@ -599,10 +657,12 @@
             let winnerZone = playerNum === 1 ? "player1" : "player2";
 
             if (isCorrect) {
-                if (playerNum === 1) hp.p2--; else hp.p1--;
+                // Im Duell kostet die Antwort Herzen - in der Wiederholung nicht,
+                // das Duell ist da entschieden.
+                if (!isReviewMode) { if (playerNum === 1) hp.p2--; else hp.p1--; }
                 document.getElementById(winnerZone).classList.add("flash-correct");
             } else {
-                if (playerNum === 1) hp.p1--; else hp.p2--;
+                if (!isReviewMode) { if (playerNum === 1) hp.p1--; else hp.p2--; }
                 document.getElementById(winnerZone).classList.add("flash-wrong");
             }
 
@@ -612,14 +672,26 @@
                 document.getElementById("player1").classList.remove("flash-correct", "flash-wrong");
                 document.getElementById("player2").classList.remove("flash-correct", "flash-wrong");
 
-                if (hp.p1 <= 0 || hp.p2 <= 0) endMatch();
-                else startCountdown(); 
+                if (isReviewMode) {
+                    reviewIdx++;
+                    // Ohne Countdown: Das Duell ist entschieden, hier geht es
+                    // ums Nachschauen, nicht um Schnelligkeit.
+                    if (reviewIdx < reviewQueue.length) nextRound(reviewQueue[reviewIdx]);
+                    else endReview();
+                } else if (hp.p1 <= 0 || hp.p2 <= 0) endMatch();
+                else startCountdown();
             }, 1200);
         }
 
         function endMatch() {
             const overlay = document.getElementById('end-overlay');
             const winText = document.getElementById('end-winner-text');
+
+            const reviewBtn = document.getElementById('btn-review');
+            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
+            if (missedItems.length) reviewBtn.innerText =
+                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Frage' : 'Fragen'} wiederholen`;
+
             overlay.style.display = "flex";
 
             if (hp.p1 > hp.p2) {
