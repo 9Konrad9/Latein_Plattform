@@ -45,7 +45,6 @@
             min-height: 480px;
         }
 
-        .start-screen { text-align: center; padding: 10px; }
 
         .notice-box { margin: 20px 0; }
 
@@ -104,9 +103,9 @@
 
         .round-number { text-align: center; font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 10px; letter-spacing: 1px; }
 
-        .options-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; flex-grow: 1;
-        }
+        /* Groesser als sonst: Die Antwortmuenzen sind Kreise, zwischen
+           denen zwoelf Pixel eng wirken. */
+        .options-grid { gap: 14px; }
 
         /* --- Die vier Antwortmünzen ---
            Ein Schrötling: Schmuck nur im Perlkreis am Rand, das Feld in der Mitte

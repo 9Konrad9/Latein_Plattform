@@ -42,16 +42,9 @@
         }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            /* War rgba(10,15,25,0.94) - fast schwarz. Die Schrift darauf wurde beim
-               Theme-Wechsel auf dunkle Tinte umgestellt, also dunkel auf dunkel.
-               Jetzt heller Putz wie die Rückmeldungs-Overlays der anderen Spiele. */
-            background: rgba(244, 236, 219, 0.96); padding: 20px; text-align: center; z-index: 20;
-            overflow-y: auto;
-        }
-        .overlay h2 { font-family: var(--font-display); color: var(--pompeji); font-size: 1.5rem; margin-bottom: 12px; }
+        /* Aussehen steht in theme.css. Hier nur die kleinere Ueberschrift:
+           Die Schicht liegt im Spielfeld, nicht ueber dem ganzen Schirm. */
+        .overlay h2 { font-size: 1.5rem; margin-bottom: 12px; }
         .overlay p { color: var(--ink-soft); line-height: 1.5; margin-bottom: 10px; font-size: 0.95rem; }
         .overlay .example { color: var(--pompeji); font-weight: bold; }
         .start-btn:not(.zweitrangig) { padding: 13px 34px; font-size: 1.1rem; margin-top: 10px; }

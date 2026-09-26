@@ -202,6 +202,23 @@ LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichh
   wirklich anders aussehen: Principias Antwortmünze, Arcus' Bronzetafel, IssaJumps Steuerpfeile).
   Maße darf ein Spiel weiterhin anpassen, Farbe und Rand nicht.
 
+- **Drei geteilte Bausteine neben den Knöpfen** (ebenfalls September 2026, alle in `theme.css`):
+  `.start-screen` (Erklärung plus Startknopf, fünfmal Zeichen für Zeichen gleich),
+  `.options-grid` (zwei Spalten für die Antwortknöpfe, fünfmal) und **die Schicht** –
+  eine fast deckende Lage hellen Putzes über dem Spiel, die es unter vier Namen gab:
+  `.feedback-overlay`, `.start-overlay` (Bomba, Fliegenklatsche), `.overlay` (IssaJump),
+  `.overlay-screen` (Villa). Echt verschieden ist daran nur zweierlei: Die drei
+  Vollbildspiele haben keinen positionierten `.game-container`, über den sie sich legen
+  könnten – ihre Schicht ist deshalb `fixed`. Und wer beim Laden schon sichtbar ist
+  (Startbildschirm) und wer nicht (Rückmeldung, Endbildschirm).
+
+  **Dabei gefundener Fehler, der leicht wiederkommt:** Ein mittig gesetzter Flexkasten
+  (`justify-content: center`) mit `overflow-y: auto` schiebt zu hohen Inhalt nach **oben**
+  aus dem Bild – und dorthin lässt sich nicht scrollen. In Bomba stand die Überschrift
+  gemessen bei −23 px und war unerreichbar. Die Schicht schreibt deshalb `justify-content:
+  center` und darunter noch einmal `justify-content: safe center`; ältere Browser verwerfen
+  die zweite Zeile und behalten die erste.
+
 - **UI-Assets in `assets/ui/`** werden per `border-image` eingebunden, nicht per
   `background-size` – sonst verzerren Rahmen und Griffe beim Dehnen. **Die Schnittwerte in
   `border-image-slice` sind Bildpixel und skalieren NICHT mit**: Wird ein Asset ausgetauscht oder

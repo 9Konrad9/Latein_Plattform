@@ -394,18 +394,80 @@ body {
 
    Via Rōmāna hat bewusst etwas anderes: dort sitzt eine Karte im Overlay
    statt einer vollflächigen Überdeckung. */
-.feedback-overlay {
+/* Und dieselbe Schicht noch dreimal unter anderem Namen: .start-overlay
+   (Bomba, Fliegenklatsche), .overlay (IssaJump), .overlay-screen (Villa).
+   Vier Namen, dieselbe Sache - eine fast deckende Lage hellen Putzes über
+   dem Spiel, Inhalt mittig in einer Spalte.
+
+   Zwei Unterschiede waren echt und bleiben:
+   - Die drei Vollbildspiele haben keinen positionierten .game-container, über
+     den sie sich legen könnten. Ihre Schicht ist deshalb fest verankert (fixed) und liegt
+     über allem, auch über der Kopfleiste.
+   - Wer beim Laden schon sichtbar ist (Startbildschirm), wer nicht
+     (Rückmeldung, Endbildschirm). Das steht unten.
+   Der Rest war Zufall: 0,96 gegen 0,97 Deckung, 20 gegen 24 gegen 25 px
+   Innenabstand, und in Villa noch ein border-radius: 8px aus der Zeit vor
+   dem Pergament. Genommen ist der Wert der Mehrheit. */
+.feedback-overlay,
+.start-overlay,
+.overlay,
+.overlay-screen {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(244, 236, 219, 0.96);
-    display: none;
+    inset: 0;
+    background: rgba(244, 236, 219, 0.97);
+    display: flex;
     flex-direction: column;
     align-items: center;
+    /* Zwei Zeilen, und die zweite ist die wichtige: Ein mittig gesetzter
+       Flexkasten, dessen Inhalt hoeher ist als er selbst, schiebt den
+       Ueberhang nach OBEN aus dem Bild - und dorthin laesst sich nicht
+       scrollen. Gemessen in Bomba: Die Ueberschrift stand bei -23 px und war
+       nicht erreichbar. `safe` schaltet in dem Fall auf linksbuendig um.
+       Aeltere Browser verwerfen die zweite Zeile und behalten die erste. */
     justify-content: center;
-    padding: 25px;
+    justify-content: safe center;
+    padding: 24px;
     text-align: center;
+    overflow-y: auto;
     z-index: 10;
+}
+
+/* Wenn die Schicht scrollen muss, dann unauffaellig: Der voreingestellte
+   Balken ist ein graues Brett quer ueber dem Pergament. Bronze auf nichts
+   passt zum Rest; wo die Kurzform noch nicht gilt (aeltere iPads), greift
+   die WebKit-Schreibweise darunter. */
+.feedback-overlay,
+.start-overlay,
+.overlay,
+.overlay-screen { scrollbar-width: thin; scrollbar-color: var(--bronze) transparent; }
+.feedback-overlay::-webkit-scrollbar,
+.start-overlay::-webkit-scrollbar,
+.overlay::-webkit-scrollbar,
+.overlay-screen::-webkit-scrollbar { width: 8px; }
+.feedback-overlay::-webkit-scrollbar-thumb,
+.start-overlay::-webkit-scrollbar-thumb,
+.overlay::-webkit-scrollbar-thumb,
+.overlay-screen::-webkit-scrollbar-thumb { background: var(--bronze); border-radius: 4px; }
+
+/* Vollbild: kein Vorfahr, über den sich die Schicht legen könnte. */
+.start-overlay { position: fixed; z-index: 500; }
+
+/* Wer beim Laden unsichtbar ist. Das JavaScript schaltet ihn auf flex. */
+.feedback-overlay,
+.overlay-screen { display: none; }
+
+/* Die Überschrift auf der Schicht. Stand in Bomba, Fliegenklatsche und
+   IssaJump je einzeln da - 2 gegen 2 gegen 1,5 rem.
+   .feedback-title gehört NICHT dazu: Deren Farbe wechselt je nach Antwort
+   zwischen Grün und Rot, die setzt das Spiel. */
+.start-overlay h2,
+.overlay h2 {
+    font-family: var(--font-display);
+    color: var(--pompeji);             /* kontrast-ok: 6,40 auf --putz */
+    font-size: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
 }
 .feedback-title {
     font-family: var(--font-display);
@@ -419,6 +481,27 @@ body {
     max-width: 500px;
 }
 .feedback-explanation strong { color: var(--pompeji); }
+
+/* ---------- Startbildschirm ----------
+   Der Block mit Erklärung und Startknopf, der beim Beginn der Runde
+   ausgeblendet wird. Stand in fünf Spielen Zeichen für Zeichen gleich
+   (Arcus, Kastell, Pendel, Principia, Pronomina). */
+.start-screen { text-align: center; padding: 10px; }
+
+/* ---------- Antwortgitter ----------
+   Zwei Spalten, darin die Antwortknöpfe. Stand in fünf Spielen (CircusV,
+   Kastell, Principia, Pronomina, Villa); die Unterschiede waren 12 gegen
+   14 px Abstand und ein fehlendes flex-grow im Circus.
+
+   flex-grow: 1 lässt das Gitter die Resthöhe der Spielfläche füllen, damit
+   die vier Knöpfe unten bündig stehen statt zu schweben. In einem Elternteil,
+   der kein Flexkasten ist, tut es nichts - deshalb schadet es dem Circus nicht. */
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    flex-grow: 1;
+}
 
 .notice-box {
     background: var(--putz) url('assets/ui/lampe.png') right 14px top 12px / 34px auto no-repeat;
