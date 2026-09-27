@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Silentium - Die stille Stunde</title>
+    <script src="progress.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Vollbild-Werkzeug wie Bomba und die Fliegenklatsche: Es gehoert keiner
+           Person, sondern dem Geraet im Raum. Deshalb schaltet es das
+           min-height: 100vh aus theme.css mit min-height: 0 ab. */
+        html, body { height: 100%; }
+        body {
+            font-family: var(--font-body);
+            color: var(--ink);
+            height: 100vh;
+            height: 100svh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .leiste {
+            display: flex; align-items: center; gap: 14px;
+            padding: 8px 14px 8px 62px;
+            background: var(--putz);
+            border-bottom: 2px solid var(--bronze);
+            flex-shrink: 0;
+        }
+        .leiste h1 {
+            font-family: var(--font-display); color: var(--pompeji);
+            font-size: 1.15rem; text-transform: uppercase; letter-spacing: 2px;
+            margin-right: auto;
+        }
+
+        /* Die Stille-Uhr ist die wichtigste Zahl im Raum - sie muss vom letzten
+           Platz aus lesbar sein. */
+        .stille { font-family: var(--font-display); font-size: 1.7rem; font-weight: bold; color: var(--richtig); }
+        .stille.gestoert { color: var(--falsch); }
+        .restzeit { font-family: var(--font-display); font-size: 1.1rem; color: var(--ink-soft); }
+        .besucherzahl { font-size: 0.9rem; color: var(--ink-soft); }
+
+        /* Der Pegelbalken: Er zeigt, WARUM etwas passiert ist. Ohne ihn raet die
+           Klasse, was zu laut war. */
+        .pegel {
+            position: relative; width: 120px; height: 12px;
+            background: var(--wand-tief); border: 2px solid var(--bronze); border-radius: 7px;
+            overflow: hidden; flex-shrink: 0;
+        }
+        .pegel-fuellung { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--richtig); transition: width 0.08s linear; }
+        .pegel-fuellung.laut { background: var(--falsch); }
+        .pegel-marke { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--pompeji); }
+
+        .szene { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+        #szene-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+
+        /* Kurzes rotes Aufblitzen, wenn es zu laut wurde. */
+        .stoerung-blitz {
+            position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(ellipse at center, rgba(176,48,48,0) 40%, rgba(176,48,48,0.45) 100%);
+            opacity: 0; transition: opacity 0.2s ease;
+        }
+        .stoerung-blitz.an { opacity: 1; }
+
+        .meldung {
+            position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+            background: var(--putz); border: 2px solid var(--bronze); border-radius: 10px;
+            padding: 8px 18px; font-family: var(--font-display); font-size: 1.05rem;
+            box-shadow: var(--schatten); opacity: 0; transition: opacity 0.3s ease;
+            max-width: 90%; text-align: center;
+        }
+        .meldung.an { opacity: 1; }
+        .meldung .lat { color: var(--pompeji); font-weight: bold; }
+
+        /* ---------- Buch, Optionen, Start, Ende ---------- */
+        .buch-gitter {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px; width: 100%; max-width: 760px; margin-top: 12px;
+        }
+        .buch-karte {
+            background: var(--putz-hell); border: 2px solid var(--bronze); border-radius: 8px;
+            padding: 8px 10px; text-align: left; font-size: 0.85rem;
+        }
+        /* Die Leerstellen im Buch: gedaempft, aber lesbar. --ink-soft kaeme auf
+           --wand-tief nur auf 4,02 - gemessen, und damit unter der Grenze. --ink
+           liegt bei 8,71; zurueckgenommen wird ueber Kursive, nicht ueber Farbe. */
+        .buch-karte.offen { background: var(--wand-tief); border-style: dashed; color: var(--ink); font-style: italic; }
+        .buch-karte .lat { font-family: var(--font-display); font-weight: bold; color: var(--pompeji); display: block; }
+        .buch-karte .de { font-style: italic; }
+        .buch-karte .kultur { display: block; margin-top: 4px; line-height: 1.35; }
+        .buch-karte.offen .kultur { font-style: italic; }
+
+        .zeile { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; justify-content: center; }
+        .zeile label { font-weight: bold; }
+        input[type=range] { width: 220px; touch-action: manipulation; }
+        .wert { font-family: var(--font-display); font-weight: bold; color: var(--pompeji); min-width: 86px; text-align: left; }
+
+        .datenschutz {
+            max-width: 560px; margin-top: 14px; padding: 10px 14px;
+            background: var(--wand-tief); border: 2px solid var(--bronze); border-radius: 9px;
+            color: var(--ink); font-size: 0.9rem; line-height: 1.45; text-align: left;
+        }
+
+        @media (max-width: 620px) {
+            .leiste h1 { font-size: 0.95rem; letter-spacing: 1px; }
+            .stille { font-size: 1.35rem; }
+            .pegel { width: 80px; }
+        }
+    </style>
+</head>
+<body>
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏠</a>
+
+<div class="leiste">
+    <h1>Silentium</h1>
+    <div class="pegel" title="Lautstärke im Raum">
+        <div class="pegel-fuellung" id="pegel-fuellung"></div>
+        <div class="pegel-marke" id="pegel-marke" style="left: 60%;"></div>
+    </div>
+    <div class="besucherzahl" id="besucherzahl">0 Besucher</div>
+    <div class="restzeit" id="restzeit">20:00</div>
+    <div class="stille" id="stille">0:00</div>
+    <button class="werkzeug-btn" id="btn-buch">Buch</button>
+    <button class="werkzeug-btn" id="btn-pause">Pause</button>
+</div>
+
+<div class="szene">
+    <canvas id="szene-canvas"></canvas>
+    <div class="stoerung-blitz" id="blitz"></div>
+    <div class="meldung" id="meldung"></div>
+
+    <!-- START -->
+    <div class="start-overlay" id="start-overlay">
+        <h2>Silentium</h2>
+        <div class="notice-box">
+            <h3>📜 So läuft's</h3>
+            <p>Solange es im Raum still bleibt, kommt Besuch auf das Landgut der Cornelier — erst Sperlinge
+               und Hühner, später Seltenes. Wird es zu laut, <strong>flieht alles auf einmal</strong>, und die
+               stille Zeit beginnt von vorn.</p>
+            <p style="margin-top:10px;">Was einmal da war, bleibt im <strong>Buch</strong> stehen, auch wenn die
+               Szene sich leert. Manche Gäste kommen nur mit Glück — Merkur schaut nach zehn Minuten Stille
+               vorbei, wenn er will, Iuppiter frühestens nach fünfzehn.</p>
+        </div>
+        <div class="datenschutz">
+            <strong>Zum Mikrofon:</strong> Diese Seite misst nur die Lautstärke im Raum.
+            Es wird <strong>nichts aufgenommen, nichts gespeichert und nichts gesendet</strong> —
+            es gibt keinen Server, an den etwas gehen könnte. Der Zugriff endet, sobald die Seite
+            geschlossen wird.
+        </div>
+
+        <div class="zeile" style="margin-top:16px;">
+            <label for="timer-regler">Dauer</label>
+            <input type="range" id="timer-regler" min="1" max="20" step="1" value="10">
+            <span class="wert" id="timer-wert">10 Minuten</span>
+        </div>
+        <div class="zeile" style="margin-top:-4px;">
+            <span class="besucherzahl" id="erreichbar">…</span>
+        </div>
+        <div class="zeile">
+            <label for="schwelle-regler">Empfindlichkeit</label>
+            <input type="range" id="schwelle-regler" min="3" max="20" step="1" value="9">
+            <span class="wert" id="schwelle-wert">9 dB</span>
+        </div>
+        <p style="max-width:520px; font-size:0.85rem; color:var(--ink-soft); line-height:1.45;">
+            Kleiner Wert heißt streng: Schon Flüstern verscheucht alles. Beides lässt sich während
+            der Stunde über <em>Pause</em> nachstellen.
+        </p>
+
+        <button class="start-btn" id="btn-start">Mikrofon freigeben und beginnen</button>
+        <button class="start-btn zweitrangig" id="btn-buch-start" style="margin-top:10px;">Buch ansehen</button>
+        <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
+    </div>
+
+    <!-- BUCH -->
+    <div class="start-overlay" id="buch-overlay" style="display:none; z-index: 520;">
+        <h2>Liber hospitum</h2>
+        <p style="color:var(--ink-soft); font-style:italic;">Das Buch der Gäste</p>
+        <p id="buch-bilanz" style="margin-top:8px;"></p>
+        <div class="buch-gitter" id="buch-gitter"></div>
+        <button class="start-btn" id="btn-buch-zu" style="margin-top:18px;">Zurück</button>
+    </div>
+
+    <!-- PAUSE -->
+    <div class="start-overlay" id="pause-overlay" style="display:none; z-index: 510;">
+        <h2>Pause</h2>
+        <div class="zeile">
+            <label for="schwelle-regler-2">Empfindlichkeit</label>
+            <input type="range" id="schwelle-regler-2" min="3" max="20" step="1" value="9">
+            <span class="wert" id="schwelle-wert-2">9 dB</span>
+        </div>
+        <p style="max-width:460px; font-size:0.9rem; color:var(--ink-soft); line-height:1.45;">
+            Der gemessene Grundpegel liegt bei <span id="grundpegel-anzeige">—</span>.
+            Verscheucht schon zu wenig die Tiere, dreh die Zahl höher.
+        </p>
+        <button class="start-btn" id="btn-neu-eichen" style="margin-top:6px;">Neu eichen</button>
+        <button class="start-btn" id="btn-weiter" style="margin-top:12px;">Weiter</button>
+        <button class="start-btn zweitrangig" id="btn-abbrechen" style="margin-top:10px;">Stunde beenden</button>
+    </div>
+
+    <!-- EICHUNG -->
+    <div class="start-overlay" id="eich-overlay" style="display:none; z-index: 505;">
+        <h2>Einen Moment still</h2>
+        <p style="max-width:460px; line-height:1.5;">
+            Silentium hört sich den Raum an, um zu wissen, was hier „ruhig" heißt.
+            Noch <span class="wert" id="eich-rest">10</span> Sekunden.
+        </p>
+        <div class="pegel" style="width:220px; height:16px; margin-top:14px;">
+            <div class="pegel-fuellung" id="eich-pegel"></div>
+        </div>
+    </div>
+
+    <!-- ENDE -->
+    <div class="start-overlay" id="end-overlay" style="display:none; z-index: 515;">
+        <h2 id="end-titel">Die Stunde ist um</h2>
+        <p id="end-text" style="max-width:520px; line-height:1.6; margin-bottom:6px;"></p>
+        <div class="buch-gitter" id="end-gitter"></div>
+        <button class="start-btn" id="btn-nochmal" style="margin-top:18px;">Noch eine Stunde</button>
+        <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   SILENTIUM - die stille Stunde
+
+   Ein Werkzeug fuer die Lehrkraft, kein Lernspiel. Es laeuft auf EINEM
+   Geraet, das im Raum steht oder mitwandert. Deshalb:
+   - kein Eintrag in den Vokabelkasten, keine Achievement-Zaehler. Stillsein
+     ist keine Lernleistung, und die Zaehler messen Lernleistung.
+   - die Sammlung liegt unter einem eigenen Schluessel und gehoert dem GERAET,
+     also faktisch der Klasse davor - genau wie Bombas Bestleistung.
+
+   ZUM MIKROFON: Gemessen wird nur der Pegel. Es wird nichts aufgenommen,
+   nichts gespeichert, nichts gesendet - es gibt keinen Server. Der
+   AudioContext bekommt den Datenstrom, ein AnalyserNode rechnet daraus einen
+   Lautstaerkewert, und das war es. Kein MediaRecorder, kein Buffer, der
+   irgendwo liegen bliebe.
+   ============================================================ */
+
+const SPEICHER = 'ludi_silentium_gesehen';
+
+/* ---------- Die Gaeste ----------
+   ankunft   = ab wie vielen Sekunden ununterbrochener Stille moeglich
+   chance    = Wahrscheinlichkeit. Fehlt sie, kommt der Gast sicher, sobald er
+               an der Reihe ist.
+
+   WICHTIG, sonst verpufft die Seltenheit: Ein Gast MIT Chance wird GENAU
+   EINMAL ausgewuerfelt, naemlich wenn die Straehne seine Sekunde erreicht.
+   Wuerfelte man im Takt weiter, waere Merkur bei 33 % nach zehn weiteren
+   Minuten praktisch sicher da - und 33 % waeren gelogen. */
+const GAESTE = [
+    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20,
+      kultur: 'Catull hat ein ganzes Gedicht auf den Sperling seiner Geliebten geschrieben.' },
+    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60,
+      kultur: 'Katzen kamen erst spät nach Rom - gegen Mäuse hielt man vorher Wiesel.' },
+    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110,
+      kultur: 'Aus dem Fressverhalten heiliger Hühner las man vor der Schlacht den Willen der Götter.' },
+    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160,
+      kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
+    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220,
+      kultur: 'Die Taube gehört der Venus; ein Taubenpaar zieht ihren Wagen.' },
+    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280,
+      kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
+    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340,
+      kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
+    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400,
+      kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
+    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460,
+      kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
+    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520,
+      kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
+    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580,
+      kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
+    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, chance: 0.5,
+      kultur: 'Die Wölfin säugte Romulus und Remus - ohne sie gäbe es Rom nicht.' },
+    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, chance: 0.33,
+      kultur: 'Der Götterbote mit den Flügelschuhen sieht im Vorbeifliegen nach dem Rechten.' },
+    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, chance: 0.2,
+      kultur: 'Iuppiter Optimus Maximus selbst. Wer ihn sieht, hat lange geschwiegen.' }
+];
+
+/* Wer ein Bild hat, bekommt es; alle anderen einen Platzhalter mit Namen.
+   Die Bilder entstehen erst, wenn die Mechanik im Unterricht bestanden hat -
+   sonst malt man dreissig Tiere fuer eine Regel, die sich noch aendert. */
+const BILDER = { passer: 'assets/silentium/passer.png' };
+
+/* ---------- Zustand ---------- */
+let audioCtx = null, analyser = null, datenPuffer = null, mikroStrom = null;
+let grundpegel = -55;          // dB, aus der Eichung
+let empfindlichkeit = 9;       // dB ueber dem Grundpegel
+let pegelFenster = [];         // geglaetteter Verlauf
+let laeuft = false, pausiert = false;
+let stilleSeit = 0;            // Sekunden ununterbrochener Stille
+let restSekunden = 600;
+let dauerMinuten = 10;
+let anwesend = [];             // { gast, x, y, seit }
+let gewuerfelt = new Set();    // Gaeste mit Chance, fuer die in diesem Lauf schon gewuerfelt wurde
+let stoerpause = 0;            // Sekunden, in denen nach Laerm nichts kommt
+let besteStraehne = 0;
+let neuImBuch = [];
+let letzterTick = 0, wakeLock = null;
+
+const canvas = document.getElementById('szene-canvas');
+const ctx = canvas.getContext('2d');
+const bilder = {};
+Object.keys(BILDER).forEach(k => { const i = new Image(); i.src = BILDER[k]; bilder[k] = i; });
+
+/* ---------- Das Buch ---------- */
+function ladeBuch() {
+    try { return JSON.parse(localStorage.getItem(SPEICHER)) || {}; } catch (e) { return {}; }
+}
+function speichereBuch(b) {
+    try { localStorage.setItem(SPEICHER, JSON.stringify(b)); } catch (e) { /* privater Modus */ }
+}
+function insBuch(gast) {
+    const b = ladeBuch();
+    if (!b[gast.id]) { b[gast.id] = { erstesMal: new Date().toISOString().slice(0, 10), anzahl: 0 }; neuImBuch.push(gast); }
+    b[gast.id].anzahl++;
+    speichereBuch(b);
+}
+
+function zeichneBuch(ziel, nurNeue) {
+    const b = ladeBuch();
+    const gitter = document.getElementById(ziel);
+    gitter.innerHTML = '';
+    const liste = nurNeue ? neuImBuch : GAESTE;
+    liste.forEach(g => {
+        const gesehen = b[g.id];
+        const karte = document.createElement('div');
+        karte.className = 'buch-karte' + (gesehen ? '' : ' offen');
+        if (gesehen) {
+            karte.innerHTML = '<span class="lat">' + g.lat + '</span><span class="de">' + g.de + '</span>' +
+                '<span class="kultur">' + g.kultur + '</span>' +
+                '<span class="kultur" style="color:var(--ink-soft);">' + gesehen.anzahl + '× gesehen</span>';
+        } else {
+            // Kein Name, keine Silhouette: Was noch nicht da war, bleibt eine
+            // Leerstelle - sonst ist die Ueberraschung vorweggenommen.
+            karte.innerHTML = '<span class="lat">?</span><span class="kultur">noch nicht dagewesen · ab ' +
+                Math.round(g.ankunft / 60) + ' Min' + (g.chance ? ', mit Glück' : '') + '</span>';
+        }
+        gitter.appendChild(karte);
+    });
+    if (!nurNeue) {
+        const wieViele = GAESTE.filter(g => b[g.id]).length;
+        document.getElementById('buch-bilanz').innerHTML =
+            '<strong>' + wieViele + ' von ' + GAESTE.length + '</strong> Gästen waren schon da.';
+    }
+}
+
+/* ---------- Mikrofon ----------
+   Nur Messen. getUserMedia gibt den Strom, ein AnalyserNode rechnet daraus
+   den Effektivwert, daraus wird ein dB-Wert. Nirgends wird etwas behalten. */
+async function mikrofonOeffnen() {
+    mikroStrom = await navigator.mediaDevices.getUserMedia({
+        audio: {
+            // Die Automatiken wuerden genau das wegregeln, was wir messen wollen:
+            // Eine Aussteuerungsautomatik zieht leise Raeume laut.
+            echoCancellation: false, noiseSuppression: false, autoGainControl: false
+        }
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    const quelle = audioCtx.createMediaStreamSource(mikroStrom);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    datenPuffer = new Float32Array(analyser.fftSize);
+    quelle.connect(analyser);   // BEWUSST nicht an den Ausgang - sonst gaebe es eine Rueckkopplung
+}
+
+function pegelJetzt() {
+    if (!analyser) return -90;
+    analyser.getFloatTimeDomainData(datenPuffer);
+    let summe = 0;
+    for (let i = 0; i < datenPuffer.length; i++) summe += datenPuffer[i] * datenPuffer[i];
+    const rms = Math.sqrt(summe / datenPuffer.length);
+    return 20 * Math.log10(rms + 1e-9);
+}
+
+/* Geglaettet ueber rund eineinhalb Sekunden: Ein einzelnes Husten soll nicht
+   alles verscheuchen, anhaltendes Reden schon. */
+function geglaetteterPegel() {
+    const jetzt = pegelJetzt();
+    pegelFenster.push(jetzt);
+    if (pegelFenster.length > 90) pegelFenster.shift();
+    const anteil = pegelFenster.slice(-45);
+    return anteil.reduce((a, b) => a + b, 0) / anteil.length;
+}
+
+/* ---------- Eichung ----------
+   Ein Klassenraum hat immer Grundrauschen - Lueftung, Flur, Beamer. Eine feste
+   Zahl kann es deshalb nicht geben; gemessen wird, was HIER ruhig heisst. */
+function eichen(danach) {
+    const ueberlagerung = document.getElementById('eich-overlay');
+    ueberlagerung.style.display = 'flex';
+    pegelFenster = [];
+    let rest = 10;
+    const werte = [];
+    document.getElementById('eich-rest').innerText = rest;
+
+    const uhr = setInterval(() => {
+        werte.push(pegelJetzt());
+        const anzeige = document.getElementById('eich-pegel');
+        const p = Math.max(0, Math.min(100, (werte[werte.length - 1] + 70) * 1.6));
+        anzeige.style.width = p + '%';
+    }, 100);
+
+    const sekunden = setInterval(() => {
+        rest--;
+        document.getElementById('eich-rest').innerText = rest;
+        if (rest <= 0) {
+            clearInterval(uhr); clearInterval(sekunden);
+            werte.sort((a, b) => a - b);
+            // Der Median, nicht der Mittelwert: Ein einzelner Stuhl, der waehrend
+            // der Eichung rueckt, wuerde den Mittelwert nach oben ziehen und die
+            // Schwelle fuer den ganzen Lauf verderben.
+            grundpegel = werte[Math.floor(werte.length / 2)] || -55;
+            document.getElementById('grundpegel-anzeige').innerText = grundpegel.toFixed(0) + ' dB';
+            ueberlagerung.style.display = 'none';
+            danach();
+        }
+    }, 1000);
+}
+
+/* ---------- Ablauf ---------- */
+function starten() {
+    dauerMinuten = parseInt(document.getElementById('timer-regler').value, 10);
+    empfindlichkeit = parseInt(document.getElementById('schwelle-regler').value, 10);
+    restSekunden = dauerMinuten * 60;
+    stilleSeit = 0; besteStraehne = 0; anwesend = []; gewuerfelt = new Set();
+    neuImBuch = []; stoerpause = 0; pausiert = false;
+
+    document.getElementById('start-overlay').style.display = 'none';
+    document.getElementById('end-overlay').style.display = 'none';
+    laeuft = true;
+    letzterTick = performance.now();
+    schlafSperre();
+    anzeigeAuffrischen();
+    requestAnimationFrame(schleife);
+}
+
+function schleife(jetzt) {
+    if (!laeuft) return;
+    const dt = Math.min(0.25, (jetzt - letzterTick) / 1000);
+    letzterTick = jetzt;
+
+    if (!pausiert) {
+        const pegel = geglaetteterPegel();
+        const schwelle = grundpegel + empfindlichkeit;
+        pegelBalken(pegel, schwelle);
+
+        if (pegel > schwelle) stoerung();
+        else {
+            if (stoerpause > 0) stoerpause -= dt;
+            else {
+                stilleSeit += dt;
+                if (stilleSeit > besteStraehne) besteStraehne = stilleSeit;
+                pruefeAnkunft();
+            }
+        }
+
+        restSekunden -= dt;
+        if (restSekunden <= 0) { beenden(); return; }
+        anzeigeAuffrischen();
+    }
+
+    zeichneSzene();
+    requestAnimationFrame(schleife);
+}
+
+function stoerung() {
+    if (anwesend.length === 0 && stilleSeit < 1) { stilleSeit = 0; return; }
+    if (anwesend.length) {
+        const blitz = document.getElementById('blitz');
+        blitz.classList.add('an');
+        setTimeout(() => blitz.classList.remove('an'), 260);
+        zeigeMeldung('Zu laut — alles ist geflohen.');
+    }
+    anwesend = [];
+    stilleSeit = 0;
+    // Kurze Ruhepause, sonst flackert die Szene bei jedem Stuhlruecken.
+    stoerpause = 10;
+    document.getElementById('stille').classList.add('gestoert');
+    setTimeout(() => document.getElementById('stille').classList.remove('gestoert'), 1200);
+}
+
+function pruefeAnkunft() {
+    const daIds = new Set(anwesend.map(a => a.gast.id));
+    for (const g of GAESTE) {
+        if (daIds.has(g.id)) continue;
+        if (stilleSeit < g.ankunft) continue;
+
+        if (g.chance !== undefined) {
+            // GENAU EINMAL wuerfeln, beim Erreichen der Minute.
+            if (gewuerfelt.has(g.id)) continue;
+            gewuerfelt.add(g.id);
+            if (Math.random() > g.chance) continue;
+        }
+        eintreten(g);
+        return;   // hoechstens einer je Bild
+    }
+}
+
+function eintreten(gast) {
+    anwesend.push({
+        gast: gast,
+        x: 0.12 + Math.random() * 0.76,
+        y: 0.55 + Math.random() * 0.34,
+        seit: 0
+    });
+    insBuch(gast);
+    zeigeMeldung('<span class="lat">' + gast.lat + '</span> — ' + gast.de);
+    anzeigeAuffrischen();
+}
+
+let meldungsUhr = null;
+function zeigeMeldung(html) {
+    const m = document.getElementById('meldung');
+    m.innerHTML = html;
+    m.classList.add('an');
+    if (meldungsUhr) clearTimeout(meldungsUhr);
+    meldungsUhr = setTimeout(() => m.classList.remove('an'), 4000);
+}
+
+function pegelBalken(pegel, schwelle) {
+    // -70 bis -10 dB auf 0 bis 100 % abgebildet
+    const anteil = x => Math.max(0, Math.min(100, (x + 70) / 60 * 100));
+    const f = document.getElementById('pegel-fuellung');
+    f.style.width = anteil(pegel) + '%';
+    f.classList.toggle('laut', pegel > schwelle);
+    document.getElementById('pegel-marke').style.left = anteil(schwelle) + '%';
+}
+
+function mmss(s) {
+    s = Math.max(0, Math.round(s));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+function anzeigeAuffrischen() {
+    document.getElementById('stille').innerText = mmss(stilleSeit);
+    document.getElementById('restzeit').innerText = mmss(restSekunden);
+    document.getElementById('besucherzahl').innerText =
+        anwesend.length + (anwesend.length === 1 ? ' Besucher' : ' Besucher');
+}
+
+/* ---------- Szene ----------
+   Vorerst gezeichnet statt gemalt: Himmel, Huegel, ein Andeutung von Hof.
+   Der richtige Hintergrund kommt, wenn die Mechanik im Unterricht bestanden
+   hat - vorher waere er Arbeit auf Verdacht. */
+function groesseAnpassen() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = Math.round(r.width);
+    canvas.height = Math.round(r.height);
+}
+window.addEventListener('resize', groesseAnpassen);
+
+function zeichneSzene() {
+    const W = canvas.width, H = canvas.height;
+    if (!W || !H) return;
+
+    const himmel = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+    himmel.addColorStop(0, '#8fcdf0');
+    himmel.addColorStop(1, '#dfeff8');
+    ctx.fillStyle = himmel;
+    ctx.fillRect(0, 0, W, H);
+
+    // Hügel
+    ctx.fillStyle = '#b9cf94';
+    ctx.beginPath();
+    ctx.moveTo(0, H * 0.72);
+    ctx.quadraticCurveTo(W * 0.3, H * 0.60, W * 0.55, H * 0.70);
+    ctx.quadraticCurveTo(W * 0.8, H * 0.78, W, H * 0.66);
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#a3bd7d';
+    ctx.fillRect(0, H * 0.82, W, H * 0.18);
+
+    // Andeutung des Landguts
+    ctx.fillStyle = '#e8dcc2';
+    ctx.fillRect(W * 0.06, H * 0.52, W * 0.2, H * 0.24);
+    ctx.fillStyle = '#b4653f';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.04, H * 0.52); ctx.lineTo(W * 0.28, H * 0.52); ctx.lineTo(W * 0.16, H * 0.43);
+    ctx.closePath(); ctx.fill();
+
+    // Zypressen
+    ctx.fillStyle = '#5f7f4e';
+    [0.74, 0.82, 0.9].forEach((p, i) => {
+        const x = W * p, h = H * (0.18 + i * 0.02);
+        ctx.beginPath();
+        ctx.ellipse(x, H * 0.78 - h / 2, W * 0.018, h / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    anwesend.forEach(a => {
+        a.seit += 1 / 60;
+        const auf = Math.min(1, a.seit / 0.8);          // sanft einblenden
+        const x = a.x * W, y = a.y * H;
+        const bild = bilder[a.gast.id];
+        ctx.save();
+        ctx.globalAlpha = auf;
+        if (bild && bild.complete && bild.naturalWidth > 0) {
+            const b = Math.max(44, H * 0.11);
+            const h = b * (bild.naturalHeight / bild.naturalWidth);
+            ctx.drawImage(bild, x - b / 2, y - h, b, h);
+        } else {
+            // Platzhalter: ein Pergamentplaettchen mit dem lateinischen Namen.
+            // Ehrlicher als ein hingeworfenes Tier - man sieht, dass hier noch
+            // ein Bild fehlt.
+            const t = a.gast.lat;
+            ctx.font = 'bold ' + Math.max(13, Math.round(H * 0.028)) + 'px Georgia, serif';
+            const b = ctx.measureText(t).width + 22;
+            const h = Math.max(30, H * 0.06);
+            ctx.fillStyle = 'rgba(244, 236, 219, 0.95)';
+            ctx.strokeStyle = '#8c7853'; ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(x - b / 2, y - h, b, h, 8);
+            else ctx.rect(x - b / 2, y - h, b, h);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#9b2c2c';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(t, x, y - h / 2);
+        }
+        ctx.restore();
+    });
+}
+
+/* ---------- Bildschirm wach halten ---------- */
+async function schlafSperre() {
+    try {
+        if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* aelteres iOS kennt das nicht - dann hilft nur "Automatische Sperre: Nie" */ }
+}
+
+function beenden() {
+    laeuft = false;
+    if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+    if (mikroStrom) { mikroStrom.getTracks().forEach(t => t.stop()); mikroStrom = null; }
+    if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; analyser = null; }
+
+    const b = ladeBuch();
+    const gesamt = GAESTE.filter(g => b[g.id]).length;
+    document.getElementById('end-titel').innerText =
+        besteStraehne >= 600 ? '📜 Eine stille Stunde' : 'Die Stunde ist um';
+    document.getElementById('end-text').innerHTML =
+        'Längste ununterbrochene Stille: <strong>' + mmss(besteStraehne) + '</strong>.<br>' +
+        (neuImBuch.length
+            ? '<strong>' + neuImBuch.length + '</strong> neue' + (neuImBuch.length === 1 ? 'r Gast' : ' Gäste') + ' im Buch:'
+            : 'Diesmal war niemand Neues dabei.') +
+        '<br><span style="color:var(--ink-soft);">Insgesamt kennt das Buch ' + gesamt + ' von ' + GAESTE.length + ' Gästen.</span>';
+    zeichneBuch('end-gitter', true);
+    document.getElementById('end-overlay').style.display = 'flex';
+}
+
+/* ---------- Bedienung ---------- */
+function erreichbarText() {
+    const min = parseInt(document.getElementById('timer-regler').value, 10);
+    const wie = GAESTE.filter(g => g.ankunft <= min * 60).length;
+    document.getElementById('erreichbar').innerText =
+        'Bei ' + min + ' Minuten sind ' + wie + ' von ' + GAESTE.length + ' Gästen überhaupt erreichbar.';
+}
+
+window.onload = function () {
+    groesseAnpassen();
+    zeichneSzene();
+
+    const tr = document.getElementById('timer-regler');
+    tr.addEventListener('input', () => {
+        document.getElementById('timer-wert').innerText = tr.value + (tr.value === '1' ? ' Minute' : ' Minuten');
+        erreichbarText();
+    });
+    erreichbarText();
+
+    [['schwelle-regler', 'schwelle-wert'], ['schwelle-regler-2', 'schwelle-wert-2']].forEach(([r, w]) => {
+        const el = document.getElementById(r);
+        el.addEventListener('input', () => {
+            empfindlichkeit = parseInt(el.value, 10);
+            document.getElementById(w).innerText = el.value + ' dB';
+            document.getElementById('schwelle-regler').value = el.value;
+            document.getElementById('schwelle-regler-2').value = el.value;
+            document.getElementById('schwelle-wert').innerText = el.value + ' dB';
+            document.getElementById('schwelle-wert-2').innerText = el.value + ' dB';
+        });
+    });
+
+    document.getElementById('btn-start').addEventListener('click', async function () {
+        try {
+            await mikrofonOeffnen();
+        } catch (e) {
+            alert('Das Mikrofon ließ sich nicht öffnen.\n\n' +
+                  'Am iPad: In der Adresszeile auf „aA" tippen → Website-Einstellungen → Mikrofon → Erlauben.\n\n' +
+                  'Meldung des Browsers: ' + e.message);
+            return;
+        }
+        document.getElementById('start-overlay').style.display = 'none';
+        eichen(starten);
+    });
+
+    document.getElementById('btn-pause').addEventListener('click', function () {
+        if (!laeuft) return;
+        pausiert = true;
+        document.getElementById('pause-overlay').style.display = 'flex';
+    });
+    document.getElementById('btn-weiter').addEventListener('click', function () {
+        document.getElementById('pause-overlay').style.display = 'none';
+        pausiert = false;
+        letzterTick = performance.now();
+    });
+    document.getElementById('btn-neu-eichen').addEventListener('click', function () {
+        document.getElementById('pause-overlay').style.display = 'none';
+        eichen(function () { pausiert = false; letzterTick = performance.now(); });
+    });
+    document.getElementById('btn-abbrechen').addEventListener('click', function () {
+        document.getElementById('pause-overlay').style.display = 'none';
+        beenden();
+    });
+
+    document.getElementById('btn-buch').addEventListener('click', function () {
+        pausiert = laeuft;
+        zeichneBuch('buch-gitter', false);
+        document.getElementById('buch-overlay').style.display = 'flex';
+    });
+    document.getElementById('btn-buch-start').addEventListener('click', function () {
+        zeichneBuch('buch-gitter', false);
+        document.getElementById('buch-overlay').style.display = 'flex';
+    });
+    document.getElementById('btn-buch-zu').addEventListener('click', function () {
+        document.getElementById('buch-overlay').style.display = 'none';
+        if (laeuft) { pausiert = false; letzterTick = performance.now(); }
+    });
+
+    document.getElementById('btn-nochmal').addEventListener('click', function () {
+        document.getElementById('end-overlay').style.display = 'none';
+        document.getElementById('start-overlay').style.display = 'flex';
+    });
+};
+</script>
+</body>
+</html>
