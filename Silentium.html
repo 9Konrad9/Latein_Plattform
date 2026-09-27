@@ -293,6 +293,29 @@ const GAESTE = [
    background.png 1,27 MB wiegt. */
 const HINTERGRUND = 'assets/silentium/villa-rustica.jpg';
 
+/* ---------- Tiefe ----------
+   Die Wiese ist eine FLAECHE, kein Band: Wer weiter hinten steht, erscheint
+   hoeher im Bild UND kleiner. Ohne das standen alle Gaeste auf einer
+   gedachten Linie und waren gleich gross - die Szene sah aus wie ein
+   Schattenspiel.
+
+   Die zwei Randwerte sind am Bild abgelesen: Die Gelaendekante laeuft von
+   0,57 links auf 0,62 rechts, also ist 0,63 die hinterste Stelle, an der
+   noch jemand im Gras steht. Unten bleibt ein Rand frei, damit niemand halb
+   aus dem Bild ragt.
+
+   Die Groessen dazwischen sind NICHT linear, sondern etwas gestaucht
+   (Exponent 1,4). Perspektivisch waere der Zusammenhang 1/Abstand; linear
+   wirkt die hintere Haelfte zu gross und die Tiefe flach. */
+const WIESE_HINTEN = 0.63, WIESE_VORN = 0.96;
+const TIEFE_HINTEN = 0.45, TIEFE_VORN = 1.30;
+
+function tiefenFaktor(y) {
+    const t = (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN);
+    const g = Math.pow(Math.max(0, Math.min(1, t)), 1.4);
+    return TIEFE_HINTEN + (TIEFE_VORN - TIEFE_HINTEN) * g;
+}
+
 const BILDER = {
     passer:  'assets/silentium/passer.png',
     felis:   'assets/silentium/felis.png',
@@ -528,14 +551,16 @@ function pruefeAnkunft() {
 }
 
 function eintreten(gast) {
-    /* Anteile des Hintergrundbildes. Die Wiese beginnt dort bei gut 60 %
-       der Hoehe (die Gelaendekante laeuft von 0,57 links auf 0,62 rechts);
-       ab 0,66 steht jeder sicher im Gras. Unten bleibt ein Rand frei,
-       damit niemand halb aus dem Bild ragt. */
+    /* Anteile des Hintergrundbildes, ueber die ganze Wiese verteilt - vorn
+       wie hinten. Wie gross jemand erscheint, sagt dann tiefenFaktor(). */
+    const y = WIESE_HINTEN + Math.random() * (WIESE_VORN - WIESE_HINTEN);
+    /* Nach hinten wird die sichtbare Wiese schmaler, weil die Huegel
+       hereinragen. Wer weit hinten steht, rueckt deshalb zur Mitte. */
+    const enge = 0.10 + 0.22 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
     anwesend.push({
         gast: gast,
-        x: 0.10 + Math.random() * 0.80,
-        y: 0.68 + Math.random() * 0.26,
+        x: enge + Math.random() * (1 - 2 * enge),
+        y: y,
         seit: 0
     });
     insBuch(gast);
@@ -645,7 +670,11 @@ function zeichneGaeste() {
     // auf einem breiten Schirm ploetzlich so gross wie die Villa.
     const R = bildRahmen || { x: 0, y: 0, w: W, h: H };
 
-    anwesend.forEach(a => {
+    /* Von hinten nach vorn zeichnen. Sonst deckt die Woelfin im Hintergrund
+       den Sperling im Vordergrund ab, und die Tiefe kippt. */
+    const nachTiefe = anwesend.slice().sort((p, q) => p.y - q.y);
+
+    nachTiefe.forEach(a => {
         a.seit += 1 / 60;
         const auf = Math.min(1, a.seit / 0.8);          // sanft einblenden
         const x = R.x + a.x * R.w, y = R.y + a.y * R.h;
@@ -657,10 +686,10 @@ function zeichneGaeste() {
                hochkant, der Pfau mit Schleppe querformatig. Bei gleicher
                Breite waere die Katze doppelt so hoch wie der Sperling.
                Die Breite wird gedeckelt, damit die Schleppe nicht ausufert. */
-            const faktor = a.gast.groesse || 1;
-            let h = Math.max(30, R.h * 0.085) * faktor;
+            const faktor = (a.gast.groesse || 1) * tiefenFaktor(a.y);
+            let h = Math.max(14, R.h * 0.085 * faktor);
             let b = h * (bild.naturalWidth / bild.naturalHeight);
-            const maxB = Math.max(60, R.h * 0.16) * faktor;
+            const maxB = Math.max(28, R.h * 0.16 * faktor);
             if (b > maxB) { b = maxB; h = b * (bild.naturalHeight / bild.naturalWidth); }
             ctx.drawImage(bild, x - b / 2, y - h, b, h);
         } else {
@@ -668,9 +697,10 @@ function zeichneGaeste() {
             // Ehrlicher als ein hingeworfenes Tier - man sieht, dass hier noch
             // ein Bild fehlt.
             const t = a.gast.lat;
-            ctx.font = 'bold ' + Math.max(12, Math.round(R.h * 0.026)) + 'px Georgia, serif';
-            const b = ctx.measureText(t).width + 22;
-            const h = Math.max(26, R.h * 0.055);
+            const tf = tiefenFaktor(a.y);
+            ctx.font = 'bold ' + Math.max(9, Math.round(R.h * 0.026 * tf)) + 'px Georgia, serif';
+            const b = ctx.measureText(t).width + 22 * tf;
+            const h = Math.max(18, R.h * 0.055 * tf);
             ctx.fillStyle = 'rgba(244, 236, 219, 0.95)';
             ctx.strokeStyle = '#8c7853'; ctx.lineWidth = 2;
             ctx.beginPath();
