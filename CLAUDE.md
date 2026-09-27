@@ -172,6 +172,37 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **Quiz.html** – statisches Kultur-Quiz (`quizData.js`), nicht wortschatz-basiert.
 - **Achievements.html** – Trophäensammlung-Übersichtsseite.
 - **index.html** – Hauptmenü.
+- **Silentium.html** – **kein Spiel, sondern ein Werkzeug für die Lehrkraft** (September 2026,
+  nach einer Idee des Fachlehrers). Es läuft auf EINEM Gerät, das im Raum steht oder mit der
+  Lehrkraft mitwandert: Solange es still bleibt, kommt Besuch auf das Landgut der Cornelier;
+  wird es zu laut, flieht alles auf einmal und die Stille-Strähne fällt auf null.
+  Daraus folgt dreierlei, und das ist bewusst so:
+  - **Kein Eintrag in den Vokabelkasten, keine Achievement-Zähler.** Stillsein ist keine
+    Lernleistung, und die Zähler messen Lernleistung. `test-silentium.js` prüft, dass im
+    Quelltext weder `recordVocabAttempt` noch `recordCategoryAttempt` vorkommt.
+  - Die Sammlung liegt unter `ludi_silentium_gesehen` und gehört dem **Gerät**, also der
+    Klasse davor – wie Bombas Bestleistung.
+  - Es steht **nicht als Karte zwischen den Spielen**, sondern als kleine Pille oben rechts
+    im Hauptmenü (`#silentium-btn` in `theme.css`, das Gegenstück zum Haus-Knopf oben links).
+  - **DIE REGEL, AN DER ALLES HÄNGT:** Ein seltener Gast wird **genau einmal** ausgewürfelt,
+    nämlich wenn die Strähne seine Sekunde erreicht. Würfelte man im Takt weiter, wäre Merkur
+    bei 33 % nach zehn weiteren Minuten praktisch sicher da – und die 33 % wären gelogen.
+    Über 400 Durchgänge nachgemessen: lupa 48 % (Soll 50), Mercurius 33 % (Soll 33),
+    Iuppiter 18 % (Soll 20).
+  - **Zum Mikrofon:** Gemessen wird nur der Pegel (`AnalyserNode`, Effektivwert → dB). Es wird
+    nichts aufgenommen, nichts gespeichert, nichts gesendet – es gibt keinen Server. Das steht
+    sichtbar auf dem Startbildschirm, und der Test prüft, dass keine Aufnahme-Schnittstelle im
+    Quelltext auftaucht. **Die Eichung nimmt den Median** über zehn Sekunden, nicht den
+    Mittelwert: Ein einzelner rückender Stuhl während der Eichung würde den Mittelwert nach
+    oben ziehen und die Schwelle für den ganzen Lauf verderben.
+    Der Lautlos-Schalter stört hier nicht – er betrifft nur die Ausgabe. Deshalb ist das
+    Schlussbild auch **sichtbar** und nicht hörbar (siehe Bomba).
+  - **Die Bilder fehlen noch.** Ein Gast ohne Bild erscheint als Pergamentplättchen mit seinem
+    lateinischen Namen. Der Bildweg ist geprüft: Canva liefert 200×200, `freistellen.js` macht
+    daraus ein sauberes PNG mit 9 KB (`assets/silentium/passer.png` liegt als Beleg dabei).
+    **Nur Hintergründe gehen so nicht** – das Original ist signiert, die Vorschau mit 200 px
+    zu klein. Erst den Klassentest, dann die Bilder: Wenn die Mechanik sich noch ändert, wären
+    dreißig fertige Tiere umsonst gemalt.
 
 Zwei davon sind **Gruppenspiele** und folgen deshalb anderen Regeln als der Rest: Sie gehören
 keiner Person, tragen im Hauptmenü **kein `progress-badge`**, und ihre Vollbild-Layouts schalten
@@ -218,6 +249,26 @@ das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstrick
 Gelöscht/nicht mehr vorhanden (bewusst entfernt, falls in altem Stand noch auftauchend):
 Bollwerk.html, Kastell_backup.html, Adventura.html, Possessiv.html, Tabularium.html,
 LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichhaltigeren Spielen.
+
+## Die Familie Cornelia
+
+Aus dem Lehrbuch, mit den Längen so, wie sie dort stehen. Sie taucht in Silentium auf
+und wird in weiteren Spielen gebraucht – **hier nachschlagen, nicht aus dem Gedächtnis
+schreiben.**
+
+| Rolle | Name |
+|---|---|
+| avus | Pūblius Cornēlius Fīrmus |
+| pater | Quīntus Cornēlius Prīscus |
+| māter | Valeria |
+| fīlius | Aulus Cornēlius Faustus |
+| fīlia | Cornēlia |
+| serva | Dēlia |
+| servus | Lycus |
+| catella | Issa |
+
+Die catella heißt **Issa** – dieselbe wie im Sprungspiel. Martial besingt eine Hündin
+dieses Namens, und darauf spielt auch das Spiel an.
 
 ## Wichtige Konventionen & bekannte Fallstricke
 

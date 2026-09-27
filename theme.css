@@ -94,6 +94,34 @@ body {
 }
 #global-menu-btn:hover { background: var(--putz-hell); border-color: var(--pompeji); }
 
+/* ---------- Der Silentium-Knopf ----------
+   Das Gegenstueck zum Haus-Knopf, oben RECHTS und nur auf dem Hauptmenue.
+   Silentium ist kein Spiel, sondern ein Werkzeug fuer die Lehrkraft - es steht
+   deshalb nicht als Karte zwischen den Spielen, sondern am Rand. Dieselbe
+   Gestalt wie der Haus-Knopf, nur als Pille mit Wort: Ein Kreis mit Zeichen
+   allein waere hier zu raetselhaft.
+   Auf schmalen Schirmen faellt das Wort weg und der Knopf wird rund - sonst
+   draengt er sich in die Kopfzeile. */
+#silentium-btn {
+    position: fixed; top: 10px; right: 10px; z-index: 100000;
+    height: 42px; padding: 0 16px; border-radius: 21px;
+    background: var(--putz);
+    border: 2px solid var(--bronze);
+    color: var(--pompeji);                 /* kontrast-ok: 6,40 auf --putz, 6,99 im Hover auf --putz-hell */
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-display); font-weight: bold; font-size: 0.95rem;
+    text-decoration: none; letter-spacing: 1px;
+    box-shadow: var(--schatten);
+    touch-action: manipulation;
+}
+#silentium-btn:hover { background: var(--putz-hell); border-color: var(--pompeji); }
+#silentium-btn .zeichen { font-size: 1.2rem; }
+
+@media (max-width: 720px) {
+    #silentium-btn { width: 42px; padding: 0; justify-content: center; border-radius: 50%; }
+    #silentium-btn .wort { display: none; }
+}
+
 /* ---------- Überschriften ---------- */
 
 /* Die Kopfzeile eines Spiels: Name und Untertitel über der Spielfläche.
