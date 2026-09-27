@@ -30,6 +30,16 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   Kennt alle unregelmäßigen Verbfamilien, Deponentien, *fierī*, sowie die Sonderfälle *dare*
   (kurze Vokale) und die 3 lexikalisierten Imperativ-Kurzformen (*dūc, dīc, fac*).
 - `progress.js` – Leitner-System (`LudiProgress.recordVocabAttempt`) und Achievement-Logik
+  … sowie `weightedPick(pool)`, die Auswahl der nächsten Vokabel. **Sie sperrt die zuletzt
+  gezogenen Wörter** (ein Drittel des Topfes, höchstens vier), solange danach genug übrig
+  bleibt. Grund: In Lektion 1 gibt es für Issa nur zehn Wörter, und ohne Sperre wiederholte
+  sich das Wort gemessen in 10 % der Runden **sofort** – nach ein paar richtigen Antworten
+  sogar in 13 %, weil die Gewichtung die gekonnten Wörter herausnimmt und der Rest enger
+  wird. Aus dem Unterricht gemeldet, nicht vermutet.
+  Die **Schieflage selbst bleibt** und soll bleiben: Was noch nicht sitzt, kommt häufiger
+  dran – das ist der Kasten. `test-auswahl.js` prüft beides, die fehlenden Wiederholungen
+  und die erhaltene Gewichtung; ohne die zweite Probe könnte die Sperre die Gewichtung
+  unbemerkt einebnen.
   (`LudiProgress.recordCategoryAttempt`, `getAchievementOverview`). Speichert in `localStorage`.
 - `achievementToast.js` – Popup-Benachrichtigung bei neu freigeschalteten Achievements.
 - `review.js` – die Wiederholungsrunde am Rundenende (`LudiReview`). Führt Buch darüber,
@@ -68,15 +78,20 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     SPIEL, nicht das Lernen: Was falsch war, geht trotzdem als falsch in den
     Vokabelkasten, sonst ließe sich Fortschritt erkaufen. Gegen den Sturz aus dem Bild
     hilft er nicht.
-    `catapulta`: 319 px Wurfhöhe, und das ist **nicht frei gewählt** – zwei Reihen sind
-    höchstens 290 auseinander, drei mindestens 375.
-    **Der erste Anlauf war falsch und ist im Unterricht durchgefallen:** Er warf Issa
-    genau auf das nächste Antwort-Feld. Man kam dort an, ohne vorher geschaut zu haben,
-    wohin man muss, und verlor prompt ein Herz. Jetzt schiebt der Katapult eine
-    zusätzliche neutrale Reihe hinter sich ein; der Wurf endet damit auf einer neutralen
-    Reihe **direkt unter** dem Antwort-Feld – Issa steht, schaut hoch, springt selbst.
-    Die Höhe pro Reihe bleibt gleich (die eingeschobene Reihe kostet genau das, was der
-    Wurf spart): gewonnen wird Tempo, nicht Punktestand, und übersprungen wird nichts.
+    `catapulta`: **469 px, drei Reihen – also über ein Antwort-Feld hinweg. Eine Frage
+    fällt aus, und genau das ist die Belohnung** (Entscheidung des Fachlehrers: dem
+    Lerneffekt schadet eine übersprungene Frage nicht).
+    Zwei Anläufe davor waren zu zaghaft und beide im Unterricht durchgefallen: Erst warf
+    der Katapult genau **auf** das Antwort-Feld – man kam an, ohne geschaut zu haben,
+    wohin, und verlor ein Herz. Dann auf die neutrale Reihe direkt darunter – sauber,
+    aber ohne Gewinn, weil die dafür eingeschobene Reihe genau das kostete, was der Wurf
+    sparte.
+    Die 469 px sind nicht frei gewählt: Drei Reihen sind höchstens 435 auseinander, vier
+    mindestens 500. Der Wurf endet also immer auf einer **neutralen** Reihe.
+    Eine überflogene Reihe gilt als durch (`handlePlatformLanding` streicht beim Aufsetzen
+    alle Antwort-Reihen unterhalb) – sonst zeigte die Anzeige weiter deren Wort, obwohl es
+    nicht mehr zu erreichen ist. Gezählt wird dafür nichts: Eine übersprungene Frage ist
+    weder richtig noch falsch.
     `test-issa.js` prüft, **worauf** der Wurf endet, nicht nur wie weit er trägt.
     Beide Gegenstände sind vorerst mit Canvas gezeichnet (rundes Scutum mit Buckel,
     Onager mit Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.

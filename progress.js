@@ -148,17 +148,51 @@ const LudiProgress = (() => {
         return getColorIndex(getBoxLevel(latinWord));
     }
 
+    /* Was zuletzt drankam, kommt nicht gleich wieder.
+
+       Aus dem Unterricht gemeldet (Issa springt, Lektion 1): "Es waren
+       eigentlich immer dieselben fünf, sechs Vokabeln und sogar manchmal
+       dieselbe Vokabel hintereinander." Nachgemessen, und zwar genau so:
+       Lektion 1 gibt für Issa nur zehn Wörter her. Bei frischem Kasten
+       wiederholte sich das Wort in 10 % der Runden SOFORT, und die sechs
+       häufigsten machten 69 % aus. Nach ein paar richtigen Antworten wurde es
+       schlimmer statt besser - 13 % und 86 % -, weil die Gewichtung die
+       gekonnten Wörter herausnimmt und der Rest umso enger wird.
+
+       Das ist kein Fehler der Gewichtung, die soll das so. Der Fehler ist, dass
+       nichts die unmittelbare Wiederholung verhindert hat. Deshalb merkt sich
+       diese Funktion die letzten Ziehungen und sperrt sie - aber nur, solange
+       danach noch genug übrig bleibt. Bei vier Wörtern im Topf wird nichts
+       gesperrt, sonst zöge sie irgendwann ins Leere.
+
+       Die Erinnerung liegt hier und nicht in den Spielen: Alle fünf Spiele mit
+       weightedPick haben dasselbe Problem, und keines soll es einzeln lösen
+       müssen. */
+    let _zuletztGezogen = [];
+
+    function _merkTiefe(n) {
+        // Ein Drittel des Topfes, höchstens vier - bei zehn Wörtern also drei.
+        return Math.max(0, Math.min(4, Math.floor(n / 3)));
+    }
+
     /**
      * Wählt zufällig ein Element aus dem Pool, gewichtet nach Ampel-Level:
      * niedrigere Stufen erscheinen deutlich häufiger als hohe.
      * pool: Array von Objekten mit einem "latin"-Feld.
+     * tiefe: wie viele der zuletzt gezogenen gesperrt werden (optional;
+     *        ohne Angabe ein Drittel des Topfes, höchstens vier).
      */
-    function weightedPick(pool) {
+    function weightedPick(pool, tiefe) {
         if (!pool || pool.length === 0) return null;
         const data = _load();
         const boxWeights = [5, 4, 3, 2, 1]; // Stufe 0..4
 
-        const weights = pool.map(item => {
+        const gesperrt = new Set(_zuletztGezogen.slice(-(tiefe === undefined ? _merkTiefe(pool.length) : tiefe)));
+        let topf = pool.filter(item => !gesperrt.has(item.latin));
+        // Sicherheitsnetz: Wenn die Sperre fast alles wegnimmt, gilt sie nicht.
+        if (topf.length < 2) topf = pool;
+
+        const weights = topf.map(item => {
             const entry = data.vocab[item.latin];
             const box = (entry && entry.box !== undefined) ? entry.box : 0;
             return boxWeights[box];
@@ -166,12 +200,19 @@ const LudiProgress = (() => {
 
         const total = weights.reduce((a, b) => a + b, 0);
         let r = Math.random() * total;
-        for (let i = 0; i < pool.length; i++) {
+        let gewaehlt = topf[topf.length - 1];
+        for (let i = 0; i < topf.length; i++) {
             r -= weights[i];
-            if (r <= 0) return pool[i];
+            if (r <= 0) { gewaehlt = topf[i]; break; }
         }
-        return pool[pool.length - 1];
+
+        _zuletztGezogen.push(gewaehlt.latin);
+        if (_zuletztGezogen.length > 8) _zuletztGezogen.shift();
+        return gewaehlt;
     }
+
+    /* Für Tests und für den Start einer neuen Runde: Die Erinnerung leeren. */
+    function resetPickMemory() { _zuletztGezogen = []; }
 
     /**
      * Gibt eine Zusammenfassung zurück, wie viele Wörter eines Pools in welcher
@@ -386,6 +427,7 @@ const LudiProgress = (() => {
         getColorIndex,
         getBoxColor,
         weightedPick,
+        resetPickMemory,
         getBoxSummary,
         getWeakVocab,
         resetProgress,

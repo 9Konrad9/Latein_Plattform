@@ -210,28 +210,28 @@
                             falsch war, geht trotzdem als falsch in den
                             Vokabelkasten - sonst koennte man sich Fortschritt
                             erkaufen.
-           CATAPULTA        Schleudert Issa hoch. Die Hoehe ist NICHT frei
-                            gewaehlt: 319 px traegt sicher ueber zwei Reihen
-                            (die sind hoechstens 290 auseinander) und nie ueber
-                            drei (mindestens 375).
+           CATAPULTA        Schleudert Issa ueber DREI Reihen und damit ueber
+                            ein Antwort-Feld hinweg: eine Frage faellt aus.
+                            Genau das ist die Belohnung - Entscheidung des
+                            Fachlehrers, dem Lerneffekt schadet eine
+                            uebersprungene Frage nicht.
 
-                            Der erste Anlauf warf sie GENAU auf das naechste
-                            Antwort-Feld - und das war falsch: Man kam dort an,
-                            ohne vorher geschaut zu haben, wohin man muss, und
-                            verlor prompt ein Herz. Gemeldet nach dem ersten
-                            Klassentest.
+                            Zwei Anlaeufe davor waren falsch, beide aus
+                            demselben Grund zu zaghaft: Erst warf der Katapult
+                            genau AUF das Antwort-Feld (man kam an, ohne
+                            geschaut zu haben, wohin, und verlor ein Herz), dann
+                            auf die neutrale Reihe direkt darunter - sauber,
+                            aber ohne Gewinn, weil die dafuer eingeschobene
+                            Reihe genau das kostete, was der Wurf sparte.
 
-                            Jetzt schiebt der Katapult eine zusaetzliche
-                            neutrale Reihe hinter sich ein. Der Wurf endet damit
-                            auf einer neutralen Reihe DIREKT UNTER dem
-                            Antwort-Feld: Issa steht, schaut hoch, springt
-                            selbst. Die Hoehe pro Reihe bleibt gleich (die
-                            eingeschobene Reihe kostet genau das, was der Wurf
-                            spart) - gewonnen wird Tempo, nicht Punktestand,
-                            und uebersprungen wird nichts. */
+                            469 px sind nicht frei gewaehlt: Drei Reihen sind
+                            hoechstens 435 auseinander, vier mindestens 500. Der
+                            Wurf endet also immer auf einer neutralen Reihe, nie
+                            auf einem Antwort-Feld - man kommt an, schaut hoch
+                            und springt selbst. */
         const ITEM_W = 30, ITEM_H = 30;
         const SCHILD_FRAMES = 600;      // rund zehn Sekunden bei 60 Bildern je Sekunde
-        const KATAPULT_V = -11.2;       // gemessen 319 px Steighoehe
+        const KATAPULT_V = -13.6;       // gemessen 469 px Steighoehe
         /* Halbiert nach dem ersten Klassentest - vorher 0,16 und 0,22, also
            rund alle acht Reihen ein Gegenstand. Das war zu viel: Was staendig
            kommt, ist kein Fund mehr. Jetzt rund alle siebzehn Reihen. */
@@ -315,7 +315,6 @@
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
         let items = [];             // Schilde und Katapulte, die auf Plattformen liegen
         let schildFrames = 0;       // wie lange das Scutum noch haelt
-        let zusatzReihen = 0;       // noch einzuschiebende neutrale Reihen (nach einem Katapult)
 
         /* Die feste zweite Runde: ein kurzer Kletterlauf nur mit den Woertern,
            die danebengegangen sind - EIN Durchgang, nicht so lange, bis es
@@ -348,7 +347,6 @@
             platforms = [];
             items = [];
             schildFrames = 0;
-            zusatzReihen = 0;
             score = 0;
             lives = START_LIVES;
             invulnFrames = 0;
@@ -414,14 +412,11 @@
                 platforms.push(plattform);
                 // cycle % 3 === 2 ist das Antwort-Feld. Die Reihe mit Rest 0 liegt
                 // also zwei darunter - genau die Wurfweite des Katapults.
-                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) {
-                    setzeItem('katapult', plattform);
-                    // Eine neutrale Reihe extra, damit der Wurf auf ihr endet
-                    // und nicht auf dem Antwort-Feld darueber.
-                    zusatzReihen = 1;
-                } else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) {
-                    setzeItem('scutum', plattform);
-                }
+                // cycle % 3 === 2 ist das Antwort-Feld. Von der Reihe mit Rest 0
+                // aus traegt der Wurf ueber drei Reihen - also ueber das
+                // Antwort-Feld hinweg auf die naechste neutrale Reihe.
+                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) setzeItem('katapult', plattform);
+                else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) setzeItem('scutum', plattform);
             }
             return y - gap;
         }
@@ -536,18 +531,10 @@
         /* Die EINE Stelle, an der Reihen entstehen. Vorher baute resetGame die
            ersten Reihen mit einer eigenen Schleife - und bekam die Zusatzreihe
            hinter einem Katapult nicht mit. Gefunden vom Test. */
+        /* Die eine Stelle, an der Reihen entstehen. resetGame() hatte dafuer
+           frueher eine eigene Schleife - und bekam dadurch nicht mit, was
+           spawnRow() sonst noch anstellt. */
         function baueNaechsteReihe() {
-            if (zusatzReihen > 0) {
-                // Eingeschobene Reihe: eine neutrale Plattform, ohne den Zyklus
-                // weiterzudrehen. Das Antwort-Feld bleibt also, wo es hingehoert,
-                // und rueckt nur eine Reihe hoeher - genau so weit, dass der Wurf
-                // davor endet.
-                zusatzReihen--;
-                const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
-                platforms.push({ x: px, y: nextSpawnY, w: NEUTRAL_W, type: 'neutral' });
-                nextSpawnY -= ROW_GAP_MIN + Math.random() * (ROW_GAP_MAX - ROW_GAP_MIN);
-                return;
-            }
             nextSpawnY = spawnRow(nextSpawnY, spawnCycle);
             spawnCycle++;
         }
@@ -603,6 +590,16 @@
         }
 
         function handlePlatformLanding(p) {
+            /* Alles, was jetzt UNTER Issa liegt, ist durch - und zwar BEVOR die
+               neutrale Plattform abkuerzt. Der Katapult wirft sie auf eine
+               neutrale Reihe, und ohne diese Zeile bliebe das ueberflogene
+               Antwort-Feld "offen": Die Anzeige zeigte weiter dessen Wort,
+               obwohl es nicht mehr zu erreichen ist. Gezaehlt wird dafuer
+               nichts - eine uebersprungene Frage ist weder richtig noch falsch. */
+            platforms.forEach(q => {
+                if (q.type === 'answer' && q.y > p.y + 10) beantworteteReihen.add(q.reiheId);
+            });
+
             if (p.type === 'neutral') { issa.vy = BOUNCE_VELOCITY; return; }
             if (invulnFrames > 0) { issa.vy = BOUNCE_VELOCITY; return; }
             /* Eine Reihe wird genau einmal beantwortet. Ohne diese Sperre zaehlte
