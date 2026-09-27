@@ -6,6 +6,7 @@
     <title>Prīncipia! - Die Münzprägerei</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="verbEngine.js"></script>
@@ -221,11 +222,7 @@
         let maxSelectedLesson = 0;
 
         let sessionCoins = []; // { word, colorIdx } - für die Schatzkammer-Anzeige dieser Runde
-        let missedItems = [];  // für die Wiederholungsrunde
-        let isReviewMode = false;
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         function fullPoolNounsAndVerbs() {
             return globalVocabularyPool.filter(v =>
@@ -449,8 +446,7 @@
             currentRoundIdx = 0;
             correctCount = 0;
             sessionCoins = [];
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -469,8 +465,8 @@
             document.getElementById('type-badge').innerText = isNoun ? 'NOMEN' : 'VERB';
             document.getElementById('stamp-word').innerText = currentTarget.latin;
 
-            document.getElementById('round-number').innerText = isReviewMode
-                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+            document.getElementById('round-number').innerText = LudiReview.laeuft(wdh)
+                ? `WIEDERHOLUNG ${LudiReview.fortschritt(wdh).nummer} VON ${LudiReview.fortschritt(wdh).gesamt}`
                 : `MÜNZE ${currentRoundIdx + 1} VON ${totalRounds}`;
 
             renderTreasuryRow();
@@ -513,7 +509,7 @@
             fbBox.style.display = 'flex';
 
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentTarget.latin, isCorrect);
 
             // Das Spiel übt Grundformen - bei Nomen Genitiv + Geschlecht, bei Verben die
             // Stammformen. Beides zählt auf denselben Zähler, weil es dieselbe Fähigkeit ist.
@@ -527,15 +523,15 @@
             const colorIdx = LudiProgress.getBoxColor(currentTarget.latin);
 
             if (isCorrect) {
-                if (isReviewMode) reviewCorrectCount++;
+                if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
                 else { correctCount++; sessionCoins.push({ word: currentTarget.latin, colorIdx }); }
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🪙 MÜNZE GEPRÄGT!";
                 fbTitle.style.color = "#4CAF50";
                 fbText.innerHTML = `<strong>${currentTarget.latin}</strong> (${currentTarget.meaning}) → <strong>${currentCorrectAnswer}</strong> ist richtig geprägt!`;
             } else {
-                if (!isReviewMode) {
-                    missedItems.push(currentTarget);
+                if (!LudiReview.laeuft(wdh)) {
+                    LudiReview.merken(wdh, currentTarget);
                     sessionCoins.push({ word: currentTarget.latin, colorIdx, broken: true });
                 }
                 selectedBtn.classList.add('wrong');
@@ -553,10 +549,10 @@
         }
 
         function nextRound() {
-            if (isReviewMode) {
-                reviewIdx++;
-                if (reviewIdx < reviewQueue.length) {
-                    showRound(reviewQueue[reviewIdx]);
+            if (LudiReview.laeuft(wdh)) {
+                const naechsteRunde = LudiReview.naechste(wdh);
+                if (naechsteRunde) {
+                    showRound(naechsteRunde);
                 } else {
                     endReview();
                 }
@@ -618,9 +614,9 @@
                 `Dein Vokabelkasten (${mintPool.length} Wörter in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
 
             const reviewBtn = document.getElementById('btn-review');
-            if (missedItems.length > 0) {
+            if (LudiReview.anzahl(wdh) > 0) {
                 reviewBtn.style.display = 'inline-block';
-                reviewBtn.innerText = `📚 ${missedItems.length} Fehlprägung(en) wiederholen`;
+                reviewBtn.innerText = `📚 ${LudiReview.anzahl(wdh)} Fehlprägung(en) wiederholen`;
             } else {
                 reviewBtn.style.display = 'none';
             }
@@ -629,21 +625,18 @@
         }
 
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-box').style.display = 'none';
             document.getElementById('combat-box').style.display = 'flex';
 
-            showRound(reviewQueue[reviewIdx]);
+            showRound(ersteRunde);
         }
 
         function endReview() {
             document.getElementById('combat-box').style.display = 'none';
             document.getElementById('feedback-box').style.display = 'none';
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
 
             const endBox = document.getElementById('end-box');
             const title = document.getElementById('end-title');
@@ -655,7 +648,7 @@
 
             title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             title.style.color = "var(--pompeji)";
-            msg.innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> Fehlprägungen nochmal versucht und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig geprägt.`;
+            msg.innerHTML = `Du hast alle <strong>${bilanz.gesamt}</strong> Fehlprägungen nochmal versucht und dabei <strong>${bilanz.richtig}</strong> davon jetzt richtig geprägt.`;
 
             updateOverallTreasuryDisplay();
         }

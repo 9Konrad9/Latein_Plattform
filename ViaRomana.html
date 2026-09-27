@@ -262,6 +262,7 @@
 
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -302,11 +303,7 @@
         let currentAdvKey = null;       // im Ablativ-Modus: welche Funktion ist gesucht?
         let advReihum = 0;              // reihum über die Funktionen, damit keine untergeht
 
-        let missedItems = [];
-        let isReviewMode = false;
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         window.onload = function() {
             document.getElementById('btn-start-game').addEventListener('click', () => promptLessonsAndStart('satzglied'));
@@ -363,8 +360,7 @@
 
             correctCount = 0;
             currentRoundIdx = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-screen').style.display = 'none';
@@ -506,8 +502,8 @@
             currentExplanation = round.explanation;
             currentTrackLemma = round.trackLemma;
 
-            document.getElementById('task-instruction').innerText = isReviewMode
-                ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
+            document.getElementById('task-instruction').innerText = LudiReview.laeuft(wdh)
+                ? `Wiederholung ${LudiReview.fortschritt(wdh).nummer} von ${LudiReview.fortschritt(wdh).gesamt}`
                 : (modus === 'ablativ'
                     ? `Satz ${currentRoundIdx + 1} von ${totalRounds} - welche Frage beantwortet das markierte Wort?`
                     : `Satz ${currentRoundIdx + 1} von ${totalRounds} - bestimme das markierte Satzglied!`);
@@ -538,7 +534,7 @@
                 ? (chosenRole === currentAdvKey)
                 : (chosenRole === currentTargetRole);
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentTrackLemma, isCorrect);
 
             // Achievement-Kategorie ist das abgefragte Satzglied selbst.
             // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
@@ -546,11 +542,11 @@
             const unlock = LudiProgress.recordCategoryAttempt(ROLE_CATEGORY[currentTargetRole], isCorrect);
             if (unlock) AchievementToast.show(unlock);
 
-            if (isReviewMode) {
-                if (isCorrect) reviewCorrectCount++;
+            if (LudiReview.laeuft(wdh)) {
+                if (isCorrect) LudiReview.treffer(wdh);
             } else {
                 if (isCorrect) { correctCount++; updateWagon(); }
-                else { missedItems.push({ words: currentWords, targetIdx: currentTargetIdx, role: currentTargetRole, explanation: currentExplanation, trackLemma: currentTrackLemma }); }
+                else { LudiReview.merken(wdh, { words: currentWords, targetIdx: currentTargetIdx, role: currentTargetRole, explanation: currentExplanation, trackLemma: currentTrackLemma }); }
             }
 
             // Artikel steht mit im Namen, weil die Rollen unterschiedliche Genera haben.
@@ -597,10 +593,10 @@
         function closeModal() {
             document.getElementById('feedback-modal').style.display = 'none';
 
-            if (isReviewMode) {
-                reviewIdx++;
-                if (reviewIdx < reviewQueue.length) {
-                    nextQuestion(reviewQueue[reviewIdx]);
+            if (LudiReview.laeuft(wdh)) {
+                const naechsteRunde = LudiReview.naechste(wdh);
+                if (naechsteRunde) {
+                    nextQuestion(naechsteRunde);
                 } else {
                     endReview();
                 }
@@ -629,35 +625,32 @@
                 `Dein Vokabelkasten (${nounPool.length + verbPool.length} Wörter in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
 
             const reviewBtn = document.getElementById('btn-review');
-            if (missedItems.length > 0) {
+            if (LudiReview.anzahl(wdh) > 0) {
                 reviewBtn.style.display = 'inline-block';
-                reviewBtn.innerText = `📚 ${missedItems.length} falsche Antwort(en) wiederholen`;
+                reviewBtn.innerText = `📚 ${LudiReview.anzahl(wdh)} falsche Antwort(en) wiederholen`;
             } else {
                 reviewBtn.style.display = 'none';
             }
         }
 
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-screen').style.display = 'none';
             document.getElementById('game-area').style.display = 'flex';
 
-            nextQuestion(reviewQueue[reviewIdx]);
+            nextQuestion(ersteRunde);
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             document.getElementById('game-area').style.display = 'none';
             document.getElementById('end-screen').style.display = 'flex';
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('box-summary').innerText = '';
 
             document.getElementById('end-title').innerText = "Wiederholung geschafft!";
-            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Sätze nochmal analysiert und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig bestimmt.`;
+            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor falschen Sätze nochmal analysiert und dabei <strong>${bilanz.richtig}</strong> davon jetzt richtig bestimmt.`;
         }
     </script>
 </body>

@@ -6,6 +6,7 @@
     <title>Aedificium Rōmānum - Villa</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -247,11 +248,7 @@
            in nextQuestion() gewuerfelt und sofort in die Knoepfe geschrieben -
            damit liess sich keine Frage ein zweites Mal stellen. */
         let currentRound = null;
-        let missedItems = [];
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
-        let isReviewMode = false;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
         
         let nounPool = [];
         let adjPool = [];
@@ -307,8 +304,7 @@
             }
 
             currentStage = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
             updateProgressBar();
             document.getElementById('villa-image').style.display = 'none';
             document.getElementById('villa-placeholder').style.display = 'flex';
@@ -388,7 +384,7 @@
             const selectedBtn = document.getElementById('opt' + idx);
             const isCorrect = (selectedBtn.textContent === currentCorrectAnswer);
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentVillaAdj.latin, isCorrect);
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentVillaAdj.latin, isCorrect);
 
             // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
             // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
@@ -398,8 +394,8 @@
 
             if (isCorrect) {
                 selectedBtn.classList.add('correct');
-                if (isReviewMode) {
-                    reviewCorrectCount++;
+                if (LudiReview.laeuft(wdh)) {
+                    LudiReview.treffer(wdh);
                 } else {
                     // Die Villa waechst nur im Spiel, nicht in der Wiederholung -
                     // sonst waere sie am Ende zweimal fertig.
@@ -411,7 +407,7 @@
                     img.src = 'assets/villa/villa_stage_' + currentStage + '.jpg';
                 }
             } else {
-                if (!isReviewMode) missedItems.push(currentRound);
+                LudiReview.merken(wdh, currentRound);
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
                     if (document.getElementById('opt' + i).textContent === currentCorrectAnswer) {
@@ -421,9 +417,9 @@
             }
 
             setTimeout(() => {
-                if (isReviewMode) {
-                    reviewIdx++;
-                    if (reviewIdx < reviewQueue.length) nextQuestion(reviewQueue[reviewIdx]);
+                if (LudiReview.laeuft(wdh)) {
+                    const naechsteRunde = LudiReview.naechste(wdh);
+                    if (naechsteRunde) nextQuestion(naechsteRunde);
                     else endReview();
                 } else if (currentStage >= totalStages) {
                     LudiProgress.saveGameResult('villa', currentStage, totalStages);
@@ -436,29 +432,26 @@
 
         function zeigeEndbildschirm() {
             const reviewBtn = document.getElementById('btn-review');
-            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
-            if (missedItems.length) reviewBtn.innerText =
-                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'falsche Form' : 'falsche Formen'} wiederholen`;
+            reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+            if (LudiReview.anzahl(wdh)) reviewBtn.innerText =
+                `📚 ${LudiReview.anzahl(wdh)} ${LudiReview.anzahl(wdh) === 1 ? 'falsche Form' : 'falsche Formen'} wiederholen`;
             document.getElementById('end-extra').innerText = '';
             document.getElementById('end-screen').style.display = 'flex';
         }
 
         /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss. */
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-screen').style.display = 'none';
-            nextQuestion(reviewQueue[reviewIdx]);
+            nextQuestion(ersteRunde);
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('end-extra').innerHTML =
-                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig bestimmt.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
+                `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${bilanz.richtig}</strong> davon jetzt richtig bestimmt.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
             document.getElementById('end-screen').style.display = 'flex';
         }
 

@@ -6,6 +6,7 @@
     <title>Issa Springt! - Vokabel-Jump'n'Run</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
@@ -279,12 +280,13 @@
              alle sehen; mit drei Herzen waere bei acht Fehlern vorher Schluss.
              Der Sturz nach unten faengt Issa weiterhin auf, nur ohne Abzug.
            - Der Lauf endet, wenn die Liste durch ist, nicht wenn Issa faellt. */
-        let missedItems = [];
-        let reviewQueue = [];
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
+        /* Issa hat ZWEI Zeiger, deshalb reichen die des Moduls hier nicht:
+           Die Plattformen fuer die naechsten Woerter wachsen schon nach, waehrend
+           Issa noch bei den unteren steht. reviewSpawnIdx sagt, wie weit der Bau
+           ist, reviewAnswered, wie weit das Spiel ist. */
         let reviewSpawnIdx = 0;
         let reviewAnswered = 0;
-        let reviewCorrectCount = 0;
-        let isReviewMode = false;
 
         /* Jede Antwort-Reihe bekommt eine Nummer. Daran erkennt die Anzeige, welche
            Reihe schon beantwortet ist - sie soll das Wort der nächsten OFFENEN
@@ -331,8 +333,8 @@
                 // In der Wiederholung kommt nicht der Vokabelkasten zu Wort,
                 // sondern die Fehlerliste - der Reihe nach. Ist sie abgespult,
                 // waechst nur noch neutraler Boden nach, bis der Lauf endet.
-                const target = isReviewMode
-                    ? reviewQueue[reviewSpawnIdx++]
+                const target = LudiReview.laeuft(wdh)
+                    ? LudiReview.liste(wdh)[reviewSpawnIdx++]
                     : (LudiProgress.weightedPick(activePool)
                        || activePool[Math.floor(Math.random() * activePool.length)]);
                 if (!target) {
@@ -482,26 +484,26 @@
             if (p.isCorrect) {
                 issa.vy = BOUNCE_VELOCITY;
                 correctCount++;
-                if (isReviewMode) reviewCorrectCount++;
+                if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
                 // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-                if (!isReviewMode) LudiProgress.recordVocabAttempt(p.targetLatin, true);
+                if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(p.targetLatin, true);
                 flashFeedback(true);
             } else {
-                if (!isReviewMode) {
+                if (!LudiReview.laeuft(wdh)) {
                     LudiProgress.recordVocabAttempt(p.targetLatin, false);
-                    if (p.targetEntry) missedItems.push(p.targetEntry);
+                    if (p.targetEntry) LudiReview.merken(wdh, p.targetEntry);
                 }
                 wrongCount++;
                 flashFeedback(false);
                 // In der Wiederholung kostet ein Fehler kein Herz - sonst waere
                 // die Liste bei drei Fehlern zu Ende, statt durchgespielt.
-                if (isReviewMode) issa.vy = BOUNCE_VELOCITY;
+                if (LudiReview.laeuft(wdh)) issa.vy = BOUNCE_VELOCITY;
                 else loseLife();
             }
 
-            if (isReviewMode) {
+            if (LudiReview.laeuft(wdh)) {
                 reviewAnswered++;
-                if (reviewAnswered >= reviewQueue.length) endReview();
+                if (reviewAnswered >= LudiReview.offen(wdh)) endReview();
             }
         }
 
@@ -514,12 +516,12 @@
         function loseLife() {
             // In der Wiederholung faengt der Sturz Issa genauso auf, kostet aber
             // kein Herz: Der Lauf endet dort an der Liste, nicht an den Herzen.
-            if (!isReviewMode) {
+            if (!LudiReview.laeuft(wdh)) {
                 lives--;
                 updateHud();
             }
             startledFrames = 30;
-            if (!isReviewMode && lives <= 0) { endGame(); return; }
+            if (!LudiReview.laeuft(wdh) && lives <= 0) { endGame(); return; }
 
             const safeY = cameraY + CH - 90;
             issa.x = CW / 2 - ISSA_W / 2;
@@ -671,8 +673,7 @@
         }
 
         function beginRun() {
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('start-overlay').style.display = 'none';
             document.getElementById('end-overlay').style.display = 'none';
@@ -696,20 +697,18 @@
                 `Erreichte Höhe: <strong>${score} m</strong><br>Vokabeln richtig: <strong>${correctCount} von ${correctCount + wrongCount}</strong>`;
 
             const reviewBtn = document.getElementById('btn-review');
-            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
-            if (missedItems.length) reviewBtn.innerText =
-                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Wort' : 'Wörter'} wiederholen`;
+            reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+            if (LudiReview.anzahl(wdh)) reviewBtn.innerText =
+                `📚 ${LudiReview.anzahl(wdh)} ${LudiReview.anzahl(wdh) === 1 ? 'Wort' : 'Wörter'} wiederholen`;
 
             document.getElementById('end-overlay').style.display = 'flex';
         }
 
         /* Feste zweite Runde: ein kurzer Kletterlauf nur mit den Fehlern. */
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
+            LudiReview.start(wdh);
             reviewSpawnIdx = 0;
             reviewAnswered = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
 
             document.getElementById('end-overlay').style.display = 'none';
             document.getElementById('hud').style.display = 'flex';
@@ -722,7 +721,7 @@
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             running = false;
             if (animFrameId) cancelAnimationFrame(animFrameId);
             document.getElementById('hud').style.display = 'none';
@@ -731,7 +730,7 @@
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('end-title').innerText = '📚 Wiederholung geschafft!';
             document.getElementById('end-stats').innerHTML =
-                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor verfehlten Wörter nochmal gesehen und dabei <strong>${reviewCorrectCount}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
+                `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor verfehlten Wörter nochmal gesehen und dabei <strong>${bilanz.richtig}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot.`;
             document.getElementById('end-overlay').style.display = 'flex';
         }
 

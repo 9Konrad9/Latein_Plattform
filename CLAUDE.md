@@ -32,6 +32,12 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - `progress.js` – Leitner-System (`LudiProgress.recordVocabAttempt`) und Achievement-Logik
   (`LudiProgress.recordCategoryAttempt`, `getAchievementOverview`). Speichert in `localStorage`.
 - `achievementToast.js` – Popup-Benachrichtigung bei neu freigeschalteten Achievements.
+- `review.js` – die Wiederholungsrunde am Rundenende (`LudiReview`). Führt Buch darüber,
+  was danebenging, was noch aussteht und wie viel davon beim zweiten Mal saß. **Der
+  gemerkte Gegenstand ist für das Modul undurchsichtig** – es reicht ihn nur durch, und
+  genau deshalb funktioniert es, obwohl die Spiele Verschiedenes merken (eine Vokabel,
+  eine ganze Runde, eine Frage samt Fragetyp). Was NICHT dort liegt: wie eine Frage
+  aussieht, wie sie wieder gestellt wird, und was während der Wiederholung ruht.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
 
 ## Aktive Spiele (Stand zuletzt)
@@ -374,12 +380,26 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   Schüler:innen gewünscht: Nach der letzten Frage nicht einfach zur Auswertung, sondern die
   danebengegangenen Vokabeln noch einmal durchgehen.
 
-  Jedes Spiel führt seine Fehlerliste selbst (`missedItems`), weil `progress.js` nur den
-  dauerhaften Leitner-Kasten hält und keine Liste dieser Runde. `getWeakVocab()` ist etwas
-  anderes: die dauerhaft schwachen Wörter über alle Sitzungen. Zehnmal dasselbe Muster
-  wäre ein Kandidat zum Zusammenlegen – bisher unterscheidet sich aber, WAS ein Spiel sich
-  merken muss (ein Wort, eine ganze Runde, eine Frage samt Fragetyp), und genau daran
-  würde eine gemeinsame Fassung scheitern.
+  Die Buchführung liegt in `review.js`, nicht zehnmal in den Spielen. `progress.js` hält
+  nur den dauerhaften Leitner-Kasten; `getWeakVocab()` ist etwas anderes, nämlich die
+  dauerhaft schwachen Wörter über alle Sitzungen.
+
+  **Mein Einwand gegen das Zusammenlegen war falsch.** Ich hatte argumentiert, die Spiele
+  merkten sich Verschiedenes – eine Vokabel, eine ganze Runde, eine Frage samt Fragetyp –
+  und daran müsse eine gemeinsame Fassung scheitern. Das stimmt nicht: Verschieden ist,
+  wie eine Frage AUSSIEHT und wie sie wieder gestellt wird. Die Buchführung ist überall
+  dieselbe, und für sie ist der gemerkte Gegenstand undurchsichtig.
+
+  **Was das strukturell bringt:** `LudiReview.merken()` tut nichts, solange die
+  Wiederholung läuft. Damit kann die zweite Runde sich nicht mehr selbst füttern – bisher
+  war das eine Regel, die zehn Dateien einhalten mussten, indem jede ihr
+  `missedItems.push` an `!isReviewMode` hängte. Eine davon zu vergessen hieße: eine
+  Runde, die nie endet. Ebenso sagt `zaehltInDenKasten()` an genau einer Stelle, was
+  der Fachlehrer entschieden hat.
+
+  Eine Ausnahme gibt es: Issa hat ZWEI Zeiger, weil die Plattformen für die nächsten
+  Wörter schon nachwachsen, während noch bei den unteren geantwortet wird. Der zweite
+  Zeiger gehört dem Spiel; `LudiReview.liste()` gibt ihm die Warteschlange lesend heraus.
   - **Entschieden (Fachlehrer):** Die Wiederholungsrunde zählt **nicht** in den Leitner-Kasten
     ein. Begründung: Sonst ginge der Fortschritt zu schnell – wer ein Wort erst im zweiten
     Anlauf und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.

@@ -6,6 +6,7 @@
     <title>Pendel! - Die Pendelmethode</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -196,11 +197,7 @@
         let stepHadError = false;
         let foundSpanOrder = [];
 
-        let missedItems = [];
-        let isReviewMode = false;
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         function promptLessonsAndStart() {
             if (typeof globalVocabularyPool === 'undefined') {
@@ -261,8 +258,7 @@
         function startGame() {
             roundIdx = 0;
             correctCount = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -278,8 +274,8 @@
             stepHadError = false;
             foundSpanOrder = [];
 
-            document.getElementById('round-number').innerText = isReviewMode
-                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+            document.getElementById('round-number').innerText = LudiReview.laeuft(wdh)
+                ? `WIEDERHOLUNG ${LudiReview.fortschritt(wdh).nummer} VON ${LudiReview.fortschritt(wdh).gesamt}`
                 : `SATZ ${roundIdx + 1} VON ${totalRounds}`;
             document.getElementById('progress-bar').style.width = (roundIdx / totalRounds * 100) + '%';
 
@@ -441,7 +437,7 @@
 
             const isCorrect = !roundHadError;
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentRound.verbLemma, isCorrect);
 
             const fbBox = document.getElementById('feedback-box');
             const fbTitle = document.getElementById('fb-title');
@@ -449,11 +445,11 @@
             fbBox.style.display = 'flex';
 
             if (isCorrect) {
-                if (isReviewMode) reviewCorrectCount++; else correctCount++;
+                if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh); else correctCount++;
                 fbTitle.innerText = "⚖️ SAUBER GEPENDELT!";
                 fbTitle.style.color = "var(--richtig)";
             } else {
-                if (!isReviewMode) missedItems.push(currentRound);
+                LudiReview.merken(wdh, currentRound);
                 fbTitle.innerText = "🧭 NOCH NICHT GANZ...";
                 fbTitle.style.color = "var(--falsch)";
             }
@@ -463,10 +459,10 @@
         function onNextClicked() {
             document.getElementById('feedback-box').style.display = 'none';
 
-            if (isReviewMode) {
-                reviewIdx++;
-                if (reviewIdx < reviewQueue.length) {
-                    showRound(reviewQueue[reviewIdx]);
+            if (LudiReview.laeuft(wdh)) {
+                const naechsteRunde = LudiReview.naechste(wdh);
+                if (naechsteRunde) {
+                    showRound(naechsteRunde);
                 } else {
                     endReview();
                 }
@@ -503,9 +499,9 @@
             msg.innerHTML = `Du hast <strong>${correctCount} von ${totalRounds}</strong> Sätzen ohne Fehlklick gependelt.`;
 
             const reviewBtn = document.getElementById('btn-review');
-            if (missedItems.length > 0) {
+            if (LudiReview.anzahl(wdh) > 0) {
                 reviewBtn.style.display = 'inline-block';
-                reviewBtn.innerText = `📚 ${missedItems.length} Satz/Sätze wiederholen`;
+                reviewBtn.innerText = `📚 ${LudiReview.anzahl(wdh)} Satz/Sätze wiederholen`;
             } else {
                 reviewBtn.style.display = 'none';
             }
@@ -513,26 +509,23 @@
         }
 
         function startReview() {
-            reviewQueue = [...missedItems];
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-box').style.display = 'none';
             document.getElementById('combat-box').style.display = 'flex';
 
-            showRound(reviewQueue[reviewIdx]);
+            showRound(ersteRunde);
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             document.getElementById('combat-box').style.display = 'none';
             document.getElementById('end-box').style.display = 'block';
             document.getElementById('btn-review').style.display = 'none';
 
             document.getElementById('end-title').innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             document.getElementById('end-title').style.color = "var(--pompeji)";
-            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor fehlerhaften Sätze nochmal gependelt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt fehlerfrei gelöst.`;
+            document.getElementById('end-msg').innerHTML = `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor fehlerhaften Sätze nochmal gependelt und dabei <strong>${bilanz.richtig}</strong> davon jetzt fehlerfrei gelöst.`;
         }
 
         window.onload = function() {

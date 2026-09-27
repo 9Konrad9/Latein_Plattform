@@ -7,6 +7,7 @@
     <!-- Zentrale Vokabeldatenbank und Engines einbinden -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -236,11 +237,7 @@
         let maxSelectedLesson = 0; // höchste gewählte Lektion, für die Tempus-Freischaltung im Verb-Modus
 
         // Wiederholungsrunde für falsch beantwortete Fragen
-        let missedItems = [];
-        let isReviewMode = false;
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         function promptLessonsAndStart(mode) {
             if (mode) gameMode = mode;
@@ -605,8 +602,7 @@
 
             currentWaveIdx = 0;
             wallHealth = 100;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
             document.getElementById('wall-health').style.width = '100%';
             document.getElementById('wall-health').parentElement.style.display = 'block';
             
@@ -642,8 +638,8 @@
             stone.style.animation = '';
 
             const colorIdx = LudiProgress.getBoxColor(currentTargetObj.latin);
-            const waveLabel = isReviewMode
-                ? `Wiederholung ${reviewIdx + 1} von ${reviewQueue.length}`
+            const waveLabel = LudiReview.laeuft(wdh)
+                ? `Wiederholung ${LudiReview.fortschritt(wdh).nummer} von ${LudiReview.fortschritt(wdh).gesamt}`
                 : `Welle ${currentWaveIdx + 1} von ${totalWaves}`;
             document.getElementById('target-clue').innerText =
                 `${waveLabel} — Grundform: ${currentTargetObj.latin} ${ampelIcons[colorIdx]}`;
@@ -674,7 +670,7 @@
             fbBox.style.display = 'flex';
 
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentTargetObj.latin, isCorrect);
             const wordTypeLabel = gameMode === 'noun' ? 'des Substantivs' : 'des Verbs';
             // Kasus-Namen sind im Deutschen maskulin ("der Nominativ"), Person ist feminin ("die 1. Person")
             const article = gameMode === 'noun' ? 'der' : 'die';
@@ -705,14 +701,14 @@
             if (unlock) AchievementToast.show(unlock);
 
             if (isCorrect) {
-                if (isReviewMode) reviewCorrectCount++;
+                if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🛡️ ABGEWEHRT!";
                 fbTitle.style.color = "#4CAF50";
                 fbText.innerHTML = `Hervorragend! Die Form stammt von <strong>${currentTargetObj.latin}</strong> (${currentTargetObj.meaning}).<br><br>Das ist korrekt ${article} <strong>${currentCorrectAnswer}</strong>.`;
             } else {
-                if (!isReviewMode) {
-                    missedItems.push({ targetObj: currentTargetObj, round: currentRound });
+                if (!LudiReview.laeuft(wdh)) {
+                    LudiReview.merken(wdh, { targetObj: currentTargetObj, round: currentRound });
                 }
                 selectedBtn.classList.add('wrong');
                 for(let i = 0; i < 4; i++) {
@@ -721,7 +717,7 @@
                     }
                 }
                 
-                if (!isReviewMode) {
+                if (!LudiReview.laeuft(wdh)) {
                     wallHealth -= 20;
                     if (wallHealth < 0) wallHealth = 0;
                     document.getElementById('wall-health').style.width = wallHealth + '%';
@@ -734,10 +730,10 @@
         }
 
         function loadNextWave() {
-            if (isReviewMode) {
-                reviewIdx++;
-                if (reviewIdx < reviewQueue.length) {
-                    showWave(reviewQueue[reviewIdx]);
+            if (LudiReview.laeuft(wdh)) {
+                const naechsteRunde = LudiReview.naechste(wdh);
+                if (naechsteRunde) {
+                    showWave(naechsteRunde);
                 } else {
                     endReview();
                 }
@@ -755,22 +751,19 @@
         }
 
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-box').style.display = 'none';
             document.getElementById('combat-box').style.display = 'flex';
             document.getElementById('wall-health').parentElement.style.display = 'none'; // Mauerstärke spielt in der Wiederholung keine Rolle
 
-            showWave(reviewQueue[reviewIdx]);
+            showWave(ersteRunde);
         }
 
         function endReview() {
             document.getElementById('combat-box').style.display = 'none';
             document.getElementById('feedback-box').style.display = 'none';
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
 
             const endBox = document.getElementById('end-box');
             const title = document.getElementById('end-title');
@@ -781,7 +774,7 @@
 
             title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             title.style.color = "var(--pompeji)";
-            msg.innerHTML = `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig beantwortet.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel automatisch häufiger dran.`;
+            msg.innerHTML = `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor falschen Formen nochmal geübt und dabei <strong>${bilanz.richtig}</strong> davon jetzt richtig beantwortet.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel automatisch häufiger dran.`;
         }
 
         function endGame(isVictory) {
@@ -813,9 +806,9 @@
                 `Dein Vokabelkasten (${targetPool.length} ${wordTypeGen} in dieser Auswahl): 🔴 ${summary.red}  🟡 ${summary.yellow}  🟢 ${summary.green}`;
 
             const reviewBtn = document.getElementById('btn-review');
-            if (missedItems.length > 0) {
+            if (LudiReview.anzahl(wdh) > 0) {
                 reviewBtn.style.display = 'inline-block';
-                reviewBtn.innerText = `📚 ${missedItems.length} falsche Antwort(en) wiederholen`;
+                reviewBtn.innerText = `📚 ${LudiReview.anzahl(wdh)} falsche Antwort(en) wiederholen`;
             } else {
                 reviewBtn.style.display = 'none';
             }

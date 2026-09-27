@@ -7,6 +7,7 @@
     <!-- Einbindung der zentralen Vokabeldatenbank -->
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
@@ -272,11 +273,7 @@
            Im Kartenmodus gibt es sie nicht: Der hat kein Ende, sondern laeuft,
            bis jemand zurueck ins Menue geht - es gaebe also keinen Moment, an
            dem man die Fehler anbieten koennte. */
-        let missedItems = [];
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
-        let isReviewMode = false;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         /* ============ DREI MODI ============
            'mc'         - das klassische Rennen mit vier Antworten, ohne Zeit je Karte
@@ -388,8 +385,7 @@
             playerLaps = 0;
             aiLaps = 0;
             kartenZaehler = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
             document.getElementById('btn-review').style.display = 'none';
 
             document.getElementById('end-screen').style.display = 'none';
@@ -501,7 +497,7 @@
         function nextQuestion(forced) {
             // In der Wiederholung ist die Rennuhr laengst abgelaufen - die
             // Sperre darf dort nicht greifen.
-            if (!isReviewMode && spielModus !== 'karten' && timeLeft <= 0) return;
+            if (!LudiReview.laeuft(wdh) && spielModus !== 'karten' && timeLeft <= 0) return;
 
             stoppeKartenUhr();
 
@@ -549,7 +545,7 @@
 
             // Keine Uhr in der Wiederholung: Dort geht es ums Nachschauen,
             // nicht ums Tempo.
-            if (spielModus === 'wettkampf' && !isReviewMode) starteKartenUhr();
+            if (spielModus === 'wettkampf' && !LudiReview.laeuft(wdh)) starteKartenUhr();
         }
 
         /* ---------- Kartenmodus ----------
@@ -630,7 +626,7 @@
             // In der Wiederholung selbst laeuft keine Uhr, hier kann also nur
             // das Rennen stehen.
             LudiProgress.recordVocabAttempt(currentVocabItem.latin, false);
-            missedItems.push(currentVocabItem);
+            LudiReview.merken(wdh, currentVocabItem);
             const kategorie = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' }[currentVocabItem.type];
             if (kategorie) LudiProgress.recordCategoryAttempt(kategorie, false);
 
@@ -660,9 +656,9 @@
             const targetAnswer = currentCorrectAnswer.trim();
             const isCorrect = (selectedText === targetAnswer);
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentVocabItem.latin, isCorrect);
-            if (!isCorrect && !isReviewMode) missedItems.push(currentVocabItem);
-            if (isCorrect && isReviewMode) reviewCorrectCount++;
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentVocabItem.latin, isCorrect);
+            if (!isCorrect && !LudiReview.laeuft(wdh)) LudiReview.merken(wdh, currentVocabItem);
+            if (isCorrect && LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
 
             // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein
             // Vergessen: Trophaeen zaehlen Fleiss, der Vokabelkasten steuert
@@ -677,7 +673,7 @@
             if (isCorrect) {
                 selectedButton.classList.add('correct');
                 // Das Rennen ist vorbei - in der Wiederholung faehrt niemand mehr.
-                if (!isReviewMode) {
+                if (!LudiReview.laeuft(wdh)) {
                     playerProgress += 10;
                     if (playerProgress >= 100) {
                         playerLaps++;
@@ -692,7 +688,7 @@
                     }
                 }
                 
-                if (!isReviewMode) {
+                if (!LudiReview.laeuft(wdh)) {
                     aiProgress += 15;
                     if (aiProgress >= 100) {
                         aiLaps++;
@@ -705,9 +701,9 @@
             updatePositions();
 
             setTimeout(() => {
-                if (isReviewMode) {
-                    reviewIdx++;
-                    if (reviewIdx < reviewQueue.length) nextQuestion(reviewQueue[reviewIdx]);
+                if (LudiReview.laeuft(wdh)) {
+                    const naechsteRunde = LudiReview.naechste(wdh);
+                    if (naechsteRunde) nextQuestion(naechsteRunde);
                     else endReview();
                 } else if (timeLeft > 0) {
                     nextQuestion();
@@ -718,21 +714,18 @@
         /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss.
            Ohne Uhr, ohne Gegner - das Rennen ist gelaufen. */
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             if (timerInterval) clearInterval(timerInterval);
             stoppeKartenUhr();
             document.getElementById('karten-uhr').style.display = 'none';
             document.getElementById('end-screen').style.display = 'none';
 
-            nextQuestion(reviewQueue[reviewIdx]);
+            nextQuestion(ersteRunde);
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             stoppeKartenUhr();
 
             const overlay = document.getElementById('end-screen');
@@ -743,7 +736,7 @@
             title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             title.style.color = "var(--pompeji)";
             msg.innerHTML =
-                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Wörter nochmal angeschaut und dabei <strong>${reviewCorrectCount}</strong> davon jetzt gewusst.<br><br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot und kommt beim nächsten Rennen häufiger dran.`;
+                `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor falschen Wörter nochmal angeschaut und dabei <strong>${bilanz.richtig}</strong> davon jetzt gewusst.<br><br>Was wieder daneben ging, bleibt in deinem Vokabelkasten auf Rot und kommt beim nächsten Rennen häufiger dran.`;
             overlay.style.display = 'flex';
         }
 
@@ -765,9 +758,9 @@
             LudiProgress.saveGameResult('circus', playerLaps, null);
 
             const reviewBtn = document.getElementById('btn-review');
-            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
-            if (missedItems.length) reviewBtn.innerText =
-                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Wort' : 'Wörter'} wiederholen`;
+            reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+            if (LudiReview.anzahl(wdh)) reviewBtn.innerText =
+                `📚 ${LudiReview.anzahl(wdh)} ${LudiReview.anzahl(wdh) === 1 ? 'Wort' : 'Wörter'} wiederholen`;
 
             overlay.style.display = 'flex';
             title.innerText = "⏱️ FINIS SPATIĪ!";

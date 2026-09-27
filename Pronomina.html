@@ -6,6 +6,7 @@
     <title>Pronomina! - Der Pronomen-Detektiv</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -254,11 +255,7 @@
            einmal, nicht so lange, bis es sitzt. Sie zaehlt NICHT in den
            Vokabelkasten (Entscheidung des Fachlehrers); die Achievement-Zaehler
            laufen weiter. */
-        let missedItems = [];
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
-        let isReviewMode = false;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
         let currentCase = null;
 
         // Modus → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
@@ -382,8 +379,7 @@
             orderedCases = [...cases].sort(() => Math.random() - 0.5);
             currentIdx = 0;
             correctCount = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -555,7 +551,7 @@
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateDemonstrativRound(nounPool));
                 currentIdx = 0; correctCount = 0;
-                missedItems = []; isReviewMode = false;
+                LudiReview.zuruecksetzen(wdh);
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('end-box').style.display = 'none';
                 document.getElementById('combat-box').style.display = 'flex';
@@ -578,7 +574,7 @@
                 orderedCases = [];
                 for (let i = 0; i < 12; i++) orderedCases.push(generateRelativeRound(nounPool));
                 currentIdx = 0; correctCount = 0;
-                missedItems = []; isReviewMode = false;
+                LudiReview.zuruecksetzen(wdh);
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('end-box').style.display = 'none';
                 document.getElementById('combat-box').style.display = 'flex';
@@ -615,8 +611,7 @@
             }
             currentIdx = 0;
             correctCount = 0;
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('end-box').style.display = 'none';
@@ -632,11 +627,11 @@
             const c = forced || orderedCases[currentIdx];
             currentCase = c;
 
-            document.getElementById('case-number').innerText = isReviewMode
-                ? `WIEDERHOLUNG ${reviewIdx + 1} VON ${reviewQueue.length}`
+            document.getElementById('case-number').innerText = LudiReview.laeuft(wdh)
+                ? `WIEDERHOLUNG ${LudiReview.fortschritt(wdh).nummer} VON ${LudiReview.fortschritt(wdh).gesamt}`
                 : `FALL ${currentIdx + 1} VON ${orderedCases.length}`;
-            document.getElementById('progress-bar').style.width = isReviewMode
-                ? (reviewIdx / reviewQueue.length * 100) + '%'
+            document.getElementById('progress-bar').style.width = LudiReview.laeuft(wdh)
+                ? ((LudiReview.fortschritt(wdh).nummer - 1) / LudiReview.fortschritt(wdh).gesamt * 100) + '%'
                 : (currentIdx / orderedCases.length * 100) + '%';
 
             document.getElementById('latin-sentence').innerHTML = c.latin.replace('___', '<span class="blank">___</span>');
@@ -668,13 +663,13 @@
             fbBox.style.display = 'flex';
 
             if (isCorrect) {
-                if (isReviewMode) reviewCorrectCount++; else correctCount++;
+                if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh); else correctCount++;
                 selectedBtn.classList.add('correct');
                 fbTitle.innerText = "🔍 FALL GELÖST!";
                 fbTitle.style.color = "var(--richtig)";
                 fbText.innerHTML = c.explanation;
             } else {
-                if (!isReviewMode) missedItems.push(c);
+                LudiReview.merken(wdh, c);
                 selectedBtn.classList.add('wrong');
                 for (let i = 0; i < 4; i++) {
                     if (document.getElementById('opt' + i).innerText === c.correct) {
@@ -687,7 +682,7 @@
             }
 
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode && currentMode !== 'possessiv' && c._trackWord) {
+            if (!LudiReview.laeuft(wdh) && currentMode !== 'possessiv' && c._trackWord) {
                 LudiProgress.recordVocabAttempt(c._trackWord, isCorrect);
             }
 
@@ -701,9 +696,9 @@
         }
 
         function nextCase() {
-            if (isReviewMode) {
-                reviewIdx++;
-                if (reviewIdx < reviewQueue.length) showCase(reviewQueue[reviewIdx]);
+            if (LudiReview.laeuft(wdh)) {
+                const naechsteRunde = LudiReview.naechste(wdh);
+                if (naechsteRunde) showCase(naechsteRunde);
                 else endReview();
                 return;
             }
@@ -719,21 +714,18 @@
         /* Feste zweite Runde: EIN Durchgang durch die Fehler, dann Schluss.
            Nicht so lange, bis alles sitzt - das war die Entscheidung. */
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             document.getElementById('end-box').style.display = 'none';
             document.getElementById('combat-box').style.display = 'flex';
 
-            showCase(reviewQueue[reviewIdx]);
+            showCase(ersteRunde);
         }
 
         function endReview() {
             document.getElementById('combat-box').style.display = 'none';
             document.getElementById('feedback-box').style.display = 'none';
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
 
             document.getElementById('end-box').style.display = 'block';
             document.getElementById('btn-review').style.display = 'none';
@@ -742,7 +734,7 @@
             title.innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             title.style.color = "var(--pompeji)";
             document.getElementById('end-msg').innerHTML =
-                `Du hast alle <strong>${reviewQueue.length}</strong> zuvor falschen Fälle nochmal bearbeitet und dabei <strong>${reviewCorrectCount}</strong> davon jetzt richtig gelöst.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel häufiger dran.`;
+                `Du hast alle <strong>${bilanz.gesamt}</strong> zuvor falschen Fälle nochmal bearbeitet und dabei <strong>${bilanz.richtig}</strong> davon jetzt richtig gelöst.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen Vokabelkasten auf Rot und kommt beim nächsten Spiel häufiger dran.`;
         }
 
         function endGame() {
@@ -755,9 +747,9 @@
             endBox.style.display = 'block';
 
             const reviewBtn = document.getElementById('btn-review');
-            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
-            if (missedItems.length) reviewBtn.innerText =
-                `\u{1F4DA} ${missedItems.length} ${missedItems.length === 1 ? 'falschen Fall' : 'falsche Fälle'} wiederholen`;
+            reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+            if (LudiReview.anzahl(wdh)) reviewBtn.innerText =
+                `\u{1F4DA} ${LudiReview.anzahl(wdh)} ${LudiReview.anzahl(wdh) === 1 ? 'falschen Fall' : 'falsche Fälle'} wiederholen`;
 
             const saveIds = { personal: 'personalpronomen', possessiv: 'possessiv', demonstrativ: 'demonstrativpronomen', relativ: 'relativpronomen' };
             LudiProgress.saveGameResult(saveIds[currentMode] || currentMode, correctCount, orderedCases.length);

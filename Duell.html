@@ -6,6 +6,7 @@
     <title>Gladiatoren-Duell - Split-Screen</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
@@ -233,11 +234,7 @@
            Gemerkt wird die ganze Frage, nicht nur das Wort: Zu einem Wort baut
            nextRound() je nach Zufall eine Bedeutungs-, Formen- oder
            Klassenfrage, und wiederholt werden soll die, die danebenging. */
-        let missedItems = [];
-        let reviewQueue = [];
-        let reviewIdx = 0;
-        let reviewCorrectCount = 0;
-        let isReviewMode = false;
+        const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
         // Gleiche Zuordnung wie in Circus Maximus, damit Bedeutungsfragen aus beiden
         // Spielen auf dieselben Zähler einlaufen.
@@ -410,8 +407,7 @@
                 return;
             }
             hp = { p1: 5, p2: 5 };
-            missedItems = [];
-            isReviewMode = false;
+            LudiReview.zuruecksetzen(wdh);
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('end-overlay').style.display = 'none';
             document.getElementById('player1').classList.remove("flash-correct", "flash-wrong");
@@ -452,26 +448,23 @@
         /* Feste zweite Runde: EIN Durchgang durch die Fehler, ohne Herzen,
            ohne Countdown. Wer zuerst tippt, antwortet - wie im Duell. */
         function startReview() {
-            reviewQueue = [...missedItems].sort(() => Math.random() - 0.5);
-            reviewIdx = 0;
-            reviewCorrectCount = 0;
-            isReviewMode = true;
+            const ersteRunde = LudiReview.start(wdh);
 
             if (countdownInterval) clearInterval(countdownInterval);
             ["p1", "p2"].forEach(p => document.getElementById(`${p}-countdown`).style.display = "none");
             document.getElementById('end-overlay').style.display = 'none';
 
-            nextRound(reviewQueue[reviewIdx]);
+            nextRound(ersteRunde);
         }
 
         function endReview() {
-            isReviewMode = false;
+            const bilanz = LudiReview.beenden(wdh);
             lockAllButtons(true);
 
             document.getElementById('btn-review').style.display = 'none';
             document.getElementById('end-winner-text').innerText = "📚 WIEDERHOLUNG GESCHAFFT!";
             document.getElementById('end-extra').innerHTML =
-                `Ihr habt alle <strong>${reviewQueue.length}</strong> zuvor verpatzten Fragen nochmal gesehen und dabei <strong>${reviewCorrectCount}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt im Vokabelkasten auf Rot.`;
+                `Ihr habt alle <strong>${bilanz.gesamt}</strong> zuvor verpatzten Fragen nochmal gesehen und dabei <strong>${bilanz.richtig}</strong> davon jetzt getroffen.<br>Was wieder daneben ging, bleibt im Vokabelkasten auf Rot.`;
             document.getElementById('end-overlay').style.display = "flex";
         }
 
@@ -639,9 +632,9 @@
             const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
             const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
             // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!isReviewMode) LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
-            if (!isCorrect && !isReviewMode) missedItems.push({ item: currentDuelItem, qType: currentQType });
-            if (isCorrect && isReviewMode) reviewCorrectCount++;
+            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
+            if (!isCorrect && !LudiReview.laeuft(wdh)) LudiReview.merken(wdh, { item: currentDuelItem, qType: currentQType });
+            if (isCorrect && LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
 
             // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
             // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
@@ -659,10 +652,10 @@
             if (isCorrect) {
                 // Im Duell kostet die Antwort Herzen - in der Wiederholung nicht,
                 // das Duell ist da entschieden.
-                if (!isReviewMode) { if (playerNum === 1) hp.p2--; else hp.p1--; }
+                if (!LudiReview.laeuft(wdh)) { if (playerNum === 1) hp.p2--; else hp.p1--; }
                 document.getElementById(winnerZone).classList.add("flash-correct");
             } else {
-                if (!isReviewMode) { if (playerNum === 1) hp.p1--; else hp.p2--; }
+                if (!LudiReview.laeuft(wdh)) { if (playerNum === 1) hp.p1--; else hp.p2--; }
                 document.getElementById(winnerZone).classList.add("flash-wrong");
             }
 
@@ -672,11 +665,11 @@
                 document.getElementById("player1").classList.remove("flash-correct", "flash-wrong");
                 document.getElementById("player2").classList.remove("flash-correct", "flash-wrong");
 
-                if (isReviewMode) {
-                    reviewIdx++;
+                if (LudiReview.laeuft(wdh)) {
+                    const naechsteRunde = LudiReview.naechste(wdh);
                     // Ohne Countdown: Das Duell ist entschieden, hier geht es
                     // ums Nachschauen, nicht um Schnelligkeit.
-                    if (reviewIdx < reviewQueue.length) nextRound(reviewQueue[reviewIdx]);
+                    if (naechsteRunde) nextRound(naechsteRunde);
                     else endReview();
                 } else if (hp.p1 <= 0 || hp.p2 <= 0) endMatch();
                 else startCountdown();
@@ -688,9 +681,9 @@
             const winText = document.getElementById('end-winner-text');
 
             const reviewBtn = document.getElementById('btn-review');
-            reviewBtn.style.display = missedItems.length ? 'inline-block' : 'none';
-            if (missedItems.length) reviewBtn.innerText =
-                `📚 ${missedItems.length} ${missedItems.length === 1 ? 'Frage' : 'Fragen'} wiederholen`;
+            reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+            if (LudiReview.anzahl(wdh)) reviewBtn.innerText =
+                `📚 ${LudiReview.anzahl(wdh)} ${LudiReview.anzahl(wdh) === 1 ? 'Frage' : 'Fragen'} wiederholen`;
 
             overlay.style.display = "flex";
 

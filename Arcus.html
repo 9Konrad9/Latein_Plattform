@@ -6,6 +6,7 @@
     <title>Arcus - Der AcI-Bogen</title>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
+    <script src="review.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
@@ -278,11 +279,7 @@
     let roundHadError = false;
     let locked = false;
 
-    let missedItems = [];
-    let isReviewMode = false;
-    let reviewQueue = [];
-    let reviewIdx = 0;
-    let reviewCorrectCount = 0;
+    const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
     window.onload = function () {
         document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
@@ -321,8 +318,7 @@
     function startGame() {
         roundIdx = 0;
         correctCount = 0;
-        missedItems = [];
-        isReviewMode = false;
+        LudiReview.zuruecksetzen(wdh);
 
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('end-box').style.display = 'none';
@@ -348,11 +344,11 @@
         roundHadError = false;
         locked = false;
 
-        document.getElementById('round-number').innerText = isReviewMode
-            ? 'WIEDERHOLUNG ' + (reviewIdx + 1) + ' VON ' + reviewQueue.length
+        document.getElementById('round-number').innerText = LudiReview.laeuft(wdh)
+            ? 'WIEDERHOLUNG ' + (LudiReview.fortschritt(wdh).nummer) + ' VON ' + LudiReview.fortschritt(wdh).gesamt
             : 'SATZ ' + (roundIdx + 1) + ' VON ' + totalRounds;
         document.getElementById('progress-bar').style.width =
-            (isReviewMode ? (reviewIdx / reviewQueue.length) : (roundIdx / totalRounds)) * 100 + '%';
+            (LudiReview.laeuft(wdh) ? ((LudiReview.fortschritt(wdh).nummer - 1) / LudiReview.fortschritt(wdh).gesamt) : (roundIdx / totalRounds)) * 100 + '%';
 
         resetArch();
         renderSentence();
@@ -474,7 +470,7 @@
         // Entscheidung des Fachlehrers: Wer ein Wort erst im zweiten Anlauf
         // und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt -
         // sonst ginge der Fortschritt zu schnell.
-        if (!isReviewMode) LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
+        if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentRound.infLemma, richtig);
         // Die Achievement-Zaehler laufen in der Wiederholung WEITER - anders als
         // der Vokabelkasten eine Zeile darueber. Das ist Absicht, kein Vergessen
         // (Entscheidung des Fachlehrers): Der Kasten steuert, welches Wort wie oft
@@ -489,11 +485,11 @@
         locked = true;
         currentStep = 'done';
 
-        if (isReviewMode) {
-            if (!roundHadError) reviewCorrectCount++;
+        if (LudiReview.laeuft(wdh)) {
+            if (!roundHadError) LudiReview.treffer(wdh);
         } else {
             if (!roundHadError) correctCount++;
-            else missedItems.push(currentRound);
+            else LudiReview.merken(wdh, currentRound);
         }
 
         const box = document.getElementById('feedback-box');
@@ -506,10 +502,10 @@
     function onNextClicked() {
         document.getElementById('feedback-box').style.display = 'none';
 
-        if (isReviewMode) {
-            reviewIdx++;
-            if (reviewIdx >= reviewQueue.length) endReview();
-            else showRound(reviewQueue[reviewIdx]);
+        if (LudiReview.laeuft(wdh)) {
+            const naechsteRunde = LudiReview.naechste(wdh);
+            if (!naechsteRunde) endReview();
+            else showRound(naechsteRunde);
             return;
         }
 
@@ -526,29 +522,26 @@
         LudiProgress.saveGameResult('arcus', correctCount, totalRounds);
 
         let text = '<strong>' + correctCount + ' von ' + totalRounds + '</strong> Bögen ohne Fehler gebaut.';
-        if (missedItems.length) text += '<br><br>' + missedItems.length + ' Satz/Sätze bereiteten Mühe.';
+        if (LudiReview.anzahl(wdh)) text += '<br><br>' + LudiReview.anzahl(wdh) + ' Satz/Sätze bereiteten Mühe.';
         document.getElementById('end-summary').innerHTML = text;
-        document.getElementById('btn-review').style.display = missedItems.length ? 'inline-block' : 'none';
+        document.getElementById('btn-review').style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
     }
 
     function startReview() {
-        reviewQueue = missedItems.slice();
-        reviewIdx = 0;
-        reviewCorrectCount = 0;
-        isReviewMode = true;
+        const ersteRunde = LudiReview.start(wdh);
 
         document.getElementById('end-box').style.display = 'none';
         document.getElementById('game-box').style.display = 'flex';
-        showRound(reviewQueue[0]);
+        showRound(ersteRunde);
     }
 
     function endReview() {
-        isReviewMode = false;
+        const bilanz = LudiReview.beenden(wdh);
         document.getElementById('game-box').style.display = 'none';
         document.getElementById('end-box').style.display = 'block';
         document.getElementById('end-title').innerText = 'Wiederholung beendet';
         document.getElementById('end-summary').innerHTML =
-            'In der Wiederholung <strong>' + reviewCorrectCount + ' von ' + reviewQueue.length + '</strong> fehlerfrei.';
+            'In der Wiederholung <strong>' + bilanz.richtig + ' von ' + bilanz.gesamt + '</strong> fehlerfrei.';
         document.getElementById('btn-review').style.display = 'none';
     }
 </script>
