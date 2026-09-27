@@ -252,40 +252,49 @@ const SPEICHER = 'ludi_silentium_gesehen';
    Wuerfelte man im Takt weiter, waere Merkur bei 33 % nach zehn weiteren
    Minuten praktisch sicher da - und 33 % waeren gelogen. */
 const GAESTE = [
-    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20,
+    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20, groesse: 0.7,
       kultur: 'Catull hat ein ganzes Gedicht auf den Sperling seiner Geliebten geschrieben.' },
-    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60,
+    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60, groesse: 1,
       kultur: 'Katzen kamen erst spät nach Rom - gegen Mäuse hielt man vorher Wiesel.' },
-    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110,
+    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, groesse: 0.85,
       kultur: 'Aus dem Fressverhalten heiliger Hühner las man vor der Schlacht den Willen der Götter.' },
-    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160,
+    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160, groesse: 0.8,
       kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
-    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220,
+    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220, groesse: 0.75,
       kultur: 'Die Taube gehört der Venus; ein Taubenpaar zieht ihren Wagen.' },
-    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280,
+    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, groesse: 0.5,
       kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
-    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340,
+    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340, groesse: 1.25,
       kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
-    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400,
+    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400, groesse: 1.4,
       kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
-    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460,
+    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460, groesse: 1.1,
       kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
-    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520,
+    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, groesse: 0.9,
       kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
-    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580,
+    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580, groesse: 0.9,
       kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
-    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, chance: 0.5,
+    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, groesse: 1.3, chance: 0.5,
       kultur: 'Die Wölfin säugte Romulus und Remus - ohne sie gäbe es Rom nicht.' },
-    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, chance: 0.33,
+    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, groesse: 1.1, chance: 0.33,
       kultur: 'Der Götterbote mit den Flügelschuhen sieht im Vorbeifliegen nach dem Rechten.' },
-    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, chance: 0.2,
+    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, groesse: 1.5, chance: 0.2,
       kultur: 'Iuppiter Optimus Maximus selbst. Wer ihn sieht, hat lange geschwiegen.' }
 ];
 
 /* Wer ein Bild hat, bekommt es; alle anderen einen Platzhalter mit Namen.
-   Die Bilder entstehen erst, wenn die Mechanik im Unterricht bestanden hat -
-   sonst malt man dreissig Tiere fuer eine Regel, die sich noch aendert. */
-const BILDER = { passer: 'assets/silentium/passer.png' };
+   Die Bilder entstehen nach und nach - erst die Tiere, die sich einzeln und
+   im Profil zeichnen lassen. Menschen und Goetter kommen spaeter: Die
+   Cornelier muessen zur Familie im Lehrbuch passen, und das schafft kein
+   Generator nebenbei. */
+const BILDER = {
+    passer:  'assets/silentium/passer.png',
+    felis:   'assets/silentium/felis.png',
+    gallina: 'assets/silentium/gallina.png',
+    columba: 'assets/silentium/columba.png',
+    pavo:    'assets/silentium/pavo.png',
+    lupa:    'assets/silentium/lupa.png'
+};
 
 /* ---------- Zustand ---------- */
 let audioCtx = null, analyser = null, datenPuffer = null, mikroStrom = null;
@@ -602,8 +611,15 @@ function zeichneSzene() {
         ctx.save();
         ctx.globalAlpha = auf;
         if (bild && bild.complete && bild.naturalWidth > 0) {
-            const b = Math.max(44, H * 0.11);
-            const h = b * (bild.naturalHeight / bild.naturalWidth);
+            /* Nach HOEHE bemessen, nicht nach Breite: Die sitzende Katze ist
+               hochkant, der Pfau mit Schleppe querformatig. Bei gleicher
+               Breite waere die Katze doppelt so hoch wie der Sperling.
+               Die Breite wird gedeckelt, damit die Schleppe nicht ausufert. */
+            const faktor = a.gast.groesse || 1;
+            let h = Math.max(38, H * 0.10) * faktor;
+            let b = h * (bild.naturalWidth / bild.naturalHeight);
+            const maxB = Math.max(70, H * 0.18) * faktor;
+            if (b > maxB) { b = maxB; h = b * (bild.naturalHeight / bild.naturalWidth); }
             ctx.drawImage(bild, x - b / 2, y - h, b, h);
         } else {
             // Platzhalter: ein Pergamentplaettchen mit dem lateinischen Namen.
