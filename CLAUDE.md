@@ -45,7 +45,36 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **CircusV.html** – reine Bedeutungsabfrage (Circus Maximus)
 - **Duell.html** – Wortschatz-Duell, mehrere Fragetypen
 - **Principia.html** – Grundformen/Stammformen progressiv
-- **IssaJump.html** – Jump-and-Run, Bedeutungsabfrage
+- **IssaJump.html** – Jump-and-Run, Bedeutungsabfrage. Das beliebteste Spiel der Arena;
+  drei Dinge daran sind gemessen und nicht geraten (September 2026, nach Rückmeldung
+  des Fachlehrers):
+  - **Ein Sprung trägt genau EINE Reihe.** Issa steigt 207 px – diskret gerechnet, die
+    Schulformel sagt 202,5, und deshalb leitet `SPRUNGHOEHE` den Wert aus der Physik ab,
+    statt ihn hinzuschreiben. Die Reihenabstände liegen bei **125–145**: eine Reihe hat
+    62 px Luft, zwei Reihen fehlen 43 px. Vorher waren es 95–130, und damit schaffte ein
+    Sprung zwei Reihen mal so und mal nicht – je nachdem, was der Würfel für die beiden
+    Abstände ergeben hatte. Genau daher kam „man kann scheinbar eine Plattform
+    überspringen, aber es reicht nicht ganz".
+    **Der schlimmste Fall stand woanders:** Die erste gebaute Reihe hatte einen festen
+    Abstand von 100 px zur Startplattform. Zwei davon sind 200 – weniger als ein Sprung.
+    Gefunden hat das der Test, nicht das Lesen.
+  - **Nach einer falschen Antwort setzt Issa auf der RICHTIGEN Plattform derselben Reihe
+    auf.** Vorher fiel sie von der falschen weiter und landete oft gleich noch einmal
+    daneben – und sie bekam nie zu sehen, welche die richtige gewesen wäre. Dazu gehört
+    eine zweite Sperre: Eine Reihe wird **genau einmal** beantwortet
+    (`beantworteteReihen`), sonst zählte das zweite Aufsetzen als zweite Antwort.
+  - **Zwei Gegenstände, beide römisch und beide mit einem Grund.**
+    `scutum`: Zehn Sekunden lang kostet eine falsche Antwort kein Herz – er schützt das
+    SPIEL, nicht das Lernen: Was falsch war, geht trotzdem als falsch in den
+    Vokabelkasten, sonst ließe sich Fortschritt erkaufen. Gegen den Sturz aus dem Bild
+    hilft er nicht.
+    `catapulta`: 319 px Wurfhöhe, und das ist **nicht frei gewählt** – zwei Reihen sind
+    höchstens 290 auseinander, drei mindestens 375. Der Katapult sitzt deshalb immer
+    zwei Reihen unter dem nächsten Antwort-Feld und wirft genau dorthin. So geht es
+    schneller nach oben, aber **keine Vokabelfrage wird übersprungen**; sonst wäre das
+    Ding eine Abkürzung am Lernen vorbei. `test-issa.js` prüft beide Schranken.
+    Beide sind vorerst mit Canvas gezeichnet (rundes Scutum mit Buckel, Onager mit
+    Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.

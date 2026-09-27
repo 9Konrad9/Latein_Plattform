@@ -192,7 +192,39 @@
         const ISSA_W = 34, ISSA_H = 30;
         const NEUTRAL_W = 66;
         const ANSWER_W = 88;
-        const ROW_GAP_MIN = 95, ROW_GAP_MAX = 130;
+        /* EINE Plattform je Sprung, eindeutig.
+           Issa steigt gemessen 207 px (diskret gerechnet; die Schulformel sagt
+           202,5). Vorher lagen die Abstaende bei 95-130: Eine Reihe schaffte ein
+           Sprung immer, ZWEI Reihen (190 bis 260) mal so, mal so. Genau das war
+           der Grund, warum sich eine Plattform scheinbar ueberspringen liess und
+           es dann doch nicht reichte - und woran man nichts besser machen kann,
+           weil es vom Wuerfel abhing.
+           Jetzt: eine Reihe hoechstens 145 (62 px Luft nach oben), zwei Reihen
+           mindestens 250 (43 px zu wenig). Beides deutlich genug, um es zu
+           sehen, statt es zu probieren. */
+        const ROW_GAP_MIN = 125, ROW_GAP_MAX = 145;
+
+        /* ---------- Gegenstaende ----------
+           Zwei Stueck, beide roemisch und beide mit einem Grund:
+
+           SCUTUM (Schild)  Zehn Sekunden lang kostet eine falsche Antwort kein
+                            Herz. Er schuetzt das SPIEL, nicht das Lernen: Was
+                            falsch war, geht trotzdem als falsch in den
+                            Vokabelkasten - sonst koennte man sich Fortschritt
+                            erkaufen.
+           CATAPULTA        Schleudert Issa hoch. Die Hoehe ist NICHT frei
+                            gewaehlt: 319 px traegt sicher ueber zwei Reihen
+                            (die sind hoechstens 290 auseinander) und nie ueber
+                            drei (mindestens 375). Der Katapult sitzt deshalb
+                            immer zwei Reihen unter dem naechsten Antwort-Feld
+                            und wirft genau dorthin. So geht es schneller nach
+                            oben, aber keine Vokabelfrage wird uebersprungen -
+                            sonst waere das Ding eine Abkuerzung am Lernen vorbei. */
+        const ITEM_W = 30, ITEM_H = 30;
+        const SCHILD_FRAMES = 600;      // rund zehn Sekunden bei 60 Bildern je Sekunde
+        const KATAPULT_V = -11.2;       // gemessen 319 px Steighoehe
+        const CHANCE_SCHILD = 0.16;
+        const CHANCE_KATAPULT = 0.22;
         const START_LIVES = 3;
         const INVULN_FRAMES = 70;
 
@@ -269,6 +301,8 @@
 
         /* ============ SPIELZUSTAND ============ */
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
+        let items = [];             // Schilde und Katapulte, die auf Plattformen liegen
+        let schildFrames = 0;       // wie lange das Scutum noch haelt
 
         /* Die feste zweite Runde: ein kurzer Kletterlauf nur mit den Woertern,
            die danebengegangen sind - EIN Durchgang, nicht so lange, bis es
@@ -299,6 +333,8 @@
         function resetGame() {
             issa = { x: CW / 2 - ISSA_W / 2, y: CH - 120, vx: 0, vy: BOUNCE_VELOCITY, facing: 1, animT: 0 };
             platforms = [];
+            items = [];
+            schildFrames = 0;
             score = 0;
             lives = START_LIVES;
             invulnFrames = 0;
@@ -315,7 +351,12 @@
 
             platforms.push({ x: CW / 2 - NEUTRAL_W / 2, y: CH - 80, w: NEUTRAL_W, type: 'neutral' });
 
-            nextSpawnY = CH - 180;
+            /* Die erste gebaute Reihe haelt denselben Abstand wie alle anderen.
+               Vorher stand hier fest CH - 180, also 100 px ueber der Startplattform -
+               und das war ausgerechnet der eine Abstand im Spiel, bei dem sich zwei
+               Reihen mit einem Sprung schaffen liessen (2 x 100 < 207).
+               Gefunden vom Test, nicht beim Lesen. */
+            nextSpawnY = (CH - 80) - ROW_GAP_MIN;
             spawnCycle = 0;
             while (nextSpawnY > -CH) { nextSpawnY = spawnRow(nextSpawnY, spawnCycle); spawnCycle++; }
 
@@ -355,9 +396,37 @@
                 }
             } else {
                 const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
-                platforms.push({ x: px, y: y, w: NEUTRAL_W, type: 'neutral' });
+                const plattform = { x: px, y: y, w: NEUTRAL_W, type: 'neutral' };
+                platforms.push(plattform);
+                // cycle % 3 === 2 ist das Antwort-Feld. Die Reihe mit Rest 0 liegt
+                // also zwei darunter - genau die Wurfweite des Katapults.
+                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) setzeItem('katapult', plattform);
+                else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) setzeItem('scutum', plattform);
             }
             return y - gap;
+        }
+
+        /* Der Gegenstand sitzt mittig auf der Plattform und wird beim Beruehren
+           eingesammelt - von oben wie von unten. */
+        function setzeItem(art, plattform) {
+            items.push({
+                art: art,
+                x: plattform.x + plattform.w / 2 - ITEM_W / 2,
+                y: plattform.y - ITEM_H - 2,
+                w: ITEM_W, h: ITEM_H
+            });
+        }
+
+        function sammleItems() {
+            for (let i = items.length - 1; i >= 0; i--) {
+                const it = items[i];
+                if (issa.x + ISSA_W < it.x || issa.x > it.x + it.w ||
+                    issa.y + ISSA_H < it.y || issa.y > it.y + it.h) continue;
+                items.splice(i, 1);
+                if (it.art === 'scutum') schildFrames = SCHILD_FRAMES;
+                else { issa.vy = KATAPULT_V; startledFrames = 0; }
+                updateHud();
+            }
         }
 
         // Sucht das nächste noch nicht erreichte Antwort-Cluster (höchstes y-, also am wenigsten weit oben, das noch über Issa liegt) und zeigt dessen Wort in der HUD.
@@ -378,7 +447,15 @@
            als Filter dazu, damit eine übersprungene Reihe die Anzeige nicht
            festhält: Reihen, die mehr als eine Sprunghöhe unter Issa liegen,
            zählen nicht mehr. */
-        const SPRUNGHOEHE = 210;   // (BOUNCE_VELOCITY^2) / (2 * GRAVITY), aufgerundet
+        /* Aus der Physik abgeleitet, nicht hingeschrieben: Die Schulformel
+           (BOUNCE_VELOCITY^2)/(2*GRAVITY) sagt 202,5 - gerechnet wird aber in
+           ganzen Frames, und das ergibt 207. Wer an der Sprungkraft dreht, soll
+           diese Zahl nicht von Hand nachziehen muessen. */
+        const SPRUNGHOEHE = (function () {
+            let v = BOUNCE_VELOCITY, y = 0, hoch = 0;
+            while (v < 0) { y += v; v += GRAVITY; if (y < hoch) hoch = y; }
+            return Math.round(-hoch);
+        })();
 
         function updateHudWord() {
             if (hudHalten > 0) { hudHalten--; return; }
@@ -412,6 +489,18 @@
                 img.style.verticalAlign = 'middle';
                 heartsEl.appendChild(img);
             }
+            /* Das Scutum steht neben den Herzen, solange es haelt - mit der
+               Restzeit, damit man den Sprung noch wagt oder eben nicht. */
+            if (schildFrames > 0) {
+                const sek = Math.ceil(schildFrames / 60);
+                const marke = document.createElement('span');
+                marke.innerText = '\u{1F6E1} ' + sek + 's';
+                marke.style.marginLeft = '8px';
+                marke.style.fontWeight = 'bold';
+                marke.style.color = 'var(--pompeji)';
+                marke.style.verticalAlign = 'middle';
+                heartsEl.appendChild(marke);
+            }
             document.getElementById('hud-score').innerText = `Höhe: ${score} m`;
         }
 
@@ -420,6 +509,7 @@
 
         function maintainPlatforms() {
             platforms = platforms.filter(p => p.y < cameraY + CH + 150);
+            items = items.filter(it => it.y < cameraY + CH + 150);
             while (nextSpawnY > cameraY - 100) {
                 nextSpawnY = spawnRow(nextSpawnY, spawnCycle);
                 spawnCycle++;
@@ -449,6 +539,9 @@
 
             if (invulnFrames > 0) invulnFrames--;
             if (startledFrames > 0) startledFrames--;
+            if (schildFrames > 0) { schildFrames--; if (schildFrames === 0) updateHud(); }
+
+            sammleItems();
 
             if (issa.vy > 0) {
                 for (const p of platforms) {
@@ -476,6 +569,11 @@
         function handlePlatformLanding(p) {
             if (p.type === 'neutral') { issa.vy = BOUNCE_VELOCITY; return; }
             if (invulnFrames > 0) { issa.vy = BOUNCE_VELOCITY; return; }
+            /* Eine Reihe wird genau einmal beantwortet. Ohne diese Sperre zaehlte
+               ein zweites Aufsetzen auf derselben Reihe als zweite Antwort - und
+               genau das passierte reihenweise, weil Issa nach einem Fehler von
+               dort weiterfiel, wo sie stand. */
+            if (beantworteteReihen.has(p.reiheId)) { issa.vy = BOUNCE_VELOCITY; return; }
 
             // Diese Reihe ist beantwortet. Das Wort bleibt noch kurz stehen,
             // damit man sieht, worauf man gesprungen ist.
@@ -495,10 +593,23 @@
                 }
                 wrongCount++;
                 flashFeedback(false);
-                // In der Wiederholung kostet ein Fehler kein Herz - sonst waere
-                // die Liste bei drei Fehlern zu Ende, statt durchgespielt.
-                if (LudiReview.laeuft(wdh)) issa.vy = BOUNCE_VELOCITY;
-                else loseLife();
+                startledFrames = 30;
+
+                /* Neu ansetzen auf der RICHTIGEN Plattform derselben Reihe.
+                   Vorher fiel Issa von der falschen Plattform aus weiter und
+                   landete haeufig gleich noch einmal daneben - und sie bekam
+                   nie zu sehen, welche die richtige gewesen waere. Jetzt steht
+                   sie darauf. */
+                const richtige = platforms.find(q => q.reiheId === p.reiheId && q.isCorrect);
+                if (richtige) {
+                    issa.x = richtige.x + richtige.w / 2 - ISSA_W / 2;
+                    issa.y = richtige.y - ISSA_H;
+                    issa.vx = 0;
+                }
+                issa.vy = BOUNCE_VELOCITY;
+                invulnFrames = INVULN_FRAMES;
+
+                if (!herzVerlieren()) return;
             }
 
             if (LudiReview.laeuft(wdh)) {
@@ -507,21 +618,36 @@
             }
         }
 
+        /* Ein Herz weg - oder eben nicht. Gibt false zurueck, wenn der Lauf damit
+           zu Ende ist.
+           Zwei Faelle kosten nichts: die Wiederholungsrunde (dort soll die Liste
+           durchgespielt werden) und ein getragenes Scutum. Der Schild schuetzt
+           aber nur das Spiel: Was falsch war, ist oben schon als falsch in den
+           Vokabelkasten gegangen. Sonst liesse sich Fortschritt einsammeln. */
+        function herzVerlieren() {
+            if (LudiReview.laeuft(wdh)) return true;
+            if (schildFrames > 0) return true;
+            lives--;
+            updateHud();
+            if (lives <= 0) { endGame(); return false; }
+            return true;
+        }
+
         function flashFeedback(correct) {
             const el = document.getElementById('feedback-flash');
             el.classList.add(correct ? 'show-correct' : 'show-wrong');
             setTimeout(() => el.classList.remove('show-correct', 'show-wrong'), 220);
         }
 
+        /* Der Sturz aus dem Bild. Das Scutum hilft hier NICHT - es deckt
+           falsche Antworten, nicht fehlende Plattformen. */
         function loseLife() {
-            // In der Wiederholung faengt der Sturz Issa genauso auf, kostet aber
-            // kein Herz: Der Lauf endet dort an der Liste, nicht an den Herzen.
+            startledFrames = 30;
             if (!LudiReview.laeuft(wdh)) {
                 lives--;
                 updateHud();
+                if (lives <= 0) { endGame(); return; }
             }
-            startledFrames = 30;
-            if (!LudiReview.laeuft(wdh) && lives <= 0) { endGame(); return; }
 
             const safeY = cameraY + CH - 90;
             issa.x = CW / 2 - ISSA_W / 2;
@@ -585,6 +711,41 @@
             return 'idle';
         }
 
+        /* Die beiden Gegenstaende sind gezeichnet, nicht gemalt: ein rundes
+           Scutum mit Buckel und Goldrand, und ein Onager - der roemische
+           Wurfarm auf einem Holzgestell. Wenn dafuer einmal Bilder da sind,
+           kommen sie hier an dieselbe Stelle wie bei den Plattformen. */
+        function drawItem(it) {
+            const mx = it.x + it.w / 2, my = it.y + it.h / 2;
+            // Sanftes Schweben, damit sie sich vom Untergrund abheben
+            const schweb = Math.sin((Date.now() / 300) + it.x) * 2;
+            ctx.save();
+            ctx.translate(mx, my + schweb);
+
+            if (it.art === 'scutum') {
+                ctx.fillStyle = '#9b2c2c';
+                ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#b8912f'; ctx.lineWidth = 2.5;
+                ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.stroke();
+                ctx.strokeStyle = '#f0e6d2'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(9, 0); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, 9); ctx.stroke();
+                ctx.fillStyle = '#b8912f';
+                ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
+            } else {
+                ctx.fillStyle = '#7a5230';
+                ctx.fillRect(-13, 4, 26, 5);                 // Gestell
+                ctx.fillRect(-10, -1, 4, 8); ctx.fillRect(6, -1, 4, 8);
+                ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 3.5;
+                ctx.beginPath(); ctx.moveTo(-6, 4); ctx.lineTo(7, -11); ctx.stroke();   // Wurfarm
+                ctx.fillStyle = '#8c7853';
+                ctx.beginPath(); ctx.arc(8, -12, 4.5, 0, Math.PI * 2); ctx.fill();      // Stein
+                ctx.strokeStyle = '#b8912f'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(-12, 1); ctx.lineTo(-5, 3); ctx.stroke();   // Spannseil
+            }
+            ctx.restore();
+        }
+
         function drawIssa() {
             const pose = getIssaPose();
             const key = pose; // 'idle' | 'jump' | 'falling' | 'startled'
@@ -628,6 +789,7 @@
             }
 
             platforms.forEach(p => drawPlatform(p));
+            items.forEach(it => drawItem(it));
             drawIssa();
             ctx.restore();
         }
