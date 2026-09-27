@@ -69,12 +69,28 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Vokabelkasten, sonst ließe sich Fortschritt erkaufen. Gegen den Sturz aus dem Bild
     hilft er nicht.
     `catapulta`: 319 px Wurfhöhe, und das ist **nicht frei gewählt** – zwei Reihen sind
-    höchstens 290 auseinander, drei mindestens 375. Der Katapult sitzt deshalb immer
-    zwei Reihen unter dem nächsten Antwort-Feld und wirft genau dorthin. So geht es
-    schneller nach oben, aber **keine Vokabelfrage wird übersprungen**; sonst wäre das
-    Ding eine Abkürzung am Lernen vorbei. `test-issa.js` prüft beide Schranken.
-    Beide sind vorerst mit Canvas gezeichnet (rundes Scutum mit Buckel, Onager mit
-    Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.
+    höchstens 290 auseinander, drei mindestens 375.
+    **Der erste Anlauf war falsch und ist im Unterricht durchgefallen:** Er warf Issa
+    genau auf das nächste Antwort-Feld. Man kam dort an, ohne vorher geschaut zu haben,
+    wohin man muss, und verlor prompt ein Herz. Jetzt schiebt der Katapult eine
+    zusätzliche neutrale Reihe hinter sich ein; der Wurf endet damit auf einer neutralen
+    Reihe **direkt unter** dem Antwort-Feld – Issa steht, schaut hoch, springt selbst.
+    Die Höhe pro Reihe bleibt gleich (die eingeschobene Reihe kostet genau das, was der
+    Wurf spart): gewonnen wird Tempo, nicht Punktestand, und übersprungen wird nichts.
+    `test-issa.js` prüft, **worauf** der Wurf endet, nicht nur wie weit er trägt.
+    Beide Gegenstände sind vorerst mit Canvas gezeichnet (rundes Scutum mit Buckel,
+    Onager mit Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.
+    Häufigkeit nach dem ersten Klassentest halbiert: 11 % (Katapult) und 8 % (Scutum)
+    je passender Reihe, also rund alle siebzehn Reihen ein Fund.
+  - **KEIN Pergament um dieses Spielfeld**, anders als bei allen anderen Spielen. Der
+    Bogen hält dort Text, hier hielte er ein Bild – Mehrwert null, Kosten 14 % Spielhöhe
+    im Querformat (gemessen). Dazu kam ein Nebeneffekt, der nicht offensichtlich ist:
+    Das `filter: drop-shadow` des Pergaments macht aus jedem `position: fixed` darin ein
+    `absolute`. Damit sassen die Steuerpfeile wieder auf der Bühne statt am
+    Bildschirmrand, obwohl die Querformat-Regel sie längst hinausgeschickt hatte.
+  - **Eine Stelle für neue Reihen** (`baueNaechsteReihe()`). `resetGame()` hatte eine
+    eigene Schleife und bekam die Zusatzreihe hinter einem Katapult nicht mit – die
+    Katapulte des Startbildschirms warfen deshalb weiter aufs Antwort-Feld.
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.

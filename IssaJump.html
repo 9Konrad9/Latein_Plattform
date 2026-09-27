@@ -28,24 +28,22 @@
             display: flex; align-items: center; justify-content: center;
             padding: 0 12px 12px;
         }
-        /* Das Spielfeld sitzt im Pergamentbogen wie die Flaechen der anderen
-           Spiele - nur haelt es hier ein Bild statt Text. Aussehen aus
-           theme.css; die Groesse rechnet resizeStage() aus, weil der Rahmen
-           mitwaechst und das 400:650-Feld trotzdem stimmen muss. */
+        /* KEIN Pergament um dieses Spielfeld - anders als bei den anderen
+           Spielen. Der Bogen haelt dort Text; hier haelt er ein Bild, und dafuer
+           bringt er nichts ein, kostet aber Spielflaeche (gemessen 14 % Hoehe im
+           Querformat). Ausserdem hat der Rahmen die Steuerung eingesperrt: Sein
+           drop-shadow macht aus jedem "position: fixed" darin ein "absolute",
+           und die Tasten klebten wieder an der Buehne statt am Bildschirmrand.
+           Entscheidung des Fachlehrers nach dem Test. */
         .stage {
-            /* Die Zeichenflaeche liegt in der Polsterbox - jede Polsterung
-               wuerde sie verkleinern, ohne dass resizeStage() davon weiss. */
-            padding: 0;
-            min-height: 0;
             position: relative;
             width: 400px;
             height: 650px;
-            /* Der Himmel gehoert auf die Zeichenflaeche, nicht auf den Kasten:
-               Am Kasten wuerde er hinter der gerissenen Pergamentkante
-               hervorschauen und einen blauen Saum um den Bogen legen. */
-            overflow: hidden;
+            aspect-ratio: 400/650;
+            background: #bcdcf0; border: 4px solid var(--bronze); border-radius: 10px; overflow: hidden;
+            box-shadow: 0 8px 25px rgba(80, 60, 30, 0.22);
         }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; background-color: #bcdcf0; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
 
         /* Aussehen steht in theme.css. Hier nur die kleinere Ueberschrift:
            Die Schicht liegt im Spielfeld, nicht ueber dem ganzen Schirm. */
@@ -123,7 +121,7 @@
     <div class="seiten-untertitel">Vokabel-Jump'n'Run</div>
 
     <div class="stage-wrapper">
-    <div class="stage game-container" id="stage">
+    <div class="stage" id="stage">
         <canvas id="game-canvas" width="400" height="650"></canvas>
 
         <div class="hud" id="hud" style="display:none;">
@@ -215,16 +213,30 @@
            CATAPULTA        Schleudert Issa hoch. Die Hoehe ist NICHT frei
                             gewaehlt: 319 px traegt sicher ueber zwei Reihen
                             (die sind hoechstens 290 auseinander) und nie ueber
-                            drei (mindestens 375). Der Katapult sitzt deshalb
-                            immer zwei Reihen unter dem naechsten Antwort-Feld
-                            und wirft genau dorthin. So geht es schneller nach
-                            oben, aber keine Vokabelfrage wird uebersprungen -
-                            sonst waere das Ding eine Abkuerzung am Lernen vorbei. */
+                            drei (mindestens 375).
+
+                            Der erste Anlauf warf sie GENAU auf das naechste
+                            Antwort-Feld - und das war falsch: Man kam dort an,
+                            ohne vorher geschaut zu haben, wohin man muss, und
+                            verlor prompt ein Herz. Gemeldet nach dem ersten
+                            Klassentest.
+
+                            Jetzt schiebt der Katapult eine zusaetzliche
+                            neutrale Reihe hinter sich ein. Der Wurf endet damit
+                            auf einer neutralen Reihe DIREKT UNTER dem
+                            Antwort-Feld: Issa steht, schaut hoch, springt
+                            selbst. Die Hoehe pro Reihe bleibt gleich (die
+                            eingeschobene Reihe kostet genau das, was der Wurf
+                            spart) - gewonnen wird Tempo, nicht Punktestand,
+                            und uebersprungen wird nichts. */
         const ITEM_W = 30, ITEM_H = 30;
         const SCHILD_FRAMES = 600;      // rund zehn Sekunden bei 60 Bildern je Sekunde
         const KATAPULT_V = -11.2;       // gemessen 319 px Steighoehe
-        const CHANCE_SCHILD = 0.16;
-        const CHANCE_KATAPULT = 0.22;
+        /* Halbiert nach dem ersten Klassentest - vorher 0,16 und 0,22, also
+           rund alle acht Reihen ein Gegenstand. Das war zu viel: Was staendig
+           kommt, ist kein Fund mehr. Jetzt rund alle siebzehn Reihen. */
+        const CHANCE_SCHILD = 0.08;
+        const CHANCE_KATAPULT = 0.11;
         const START_LIVES = 3;
         const INVULN_FRAMES = 70;
 
@@ -303,6 +315,7 @@
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
         let items = [];             // Schilde und Katapulte, die auf Plattformen liegen
         let schildFrames = 0;       // wie lange das Scutum noch haelt
+        let zusatzReihen = 0;       // noch einzuschiebende neutrale Reihen (nach einem Katapult)
 
         /* Die feste zweite Runde: ein kurzer Kletterlauf nur mit den Woertern,
            die danebengegangen sind - EIN Durchgang, nicht so lange, bis es
@@ -335,6 +348,7 @@
             platforms = [];
             items = [];
             schildFrames = 0;
+            zusatzReihen = 0;
             score = 0;
             lives = START_LIVES;
             invulnFrames = 0;
@@ -358,7 +372,7 @@
                Gefunden vom Test, nicht beim Lesen. */
             nextSpawnY = (CH - 80) - ROW_GAP_MIN;
             spawnCycle = 0;
-            while (nextSpawnY > -CH) { nextSpawnY = spawnRow(nextSpawnY, spawnCycle); spawnCycle++; }
+            while (nextSpawnY > -CH) baueNaechsteReihe();
 
             updateHudWord();
             updateHud();
@@ -400,8 +414,14 @@
                 platforms.push(plattform);
                 // cycle % 3 === 2 ist das Antwort-Feld. Die Reihe mit Rest 0 liegt
                 // also zwei darunter - genau die Wurfweite des Katapults.
-                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) setzeItem('katapult', plattform);
-                else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) setzeItem('scutum', plattform);
+                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) {
+                    setzeItem('katapult', plattform);
+                    // Eine neutrale Reihe extra, damit der Wurf auf ihr endet
+                    // und nicht auf dem Antwort-Feld darueber.
+                    zusatzReihen = 1;
+                } else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) {
+                    setzeItem('scutum', plattform);
+                }
             }
             return y - gap;
         }
@@ -510,10 +530,26 @@
         function maintainPlatforms() {
             platforms = platforms.filter(p => p.y < cameraY + CH + 150);
             items = items.filter(it => it.y < cameraY + CH + 150);
-            while (nextSpawnY > cameraY - 100) {
-                nextSpawnY = spawnRow(nextSpawnY, spawnCycle);
-                spawnCycle++;
+            while (nextSpawnY > cameraY - 100) baueNaechsteReihe();
+        }
+
+        /* Die EINE Stelle, an der Reihen entstehen. Vorher baute resetGame die
+           ersten Reihen mit einer eigenen Schleife - und bekam die Zusatzreihe
+           hinter einem Katapult nicht mit. Gefunden vom Test. */
+        function baueNaechsteReihe() {
+            if (zusatzReihen > 0) {
+                // Eingeschobene Reihe: eine neutrale Plattform, ohne den Zyklus
+                // weiterzudrehen. Das Antwort-Feld bleibt also, wo es hingehoert,
+                // und rueckt nur eine Reihe hoeher - genau so weit, dass der Wurf
+                // davor endet.
+                zusatzReihen--;
+                const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
+                platforms.push({ x: px, y: nextSpawnY, w: NEUTRAL_W, type: 'neutral' });
+                nextSpawnY -= ROW_GAP_MIN + Math.random() * (ROW_GAP_MAX - ROW_GAP_MIN);
+                return;
             }
+            nextSpawnY = spawnRow(nextSpawnY, spawnCycle);
+            spawnCycle++;
         }
 
         /* ============ PHYSIK & KOLLISION ============ */
