@@ -299,16 +299,20 @@ const HINTERGRUND = 'assets/silentium/villa-rustica.jpg';
    gedachten Linie und waren gleich gross - die Szene sah aus wie ein
    Schattenspiel.
 
-   Die zwei Randwerte sind am Bild abgelesen: Die Gelaendekante laeuft von
-   0,57 links auf 0,62 rechts, also ist 0,63 die hinterste Stelle, an der
-   noch jemand im Gras steht. Unten bleibt ein Rand frei, damit niemand halb
-   aus dem Bild ragt.
+   Die zwei Randwerte sind am Bild GEMESSEN, nicht geschaetzt: Ein kleines
+   Skript sucht spaltenweise die erste Zeile, in der die Farbe von huegelblau
+   auf wiesengruen umschlaegt. Beim zweiten Hintergrund (mit Weg und
+   gestaffelten Grasbuescheln) liegt diese Kante bei 0,48 bis 0,51 - deutlich
+   hoeher als beim ersten, die Wiese ist also groesser geworden. 0,52 ist
+   damit die hinterste Stelle, an der ueberall noch Gras ist.
+   Unten bleibt ein Rand frei, damit niemand halb aus dem Bild ragt und die
+   grossen Grasbueschel im Vordergrund nicht ueberdeckt werden.
 
    Die Groessen dazwischen sind NICHT linear, sondern etwas gestaucht
    (Exponent 1,4). Perspektivisch waere der Zusammenhang 1/Abstand; linear
    wirkt die hintere Haelfte zu gross und die Tiefe flach. */
-const WIESE_HINTEN = 0.63, WIESE_VORN = 0.96;
-const TIEFE_HINTEN = 0.45, TIEFE_VORN = 1.30;
+const WIESE_HINTEN = 0.52, WIESE_VORN = 0.94;
+const TIEFE_HINTEN = 0.38, TIEFE_VORN = 1.30;
 
 function tiefenFaktor(y) {
     const t = (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN);
@@ -554,9 +558,11 @@ function eintreten(gast) {
     /* Anteile des Hintergrundbildes, ueber die ganze Wiese verteilt - vorn
        wie hinten. Wie gross jemand erscheint, sagt dann tiefenFaktor(). */
     const y = WIESE_HINTEN + Math.random() * (WIESE_VORN - WIESE_HINTEN);
-    /* Nach hinten wird die sichtbare Wiese schmaler, weil die Huegel
-       hereinragen. Wer weit hinten steht, rueckt deshalb zur Mitte. */
-    const enge = 0.10 + 0.22 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
+    /* Nach hinten wird die freie Wiese schmaler - links steht das Landgut mit
+       seinen Olivenbaeumen (bis etwa 0,33), rechts die Trockenmauer mit den
+       Zypressen (ab etwa 0,74). Ganz hinten bleibt also nur die Mitte, vorn
+       ist die volle Breite frei. */
+    const enge = 0.05 + 0.30 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
     anwesend.push({
         gast: gast,
         x: enge + Math.random() * (1 - 2 * enge),
