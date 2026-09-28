@@ -106,6 +106,25 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - **Eine Stelle für neue Reihen** (`baueNaechsteReihe()`). `resetGame()` hatte eine
     eigene Schleife und bekam die Zusatzreihe hinter einem Katapult nicht mit – die
     Katapulte des Startbildschirms warfen deshalb weiter aufs Antwort-Feld.
+  - **Die Wiederholungsrunde endet an dem, was AUSSTEHT – nicht an einer Zahl.**
+    Aus dem Unterricht gemeldet (September 2026): „Irgendwann waren keine Vokabeln mehr, nur
+    noch Springen." Die Runde endete nach `LudiReview.offen(wdh)` Antworten. Wer eine
+    Antwort-Reihe **übersprang**, erreichte diese Zahl nie: Die überflogene Reihe gilt als
+    durch (`handlePlatformLanding` streicht alles darunter), **gezählt wurde sie nicht**. War
+    die Warteschlange danach abgebaut, wuchs nur noch neutraler Boden nach – ein Lauf ohne
+    Ende. Der Weg dorthin war der Katapult, der ja genau über ein Antwort-Feld hinwegträgt.
+    Zwei Dinge dagegen, beide nötig:
+    - **In der Wiederholung gibt es keine Gegenstände.** Aus demselben Grund wie die ruhenden
+      Herzen: Das Spiel ist entschieden, wiederholt wird nur noch. Der Katapult überspränge
+      genau die Frage, die man nochmal sehen soll, und das Scutum schützt vor einem
+      Herzverlust, den es dort gar nicht gibt.
+    - **`wiederholungFertig()`** statt eines Zählers: fertig ist, wenn kein Wort mehr in der
+      Warteschlange steht UND keine offene Antwort-Reihe mehr auf dem Schirm ist. Geprüft wird
+      auch direkt nach dem Streichen der passierten Reihen – sonst bliebe ein Aufsetzen auf
+      einer NEUTRALEN Plattform unbemerkt, und genau dort endet der Katapultwurf.
+    **Die Lehre:** Zwei Zahlen, die zusammenpassen müssen, passen irgendwann nicht mehr
+    zusammen. `reviewAnswered` ist deshalb ersatzlos weg – was aussteht, steht in den
+    Plattformen selbst. `test-issa.js` prüft beides mit Gegenprobe.
   - **Die erreichte Höhe ist eine zweite Bestleistung** (September 2026, von Schüler:innen
     gewünscht). Sie steht im Hauptmenü auf der Karte („🏆 1420 m hoch · Vokabeln 38/45") und
     trägt die Trophäe *Himmelsstürmerin* (200 / 500 / 1000 / 2000 m).

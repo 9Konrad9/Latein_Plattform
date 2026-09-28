@@ -333,12 +333,15 @@
              Der Sturz nach unten faengt Issa weiterhin auf, nur ohne Abzug.
            - Der Lauf endet, wenn die Liste durch ist, nicht wenn Issa faellt. */
         const wdh = LudiReview.neu();   // Buchfuehrung in review.js
-        /* Issa hat ZWEI Zeiger, deshalb reichen die des Moduls hier nicht:
-           Die Plattformen fuer die naechsten Woerter wachsen schon nach, waehrend
-           Issa noch bei den unteren steht. reviewSpawnIdx sagt, wie weit der Bau
-           ist, reviewAnswered, wie weit das Spiel ist. */
+        /* Issa braucht einen eigenen Zeiger, weil die Plattformen fuer die
+           naechsten Woerter schon nachwachsen, waehrend sie noch bei den unteren
+           steht: reviewSpawnIdx sagt, wie weit der BAU ist.
+
+           Einen zweiten Zaehler fuer die Antworten gab es auch einmal. Er ist
+           weg, und das war der Fehler: Zwei Zahlen, die zusammenpassen muessen,
+           passen irgendwann nicht mehr zusammen. Was aussteht, steht jetzt in
+           den Plattformen selbst - siehe wiederholungFertig(). */
         let reviewSpawnIdx = 0;
-        let reviewAnswered = 0;
 
         /* Jede Antwort-Reihe bekommt eine Nummer. Daran erkennt die Anzeige, welche
            Reihe schon beantwortet ist - sie soll das Wort der nächsten OFFENEN
@@ -417,13 +420,21 @@
                 const px = 20 + Math.random() * (CW - NEUTRAL_W - 40);
                 const plattform = { x: px, y: y, w: NEUTRAL_W, type: 'neutral' };
                 platforms.push(plattform);
-                // cycle % 3 === 2 ist das Antwort-Feld. Die Reihe mit Rest 0 liegt
-                // also zwei darunter - genau die Wurfweite des Katapults.
-                // cycle % 3 === 2 ist das Antwort-Feld. Von der Reihe mit Rest 0
-                // aus traegt der Wurf ueber drei Reihen - also ueber das
-                // Antwort-Feld hinweg auf die naechste neutrale Reihe.
-                if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) setzeItem('katapult', plattform);
-                else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) setzeItem('scutum', plattform);
+                /* cycle % 3 === 2 ist das Antwort-Feld. Von der Reihe mit Rest 0
+                   aus traegt der Wurf ueber drei Reihen - also ueber das
+                   Antwort-Feld hinweg auf die naechste neutrale Reihe.
+
+                   In der WIEDERHOLUNG gibt es beide Gegenstaende nicht, aus
+                   demselben Grund wie die ruhenden Herzen: Das Spiel ist
+                   entschieden, wiederholt wird nur noch. Der Katapult ueber-
+                   springt eine Frage - genau die, die man nochmal sehen sollte.
+                   Und das Scutum schuetzt vor Herzverlust, den es dort ohnehin
+                   nicht gibt. Aus dem Unterricht gemeldet: Mit dem Katapult
+                   blieb die Runde haengen (siehe wiederholungFertig()). */
+                if (!LudiReview.laeuft(wdh)) {
+                    if (cycle % 3 === 0 && Math.random() < CHANCE_KATAPULT) setzeItem('katapult', plattform);
+                    else if (cycle % 3 === 1 && Math.random() < CHANCE_SCHILD) setzeItem('scutum', plattform);
+                }
             }
             return y - gap;
         }
@@ -607,6 +618,10 @@
                 if (q.type === 'answer' && q.y > p.y + 10) beantworteteReihen.add(q.reiheId);
             });
 
+            // Hier, nicht erst beim naechsten Antworten: Wenn dieses Aufsetzen
+            // die LETZTE offene Reihe gestrichen hat, kommt kein Antworten mehr.
+            if (LudiReview.laeuft(wdh) && wiederholungFertig()) { endReview(); return; }
+
             if (p.type === 'neutral') { issa.vy = BOUNCE_VELOCITY; return; }
             if (invulnFrames > 0) { issa.vy = BOUNCE_VELOCITY; return; }
             /* Eine Reihe wird genau einmal beantwortet. Ohne diese Sperre zaehlte
@@ -654,8 +669,7 @@
             }
 
             if (LudiReview.laeuft(wdh)) {
-                reviewAnswered++;
-                if (reviewAnswered >= LudiReview.offen(wdh)) endReview();
+                if (wiederholungFertig()) endReview();
             }
         }
 
@@ -680,6 +694,26 @@
         function merkeTrophaeen(was) {
             if (!was) return;
             (Array.isArray(was) ? was : [was]).forEach(u => { if (u) neueTrophaeen.push(u); });
+        }
+
+        /* Wann ist die Wiederholung vorbei?
+
+           Nicht mehr nach einer festen Zahl von Antworten, sondern dann, wenn
+           nichts mehr aussteht: kein Wort mehr in der Warteschlange UND keine
+           offene Antwort-Reihe mehr auf dem Schirm.
+
+           Vorher wurde bis LudiReview.offen(wdh) gezaehlt. Wer eine Antwort-
+           Reihe UEBERSPRANG, erreichte die Zahl nie: Die ueberflogene Reihe
+           gilt als durch (handlePlatformLanding streicht alles darunter), aber
+           gezaehlt wurde sie nicht. War die Warteschlange dann abgebaut, wuchs
+           nur noch neutraler Boden nach - Springen ohne Vokabeln, ohne Ende.
+           Genau so gemeldet: "irgendwann waren keine Vokabeln mehr, nur noch
+           Springen". Der Katapult war der Weg dorthin; er ist jetzt aus der
+           Wiederholung heraus. Diese Bedingung ist das Netz darunter - sie
+           haelt, egal WIE eine Reihe verlorengeht. */
+        function wiederholungFertig() {
+            if (reviewSpawnIdx < LudiReview.liste(wdh).length) return false;
+            return !platforms.some(q => q.type === 'answer' && !beantworteteReihen.has(q.reiheId));
         }
 
         function herzVerlieren() {
@@ -960,7 +994,6 @@
         function startReview() {
             LudiReview.start(wdh);
             reviewSpawnIdx = 0;
-            reviewAnswered = 0;
 
             document.getElementById('end-overlay').style.display = 'none';
             document.getElementById('hud').style.display = 'flex';
