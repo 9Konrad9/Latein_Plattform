@@ -48,16 +48,57 @@ const LudiProgress = (() => {
         const prev = data.games[gameId];
         const now = new Date().toISOString();
 
-        data.games[gameId] = {
+        const eintrag = {
             bestScore: prev ? Math.max(prev.bestScore, score) : score,
             maxScore: maxScore,
             lastScore: score,
             lastPlayed: now,
             timesPlayed: (prev ? prev.timesPlayed : 0) + 1
         };
+        /* Der Eintrag wird hier NEU gebaut - alles, was sonst noch daran
+           haengt, muss ausdruecklich mit. Vergessen kostete die Bestleistung
+           aus recordBest(): Issas Hoehe wurde gespeichert und von der
+           naechsten Runde sofort wieder geloescht. Gefunden vom Test.
+           Wer hier ein Feld ergaenzt, ergaenzt es auch in dieser Zeile. */
+        if (prev && prev.bests) eintrag.bests = prev.bests;
+        data.games[gameId] = eintrag;
         _save(data);
     }
 
+    /**
+     * Eine ZWEITE Bestleistung neben bestScore.
+     *
+     * bestScore ist überall im Projekt die Lernquote ("richtig von gesamt"),
+     * und das Hauptmenü wie die Trophäenseite lesen sie so. Issas erreichte
+     * Höhe ist etwas anderes: eine Spielleistung, ohne Bezugsgröße. Sie käme
+     * dort also als "142 / 45" heraus - deshalb ein eigenes Fach.
+     *
+     * Gespeichert wird nur, was besser ist. Rückgabe: { neu, wert, unlock }.
+     */
+    function recordBest(gameId, name, wert) {
+        const data = _load();
+        const spiel = data.games[gameId] || (data.games[gameId] = {
+            bestScore: 0, maxScore: null, lastScore: 0, lastPlayed: null, timesPlayed: 0
+        });
+        if (!spiel.bests) spiel.bests = {};
+        const vorher = spiel.bests[name] || 0;
+        if (wert <= vorher) return { neu: false, wert: vorher, unlock: null };
+
+        spiel.bests[name] = wert;
+        const paar = BEST_ACHIEVEMENTS.find(b => b.gameId === gameId && b.best === name);
+        const def = paar && FIXED_ACHIEVEMENTS.find(f => f.id === paar.achievement);
+        const unlock = def
+            ? _checkUnlock(data, def.id, wert, def.thresholds, { icon: def.icon, title: def.title, unit: def.unit })
+            : null;
+        _save(data);
+        return { neu: true, wert: wert, unlock: unlock };
+    }
+
+    function getBest(gameId, name) {
+        const spiel = _load().games[gameId];
+        return (spiel && spiel.bests && spiel.bests[name]) || 0;
+    }
+
     function getGameProgress(gameId) {
         const data = _load();
         return data.games[gameId] || null;
@@ -263,12 +304,35 @@ const LudiProgress = (() => {
 
     const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Diamant'];
 
-    // Die 4 festen, spielübergreifenden Achievements
+    // Die festen Achievements. Die ersten vier sind spielübergreifend und
+    // hängen an recordVocabAttempt; das fünfte gehört zu EINEM Spiel und hängt
+    // an einer Bestleistung (siehe BEST_ACHIEVEMENTS darunter).
+    // Die Indizes 0 bis 3 werden weiter oben einzeln angesprochen - neue
+    // Einträge deshalb HINTEN anhängen.
     const FIXED_ACHIEVEMENTS = [
-        { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 50] },
-        { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 500, 1000, 2500] },
-        { id: 'mastery', icon: '🟢', title: 'Vokabel-Meisterschaft', unit: 'Vokabeln auf Grün', thresholds: [50, 200, 500, 900] },
-        { id: 'days', icon: '📅', title: 'Beständigkeit', unit: 'verschiedene Tage gespielt', thresholds: [3, 7, 14, 30] }
+        { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 50], bereich: 'allgemein' },
+        { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 500, 1000, 2500], bereich: 'allgemein' },
+        { id: 'mastery', icon: '🟢', title: 'Vokabel-Meisterschaft', unit: 'Vokabeln auf Grün', thresholds: [50, 200, 500, 900], bereich: 'allgemein' },
+        { id: 'days', icon: '📅', title: 'Beständigkeit', unit: 'verschiedene Tage gespielt', thresholds: [3, 7, 14, 30], bereich: 'allgemein' },
+        /* Issas Höhe ist ausnahmsweise eine SPIELleistung - und doch eine
+           ehrliche Lernmarke: Höher kommt nur, wer trifft. Drei Herzen enden
+           den Lauf, und eine Antwortreihe liegt je drei Plattformreihen
+           auseinander, also rund 40 Meter. 200 m sind damit etwa fünf Wörter
+           am Stück, 2000 m etwa fünfzig. */
+        /* `bereich` sagt der Trophaeenseite, unter welche Ueberschrift die
+           Karte gehoert. Vorher stand die Zuordnung dort als feste Liste von
+           vier Kennungen - und alles, was NICHT darin stand, landete unter
+           "Formen & Wortarten". Die Höhe erschien dadurch zwischen den
+           Wortarten. Wer hier eine Trophäe ergänzt, vergisst die Liste dort
+           sonst wieder. */
+        { id: 'hoehe', icon: '☁️', title: 'Himmelsstürmerin', unit: 'Meter mit Issa erklettert', thresholds: [200, 500, 1000, 2000], bereich: 'bestleistung' }
+    ];
+
+    /* Bestleistungen, die zusätzlich eine Trophäe tragen. Die Tabelle sagt,
+       WO der Wert steht - damit recordBest() und getAchievementOverview()
+       dieselbe Quelle lesen und nicht auseinanderlaufen. */
+    const BEST_ACHIEVEMENTS = [
+        { achievement: 'hoehe', gameId: 'issajump', best: 'hoehe' }
     ];
 
     // Schwellwerte für alle Kategorie-spezifischen Achievements (Wortarten in
@@ -391,6 +455,11 @@ const LudiProgress = (() => {
             mastery: greenCount,
             days: (a.daysPlayed || []).length
         };
+        // Dieselbe Quelle wie recordBest() - siehe BEST_ACHIEVEMENTS.
+        BEST_ACHIEVEMENTS.forEach(b => {
+            const spiel = data.games[b.gameId];
+            fixedValues[b.achievement] = (spiel && spiel.bests && spiel.bests[b.best]) || 0;
+        });
 
         const result = FIXED_ACHIEVEMENTS.map(def => {
             const value = fixedValues[def.id];
@@ -407,7 +476,8 @@ const LudiProgress = (() => {
             result.push({
                 id: 'cat_' + cat, icon: meta.icon, title: meta.label,
                 unit: `${meta.label} richtig beantwortet`,
-                thresholds: CATEGORY_THRESHOLDS, value, tier, nextThreshold
+                thresholds: CATEGORY_THRESHOLDS, value, tier, nextThreshold,
+                bereich: 'kategorie'
             });
         });
 
@@ -420,6 +490,8 @@ const LudiProgress = (() => {
 
     return {
         saveGameResult,
+        recordBest,
+        getBest,
         getGameProgress,
         getAllProgress,
         recordVocabAttempt,

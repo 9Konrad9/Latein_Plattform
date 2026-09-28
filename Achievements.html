@@ -128,6 +128,9 @@
     <div class="section-title">🎖️ Allgemeine Erfolge</div>
     <div class="achievement-grid" id="fixed-grid"></div>
 
+    <div class="section-title" id="titel-bestleistung">🏆 Bestleistungen</div>
+    <div class="achievement-grid" id="best-grid"></div>
+
     <div class="section-title">📖 Formen &amp; Wortarten</div>
     <div class="achievement-grid" id="category-grid"></div>
     <div class="empty-note" id="empty-note" style="display:none;">
@@ -172,11 +175,21 @@
             const totalPossible = overview.length * 4;
             document.getElementById('total-badge').innerText = `${totalUnlocked} von ${totalPossible} Stufen freigeschaltet`;
 
-            const fixedIds = ['streak', 'total', 'mastery', 'days'];
-            const fixed = overview.filter(a => fixedIds.includes(a.id));
-            const categories = overview.filter(a => !fixedIds.includes(a.id));
+            /* Jede Trophäe sagt selbst, wohin sie gehört (`bereich` in
+               progress.js). Vorher stand hier eine feste Liste von vier
+               Kennungen, und alles andere galt als Wortart - eine neue
+               Trophäe landete damit stillschweigend im falschen Abschnitt. */
+            const ausBereich = n => overview.filter(a => (a.bereich || 'allgemein') === n);
+            const fixed = ausBereich('allgemein');
+            const bestleistungen = ausBereich('bestleistung');
+            const categories = ausBereich('kategorie');
 
             document.getElementById('fixed-grid').innerHTML = fixed.map(renderCard).join('');
+            document.getElementById('best-grid').innerHTML = bestleistungen.map(renderCard).join('');
+            // Die Karte steht auch ungeholt da - wie in den anderen Abschnitten:
+            // Ein Ziel, das man sieht, ist ein Ziel. Weg bleibt die Überschrift nur,
+            // wenn es GAR keine Bestleistungs-Trophäe mehr gibt.
+            document.getElementById('titel-bestleistung').style.display = bestleistungen.length ? '' : 'none';
 
             if (categories.length === 0) {
                 document.getElementById('empty-note').style.display = 'block';

@@ -500,6 +500,25 @@
                 return;
             }
 
+            /* Sonderfall: Issa springt hat NEBEN der Vokabelquote eine zweite
+               Bestleistung - die erreichte Höhe. Sie steht vorn, weil sie die
+               ist, über die gesprochen wird; die Quote bleibt daneben stehen,
+               damit die Karte weiter zeigt, dass hier Vokabeln geübt werden. */
+            if (gameId === 'issajump') {
+                const hoehe = LudiProgress.getBest('issajump', 'hoehe');
+                const p = LudiProgress.getGameProgress('issajump');
+                if (hoehe || p) {
+                    badge.classList.add('has-score');
+                    const teile = [];
+                    if (hoehe) teile.push(`${hoehe} m hoch`);
+                    if (p) teile.push(`Vokabeln ${p.bestScore}/${p.maxScore}`);
+                    badge.innerText = `🏆 ${teile.join(' · ')}`;
+                } else {
+                    badge.innerText = 'Noch nicht gespielt';
+                }
+                return;
+            }
+
             const progress = LudiProgress.getGameProgress(gameId);
 
             if (progress) {

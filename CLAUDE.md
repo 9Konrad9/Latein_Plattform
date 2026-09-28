@@ -106,6 +106,31 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - **Eine Stelle für neue Reihen** (`baueNaechsteReihe()`). `resetGame()` hatte eine
     eigene Schleife und bekam die Zusatzreihe hinter einem Katapult nicht mit – die
     Katapulte des Startbildschirms warfen deshalb weiter aufs Antwort-Feld.
+  - **Die erreichte Höhe ist eine zweite Bestleistung** (September 2026, von Schüler:innen
+    gewünscht). Sie steht im Hauptmenü auf der Karte („🏆 1420 m hoch · Vokabeln 38/45") und
+    trägt die Trophäe *Himmelsstürmerin* (200 / 500 / 1000 / 2000 m).
+    - **Warum ein eigenes Fach und nicht `bestScore`:** `bestScore` ist im ganzen Projekt die
+      Lernquote, und Hauptmenü wie Trophäenseite lesen sie als „richtig von gesamt". Eine Höhe
+      hätte dort keine Bezugsgröße und käme als „142 / 45" heraus. Dafür gibt es
+      `LudiProgress.recordBest(gameId, name, wert)` / `getBest(...)` mit dem Fach `bests`.
+    - **Sie ist trotzdem eine ehrliche Lernmarke**, anders als Silentiums Stille: Höher kommt
+      nur, wer trifft – drei Herzen enden den Lauf. Eine Antwortreihe liegt je drei
+      Plattformreihen auseinander, also rund 40 Meter; 200 m sind etwa fünf Wörter am Stück,
+      2000 m etwa fünfzig.
+    - **Nicht aus der Wiederholungsrunde.** Dort kosten Fehler kein Herz, Issa könnte also
+      beliebig steigen. Heute ist der Zweig ohnehin unerreichbar (`endGame()` läuft nur über
+      die Herzen, und `startReview()` setzt den Zähler auf null) – die Sperre steht da, damit
+      das so bleibt.
+    - **Gefundener Fehler, der leicht wiederkommt:** `saveGameResult()` baut den Spieleintrag
+      NEU. Die frisch gespeicherte Höhe war damit nach der nächsten Runde wieder weg. Wer dort
+      ein Feld ergänzt, muss es in der Übernahmezeile mitnennen. Gefunden vom Test, nicht beim
+      Lesen.
+  - **Die Wortart-Zähler laufen jetzt mit** (`Substantiv`/`Verb`/`Adjektiv`) – der offene Punkt
+    von weiter unten ist damit erledigt. Wie in den fünf anderen Spielen laufen sie **auch in
+    der Wiederholung** weiter, während der Vokabelkasten dort ruht.
+  - **Trophäen werden gesammelt und erst am Rundenende gezeigt**, nicht als Einblendung während
+    des Laufs. In einem Spiel, das von Reaktion lebt, kostet ein Popup mitten im Sprung genau
+    das Herz, das es feiern wollte. IssaJump bindet deshalb `achievementToast.js` gar nicht ein.
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.
@@ -668,9 +693,14 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   Dafür fehlt in `verbEngine.js` noch eine PPP-Deklination (das us/a/um-Muster gibt es bereits
   in `getGerundivumDeclension` und ließe sich nachnutzen).
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
-  eine sinnvolle Kategorie hat. Ohne bleiben nur Quiz.html (Kulturwissen, kein Wortschatz) und
-  IssaJump.html (reine Bedeutungsabfrage – könnte die Wortart-Zähler mitbedienen, tut es aber
-  noch nicht).
+  eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
+  (Kulturwissen, kein Wortschatz).
+
+- **Jede Trophäe sagt selbst, wohin sie gehört** (`bereich`: `allgemein` / `bestleistung` /
+  `kategorie`). `Achievements.html` hatte die Zuordnung als feste Liste von vier Kennungen, und
+  alles, was nicht darin stand, galt als Wortart – die neue Höhen-Trophäe erschien dadurch
+  zwischen den Substantiven und Verben. Zwei Listen mit denselben Kennungen driften
+  auseinander; jetzt steht die Zuordnung an der Definition.
 
 ## Arbeitsweise, die sich bewährt hat
 

@@ -313,6 +313,12 @@
 
         /* ============ SPIELZUSTAND ============ */
         let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
+
+        /* Freigeschaltete Trophaeen werden GESAMMELT und erst am Rundenende
+           gezeigt, nicht als Einblendung waehrend des Laufs. In einem Spiel,
+           das von Reaktion lebt, kostet ein Popup mitten im Sprung genau das
+           Herz, das es feiern wollte. */
+        let neueTrophaeen = [];
         let items = [];             // Schilde und Katapulte, die auf Plattformen liegen
         let schildFrames = 0;       // wie lange das Scutum noch haelt
 
@@ -349,6 +355,7 @@
             schildFrames = 0;
             score = 0;
             lives = START_LIVES;
+            neueTrophaeen = [];
             invulnFrames = 0;
             keys = {};
             touchDir = 0;
@@ -612,12 +619,13 @@
             // damit man sieht, worauf man gesprungen ist.
             beantworteteReihen.add(p.reiheId);
             hudHalten = HUD_HALTEN_FRAMES;
+            wortartZaehlen(p.targetEntry, p.isCorrect);
             if (p.isCorrect) {
                 issa.vy = BOUNCE_VELOCITY;
                 correctCount++;
                 if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
                 // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-                if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(p.targetLatin, true);
+                if (!LudiReview.laeuft(wdh)) merkeTrophaeen(LudiProgress.recordVocabAttempt(p.targetLatin, true));
                 flashFeedback(true);
             } else {
                 if (!LudiReview.laeuft(wdh)) {
@@ -657,6 +665,23 @@
            durchgespielt werden) und ein getragenes Scutum. Der Schild schuetzt
            aber nur das Spiel: Was falsch war, ist oben schon als falsch in den
            Vokabelkasten gegangen. Sonst liesse sich Fortschritt einsammeln. */
+        const WORTART = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' };
+
+        /* Der Zaehler laeuft in der Wiederholung WEITER - Absicht, kein
+           Vergessen: Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die
+           Auswahl. Wer seine Fehler nochmal durchgeht, hat den Fleiss
+           aufgebracht. (Dieselbe Entscheidung wie in den fuenf anderen
+           Spielen mit Kategorie-Zaehlern.) */
+        function wortartZaehlen(eintrag, richtig) {
+            const kategorie = eintrag && WORTART[eintrag.type];
+            if (kategorie) merkeTrophaeen(LudiProgress.recordCategoryAttempt(kategorie, richtig));
+        }
+
+        function merkeTrophaeen(was) {
+            if (!was) return;
+            (Array.isArray(was) ? was : [was]).forEach(u => { if (u) neueTrophaeen.push(u); });
+        }
+
         function herzVerlieren() {
             if (LudiReview.laeuft(wdh)) return true;
             if (schildFrames > 0) return true;
@@ -880,6 +905,18 @@
             gameLoop();
         }
 
+        /* Was in diesem Lauf freigeschaltet wurde, am Stueck. Doppelte
+           Eintraege sind moeglich, wenn dieselbe Trophaee in einem Lauf zwei
+           Stufen steigt - dann ist die hoehere gemeint, und die steht hinten. */
+        function trophaeenText() {
+            if (!neueTrophaeen.length) return '';
+            const nachId = {};
+            neueTrophaeen.forEach(u => { nachId[u.id] = u; });
+            const zeilen = Object.values(nachId).map(u =>
+                `${u.icon} <strong>${u.title}</strong> in ${u.tierName}`);
+            return `<br><br><span style="color:var(--gold);">Neu freigeschaltet:</span><br>` + zeilen.join('<br>');
+        }
+
         function endGame() {
             running = false;
             if (animFrameId) cancelAnimationFrame(animFrameId);
@@ -888,8 +925,26 @@
 
             LudiProgress.saveGameResult('issajump', correctCount, correctCount + wrongCount);
 
+            /* Die Hoehe wird nur aus einem ECHTEN Lauf uebernommen. In der
+               Wiederholung kosten Fehler kein Herz (herzVerlieren gibt dort
+               sofort zurueck) - Issa koennte also beliebig weit steigen, und
+               der Rekord waere nichts mehr wert. Heute ist der Zweig ohnehin
+               unerreichbar, weil endGame() nur ueber die Herzen laeuft; die
+               Sperre steht da, damit das so bleibt. */
+            let rekord = null;
+            if (!LudiReview.laeuft(wdh)) {
+                rekord = LudiProgress.recordBest('issajump', 'hoehe', score);
+                merkeTrophaeen(rekord.unlock);
+            }
+
+            const beste = LudiProgress.getBest('issajump', 'hoehe');
             document.getElementById('end-stats').innerHTML =
-                `Erreichte Höhe: <strong>${score} m</strong><br>Vokabeln richtig: <strong>${correctCount} von ${correctCount + wrongCount}</strong>`;
+                `Erreichte Höhe: <strong>${score} m</strong>` +
+                (rekord && rekord.neu
+                    ? ` <span style="color:var(--richtig);">— so hoch war Issa noch nie!</span>`
+                    : beste ? ` <span style="color:var(--ink-soft);">(beste: ${beste} m)</span>` : '') +
+                `<br>Vokabeln richtig: <strong>${correctCount} von ${correctCount + wrongCount}</strong>` +
+                trophaeenText();
 
             const reviewBtn = document.getElementById('btn-review');
             reviewBtn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
