@@ -262,7 +262,7 @@ const GAESTE = [
       kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
     { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220, groesse: 0.75,
       kultur: 'Die Taube gehört der Venus; ein Taubenpaar zieht ihren Wagen.' },
-    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, groesse: 0.5,
+    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, groesse: 0.5, nah: true,
       kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
     { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340, groesse: 1.25,
       kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
@@ -320,12 +320,42 @@ function tiefenFaktor(y) {
     return TIEFE_HINTEN + (TIEFE_VORN - TIEFE_HINTEN) * g;
 }
 
+/* Welcher Teil der Wiese ist ueberhaupt zu sehen?
+
+   Das Bild wird formatfuellend gezeichnet, auf einem breiten Schirm also oben
+   und unten beschnitten. Gemessen bei 1280x663: Rahmen 1280x859, je 98 Punkte
+   fallen weg, sichtbar bleibt 0,114 bis 0,886 - und damit liegen 13 % der
+   Wiese UNTER dem Bildrand. Wer dort eintrat, war schlicht nicht da: kein
+   Fehler, den man sieht, sondern einer, den man nicht sieht.
+
+   Die Tiefe rechnet weiter mit WIESE_HINTEN/WIESE_VORN - die gehoeren zum
+   Gelaende und nicht zum Schirm. Beschnitten wird nur, wo jemand HINTRITT. */
+function sichtbareWiese() {
+    let hinten = WIESE_HINTEN, vorn = WIESE_VORN;
+    if (bildRahmen && bildRahmen.h > 0) {
+        const rand = 0.02;   // niemand klebt genau an der Kante
+        hinten = Math.max(hinten, (0 - bildRahmen.y) / bildRahmen.h + rand);
+        vorn = Math.min(vorn, (canvas.height - bildRahmen.y) / bildRahmen.h - rand);
+        // Notausgang fuer sehr schmale Schirme: lieber die ganze Wiese als gar keine.
+        if (vorn - hinten < 0.08) { hinten = WIESE_HINTEN; vorn = WIESE_VORN; }
+    }
+    return { hinten: hinten, vorn: vorn };
+}
+
 const BILDER = {
     passer:  'assets/silentium/passer.png',
     felis:   'assets/silentium/felis.png',
     gallina: 'assets/silentium/gallina.png',
+    /* Issa ist dieselbe Huendin wie im Sprungspiel - dasselbe Bild, nur
+       kleiner gerechnet. Zwei Zeichnungen derselben catella waeren ein
+       Bruch, den die Klasse sofort bemerkt. */
+    issa:    'assets/silentium/issa.png',
     columba: 'assets/silentium/columba.png',
+    lacerta: 'assets/silentium/lacerta.png',
+    asinus:  'assets/silentium/asinus.png',
     pavo:    'assets/silentium/pavo.png',
+    anseres: 'assets/silentium/anseres.png',
+    aquila:  'assets/silentium/aquila.png',
     lupa:    'assets/silentium/lupa.png'
 };
 
@@ -556,8 +586,17 @@ function pruefeAnkunft() {
 
 function eintreten(gast) {
     /* Anteile des Hintergrundbildes, ueber die ganze Wiese verteilt - vorn
-       wie hinten. Wie gross jemand erscheint, sagt dann tiefenFaktor(). */
-    const y = WIESE_HINTEN + Math.random() * (WIESE_VORN - WIESE_HINTEN);
+       wie hinten. Wie gross jemand erscheint, sagt dann tiefenFaktor().
+
+       Eine Ausnahme: Wer flach am Boden liegt, kommt nur in die vordere
+       Haelfte. Die Eidechse misst 160x47 Bildpunkte; ueber die Hoehe bemessen
+       und in der Breite gedeckelt wird daraus in der Bildmitte ein Streifen
+       von 69x20 Punkten, ganz hinten einer von 28x8 - gemessen. Ein Gast, den
+       niemand findet, ist kein Fund. Zur sonnenwarmen Mauer im Vordergrund
+       passt sie ohnehin besser als in die Ferne. */
+    const w = sichtbareWiese();
+    const hinten = gast.nah ? (w.hinten + w.vorn) / 2 : w.hinten;
+    const y = hinten + Math.random() * (w.vorn - hinten);
     /* Nach hinten wird die freie Wiese schmaler - links steht das Landgut mit
        seinen Olivenbaeumen (bis etwa 0,33), rechts die Trockenmauer mit den
        Zypressen (ab etwa 0,74). Ganz hinten bleibt also nur die Mitte, vorn

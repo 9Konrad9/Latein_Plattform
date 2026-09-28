@@ -197,12 +197,34 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     oben ziehen und die Schwelle für den ganzen Lauf verderben.
     Der Lautlos-Schalter stört hier nicht – er betrifft nur die Ausgabe. Deshalb ist das
     Schlussbild auch **sichtbar** und nicht hörbar (siehe Bomba).
-  - **Die Bilder fehlen noch.** Ein Gast ohne Bild erscheint als Pergamentplättchen mit seinem
-    lateinischen Namen. Der Bildweg ist geprüft: Canva liefert 200×200, `freistellen.js` macht
-    daraus ein sauberes PNG mit 9 KB (`assets/silentium/passer.png` liegt als Beleg dabei).
-    **Nur Hintergründe gehen so nicht** – das Original ist signiert, die Vorschau mit 200 px
-    zu klein. Erst den Klassentest, dann die Bilder: Wenn die Mechanik sich noch ändert, wären
-    dreißig fertige Tiere umsonst gemalt.
+  - **Elf der vierzehn Gäste haben ein Bild.** Ohne sind noch die drei, die eine Entscheidung
+    brauchen: `cornelii` (muss zur Familie im Lehrbuch passen), `mercurius`, `iuppiter`. Wer
+    keines hat, erscheint als Pergamentplättchen mit seinem lateinischen Namen – der Ersatz ist
+    vorgesehen, kein Notbehelf. Der Weg: Canva liefert 200×200 auf Magenta, `freistellen.js`
+    macht daraus ein palettiertes PNG von 4–12 KB. **Nur Hintergründe gehen so nicht** – das
+    Original ist signiert, die Vorschau mit 200 px zu klein.
+    **Issa ist dasselbe Bild wie im Sprungspiel**, nur kleiner gerechnet (`issa_idle.png`,
+    beschnitten und auf 160 px gebracht). Zwei Zeichnungen derselben catella wären ein Bruch,
+    den die Klasse sofort bemerkt.
+    `test-silentium.js` prüft jede Bildkennung gegen die Gästeliste und jede Datei auf
+    Durchsichtigkeit. Grund: Ein Tippfehler in der Bildliste fällt sonst NICHT auf – der Gast
+    erscheint dann einfach als Plättchen, und das ist ja der vorgesehene Ersatz. Gemerkt würde
+    es erst in der Klasse.
+  - **Zwei Regeln dafür, wo jemand hintritt.** Beide gemessen, und beide fallen nicht auf,
+    wenn sie fehlen – es erscheint ja nichts Falsches, sondern nichts.
+    - **Niemand tritt unter den Bildrand.** Der Hintergrund wird formatfüllend gezeichnet und
+      auf breiten Schirmen oben und unten beschnitten. Gemessen bei 1280×663: Rahmen 1280×859,
+      je 98 Punkte fallen weg, **13 % der Wiese liegen unter der Fläche**. Wer dort eintrat,
+      war schlicht nicht da. `sichtbareWiese()` schneidet die Spanne am Ausschnitt zu; die
+      TIEFE rechnet weiter mit `WIESE_HINTEN`/`WIESE_VORN`, denn die gehören zum Gelände und
+      nicht zum Schirm. Die beiden iPad-Formate waren nie betroffen – es traf den Beamer.
+    - **Wer flach am Boden liegt, bleibt vorn** (`nah: true`, bisher nur die Eidechse). Sie
+      misst 160×47 Bildpunkte; über die Höhe bemessen und in der Breite gedeckelt wird daraus
+      in der Bildmitte ein Streifen von 69×20 Punkten, ganz hinten einer von 28×8. Ein Gast,
+      den niemand findet, ist kein Fund. Zur sonnenwarmen Mauer im Vordergrund passt sie
+      ohnehin besser als in die Ferne.
+    Die Gegenprobe gehört bei beiden dazu: ohne sie wäre der Test auch grün, wenn gar niemand
+    mehr in den Hintergrund käme und die Tiefe eingeebnet wäre.
 
 Zwei davon sind **Gruppenspiele** und folgen deshalb anderen Regeln als der Rest: Sie gehören
 keiner Person, tragen im Hauptmenü **kein `progress-badge`**, und ihre Vollbild-Layouts schalten
