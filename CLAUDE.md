@@ -220,6 +220,29 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     oben ziehen und die Schwelle für den ganzen Lauf verderben.
     Der Lautlos-Schalter stört hier nicht – er betrifft nur die Ausgabe. Deshalb ist das
     Schlussbild auch **sichtbar** und nicht hörbar (siehe Bomba).
+  - **Die Empfindlichkeit ist ein ABSTAND, kein Pegel.** Die Zahl am Regler sagt, wie viel
+    lauter als der geeichte Raum es werden darf – und weil ein dB-Abstand ein Verhältnis ist,
+    gilt sie unabhängig davon, wie empfindlich das Mikrofon des jeweiligen Geräts ist.
+    Der Bereich lief zuerst von 3 bis 20 und war damit zu streng: **20 dB über einem stillen
+    Raum IST schon Zimmerlautstärke**, am obersten Anschlag stieß also eine ruhige
+    Partnerarbeit bereits an die Grenze; und 3 dB unten liegen innerhalb dessen, worum ein
+    stiller Raum von selbst schwankt. Jetzt **5 bis 30, Voreinstellung 14** (vorher 9).
+    Orientierungswerte, in dB über einem stillen Klassenraum und aus der Entfernung des
+    Lehrergeräts gemessen, nicht aus einem Meter:
+
+    | Was im Raum passiert | dB über dem stillen Raum |
+    |---|---|
+    | Blättern, Stifte, Stuhlrücken | rund 8 |
+    | flüsternde Klasse | 10–15 |
+    | Zimmerlautstärke, ruhiges Gespräch | gut 20 |
+    | normale Unterhaltung | knapp 30 |
+
+    Je 6 dB ist doppelter Schalldruck. **Die Namen sind wichtiger als die Zahlen**
+    (`SCHWELLEN_LAGEN`: sehr streng / streng / mittel / großzügig / sehr großzügig, jeweils
+    mit einem Satz dazu): Eine Lehrkraft denkt in „Flüsterphase", nicht in Dezibel.
+    `test-silentium.js` prüft, dass **beide** Regler – Startbild und Pause – dieselben Grenzen
+    haben (zwei Regler, die auseinanderlaufen, fallen sonst nie auf), dass jede Stellung einen
+    Namen trägt und dass der oberste Anschlag über der Zimmerlautstärke liegt.
   - **Elf der vierzehn Gäste haben ein Bild.** Ohne sind noch die drei, die eine Entscheidung
     brauchen: `cornelii` (muss zur Familie im Lehrbuch passen), `mercurius`, `iuppiter`. Wer
     keines hat, erscheint als Pergamentplättchen mit seinem lateinischen Namen – der Ersatz ist

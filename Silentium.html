@@ -171,12 +171,18 @@
         </div>
         <div class="zeile">
             <label for="schwelle-regler">Empfindlichkeit</label>
-            <input type="range" id="schwelle-regler" min="3" max="20" step="1" value="9">
-            <span class="wert" id="schwelle-wert">9 dB</span>
+            <input type="range" id="schwelle-regler" min="5" max="30" step="1" value="14">
+            <span class="wert" id="schwelle-wert">14 dB</span>
+        </div>
+        <div class="zeile" style="margin-top:-4px;">
+            <span class="besucherzahl" id="schwelle-lage">…</span>
         </div>
         <p style="max-width:520px; font-size:0.85rem; color:var(--ink-soft); line-height:1.45;">
-            Kleiner Wert heißt streng: Schon Flüstern verscheucht alles. Beides lässt sich während
-            der Stunde über <em>Pause</em> nachstellen.
+            Die Zahl sagt, <strong>wie viel lauter als der geeichte Raum</strong> es werden darf —
+            nicht, wie laut es absolut sein darf. Zur Einordnung: Blättern und Stifte liegen rund
+            8 dB über einem stillen Raum, eine flüsternde Klasse etwa 10 bis 15, Zimmerlautstärke
+            gut 20, eine normale Unterhaltung knapp 30. Je 6 dB ist doppelter Schalldruck.
+            Beides lässt sich während der Stunde über <em>Pause</em> nachstellen.
         </p>
 
         <div class="rekord" id="rekord" style="display:none;"></div>
@@ -199,12 +205,15 @@
         <h2>Pause</h2>
         <div class="zeile">
             <label for="schwelle-regler-2">Empfindlichkeit</label>
-            <input type="range" id="schwelle-regler-2" min="3" max="20" step="1" value="9">
-            <span class="wert" id="schwelle-wert-2">9 dB</span>
+            <input type="range" id="schwelle-regler-2" min="5" max="30" step="1" value="14">
+            <span class="wert" id="schwelle-wert-2">14 dB</span>
+        </div>
+        <div class="zeile" style="margin-top:-4px;">
+            <span class="besucherzahl" id="schwelle-lage-2">…</span>
         </div>
         <p style="max-width:460px; font-size:0.9rem; color:var(--ink-soft); line-height:1.45;">
-            Der gemessene Grundpegel liegt bei <span id="grundpegel-anzeige">—</span>.
-            Verscheucht schon zu wenig die Tiere, dreh die Zahl höher.
+            Der gemessene Grundpegel liegt bei <span id="grundpegel-anzeige">—</span>. Die Zahl
+            oben ist der Abstand dazu: Verscheucht schon zu wenig die Tiere, dreh sie höher.
         </p>
         <button class="start-btn" id="btn-neu-eichen" style="margin-top:6px;">Neu eichen</button>
         <button class="start-btn" id="btn-weiter" style="margin-top:12px;">Weiter</button>
@@ -399,7 +408,40 @@ const BILDER = {
 /* ---------- Zustand ---------- */
 let audioCtx = null, analyser = null, datenPuffer = null, mikroStrom = null;
 let grundpegel = -55;          // dB, aus der Eichung
-let empfindlichkeit = 9;       // dB ueber dem Grundpegel
+let empfindlichkeit = 14;      // dB ueber dem Grundpegel
+
+/* Was die Zahl am Regler bedeutet.
+
+   Sie ist KEIN absoluter Pegel, sondern der Abstand zum geeichten Raum - und
+   weil der Abstand in dB gerechnet ist, gilt er unabhaengig davon, wie
+   empfindlich das Mikrofon des jeweiligen Geraets ist.
+
+   Der Bereich reichte zuerst von 3 bis 20. Das war zu streng: 20 dB ueber
+   einem stillen Raum IST schon Zimmerlautstaerke, am obersten Anschlag stiess
+   also eine ruhige Partnerarbeit bereits an die Grenze - und 3 dB unten liegen
+   innerhalb dessen, worum ein stiller Raum von selbst schwankt. Jetzt 5 bis 30.
+
+   Die Orientierungswerte (dB ueber einem stillen Klassenraum, aus der
+   Entfernung des Lehrergeraets, nicht aus einem Meter):
+     Blaettern, Stifte, Stuhlruecken   rund  8
+     fluesternde Klasse                  10-15
+     Zimmerlautstaerke, ruhiges Gespraech gut 20
+     normale Unterhaltung               knapp 30
+   Je 6 dB ist doppelter Schalldruck.
+
+   Die NAMEN sind wichtiger als die Zahlen: Eine Lehrkraft denkt in
+   "Fluesterphase", nicht in Dezibel. */
+const SCHWELLEN_LAGEN = [
+    { bis:  8, name: 'sehr streng',    satz: 'Schon Blättern und Stifte verscheuchen alles — für die Klassenarbeit.' },
+    { bis: 13, name: 'streng',         satz: 'Flüstern verscheucht alles — für stille Einzelarbeit.' },
+    { bis: 19, name: 'mittel',         satz: 'Leises Flüstern geht durch, halblaute Sätze nicht.' },
+    { bis: 25, name: 'großzügig',      satz: 'Gedämpftes Murmeln geht durch — für Partnerarbeit.' },
+    { bis: 99, name: 'sehr großzügig', satz: 'Zimmerlautstärke geht durch — für Gruppenarbeit.' }
+];
+
+function schwellenLage(dB) {
+    return SCHWELLEN_LAGEN.find(l => dB <= l.bis) || SCHWELLEN_LAGEN[SCHWELLEN_LAGEN.length - 1];
+}
 let pegelFenster = [];         // geglaetteter Verlauf
 let laeuft = false, pausiert = false;
 let stilleSeit = 0;            // Sekunden ununterbrochener Stille
@@ -929,6 +971,15 @@ function erreichbarText() {
         'Bei ' + min + ' Minuten sind ' + wie + ' von ' + GAESTE.length + ' Gästen überhaupt erreichbar.';
 }
 
+function schwelleZeigen() {
+    const l = schwellenLage(empfindlichkeit);
+    const t = l.name + ' — ' + l.satz;
+    ['schwelle-lage', 'schwelle-lage-2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = t;
+    });
+}
+
 function rekordZeigen() {
     const r = ladeRekord();
     const el = document.getElementById('rekord');
@@ -948,12 +999,14 @@ window.onload = function () {
     });
     erreichbarText();
     rekordZeigen();
+    schwelleZeigen();
 
     [['schwelle-regler', 'schwelle-wert'], ['schwelle-regler-2', 'schwelle-wert-2']].forEach(([r, w]) => {
         const el = document.getElementById(r);
         el.addEventListener('input', () => {
             empfindlichkeit = parseInt(el.value, 10);
             document.getElementById(w).innerText = el.value + ' dB';
+            schwelleZeigen();
             document.getElementById('schwelle-regler').value = el.value;
             document.getElementById('schwelle-regler-2').value = el.value;
             document.getElementById('schwelle-wert').innerText = el.value + ' dB';
