@@ -181,7 +181,30 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Lernleistung, und die Zähler messen Lernleistung. `test-silentium.js` prüft, dass im
     Quelltext weder `recordVocabAttempt` noch `recordCategoryAttempt` vorkommt.
   - Die Sammlung liegt unter `ludi_silentium_gesehen` und gehört dem **Gerät**, also der
-    Klasse davor – wie Bombas Bestleistung.
+    Klasse davor – wie Bombas Bestleistung. Daneben steht unter `ludi_silentium_rekord` die
+    **längste Stille, die dieses Gerät je gesehen hat**. Eigener Schlüssel, damit sie überlebt,
+    wenn das Buch einmal geleert wird. Sie steht auf dem Start- und dem Schlussbild, **nicht in
+    der laufenden Leiste**: Ein Ziel vor Augen motiviert, ein Ziel im Blickfeld während der
+    Arbeit lädt zum Mitzählen ein. Geschlagen wird sie nur von einer längeren Strähne, nicht
+    von einer längeren Stunde; `test-silentium.js` prüft das am Verhalten (400 setzen, 200
+    darf nicht überschreiben, 500 muss heben) samt Gegenprobe, dass nur der wirklich
+    geschlagene Rekord gefeiert wird.
+  - **Die Ankunftszeiten streuen um ein Viertel – aber nicht bei den Seltenen.** Feste
+    Sekunden machen aus der Stunde eine Stoppuhr: Wer zweimal dabei war, weiß, dass der
+    Sperling nach zwanzig Sekunden kommt, und zählt mit, statt zu arbeiten. Gemessen tauschen
+    dadurch in 91 % der Durchgänge benachbarte Gäste die Reihenfolge – die Streuung ändert
+    also wirklich etwas und wackelt nicht nur.
+    Die seltenen Gäste behalten ihre Minute auf die Sekunde: „Merkur schaut nach zehn Minuten
+    vorbei" steht so auf dem Startbildschirm, und unberechenbar genug sind sie durch den
+    Würfel. Das Buch sagt deshalb **„ab etwa 5 Min"** bei den sicheren und **„ab 10 Min, mit
+    Glück"** bei den seltenen.
+    **Gewürfelt wird EINMAL je Durchgang, beim Start** (`ankuenfteWuerfeln()`). Im Takt
+    weitergewürfelt wäre die Schwelle eines Gastes keine Schwelle mehr, sondern ein Zittern
+    um sie herum – derselbe Fehler wie beim Würfel der Seltenen.
+    Wo sonst noch mit `ankunft` gerechnet wird, muss der **Rand** her, nicht der Mittelwert:
+    Der Hinweis „Bei 10 Minuten sind N Gäste erreichbar" nimmt den spätestmöglichen
+    Zeitpunkt, sonst stimmt die Zusage in genau den Durchgängen nicht, in denen der Würfel
+    jemanden nach hinten schiebt.
   - Es steht **nicht als Karte zwischen den Spielen**, sondern als kleine Pille oben rechts
     im Hauptmenü (`#silentium-btn` in `theme.css`, das Gegenstück zum Haus-Knopf oben links).
   - **DIE REGEL, AN DER ALLES HÄNGT:** Ein seltener Gast wird **genau einmal** ausgewürfelt,

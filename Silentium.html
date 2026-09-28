@@ -43,6 +43,16 @@
         .restzeit { font-family: var(--font-display); font-size: 1.1rem; color: var(--ink-soft); }
         .besucherzahl { font-size: 0.9rem; color: var(--ink-soft); }
 
+        /* Der Klassenrekord steht auf dem Start- und dem Schlussbild, NICHT in
+           der laufenden Leiste: Ein Ziel vor Augen motiviert, ein Ziel im
+           Blickfeld waehrend der Arbeit laedt zum Mitzaehlen ein. */
+        .rekord {
+            margin-top: 10px; padding: 6px 16px;
+            background: var(--putz); border: 2px solid var(--bronze); border-radius: 20px;
+            font-family: var(--font-display); font-size: 1rem; color: var(--ink);
+        }
+        .rekord strong { color: var(--richtig); }
+
         /* Der Pegelbalken: Er zeigt, WARUM etwas passiert ist. Ohne ihn raet die
            Klasse, was zu laut war. */
         .pegel {
@@ -169,6 +179,7 @@
             der Stunde über <em>Pause</em> nachstellen.
         </p>
 
+        <div class="rekord" id="rekord" style="display:none;"></div>
         <button class="start-btn" id="btn-start">Mikrofon freigeben und beginnen</button>
         <button class="start-btn zweitrangig" id="btn-buch-start" style="margin-top:10px;">Buch ansehen</button>
         <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
@@ -241,6 +252,12 @@
    ============================================================ */
 
 const SPEICHER = 'ludi_silentium_gesehen';
+
+/* Die laengste Stille, die dieses Geraet je gesehen hat - unter eigenem
+   Schluessel, nicht im Buch. Wie Bombas Bestleistung gehoert sie der KLASSE
+   vor dem Geraet und nicht einer Person; und sie soll ueberleben, wenn das
+   Buch einmal geleert wird. */
+const REKORD = 'ludi_silentium_rekord';
 
 /* ---------- Die Gaeste ----------
    ankunft   = ab wie vielen Sekunden ununterbrochener Stille moeglich
@@ -410,6 +427,13 @@ hintergrund.src = HINTERGRUND;
 let bildRahmen = null;
 
 /* ---------- Das Buch ---------- */
+function ladeRekord() {
+    try { return parseInt(localStorage.getItem(REKORD), 10) || 0; } catch (e) { return 0; }
+}
+function speichereRekord(sekunden) {
+    try { localStorage.setItem(REKORD, String(Math.round(sekunden))); } catch (e) { /* privater Modus */ }
+}
+
 function ladeBuch() {
     try { return JSON.parse(localStorage.getItem(SPEICHER)) || {}; } catch (e) { return {}; }
 }
@@ -439,8 +463,11 @@ function zeichneBuch(ziel, nurNeue) {
         } else {
             // Kein Name, keine Silhouette: Was noch nicht da war, bleibt eine
             // Leerstelle - sonst ist die Ueberraschung vorweggenommen.
+            // 'etwa', weil die Ankunft der sicheren Gäste um ein Viertel streut.
+            // Die seltenen behalten ihre Minute - dort steht sie deshalb genau.
             karte.innerHTML = '<span class="lat">?</span><span class="kultur">noch nicht dagewesen · ab ' +
-                Math.round(g.ankunft / 60) + ' Min' + (g.chance ? ', mit Glück' : '') + '</span>';
+                (g.chance ? '' : 'etwa ') + Math.round(g.ankunft / 60) + ' Min' +
+                (g.chance ? ', mit Glück' : '') + '</span>';
         }
         gitter.appendChild(karte);
     });
@@ -531,6 +558,7 @@ function starten() {
     empfindlichkeit = parseInt(document.getElementById('schwelle-regler').value, 10);
     restSekunden = dauerMinuten * 60;
     stilleSeit = 0; besteStraehne = 0; anwesend = []; gewuerfelt = new Set();
+    ankuenfteWuerfeln();
     neuImBuch = []; stoerpause = 0; pausiert = false;
 
     document.getElementById('start-overlay').style.display = 'none';
@@ -587,11 +615,45 @@ function stoerung() {
     setTimeout(() => document.getElementById('stille').classList.remove('gestoert'), 1200);
 }
 
+/* Die Ankunftszeiten streuen - aber nicht alle.
+
+   Fest gesetzte Sekunden machen aus der Stunde eine Stoppuhr: Wer zweimal
+   dabei war, weiss, dass der Sperling nach zwanzig Sekunden kommt, und zaehlt
+   mit, statt zu arbeiten. Ein Viertel Streuung reicht, damit sich das nicht
+   abzaehlen laesst, und verschiebt nebenbei die Reihenfolge benachbarter
+   Gaeste gegeneinander - zwei Durchgaenge sehen nie gleich aus.
+
+   Die seltenen Gaeste behalten ihre Minute. 'Merkur schaut nach zehn Minuten
+   vorbei, wenn er will' steht so auf dem Startbildschirm; das ist ein
+   Versprechen an die Klasse. Unberechenbar genug sind sie durch den Wuerfel.
+
+   Gewuerfelt wird EINMAL je Durchgang, beim Start. Wuerfelte man im Takt
+   weiter, waere die Schwelle eines Gastes keine Schwelle mehr, sondern ein
+   Zittern um sie herum - derselbe Fehler wie beim Wuerfel der Seltenen. */
+const ANKUNFT_STREUUNG = 0.25;
+let ankunftHeute = {};
+
+function ankuenfteWuerfeln() {
+    ankunftHeute = {};
+    GAESTE.forEach(g => {
+        if (g.chance !== undefined) { ankunftHeute[g.id] = g.ankunft; return; }
+        const streu = 1 + (Math.random() * 2 - 1) * ANKUNFT_STREUUNG;
+        ankunftHeute[g.id] = Math.round(g.ankunft * streu);
+    });
+}
+
+function ankunftVon(gast) {
+    return ankunftHeute[gast.id] !== undefined ? ankunftHeute[gast.id] : gast.ankunft;
+}
+
 function pruefeAnkunft() {
     const daIds = new Set(anwesend.map(a => a.gast.id));
-    for (const g of GAESTE) {
+    // Nach der HEUTIGEN Zeit durchgehen, nicht nach der Listenreihenfolge:
+    // Sonst laege die Reihenfolge trotz Streuung wieder fest.
+    const reihe = GAESTE.slice().sort((a, b) => ankunftVon(a) - ankunftVon(b));
+    for (const g of reihe) {
         if (daIds.has(g.id)) continue;
-        if (stilleSeit < g.ankunft) continue;
+        if (stilleSeit < ankunftVon(g)) continue;
 
         if (g.chance !== undefined) {
             // GENAU EINMAL wuerfeln, beim Erreichen der Minute.
@@ -832,10 +894,22 @@ function beenden() {
 
     const b = ladeBuch();
     const gesamt = GAESTE.filter(g => b[g.id]).length;
+
+    // Der Rekord gehoert der Klasse vor dem Geraet. Geschlagen wird er nur
+    // von einer laengeren Straehne, nicht von einer laengeren Stunde.
+    const alterRekord = ladeRekord();
+    const geschlagen = besteStraehne > alterRekord + 1;   // Sekundenbruchteile zaehlen nicht
+    if (geschlagen) speichereRekord(besteStraehne);
+
     document.getElementById('end-titel').innerText =
-        besteStraehne >= 600 ? '📜 Eine stille Stunde' : 'Die Stunde ist um';
+        geschlagen ? '🏆 So still war es hier noch nie'
+                   : besteStraehne >= 600 ? '📜 Eine stille Stunde' : 'Die Stunde ist um';
     document.getElementById('end-text').innerHTML =
-        'Längste ununterbrochene Stille: <strong>' + mmss(besteStraehne) + '</strong>.<br>' +
+        'Längste ununterbrochene Stille: <strong>' + mmss(besteStraehne) + '</strong>.' +
+        (geschlagen
+            ? ' <span style="color:var(--richtig);">Bester Wert dieser Klasse — vorher ' + mmss(alterRekord) + '.</span>'
+            : alterRekord > 0 ? ' <span style="color:var(--ink-soft);">Rekord dieser Klasse: ' + mmss(alterRekord) + '.</span>' : '') +
+        '<br>' +
         (neuImBuch.length
             ? '<strong>' + neuImBuch.length + '</strong> neue' + (neuImBuch.length === 1 ? 'r Gast' : ' Gäste') + ' im Buch:'
             : 'Diesmal war niemand Neues dabei.') +
@@ -847,9 +921,20 @@ function beenden() {
 /* ---------- Bedienung ---------- */
 function erreichbarText() {
     const min = parseInt(document.getElementById('timer-regler').value, 10);
-    const wie = GAESTE.filter(g => g.ankunft <= min * 60).length;
+    // Mit dem spaetestmoeglichen Zeitpunkt rechnen: Die Zusage muss auch dann
+    // stimmen, wenn der Wuerfel einen Gast ans obere Ende schiebt.
+    const spaetestens = g => g.chance !== undefined ? g.ankunft : g.ankunft * (1 + ANKUNFT_STREUUNG);
+    const wie = GAESTE.filter(g => spaetestens(g) <= min * 60).length;
     document.getElementById('erreichbar').innerText =
         'Bei ' + min + ' Minuten sind ' + wie + ' von ' + GAESTE.length + ' Gästen überhaupt erreichbar.';
+}
+
+function rekordZeigen() {
+    const r = ladeRekord();
+    const el = document.getElementById('rekord');
+    if (!r) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = '🏆 Längste Stille dieser Klasse: <strong>' + mmss(r) + '</strong>';
 }
 
 window.onload = function () {
@@ -862,6 +947,7 @@ window.onload = function () {
         erreichbarText();
     });
     erreichbarText();
+    rekordZeigen();
 
     [['schwelle-regler', 'schwelle-wert'], ['schwelle-regler-2', 'schwelle-wert-2']].forEach(([r, w]) => {
         const el = document.getElementById(r);
