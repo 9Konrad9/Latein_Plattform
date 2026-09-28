@@ -65,40 +65,40 @@ const LudiProgress = (() => {
         _save(data);
     }
 
-    /**
-     * Eine ZWEITE Bestleistung neben bestScore.
-     *
-     * bestScore ist überall im Projekt die Lernquote ("richtig von gesamt"),
-     * und das Hauptmenü wie die Trophäenseite lesen sie so. Issas erreichte
-     * Höhe ist etwas anderes: eine Spielleistung, ohne Bezugsgröße. Sie käme
-     * dort also als "142 / 45" heraus - deshalb ein eigenes Fach.
-     *
-     * Gespeichert wird nur, was besser ist. Rückgabe: { neu, wert, unlock }.
-     */
-    function recordBest(gameId, name, wert) {
-        const data = _load();
-        const spiel = data.games[gameId] || (data.games[gameId] = {
-            bestScore: 0, maxScore: null, lastScore: 0, lastPlayed: null, timesPlayed: 0
-        });
-        if (!spiel.bests) spiel.bests = {};
-        const vorher = spiel.bests[name] || 0;
-        if (wert <= vorher) return { neu: false, wert: vorher, unlock: null };
-
-        spiel.bests[name] = wert;
-        const paar = BEST_ACHIEVEMENTS.find(b => b.gameId === gameId && b.best === name);
-        const def = paar && FIXED_ACHIEVEMENTS.find(f => f.id === paar.achievement);
-        const unlock = def
-            ? _checkUnlock(data, def.id, wert, def.thresholds, { icon: def.icon, title: def.title, unit: def.unit })
-            : null;
-        _save(data);
-        return { neu: true, wert: wert, unlock: unlock };
-    }
-
-    function getBest(gameId, name) {
-        const spiel = _load().games[gameId];
-        return (spiel && spiel.bests && spiel.bests[name]) || 0;
-    }
-
+    /**
+     * Eine ZWEITE Bestleistung neben bestScore.
+     *
+     * bestScore ist überall im Projekt die Lernquote ("richtig von gesamt"),
+     * und das Hauptmenü wie die Trophäenseite lesen sie so. Issas erreichte
+     * Höhe ist etwas anderes: eine Spielleistung, ohne Bezugsgröße. Sie käme
+     * dort also als "142 / 45" heraus - deshalb ein eigenes Fach.
+     *
+     * Gespeichert wird nur, was besser ist. Rückgabe: { neu, wert, unlock }.
+     */
+    function recordBest(gameId, name, wert) {
+        const data = _load();
+        const spiel = data.games[gameId] || (data.games[gameId] = {
+            bestScore: 0, maxScore: null, lastScore: 0, lastPlayed: null, timesPlayed: 0
+        });
+        if (!spiel.bests) spiel.bests = {};
+        const vorher = spiel.bests[name] || 0;
+        if (wert <= vorher) return { neu: false, wert: vorher, unlock: null };
+
+        spiel.bests[name] = wert;
+        const paar = BEST_ACHIEVEMENTS.find(b => b.gameId === gameId && b.best === name);
+        const def = paar && FIXED_ACHIEVEMENTS.find(f => f.id === paar.achievement);
+        const unlock = def
+            ? _checkUnlock(data, def.id, wert, def.thresholds, { icon: def.icon, title: def.title, unit: def.unit })
+            : null;
+        _save(data);
+        return { neu: true, wert: wert, unlock: unlock };
+    }
+
+    function getBest(gameId, name) {
+        const spiel = _load().games[gameId];
+        return (spiel && spiel.bests && spiel.bests[name]) || 0;
+    }
+
     function getGameProgress(gameId) {
         const data = _load();
         return data.games[gameId] || null;
