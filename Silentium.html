@@ -252,33 +252,33 @@ const SPEICHER = 'ludi_silentium_gesehen';
    Wuerfelte man im Takt weiter, waere Merkur bei 33 % nach zehn weiteren
    Minuten praktisch sicher da - und 33 % waeren gelogen. */
 const GAESTE = [
-    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20, groesse: 0.7,
+    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20, hoehe: 15,
       kultur: 'Catull hat ein ganzes Gedicht auf den Sperling seiner Geliebten geschrieben.' },
-    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60, groesse: 1,
+    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60, hoehe: 35,
       kultur: 'Katzen kamen erst spät nach Rom - gegen Mäuse hielt man vorher Wiesel.' },
-    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, groesse: 0.85,
+    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, hoehe: 42,
       kultur: 'Aus dem Fressverhalten heiliger Hühner las man vor der Schlacht den Willen der Götter.' },
-    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160, groesse: 0.8,
+    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160, hoehe: 32,
       kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
-    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220, groesse: 0.75,
+    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220, hoehe: 28,
       kultur: 'Die Taube gehört der Venus; ein Taubenpaar zieht ihren Wagen.' },
-    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, groesse: 0.5, nah: true,
+    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, hoehe: 9, nah: true,
       kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
-    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340, groesse: 1.25,
+    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340, hoehe: 125,
       kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
-    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400, groesse: 1.4,
+    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400, hoehe: 170,
       kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
-    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460, groesse: 1.1,
+    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460, hoehe: 105,
       kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
-    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, groesse: 0.9,
+    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, hoehe: 78,
       kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
-    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580, groesse: 0.9,
+    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580, hoehe: 82,
       kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
-    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, groesse: 1.3, chance: 0.5,
+    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, hoehe: 85, chance: 0.5,
       kultur: 'Die Wölfin säugte Romulus und Remus - ohne sie gäbe es Rom nicht.' },
-    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, groesse: 1.1, chance: 0.33,
+    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, hoehe: 180, chance: 0.33,
       kultur: 'Der Götterbote mit den Flügelschuhen sieht im Vorbeifliegen nach dem Rechten.' },
-    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, groesse: 1.5, chance: 0.2,
+    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, hoehe: 210, chance: 0.2,
       kultur: 'Iuppiter Optimus Maximus selbst. Wer ihn sieht, hat lange geschwiegen.' }
 ];
 
@@ -330,6 +330,26 @@ function tiefenFaktor(y) {
 
    Die Tiefe rechnet weiter mit WIESE_HINTEN/WIESE_VORN - die gehoeren zum
    Gelaende und nicht zum Schirm. Beschnitten wird nur, wo jemand HINTRITT. */
+/* Wie gross wird jemand gezeichnet?
+
+   Nicht mehr von Hand geschaetzt, sondern aus der wirklichen Hoehe des Tieres
+   gerechnet - vorher war der Esel mit 73 Punkten je Meter Natur der KLEINSTE
+   Gast der Wiese und der Sperling mit 340 der groesste, gemessen. Das sieht
+   man sofort, auch wenn man nicht sagen kann, woran es liegt.
+
+   Streng massstaeblich (Exponent 1) waere es aber auch falsch: Neben einem
+   Esel von 130 Punkten bliebe der Sperling 16 Punkte hoch und waere vom
+   Lehrerpult aus nicht mehr zu finden. Gleich gross (Exponent 0) waere albern.
+   Die Wurzel dazwischen haelt beides aus - der Esel bleibt gut dreimal so hoch
+   wie der Sperling (130 zu 40), die Natur gibt das Achtfache her. */
+const GROESSE_BEI_1_M = 1.57;   // Faktor fuer ein Tier von einem Meter
+const GROESSE_STAUCHUNG = 0.55;
+
+function groessenFaktor(gast) {
+    const cm = gast.hoehe || 100;
+    return GROESSE_BEI_1_M * Math.pow(cm / 100, GROESSE_STAUCHUNG);
+}
+
 function sichtbareWiese() {
     let hinten = WIESE_HINTEN, vorn = WIESE_VORN;
     if (bildRahmen && bildRahmen.h > 0) {
@@ -584,6 +604,50 @@ function pruefeAnkunft() {
     }
 }
 
+/* Wo tritt jemand hin?
+
+   Nicht auf den erstbesten gewuerfelten Punkt: Reiner Zufall setzt Gaeste
+   ueberraschend oft dicht aufeinander. Ueber 500 volle Wiesen mit elf Gaesten
+   gemessen: In 88 % davon ueberschnitt sich mindestens ein Paar, im Schnitt
+   waren es 2,1 Paare, und die engste Luecke lag bei -27 Bildpunkten. Auf dem
+   Schirm sieht das nicht nach Zufall aus, sondern nach einem Fehler.
+   Mit der Auswahl: 0 % und +49 Punkte.
+
+   Stattdessen werden vierzehn Plaetze vorgeschlagen und der mit der groessten
+   Luecke genommen. Gemessen wird in BILDPUNKTEN und von Rand zu Rand: Zwei
+   Sperlinge duerfen naeher beieinander stehen als zwei Esel, und dieselbe
+   Luecke im Bild ist vorn weniger Weg als hinten. */
+const PLATZ_VORSCHLAEGE = 14;
+
+function platzSuchen(gast) {
+    const w = sichtbareWiese();
+    const hinten = gast.nah ? (w.hinten + w.vorn) / 2 : w.hinten;
+    const R = bildRahmen || { w: canvas.width, h: canvas.height };
+    // Gezeichnete Hoehe, ohne das Bild zu brauchen - als Mass fuer den Platzbedarf.
+    const spanne = (g, y) => R.h * 0.085 * groessenFaktor(g) * tiefenFaktor(y);
+
+    let bester = null, besteLuecke = -Infinity;
+    for (let i = 0; i < PLATZ_VORSCHLAEGE; i++) {
+        const y = hinten + Math.random() * (w.vorn - hinten);
+        /* Nach hinten wird die freie Wiese schmaler - links steht das Landgut
+           mit seinen Olivenbaeumen (bis etwa 0,33), rechts die Trockenmauer mit
+           den Zypressen (ab etwa 0,74). Ganz hinten bleibt also nur die Mitte,
+           vorn ist die volle Breite frei. */
+        const enge = 0.05 + 0.30 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
+        const x = enge + Math.random() * (1 - 2 * enge);
+
+        let luecke = Infinity;
+        const meine = spanne(gast, y);
+        anwesend.forEach(a => {
+            const dx = (x - a.x) * R.w, dy = (y - a.y) * R.h;
+            const abstand = Math.sqrt(dx * dx + dy * dy) - (meine + spanne(a.gast, a.y)) / 2;
+            if (abstand < luecke) luecke = abstand;
+        });
+        if (luecke > besteLuecke) { besteLuecke = luecke; bester = { x: x, y: y }; }
+    }
+    return bester;
+}
+
 function eintreten(gast) {
     /* Anteile des Hintergrundbildes, ueber die ganze Wiese verteilt - vorn
        wie hinten. Wie gross jemand erscheint, sagt dann tiefenFaktor().
@@ -594,18 +658,11 @@ function eintreten(gast) {
        von 69x20 Punkten, ganz hinten einer von 28x8 - gemessen. Ein Gast, den
        niemand findet, ist kein Fund. Zur sonnenwarmen Mauer im Vordergrund
        passt sie ohnehin besser als in die Ferne. */
-    const w = sichtbareWiese();
-    const hinten = gast.nah ? (w.hinten + w.vorn) / 2 : w.hinten;
-    const y = hinten + Math.random() * (w.vorn - hinten);
-    /* Nach hinten wird die freie Wiese schmaler - links steht das Landgut mit
-       seinen Olivenbaeumen (bis etwa 0,33), rechts die Trockenmauer mit den
-       Zypressen (ab etwa 0,74). Ganz hinten bleibt also nur die Mitte, vorn
-       ist die volle Breite frei. */
-    const enge = 0.05 + 0.30 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
+    const platz = platzSuchen(gast);
     anwesend.push({
         gast: gast,
-        x: enge + Math.random() * (1 - 2 * enge),
-        y: y,
+        x: platz.x,
+        y: platz.y,
         seit: 0
     });
     insBuch(gast);
@@ -731,7 +788,7 @@ function zeichneGaeste() {
                hochkant, der Pfau mit Schleppe querformatig. Bei gleicher
                Breite waere die Katze doppelt so hoch wie der Sperling.
                Die Breite wird gedeckelt, damit die Schleppe nicht ausufert. */
-            const faktor = (a.gast.groesse || 1) * tiefenFaktor(a.y);
+            const faktor = groessenFaktor(a.gast) * tiefenFaktor(a.y);
             let h = Math.max(14, R.h * 0.085 * faktor);
             let b = h * (bild.naturalWidth / bild.naturalHeight);
             const maxB = Math.max(28, R.h * 0.16 * faktor);

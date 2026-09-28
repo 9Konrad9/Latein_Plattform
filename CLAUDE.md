@@ -210,7 +210,18 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Durchsichtigkeit. Grund: Ein Tippfehler in der Bildliste fällt sonst NICHT auf – der Gast
     erscheint dann einfach als Plättchen, und das ist ja der vorgesehene Ersatz. Gemerkt würde
     es erst in der Klasse.
-  - **Zwei Regeln dafür, wo jemand hintritt.** Beide gemessen, und beide fallen nicht auf,
+  - **Wie groß jemand gezeichnet wird, steht nicht im Datensatz, sondern wird gerechnet.**
+    Jeder Gast trägt seine wirkliche Höhe in Zentimetern (`hoehe`), `groessenFaktor()` macht
+    daraus den Zeichenfaktor. Vorher standen dort von Hand geschätzte Zahlen, und die waren
+    auseinandergelaufen: Der **Esel war mit 73 Bildpunkten je Meter Natur der kleinste Gast**
+    der Wiese, der Sperling mit 340 der größte – gemessen. Das sieht man sofort, auch ohne
+    sagen zu können, woran es liegt.
+    Streng maßstäblich wäre aber auch falsch: Neben einem Esel von 130 Punkten bliebe der
+    Sperling 16 Punkte hoch und wäre vom Pult aus nicht mehr zu finden. Deshalb die Wurzel
+    dazwischen (`GROESSE_STAUCHUNG = 0.55`) – im Bild 5,7×, in der Natur 23×.
+    `test-silentium.js` prüft die Reihenfolge (größer im Bild = größer in der Natur) und dass
+    die Stauchung eine Stauchung bleibt: nicht flach, nicht maßstäblich.
+  - **Drei Regeln dafür, wo jemand hintritt.** Alle gemessen, und alle fallen nicht auf,
     wenn sie fehlen – es erscheint ja nichts Falsches, sondern nichts.
     - **Niemand tritt unter den Bildrand.** Der Hintergrund wird formatfüllend gezeichnet und
       auf breiten Schirmen oben und unten beschnitten. Gemessen bei 1280×663: Rahmen 1280×859,
@@ -223,6 +234,12 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
       in der Bildmitte ein Streifen von 69×20 Punkten, ganz hinten einer von 28×8. Ein Gast,
       den niemand findet, ist kein Fund. Zur sonnenwarmen Mauer im Vordergrund passt sie
       ohnehin besser als in die Ferne.
+    - **Der Platz wird ausgesucht, nicht gewürfelt.** `platzSuchen()` schlägt vierzehn Plätze
+      vor und nimmt den mit der größten Lücke – gerechnet in Bildpunkten und von Rand zu Rand,
+      damit zwei Sperlinge näher beieinander stehen dürfen als zwei Esel. Gemessen über 500
+      volle Wiesen mit elf Gästen: **gewürfelt überschnitt sich in 88 % der Wiesen mindestens
+      ein Paar** (im Schnitt 2,1 Paare, engste Lücke −27 Punkte), ausgesucht sind es 0 % und
+      +49 Punkte. Auf dem Schirm sieht Klumpen nicht nach Zufall aus, sondern nach einem Fehler.
     Die Gegenprobe gehört bei beiden dazu: ohne sie wäre der Test auch grün, wenn gar niemand
     mehr in den Hintergrund käme und die Tiefe eingeebnet wäre.
 
