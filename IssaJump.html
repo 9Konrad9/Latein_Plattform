@@ -914,7 +914,9 @@
             neueTrophaeen.forEach(u => { nachId[u.id] = u; });
             const zeilen = Object.values(nachId).map(u =>
                 `${u.icon} <strong>${u.title}</strong> in ${u.tierName}`);
-            return `<br><br><span style="color:var(--gold);">Neu freigeschaltet:</span><br>` + zeilen.join('<br>');
+            // --gold steht auf dem hellen Putz der Schicht bei 2,51 - gemessen, zu wenig.
+            // --pompeji liegt dort bei 6,40, dieselbe Farbe wie die Ueberschrift darueber.
+            return `<br><br><span style="color:var(--pompeji);">Neu freigeschaltet:</span><br>` + zeilen.join('<br>');
         }
 
         function endGame() {

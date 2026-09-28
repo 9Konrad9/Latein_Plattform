@@ -406,6 +406,17 @@ dieses Namens, und darauf spielt auch das Spiel an.
     und `achievementToast.js` enthalten sie im Einbinde-Hinweis-Kommentar. Im Browser harmlos (die
     Dateien werden per `src` geladen), beim Inlinen bricht der HTML-Parser dort das Script-Tag ab –
     die Datei lädt dann still nur zur Hälfte.
+  - **Patch-Skripte: erst auf LF vereinheitlichen, DANN auf die Zeilenenden der Datei
+    bringen.** Wer einen schon mit CRLF verbundenen Text noch einmal umwandelt, erzeugt
+    `\r\r\n`. Beim Lesen fällt das nicht auf, im Browser auch nicht – aber git erkennt die
+    Datei dann nicht mehr als Text (`git ls-files --eol` zeigt `i/-text`), die Normalisierung
+    von `core.autocrlf` fällt aus, und der nächste Commit schreibt die ganze Datei neu: bei
+    `progress.js` waren es 513 Zeilen raus und 513 rein für 79 wirklich geänderte. Nach einem
+    Commit mit auffällig vielen Zeilen lohnt ein Blick in `git show --stat`.
+  - **Backticks und `${...}` überleben die Bash-Zeile nicht.** In einem `node -e "..."` frisst
+    die Shell beides – aus einem Kommentar wird eine leere Klammer, aus einer Vorlagenzeichen-
+    kette ein Aufruf, den es nicht gibt. Beides ist in dieser Sitzung zweimal passiert.
+    Patch-Skripte deshalb als DATEI schreiben und dann `node datei.js` aufrufen.
   - **jsdom kennt `innerText` nicht.** Die Spiele setzen Texte fast überall per `.innerText`; in
     jsdom legt das nur eine gewöhnliche JS-Eigenschaft an, statt den DOM-Text zu ändern.
     `.textContent` liefert deshalb weiter den HTML-Platzhalter – ein Test, der `textContent` prüft,
