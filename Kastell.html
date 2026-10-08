@@ -156,6 +156,14 @@
                 <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">Welche Tempora schon auftauchen, richtet sich automatisch nach deiner Lektionsauswahl: Präsens von Anfang an, Perfekt ab Lektion 10, Imperfekt ab Lektion 12, Futur I ab Lektion 13, Plusquamperfekt ab Lektion 14.</p>
             </div>
             <button class="start-btn" id="btn-start-verb">Verb-Formen üben</button>
+
+            <div class="notice-box" style="margin-top: 25px;">
+                <h3>📜 Modus 3: Nur Passivformen</h3>
+                <p>Dasselbe wie Modus 2, aber die Katapulte werfen <strong>ausschließlich Passivformen</strong> (z. B. <em>capiēmur</em>).</p>
+                <p style="margin-top: 10px;">Unter den falschen Antworten steht jedes Mal <strong>dieselbe Form im Aktiv</strong> – <em>capiēmur</em> gegen <em>capiēmus</em>. Genau daran entscheidet sich, ob das Passiv sitzt.</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--ink-soft);">Ab Lektion 15 (Präsens, Imperfekt und Futur Passiv); ab Lektion 16 kommen Perfekt und Plusquamperfekt dazu.</p>
+            </div>
+            <button class="start-btn" id="btn-start-passiv">Passiv-Formen üben</button>
         </div>
 
         <!-- Didaktische Feedbackbox -->
@@ -232,7 +240,10 @@
         let roundLocked = false;
 
         let targetPool = [];
-        let gameMode = 'noun'; // 'noun' | 'verb'
+        /* 'passiv' ist 'verb' mit einer Einschraenkung: Gefragt wird immer eine
+           Passivform. Alle Stellen, die auf 'noun' pruefen, behandeln es dadurch
+           von selbst richtig als Verbmodus. */
+        let gameMode = 'noun'; // 'noun' | 'verb' | 'passiv'
         let activePool = [];
         let maxSelectedLesson = 0; // höchste gewählte Lektion, für die Tempus-Freischaltung im Verb-Modus
 
@@ -255,6 +266,7 @@
             // Ausfallsicheres Event-Binding für iOS
             document.getElementById('btn-start-noun').addEventListener('click', function() { promptLessonsAndStart('noun'); });
             document.getElementById('btn-start-verb').addEventListener('click', function() { promptLessonsAndStart('verb'); });
+            document.getElementById('btn-start-passiv').addEventListener('click', function() { promptLessonsAndStart('passiv'); });
             document.getElementById('btn-next-wave').addEventListener('click', loadNextWave);
             document.getElementById('btn-restart').addEventListener('click', function() { promptLessonsAndStart(); });
             document.getElementById('btn-review').addEventListener('click', startReview);
@@ -272,15 +284,24 @@
         // dadurch tauchen häufige Formen (Präsens etc.) öfter auf als seltene
         // (Gerundium, Konjunktiv Perfekt Passiv etc.), ohne dass seltene Formen
         // komplett fehlen.
-        function buildRoundFromSlots(slots) {
-            const weights = slots.map(s => s.weight || 1);
+        /* `zielDarf` schraenkt ein, welche Form GEFRAGT werden darf - die
+           Distraktoren kommen weiterhin aus dem ganzen Paradigma. Genau so muss
+           es sein: Im Passiv-Modus ist die wichtigste falsche Antwort die
+           Aktivform derselben Person (capiēmur gegen capiēmus). Wer auch die
+           Distraktoren einschraenkte, naehme dem Modus seinen Sinn. */
+        function buildRoundFromSlots(slots, zielDarf) {
+            const zielbar = zielDarf ? slots.filter(zielDarf) : slots;
+            if (!zielbar.length) return null;
+            const weights = zielbar.map(s => s.weight || 1);
             const totalWeight = weights.reduce((a, b) => a + b, 0);
             let r = Math.random() * totalWeight;
-            let targetIdx = slots.length - 1;
-            for (let i = 0; i < slots.length; i++) {
+            let gewaehlt = zielbar[zielbar.length - 1];
+            for (let i = 0; i < zielbar.length; i++) {
                 r -= weights[i];
-                if (r <= 0) { targetIdx = i; break; }
+                if (r <= 0) { gewaehlt = zielbar[i]; break; }
             }
+            // Der Index im VOLLEN Feld - die Distraktoren suchen dort weiter.
+            const targetIdx = slots.indexOf(gewaehlt);
             const target = slots[targetIdx];
 
             return {
@@ -434,8 +455,39 @@
 
         /* Aufgeteilt, damit auch anderswo nachgesehen werden kann, WELCHE Formen
            eine Lektionsauswahl ueberhaupt hergibt - ohne gleich eine Runde zu bauen. */
+        // Welche Formen sind im Passiv-Modus ueberhaupt zielbar? Alles, was das
+        //    Merkmal traegt - Indikativ, Konjunktiv und der Infinitiv Passiv.
+        // PPA, Gerundium und Gerundivum tragen `genus: null` und fallen damit
+        // von selbst heraus; sie sind keine Passivformen im Sinne von L15.
+        function istPassivform(slot) {
+            return !!(slot.merkmale && slot.merkmale.genus === "Passiv");
+        }
+
+        /* Ein persönliches Passiv braucht ein Akkusativobjekt, das zum Subjekt
+           werden kann. Die Engine BILDET zwar zu fast jedem Verb Passivformen -
+           sie konjugiert, sie denkt nicht -, aber „venīmur" heisst nichts.
+           Gemessen bei L15: 39 von 142 Verben im Passiv-Topf sind intransitiv
+           oder stehen mit dem Dativ (venīre, currere, clāmāre, respondēre,
+           placēre ...). Das wäre mehr als jede vierte Frage auf einer Form,
+           die es nicht gibt.
+
+           `valenz` ist dafür da und fachlich gegengelesen; sie ist mal ein
+           String, mal ein Array (wenn beide Verwendungen gelten).
+
+           Das unpersönliche Passiv (curritur - „man läuft") bleibt damit
+           draussen. Das ist Absicht: Pontes führt in L15 das persönliche ein,
+           und eine Form ohne Person passt nicht in ein Spiel, das nach Person
+           und Numerus fragt. */
+        function kannPersoenlichesPassiv(verbObj) {
+            const val = verbObj.valenz;
+            if (!val) return false;
+            return (Array.isArray(val) ? val : [val])
+                .some(v => String(v).indexOf('akk') !== -1);
+        }
+
         function buildVerbRound(verbObj) {
-            return buildRoundFromSlots(verbSlots(verbObj));
+            return buildRoundFromSlots(verbSlots(verbObj),
+                                       gameMode === "passiv" ? istPassivform : null);
         }
 
         function verbSlots(verbObj) {
@@ -568,6 +620,21 @@
                 alert("Fehler: Kein Vokabelpool ausgewählt!"); return;
             }
 
+            /* Die Lektionssperre des Passiv-Modus steht VOR dem Topfbau - sie
+               braucht keinen Topf, und so bleibt nach einer Ablehnung auch
+               nichts halb Aufgebautes stehen. Stand sie weiter unten, war
+               targetPool schon gefüllt, obwohl die Runde nie startete; gefunden
+               vom Test, der genau das geprüft hat.
+               Die Zahl kommt aus verbEngine.js und soll nur dort stehen. */
+            if (gameMode === 'passiv') {
+                const abL = VerbEngine.TEMPUS_LESSON_PASSIV['Präsens'];
+                if (maxSelectedLesson < abL) {
+                    alert("Das Passiv kommt in Lektion " + abL + " dran.\n\n" +
+                          "Wähle bitte Lektionen bis mindestens " + abL + " aus - oder übe solange alle Verbformen gemischt.");
+                    return;
+                }
+            }
+
             if (gameMode === 'noun') {
                 targetPool = activePool.filter(v =>
                     v.type === 'noun' && !v.latin.includes(' ') && !v.middle.includes('Pl.')
@@ -596,6 +663,37 @@
                 }, 0);
                 if (meisteFormen < 4) {
                     alert("Für die Verbformen reicht diese Lektionsauswahl noch nicht aus: Bis Lektion 2 gibt es nur die 3. Person und den Infinitiv, also zu wenige Formen für vier Antwortmöglichkeiten.\n\nAb Lektion 3 kommen die 1. und 2. Person dazu. Wähle bitte mehr Lektionen - oder übe solange die Substantive.");
+                    return;
+                }
+            }
+
+            /* Die zweite Bedingung des Passiv-Modus (die erste, die Lektion,
+               steht ganz oben): Der Topf muss Verben enthalten, die ein Passiv
+               überhaupt bilden können. Geprüft wird HIER, nicht mitten im Lauf -
+               dasselbe Muster wie bei den Verbformen oben und bei ViaRomanas
+               Ablativ-Modus: Lieber vorher sagen, dass die Auswahl nicht passt,
+               als mittendrin stehenbleiben. */
+            if (gameMode === 'passiv') {
+                /* Nicht jedes Verb taugt: Manche haben gar keine Passivform
+                      (posse; im Perfekt fehlt ohne PPP die Grundlage), und manche
+                      bilden zwar Formen, aber keine, die etwas heissen - siehe
+                      kannPersoenlichesPassiv(). Gemessen bei L15 bleiben von 151
+                      Verben 103 übrig. Ohne den Filter zöge weightedPick eines der
+                      anderen, und buildVerbRound hätte nichts zu fragen oder fragte
+                      nach „venīmur".
+
+                      Deponentien bleiben ebenfalls draußen (ab L31). Ihre Formen
+                      SIND passiv, ihre Bedeutung ist aktiv - in einem Modus, der
+                      gerade das Passiv einübt, ist das die eine Form, die das
+                      Falsche beibringt. Wer Deponentien üben will, nimmt den
+                      gemischten Verbmodus. */
+                targetPool = targetPool.filter(v =>
+                    v.gram_class !== 'Deponens' && v.latin !== 'fierī' &&
+                    kannPersoenlichesPassiv(v) &&
+                    verbSlots(v).some(istPassivform));
+                if (targetPool.length < 4) {
+                    alert("In dieser Lektionsauswahl gibt es noch zu wenige Verben mit Passivformen.\n\n" +
+                          "Wähle bitte weitere Lektionen aus.");
                     return;
                 }
             }

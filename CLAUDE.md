@@ -172,6 +172,34 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     um 65 %. Weite Distraktoren gibt es nur noch, wo das Paradigma keinen näheren hergibt
     (z. B. der Infinitiv bei L5 – dort ist „*amāre* oder *amat*?" gerade die Lernfrage).
     `test-kastell.js` prüft genau das: kein Distraktor weiter weg **als nötig**.
+
+  **Modus 3: Nur Passivformen** (Oktober 2026, für eine 8. Klasse, die das Passiv neu hat).
+  Gefragt wird ausschließlich eine Passivform; alles andere bleibt wie in Modus 2.
+  - **Eingeschränkt ist nur das ZIEL, nicht die Distraktoren.** `buildRoundFromSlots()` nimmt
+    dafür einen Filter entgegen und sucht das Ziel nur unter den passenden Formen – die
+    falschen Antworten kommen weiter aus dem ganzen Paradigma. Genau so muss es sein: Die
+    wichtigste falsche Antwort ist die **Aktivform derselben Person** (*capiēmur* gegen
+    *capiēmus*). Gemessen steht sie in **100 % der Runden** dabei, und daneben rund die
+    Hälfte Passivformen für die Unterscheidung innerhalb des Passivs. Wer auch die
+    Distraktoren einschränkte, nähme dem Modus seinen Sinn – `test-kastell.js` prüft beides.
+  - **Der Topf braucht ein Akkusativobjekt.** Die Engine bildet zu fast jedem Verb
+    Passivformen – sie konjugiert, sie denkt nicht –, aber *venīmur* heißt nichts. Gemessen:
+    **39 von 142 Verben** im Passiv-Topf bei L15 sind intransitiv oder stehen mit dem Dativ
+    (*venīre, currere, clāmāre, respondēre, placēre* …), also mehr als jede vierte Frage.
+    `kannPersoenlichesPassiv()` liest dafür `valenz`; übrig bleiben 103 Verben.
+    Das unpersönliche Passiv (*curritur*) bleibt damit draußen – Absicht: Pontes führt in L15
+    das persönliche ein, und eine Form ohne Person passt nicht in ein Spiel, das nach Person
+    und Numerus fragt.
+  - **Deponentien bleiben draußen** (ab L31): Ihre Formen *sind* passiv, ihre Bedeutung ist
+    aktiv. In einem Modus, der gerade das Passiv einübt, ist das die eine Form, die das
+    Falsche beibringt. Im gemischten Verbmodus kommen sie weiterhin vor.
+  - **Die Lektionssperre steht VOR dem Topfbau.** Sie stand zuerst dahinter, und dann war
+    `targetPool` schon gefüllt, obwohl die Runde nie startete – gefunden vom Test, der das
+    Verhalten prüft statt des Quelltexts. Die Zahl kommt aus `VerbEngine.TEMPUS_LESSON_PASSIV`.
+  - **Noch offen, bewusst nicht mitgeändert:** Modus 2 bietet dieselben unmöglichen
+    Passivformen weiterhin an (*venīmur* & Co.), nur eben seltener, weil dort auch Aktivformen
+    drankommen. Dieselbe Prüfung ließe sich dort einhängen – das ändert aber einen
+    bestehenden Modus und gehört besprochen, nicht nebenbei erledigt.
 - **Villa.html** (Aedificium Rōmānum) – KNG-Kongruenz. Drei Adjektiv-Modi (regulär -us/-a/-um,
   i-Deklination, gemischt). Sechs Bild-Stufen für den Baufortschritt in `assets/villa/`.
 - **ViaRomana.html** – **zwei Modi.**
