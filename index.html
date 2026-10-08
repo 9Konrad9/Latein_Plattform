@@ -308,6 +308,22 @@
                 <a href="Fliegenklatsche.html" class="play-btn">Brett aufbauen</a>
             </div>
 
+            <!-- Das einzige Spiel, bei dem die ganze Klasse GLEICHZEITIG am eigenen
+                 Gerät spielt - und es braucht trotzdem keinen Server: Abgestimmt
+                 werden muss nur die Lektionsspanne. Kein Fortschrittsband, weil das
+                 Gerät nicht prüfen kann, ob ein Kreuz richtig gesetzt war. -->
+            <div class="game-card" data-game="bingo">
+                <div class="game-icon">🎲</div>
+                <div class="game-title">Vokabel-Bingo</div>
+                <div class="game-focus">Schwerpunkt: ganze Klasse, jedes Gerät eine Karte</div>
+                <div class="game-desc">
+                    Jedes iPad erzeugt sich eine eigene 4×4-Karte mit Bedeutungen, die
+                    Lehrkraft ruft vom Beamer die lateinischen Wörter auf. Vier in einer
+                    Reihe — Bingo!
+                </div>
+                <a href="Bingo.html" class="play-btn">Karten austeilen</a>
+            </div>
+
             <!-- Ein Gerät, das herumgereicht wird: Die Leistung gehört der
                  Gruppe, nicht der Person am iPad. Deshalb kein Fortschrittsband. -->
             <div class="game-card" data-game="bomba">
@@ -483,6 +499,15 @@
         document.querySelectorAll('.game-card[data-game]').forEach(card => {
             const gameId = card.getAttribute('data-game');
             const badge = card.querySelector('.progress-badge');
+
+            /* Die Gruppenspiele (Fliegenklatsche, Bingo, Bomba) tragen bewusst
+               KEIN Fortschrittsband - die Leistung gehoert dort der Klasse, nicht
+               dem Geraet. Ohne diese Zeile warf die Schleife an der ersten solchen
+               Karte, und forEach bricht dann GANZ ab: Sieben Karten dahinter
+               (Kastell, Villa, Pronomina, ViaRomana, Pendel, Arcus, Quiz) blieben
+               stumm. Kein Fehler, den man sieht - ein leeres Band sieht aus wie
+               ein leeres Band. */
+            if (!badge) return;
 
             // Sonderfall: Pronomina! hat zwei getrennte Modi mit eigenen Scores
             if (gameId === 'pronomina') {

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vokabel-Bingo - Lūdī Rōmānī</title>
+    <script src="vocabulary.js"></script>
+    <script src="lessonFilter.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Palette und geteilte Bausteine stehen in theme.css.
+           Hier nur, was das Bingo allein braucht.
+
+           Das Spiel läuft auf ZWEI Arten von Geräten gleichzeitig: Die Lehrkraft
+           ruft vom Beamer auf, die Klasse hat die Karten auf den eigenen iPads.
+           Beide Ansichten stecken in dieser Datei - abgestimmt werden muss
+           zwischen ihnen nichts ausser der Lektionsspanne, und die sagt die
+           Lehrkraft an. Genau deshalb kommt das Spiel ohne Server aus. */
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html { height: 100%; }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--ink);
+            /* vh zuerst als Rückfall, dann svh. min-height: 0 schaltet das
+               min-height: 100vh aus theme.css ab - es würde die eigene Höhe
+               sonst überstimmen (min-height schlägt height). Wie bei der
+               Fliegenklatsche und aus demselben Grund. */
+            height: 100vh;
+            height: 100svh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .leiste {
+            flex: 0 0 auto;
+            display: flex; align-items: center; gap: 14px;
+            padding: 8px 14px 8px 60px;
+            background: var(--putz);
+            border-bottom: 2px solid var(--bronze);
+        }
+        .leiste .titel {
+            font-family: var(--font-display); font-size: 1.1rem;
+            color: var(--pompeji); letter-spacing: 1px; text-transform: uppercase;
+        }
+        .leiste .spanne { font-size: 0.85rem; color: var(--ink-soft); }
+        .leiste .luecke { flex: 1 1 auto; }
+
+        .buehne {
+            flex: 1 1 auto; min-height: 0;
+            display: flex; flex-direction: column;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        /* ---------- Rolle 1: der Aufrufer am Beamer ---------- */
+
+        .aufruf-feld {
+            flex: 1 1 auto; min-height: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px;
+        }
+        .aufruf-wort {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 13vw, 9rem);
+            line-height: 1.05;
+            color: var(--pompeji);
+            text-align: center;
+            overflow-wrap: break-word; max-width: 100%;
+        }
+        .aufruf-bedeutung {
+            font-size: clamp(1rem, 3.5vw, 2rem);
+            color: var(--ink-soft);
+            font-style: italic;
+            min-height: 1.3em;            /* hält den Platz frei, damit nichts springt */
+        }
+        .aufruf-zaehler { font-size: 0.95rem; color: var(--ink-soft); }
+
+        /* Die Liste des schon Aufgerufenen - sie ist der PRÜFSTEIN: Ruft jemand
+           Bingo, werden die vier Wörter der Reihe hier nachgeschlagen. */
+        .liste {
+            flex: 0 0 auto;
+            max-height: 28vh; overflow-y: auto;
+            display: flex; flex-wrap: wrap; gap: 6px;
+            padding: 8px; margin-top: 8px;
+            background: var(--wand); border: 2px solid var(--bronze); border-radius: 8px;
+        }
+        .liste:empty { display: none; }
+        .liste span {
+            font-family: var(--font-display); font-size: 0.95rem;
+            padding: 2px 8px; border-radius: 4px;
+            background: var(--putz); border: 1px solid var(--bronze);
+        }
+        .liste span.neu { background: var(--pompeji); color: var(--putz); border-color: var(--pompeji); }
+
+        /* ---------- Rolle 2: die Karte auf dem Schüler-iPad ---------- */
+
+        .karte {
+            flex: 1 1 auto; min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        /* Dieselbe Marmortafel wie auf dem Brett der Fliegenklatsche - und aus
+           demselben Grund in em: Der Rahmen soll mit der Schrift mitwachsen,
+           von der kleinsten Kachel bis zur grössten. */
+        .kachel {
+            position: relative;
+            border-style: solid;
+            border-width: 0.5em 0.6em;
+            border-image: url('assets/ui/marmor.png') 54 54 54 54 fill stretch;
+            background: none;
+            color: var(--ink);          /* kontrast-ok: 12,11 auf dem Marmorfeld #f1ebdf */
+            font-family: var(--font-display);
+            font-size: clamp(0.62rem, 2.2vw, 1.15rem);
+            font-weight: bold;
+            text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.1em 0.2em;
+            cursor: pointer;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+            transition: filter 0.12s ease;
+        }
+        .kachel:active { filter: brightness(0.94); }
+
+        /* Markiert = gestempelt, wie auf einer Bingokarte mit dem Filzstift.
+           Die Scheibe liegt UNTER der Schrift (z-index), damit das Wort lesbar
+           bleibt - gemessen 7,41 für --ink auf der gestempelten Fläche,
+                                         6,34 für den Rand in --pompeji auf dem Marmor. */
+        .kachel .wort { position: relative; z-index: 1; }
+        .kachel.markiert::after {
+            content: '';
+            position: absolute; left: 50%; top: 50%;
+            width: 86%; height: 86%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: rgba(155, 44, 44, 0.30);
+            border: 3px solid var(--pompeji);
+            z-index: 0;
+        }
+
+        .bingo-banner {
+            flex: 0 0 auto;
+            margin-top: 10px; padding: 10px 14px;
+            background: var(--putz); border: 2px solid var(--pompeji); border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .bingo-banner.an { display: block; }
+        .bingo-banner .ruf {
+            font-family: var(--font-display); font-size: 1.6rem; color: var(--pompeji);
+        }
+        .bingo-banner .pruefung { margin-top: 6px; font-size: 0.95rem; color: var(--ink); }
+        .bingo-banner .pruefung b { font-family: var(--font-display); }
+
+        .fusszeile { flex: 0 0 auto; display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        .fusszeile .start-btn { margin-top: 0; }
+
+        @media (orientation: landscape) and (max-height: 520px) {
+            .leiste { padding-top: 4px; padding-bottom: 4px; }
+            .liste { max-height: 20vh; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏛️</a>
+
+<!-- ---------- Startbildschirm: welche Rolle? ---------- -->
+<div class="start-overlay" id="start-overlay">
+    <h2 class="seiten-titel">Vokabel-Bingo</h2>
+    <p class="seiten-untertitel">Die ganze Klasse, jedes Gerät eine eigene Karte</p>
+
+    <div class="notice-box">
+        <h3>📜 So läuft's</h3>
+        <p>Jedes Gerät erzeugt sich <strong>seine eigene Karte</strong> mit sechzehn deutschen
+           Bedeutungen. Die Lehrkraft ruft vom Beamer die <strong>lateinischen Wörter</strong> auf.
+           Wer die Bedeutung auf seiner Karte hat, tippt sie an.</p>
+        <p style="margin-top:10px;">Vier in einer Reihe, einer Spalte oder einer Diagonale —
+           <strong>Bingo!</strong> Die Karte nennt dann die vier lateinischen Wörter, damit die
+           Lehrkraft sie in ihrer Liste nachschlagen kann.</p>
+        <p style="margin-top:10px; font-size:0.9rem; color:var(--ink-soft);">
+           Wichtig ist nur eines: <strong>Alle wählen dieselbe Lektionsspanne.</strong> Mehr muss
+           zwischen den Geräten nicht abgestimmt werden — deshalb braucht das Spiel keinen Server.</p>
+    </div>
+
+    <button class="start-btn" id="btn-aufrufer">Beamer: Wörter aufrufen</button>
+    <button class="start-btn" id="btn-karte" style="margin-top:10px;">Mein Spielfeld</button>
+    <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
+</div>
+
+<!-- ---------- Die Bühne, je nach Rolle gefüllt ---------- -->
+<div class="leiste" id="leiste" style="display:none;">
+    <span class="titel" id="rollen-titel">Bingo</span>
+    <span class="spanne" id="spanne-anzeige"></span>
+    <span class="luecke"></span>
+    <span class="aufruf-zaehler" id="zaehler"></span>
+</div>
+
+<div class="buehne" id="buehne" style="display:none;">
+
+    <!-- Rolle 1 -->
+    <div class="aufruf-feld" id="aufruf-feld" style="display:none;">
+        <div class="aufruf-wort" id="aufruf-wort">Bereit?</div>
+        <div class="aufruf-bedeutung" id="aufruf-bedeutung"></div>
+    </div>
+    <div class="liste" id="liste"></div>
+
+    <!-- Rolle 2 -->
+    <div class="karte" id="karte" style="display:none;"></div>
+    <div class="bingo-banner" id="bingo-banner">
+        <div class="ruf">🏅 Bingo!</div>
+        <div class="pruefung" id="bingo-pruefung"></div>
+    </div>
+
+    <div class="fusszeile" id="fusszeile"></div>
+</div>
+
+<script>
+/* ============================================================
+   Vokabel-Bingo
+
+   Zwei Rollen, ein Spiel, kein Server. Die Lehrkraft ruft auf, die Klasse
+   kreuzt an. Abgestimmt wird zwischen den Geräten NICHTS ausser der
+   Lektionsspanne - alle ziehen aus demselben Topf, und mehr als "bis
+   Lektion 12" muss nicht synchron sein.
+   ============================================================ */
+
+const SEITE = 4;                       // 4x4
+const FELDER = SEITE * SEITE;
+const MIN_TOPF = 20;                   // 16 Kacheln plus etwas Luft
+
+/* Alle Reihen, Spalten und die beiden Diagonalen - zehn Linien bei 4x4.
+   Einmal gerechnet statt hingeschrieben: Bei einer anderen Kantenlänge
+   stimmt die Liste sonst still nicht mehr. */
+const LINIEN = (() => {
+    const l = [];
+    for (let r = 0; r < SEITE; r++) l.push(Array.from({ length: SEITE }, (_, c) => r * SEITE + c));
+    for (let c = 0; c < SEITE; c++) l.push(Array.from({ length: SEITE }, (_, r) => r * SEITE + c));
+    l.push(Array.from({ length: SEITE }, (_, i) => i * SEITE + i));
+    l.push(Array.from({ length: SEITE }, (_, i) => i * SEITE + (SEITE - 1 - i)));
+    return l;
+})();
+
+let rolle = null;                      // 'aufrufer' | 'karte'
+let topf = [];                         // [{ latin, bedeutung }]
+let maxLektion = 0;
+
+// Rolle 1
+let rest = [];                         // noch nicht aufgerufen
+let aufgerufen = [];                   // in der Reihenfolge des Aufrufs
+
+// Rolle 2
+let karte = [];                        // 16 x { latin, bedeutung, markiert }
+let bingoGemeldet = false;
+
+/* ---------- Der Topf ----------
+
+   Nur Wörter mit EINDEUTIGER Bedeutung. Sonst steht auf der Karte „rufen",
+   die Lehrkraft ruft „vocāre" - und die Kachel stammte von „clāmāre".
+   Beim Nachprüfen stünde dann das falsche Wort da, und niemand könnte
+   entscheiden, wer recht hat. Gemessen fallen dadurch bis L12 nur 42 von
+   386 Wörtern weg (et/-que/atque für „und", caedere/occidere für „töten"),
+   bis L22 sind es 68 von 625 - der Topf bleibt gross genug.
+
+   Genommen wird die ERSTE Bedeutungsangabe, abgeschnitten vor Komma,
+   Semikolon und Klammer: „arbeiten, sich bemühen; (+ Abl.) an etwas leiden"
+   passt auf keine Kachel, „arbeiten" schon. */
+function baueTopf(pool) {
+    const erste = m => String(m || '').split(/[,;(]/)[0].trim();
+    const nach = new Map();
+    pool.forEach(v => {
+        const b = erste(v.meaning);
+        if (!b || b.length > 24) return;
+        if (!nach.has(b)) nach.set(b, []);
+        nach.get(b).push(v);
+    });
+    const raus = [];
+    nach.forEach((treffer, bedeutung) => {
+        if (treffer.length === 1) raus.push({ latin: treffer[0].latin, bedeutung: bedeutung });
+    });
+    return raus;
+}
+
+function mische(a) {
+    const b = a.slice();
+    for (let i = b.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [b[i], b[j]] = [b[j], b[i]];
+    }
+    return b;
+}
+
+/* ---------- Start ---------- */
+
+function starte(gewaehlteRolle) {
+    rolle = gewaehlteRolle;
+    LessonFilter.show(globalVocabularyPool, function (gefiltert, lektionen) {
+        maxLektion = lektionen && lektionen.length ? Math.max.apply(null, lektionen) : 0;
+        topf = baueTopf(gefiltert);
+
+        if (topf.length < MIN_TOPF) {
+            alert('Für eine Bingokarte braucht es mindestens ' + MIN_TOPF + ' Wörter mit eindeutiger ' +
+                  'Bedeutung; in dieser Auswahl sind es ' + topf.length + '.\n\n' +
+                  'Bitte wähle weitere Lektionen aus.');
+            return;
+        }
+
+        document.getElementById('start-overlay').style.display = 'none';
+        document.getElementById('leiste').style.display = 'flex';
+        document.getElementById('buehne').style.display = 'flex';
+        document.getElementById('spanne-anzeige').innerText =
+            (maxLektion ? 'bis Lektion ' + maxLektion : 'alle Lektionen') + ' · ' + topf.length + ' Wörter';
+
+        if (rolle === 'aufrufer') richteAufruferEin();
+        else richteKarteEin();
+    });
+}
+
+/* ---------- Rolle 1: aufrufen ---------- */
+
+function richteAufruferEin() {
+    document.getElementById('rollen-titel').innerText = 'Aufruf';
+    document.getElementById('aufruf-feld').style.display = 'flex';
+    rest = mische(topf);
+    aufgerufen = [];
+    zeichneListe();
+    zaehlerAuffrischen();
+
+    knoepfe([
+        { text: 'Nächstes Wort', id: 'btn-naechstes', tun: naechstesWort },
+        { text: 'Bedeutung zeigen', id: 'btn-bedeutung', tun: bedeutungZeigen, still: true },
+        { text: 'Neue Runde', id: 'btn-neu', tun: richteAufruferEin, still: true }
+    ]);
+}
+
+function naechstesWort() {
+    if (!rest.length) {
+        document.getElementById('aufruf-wort').innerText = 'Alle Wörter aufgerufen';
+        document.getElementById('aufruf-bedeutung').innerText = '';
+        return;
+    }
+    const w = rest.pop();
+    aufgerufen.push(w);
+    document.getElementById('aufruf-wort').innerText = w.latin;
+    // Die Bedeutung bleibt zunächst verdeckt: Sie zu nennen nimmt dem Spiel
+    // die Übung. Der Knopf daneben holt sie, wenn die Klasse feststeckt.
+    document.getElementById('aufruf-bedeutung').innerText = '';
+    zeichneListe();
+    zaehlerAuffrischen();
+}
+
+function bedeutungZeigen() {
+    const w = aufgerufen[aufgerufen.length - 1];
+    document.getElementById('aufruf-bedeutung').innerText = w ? w.bedeutung : '';
+}
+
+function zeichneListe() {
+    const ziel = document.getElementById('liste');
+    ziel.innerHTML = '';
+    // Jüngstes zuerst: Beim Nachschlagen sucht man meistens das, was gerade kam.
+    aufgerufen.slice().reverse().forEach(function (w, i) {
+        const s = document.createElement('span');
+        s.textContent = w.latin;
+        if (i === 0) s.className = 'neu';
+        ziel.appendChild(s);
+    });
+}
+
+function zaehlerAuffrischen() {
+    document.getElementById('zaehler').innerText =
+        aufgerufen.length + ' von ' + topf.length + ' aufgerufen';
+}
+
+/* ---------- Rolle 2: ankreuzen ---------- */
+
+function richteKarteEin() {
+    document.getElementById('rollen-titel').innerText = 'Meine Karte';
+    document.getElementById('karte').style.display = 'grid';
+    neueKarte();
+    knoepfe([{ text: 'Neue Karte', id: 'btn-neue-karte', tun: neueKarte, still: true }]);
+}
+
+function neueKarte() {
+    karte = mische(topf).slice(0, FELDER).map(function (w) {
+        return { latin: w.latin, bedeutung: w.bedeutung, markiert: false };
+    });
+    bingoGemeldet = false;
+    document.getElementById('bingo-banner').classList.remove('an');
+    zeichneKarte();
+    document.getElementById('zaehler').innerText = '0 von ' + FELDER + ' angekreuzt';
+}
+
+function zeichneKarte() {
+    const ziel = document.getElementById('karte');
+    ziel.innerHTML = '';
+    karte.forEach(function (zelle, i) {
+        const k = document.createElement('button');
+        k.className = 'kachel' + (zelle.markiert ? ' markiert' : '');
+        k.type = 'button';
+        k.setAttribute('aria-pressed', zelle.markiert ? 'true' : 'false');
+        // Das lateinische Wort steht als Titel mit drin: Wer am Ende prüfen
+        // will, kommt auch ohne Bingo an die Zuordnung.
+        k.title = zelle.latin;
+        const span = document.createElement('span');
+        span.className = 'wort';
+        span.textContent = zelle.bedeutung;
+        k.appendChild(span);
+        k.addEventListener('click', function () { kippeZelle(i); });
+        ziel.appendChild(k);
+    });
+}
+
+function kippeZelle(i) {
+    karte[i].markiert = !karte[i].markiert;
+    zeichneKarte();
+    document.getElementById('zaehler').innerText =
+        karte.filter(function (z) { return z.markiert; }).length + ' von ' + FELDER + ' angekreuzt';
+    pruefeBingo();
+}
+
+/* Vier in einer Linie. Gemeldet wird EINMAL - sonst blinkt der Banner bei
+   jedem weiteren Antippen wieder auf, und niemand weiss, welche Reihe
+   gemeint war. */
+function pruefeBingo() {
+    const treffer = LINIEN.find(function (linie) {
+        return linie.every(function (i) { return karte[i].markiert; });
+    });
+    const banner = document.getElementById('bingo-banner');
+    if (!treffer) { banner.classList.remove('an'); bingoGemeldet = false; return; }
+    if (bingoGemeldet) return;
+    bingoGemeldet = true;
+
+    /* Das ist die Stelle, an der das Spiel ohne Server prüfbar wird: Die Karte
+       nennt die vier LATEINISCHEN Wörter ihrer Reihe. Die Lehrkraft schlägt sie
+       in ihrer Aufrufliste nach - stehen alle vier dort, gilt das Bingo.
+       Ohne diese Zeile müsste sie sechzehn deutsche Kacheln zurückübersetzen. */
+    const woerter = treffer.map(function (i) { return karte[i].latin; });
+    document.getElementById('bingo-pruefung').innerHTML =
+        'Zum Prüfen — diese vier wurden aufgerufen:<br><b>' + woerter.join(' · ') + '</b>';
+    banner.classList.add('an');
+}
+
+/* ---------- Kleinkram ---------- */
+
+function knoepfe(liste) {
+    const ziel = document.getElementById('fusszeile');
+    ziel.innerHTML = '';
+    liste.forEach(function (k) {
+        const b = document.createElement('button');
+        b.className = 'start-btn' + (k.still ? ' zweitrangig' : '');
+        b.id = k.id;
+        b.textContent = k.text;
+        b.addEventListener('click', k.tun);
+        ziel.appendChild(b);
+    });
+}
+
+window.onload = function () {
+    document.getElementById('btn-aufrufer').addEventListener('click', function () { starte('aufrufer'); });
+    document.getElementById('btn-karte').addEventListener('click', function () { starte('karte'); });
+};
+</script>
+
+</body>
+</html>

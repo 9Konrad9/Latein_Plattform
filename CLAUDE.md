@@ -380,14 +380,47 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Die Gegenprobe gehört bei beiden dazu: ohne sie wäre der Test auch grün, wenn gar niemand
     mehr in den Hintergrund käme und die Tiefe eingeebnet wäre.
 
-Zwei davon sind **Gruppenspiele** und folgen deshalb anderen Regeln als der Rest: Sie gehören
+Drei davon sind **Gruppenspiele** und folgen deshalb anderen Regeln als der Rest: Sie gehören
 keiner Person, tragen im Hauptmenü **kein `progress-badge`**, und ihre Vollbild-Layouts schalten
 das `min-height: 100vh` aus `theme.css` mit `min-height: 0` ab (siehe Fallstricke unten).
+
+**Die Schleife im Hauptmenü, die die Fortschrittsbänder füllt, muss `if (!badge) return;`
+enthalten.** Ohne das warf sie an der ersten Karte ohne Band - und `forEach` bricht dann GANZ
+ab: **Sieben Karten dahinter** (Kastell, Villa, Pronomina, ViaRomana, Pendel, Arcus, Quiz)
+blieben leer. Niemandem aufgefallen, weil ein leeres Band aussieht wie ein leeres Band.
+Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
 
 - **Fliegenklatsche.html** – Brettspiel am Beamer für die ganze Klasse. Nicht überlappende
   Wortkacheln auf Marmortafeln (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**,
   damit der Rahmen von 9 bis 64 px Schrift mitwächst). Zwei Teams, Punkte von Hand.
   Kein Richtig/Falsch, deshalb **kein** `recordVocabAttempt`.
+- **Bingo.html** – **Vokabel-Bingo** (Oktober 2026). Das erste Spiel, bei dem die ganze Klasse
+  GLEICHZEITIG am eigenen Gerät spielt – und es braucht trotzdem keinen Server. Eine Datei,
+  zwei Rollen: *Beamer: Wörter aufrufen* (Lehrkraft, ruft die lateinischen Wörter auf, führt
+  die Aufrufliste) und *Mein Spielfeld* (4×4-Karte mit deutschen Bedeutungen).
+  **Abgestimmt wird zwischen den Geräten NICHTS ausser der Lektionsspanne** – alle ziehen aus
+  demselben Topf, und mehr als „bis Lektion 12" muss nicht synchron sein. Genau daran hängt,
+  dass das Spiel ohne Backend funktioniert.
+  - **Der Topf enthält nur Wörter mit EINDEUTIGER Bedeutung.** Sonst steht auf der Karte
+    „rufen", die Lehrkraft ruft *vocāre* – und die Kachel stammte von *clāmāre*. Beim
+    Nachprüfen stünde das falsche Wort da, und niemand könnte entscheiden, wer recht hat.
+    Genommen wird die **erste** Bedeutungsangabe, abgeschnitten vor Komma, Semikolon und
+    Klammer: „arbeiten, sich bemühen; (+ Abl.) an etwas leiden" passt auf keine Kachel,
+    „arbeiten" schon. Gemessen kostet das wenig: bis L12 fallen 42 von 386 Wörtern weg
+    (*et/-que/atque* für „und", *caedere/occidere* für „töten"), bis L22 68 von 625.
+  - **Bei Bingo nennt die Karte die vier LATEINISCHEN Wörter ihrer Reihe.** Das ist die
+    einzige Brücke zwischen Schülergerät und Aufrufliste – die Lehrkraft schlägt die vier
+    nach, und fertig. Ohne diese Zeile müsste sie sechzehn deutsche Kacheln zurückübersetzen,
+    und ein falsch gerufenes Bingo wäre nicht zu widerlegen. Ein Kartencode mit gesätem
+    Zufall wäre die aufwendigere Alternative gewesen; vier Wörter tun es auch.
+  - **Kein Vokabelkasten**, wie bei der Fliegenklatsche und aus demselben Grund: Das Gerät
+    kann nicht prüfen, ob ein Kreuz zu Recht gesetzt wurde. `test-bingo.js` prüft das.
+  - Die Bedeutung des aufgerufenen Wortes bleibt **verdeckt** und kommt nur auf Knopfdruck –
+    sie gleich mitzunennen nähme dem Spiel die Übung.
+  - Die Kacheln sind dieselben Marmortafeln wie auf dem Brett der Fliegenklatsche
+    (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**). Markiert heisst
+    gestempelt: eine Scheibe in `--pompeji` UNTER der Schrift (gemessen 7,41 für `--ink` auf
+    der gestempelten Fläche, 6,34 für den Rand auf dem Marmor).
 - **Bomba.html** – ein geteiltes Gerät wandert im Kreis, Multiple Choice; wer die Bomba bei
   abgebrannter Lunte hält, verliert. Drei Regeln tragen das Spiel, alle drei nach Rückmeldung
   des Fachlehrers so entstanden – nicht ohne Not daran drehen:
@@ -737,11 +770,7 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   noch nichts davon gebaut, Reihenfolge offen. Der harte Filter für alle: kein Server, kein
   Login – nichts darf Geräte untereinander abstimmen müssen. Jedes Spiel läuft entweder an
   EINEM Gerät oder am Beamer für alle.
-  - **Vokabel-Bingo.** Jedes Gerät erzeugt sich selbst eine 4×4-Karte mit Bedeutungen aus der
-    gewählten Lektionsspanne, die Lehrkraft ruft vom Beamer die lateinischen Wörter auf.
-    Der Witz: Das braucht trotz fehlendem Backend keine Abstimmung – alle ziehen aus
-    demselben Topf, mehr als „bis Lektion 12" muss nicht synchron sein. Erstes Spiel der
-    Arena, bei dem die ganze Klasse gleichzeitig mit eigenem Gerät spielt.
+  - ~~Vokabel-Bingo~~ – **gebaut** (Oktober 2026), siehe „Aktive Spiele" oben.
   - ~~Bomba~~ – **gebaut**, siehe „Aktive Spiele" oben.
   - **Memory.** Latein ↔ Deutsch, zu zweit an einem iPad. Das ruhige Gegenstück zur
     Fliegenklatsche.
