@@ -421,6 +421,18 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**). Markiert heisst
     gestempelt: eine Scheibe in `--pompeji` UNTER der Schrift (gemessen 7,41 für `--ink` auf
     der gestempelten Fläche, 6,34 für den Rand auf dem Marmor).
+  - **Das aufgerufene Wort liegt auf der Schriftrolle, nicht auf der blanken Wand** – dieselbe
+    dreiteilige Rolle wie das Satzfeld in Arcus. Aus dem Unterricht gemeldet und dann gemessen:
+    Die Wand reicht von Weiss in den Steinen bis fast Schwarz in den Fugen, `--pompeji` steht
+    darauf **zwischen 7,53 und 2,54** – je nachdem, wo ein Buchstabe gerade hinfällt. Am Beamer
+    ist das Wort dann mal lesbar und mal nicht. Auf dem Pergamentband sind es gleichmässige
+    **6,16** (und 11,24 für die Bedeutung in `#3b2a18`). Randbreiten in `clamp()`, damit die
+    Rolle vom iPad bis zum Beamer mitwächst – bei festen Pixeln wäre die wellige Kante auf dem
+    Beamer ein Strich.
+  - **Die Fusszeile bricht um** (`flex-wrap`). Ohne das standen die drei Knöpfe auf einem
+    375-px-Schirm nebeneinander von −45 bis 420: Der wichtigste, „Nächstes Wort", ragte links
+    hinaus und war halb unerreichbar – und weil der Körper `overflow: hidden` hat, gab es nicht
+    einmal eine Bildlaufleiste, die es verraten hätte.
 - **Bomba.html** – ein geteiltes Gerät wandert im Kreis, Multiple Choice; wer die Bomba bei
   abgebrannter Lunte hält, verliert. Drei Regeln tragen das Spiel, alle drei nach Rückmeldung
   des Fachlehrers so entstanden – nicht ohne Not daran drehen:

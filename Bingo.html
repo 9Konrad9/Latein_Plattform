@@ -66,17 +66,57 @@
             align-items: center; justify-content: center;
             gap: 10px;
         }
+        /* Das aufgerufene Wort liegt auf der Schriftrolle, nicht auf der blanken
+           Wand - dieselbe dreiteilige Rolle wie das Satzfeld in Arcus.
+
+           Grund ist gemessen: Die Wand reicht von Weiss in den Steinen bis fast
+           Schwarz in den Fugen. --pompeji steht darauf zwischen 7,53 und 2,54,
+           je nachdem, wo ein Buchstabe gerade hinfällt - am Beamer ist das Wort
+           dann mal lesbar und mal nicht. Auf dem Pergamentband sind es
+           gleichmässige 6,16 (und 11,24 für die Bedeutung in #3b2a18).
+
+           Der Rand ist schmaler als der Schnitt (12 42 10 42): Er muss nur die
+           wellige Kante tragen, keinen Rahmen. In clamp(), damit die Rolle vom
+           iPad bis zum Beamer mitwächst - bei festen Pixeln wäre die Kante auf
+           dem Beamer ein Strich. */
+        .aufruf-rolle {
+            position: relative;
+            margin: 0 clamp(36px, 6vw, 76px);
+            max-width: calc(100% - clamp(72px, 12vw, 152px));
+            border-style: solid;
+            border-width: clamp(10px, 1.4vw, 20px) clamp(22px, 3.4vw, 46px);
+            border-image: url('assets/ui/pergament.png') 12 42 10 42 fill stretch;
+            background: none;
+            padding: clamp(6px, 1.6vh, 26px) clamp(10px, 2vw, 34px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 2px;
+        }
+        /* Die beiden Walzen an den Enden. Sie verdecken zugleich die
+           Schnittkanten des Bandes - ohne sie läge dort eine gerade Kante. */
+        .aufruf-rolle::before,
+        .aufruf-rolle::after {
+            content: '';
+            position: absolute; top: 50%;
+            transform: translateY(-50%);
+            width: clamp(32px, 5vw, 68px); height: 128%;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            pointer-events: none;
+        }
+        .aufruf-rolle::before { left: calc(-1 * clamp(27px, 4.2vw, 58px)); background-image: url('assets/ui/rolle-links.png'); }
+        .aufruf-rolle::after  { right: calc(-1 * clamp(27px, 4.2vw, 58px)); background-image: url('assets/ui/rolle-rechts.png'); }
+
         .aufruf-wort {
             font-family: var(--font-display);
-            font-size: clamp(2.5rem, 13vw, 9rem);
+            font-size: clamp(2.2rem, 11vw, 8rem);
             line-height: 1.05;
-            color: var(--pompeji);
+            color: var(--pompeji);   /* kontrast-ok: 6,16 auf dem Pergamentfeld #f6e7ca */
             text-align: center;
             overflow-wrap: break-word; max-width: 100%;
         }
         .aufruf-bedeutung {
-            font-size: clamp(1rem, 3.5vw, 2rem);
-            color: var(--ink-soft);
+            font-size: clamp(0.95rem, 3vw, 1.8rem);
+            color: #3b2a18;          /* kontrast-ok: 11,24 auf dem Pergamentfeld */
             font-style: italic;
             min-height: 1.3em;            /* hält den Platz frei, damit nichts springt */
         }
@@ -162,7 +202,15 @@
         .bingo-banner .pruefung { margin-top: 6px; font-size: 0.95rem; color: var(--ink); }
         .bingo-banner .pruefung b { font-family: var(--font-display); }
 
-        .fusszeile { flex: 0 0 auto; display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        /* flex-wrap, nicht nur flex: Auf 375 px standen die drei Knoepfe
+           nebeneinander von -45 bis 420 - der WICHTIGSTE, "Naechstes Wort", ragte
+           links hinaus und war halb unerreichbar. Gemessen, nicht vermutet; der
+           Koerper hat overflow: hidden, es gab also nicht einmal eine Bildlaufleiste. */
+        .fusszeile {
+            flex: 0 0 auto;
+            display: flex; flex-wrap: wrap; gap: 10px;
+            justify-content: center; margin-top: 10px;
+        }
         .fusszeile .start-btn { margin-top: 0; }
 
         @media (orientation: landscape) and (max-height: 520px) {
@@ -210,8 +258,10 @@
 
     <!-- Rolle 1 -->
     <div class="aufruf-feld" id="aufruf-feld" style="display:none;">
-        <div class="aufruf-wort" id="aufruf-wort">Bereit?</div>
-        <div class="aufruf-bedeutung" id="aufruf-bedeutung"></div>
+        <div class="aufruf-rolle">
+            <div class="aufruf-wort" id="aufruf-wort">Bereit?</div>
+            <div class="aufruf-bedeutung" id="aufruf-bedeutung"></div>
+        </div>
     </div>
     <div class="liste" id="liste"></div>
 
