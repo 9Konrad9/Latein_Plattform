@@ -185,9 +185,28 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
      Mit wem? –, der Fachbegriff steht in der Erklärung. Ab L7 (`ADVERBIAL_LESSON`); davor
      gäbe es nur die Richtungsangabe, also nichts zu unterscheiden.
      Zwei Dinge tragen diesen Modus:
-     - **Der Kontrast *in urbem* (wohin?) gegen *in urbe* (wo?)** – dieselbe Präposition,
-       anderer Kasus. Dafür baut `SentenceEngine` seit jetzt auch die **Richtungsangabe im
-       Akkusativ** (`in`/`ad` + Akk., Pontes L3 – die Engine hielt sie vorher bis L7 zurück).
+     - **Gefragt ist NUR ein Ablativ – und unter der Lösung steht, woran man ihn erkennt.**
+       Hier stand zuerst das Gegenteil: Die Richtungsangabe im Akkusativ (`in`/`ad` + Akk.,
+       Pontes L3) war absichtlich mit dabei, wegen des Kontrasts *in urbem* (wohin?) gegen
+       *in urbe* (wo?). **Im Unterricht ist genau das durchgefallen** (Oktober 2026): Ein
+       Modus mit dem Titel „Nur Ablativ: Welche Funktion?" fragte nach der Funktion eines
+       Wortes, das gar kein Ablativ ist – gemessen in **40 von 240 Runden**, also jeder
+       sechsten. Wer den Kasus gerade erst lernt, kann daraus nur schließen, die
+       Richtungsangabe sei auch einer.
+       `verfuegbareAdvKeys()` filtert deshalb auf `kasus === 'abl'`; der Knopf „Wohin?" ist
+       aus der Reihe raus. **Im Satzglied-Modus bleibt die Richtungsangabe** – dort ist sie
+       schlicht eine adverbiale Bestimmung, und die Frage nach dem Kasus stellt sich nicht.
+       Der Kontrast ist nicht verloren, er steht jetzt **im Hinweis unter der Lösung**:
+       Jeder Eintrag in `SentenceEngine.ADVERBIALE` trägt ein Feld `hinweis`, das sagt, WORAN
+       man die Funktion erkennt – und das ist fast immer die Präposition oder ihr Fehlen
+       (`in` + Abl. gegen `in` + Akk.; `ex`/`ab`/`dē` immer Ablativ; `cum` immer Ablativ;
+       bloßer Ablativ bei einem Zeitwort = wann, bei einer Sache = womit). Der Fachbegriff
+       allein beantwortet die Frage nicht, die eine 7. Klasse wirklich hat: „Woran hätte ich
+       das sehen sollen?"
+       `test-gating.js` prüft beides mit Gegenproben: dass über 240 Runden kein Nicht-Ablativ
+       gefragt wird, dass die Engine die Richtungsangabe trotzdem noch bauen kann (sonst wäre
+       der Test auch grün, wenn sie ganz verschwunden wäre), und dass der Hinweis wirklich in
+       der Erklärung ankommt, die das Spiel zeigt.
      - **Eine EINZELNE Lektion ist der Sonderfall.** Der Modus stürzte ab, sobald
        jemand nur „Lektion 15" anklickte, statt einen Bereich zu wählen: Die
        Funktionswörter (hōra, silva, gladius …) verteilen sich über den ganzen

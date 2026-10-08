@@ -42,30 +42,43 @@ const SentenceEngine = (() => {
         'pervenīre', 'accēdere', 'discēdere'
     ];
 
+    /* `hinweis` sagt, WORAN man die Funktion erkennt - und das ist fast immer
+       die Präposition oder ihr Fehlen. Ohne diesen Satz nennt die Rückmeldung
+       nur den Fachbegriff, und der beantwortet die Frage nicht, die eine 7.
+       Klasse wirklich hat: "Woran hätte ich das sehen sollen?"
+       Die beiden Paare, auf die es ankommt:
+         in + Akk. (wohin?)  gegen  in + Abl. (wo?)   - der Kasus entscheidet
+         blosser Abl. bei einem Zeitwort (wann?)  gegen  bei einer Sache (womit?) */
     const ADVERBIALE = [
         { key: 'richtung',   kasus: 'akk', lektion: 3, prep: ['in', 'ad'], nurBewegung: true,
           woerter: ['villa', 'hortus', 'schola', 'forum', 'ātrium', 'culīna', 'peristȳlium',
                     'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],
-          label: 'Richtung',                                    frage: 'Wohin?' },
+          label: 'Richtung',                                    frage: 'Wohin?',
+          hinweis: '„in“ und „ad“ mit dem AKKUSATIV fragen: wohin? Dasselbe „in“ mit dem Ablativ fragt: wo? Nicht die Präposition entscheidet, sondern der Kasus.' },
         { key: 'zeit',       kasus: 'abl', lektion: 7, prep: null,
           woerter: ['hōra', 'aestās', 'nox', 'annus', 'diēs', 'lūx'],
-          label: 'Zeit (Ablativus temporis)',                   frage: 'Wann?' },
+          label: 'Zeit (Ablativus temporis)',                   frage: 'Wann?',
+          hinweis: 'Bloßer Ablativ, ohne Präposition - und das Wort bezeichnet eine Zeit (hōra, nox, annus). Dann fragt er: wann?' },
         { key: 'ort',        kasus: 'abl', lektion: 7, prep: 'in',
           woerter: ['villa', 'hortus', 'schola', 'forum', 'ātrium', 'culīna', 'peristȳlium',
                     'urbs', 'templum', 'īnsula', 'silva', 'oppidum'],
-          label: 'Ort (Ablativus loci)',                        frage: 'Wo?' },
+          label: 'Ort (Ablativus loci)',                        frage: 'Wo?',
+          hinweis: '„in“ mit dem ABLATIV fragt: wo? Mit dem Akkusativ fragt dasselbe „in“: wohin? (in urbe - in der Stadt / in urbem - in die Stadt).' },
         { key: 'herkunft',   kasus: 'abl', lektion: 7, prep: 'ex',
           woerter: ['villa', 'hortus', 'schola', 'ātrium', 'culīna',
                     'urbs', 'prōvincia', 'domus', 'silva', 'terra'],
-          label: 'Herkunft/Trennung (Ablativus separationis)',  frage: 'Woher?' },
+          label: 'Herkunft/Trennung (Ablativus separationis)',  frage: 'Woher?',
+          hinweis: '„ex“ steht immer mit dem Ablativ - ebenso „ab“ und „dē“. Alle drei fragen: woher?' },
         { key: 'mittel',     kasus: 'abl', lektion: 7, prep: null,
           woerter: ['pecūnia', 'tuba', 'signum', 'vōx', 'aqua', 'tabula', 'verbum',
                     'gladius', 'manus', 'nāvis', 'arma', 'dextra'],
-          label: 'Mittel (Ablativus instrumenti)',              frage: 'Womit?' },
+          label: 'Mittel (Ablativus instrumenti)',              frage: 'Womit?',
+          hinweis: 'Bloßer Ablativ, ohne Präposition - und das Wort bezeichnet eine Sache. Dann fragt er: womit? Bei einer Person stünde „cum“.' },
         { key: 'begleitung', kasus: 'abl', lektion: 7, prep: 'cum',
           woerter: ['amīcus', 'pater', 'māter', 'frāter', 'soror', 'servus',
                     'magister', 'discipulus', 'uxor', 'fīlius', 'fīlia'],
-          label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?' }
+          label: 'Begleitung (Ablativus sociativus)',           frage: 'Mit wem?',
+          hinweis: '„cum“ steht immer mit dem Ablativ und nennt die Person, die dabei ist: mit wem?' }
     ];
 
     const ACI_LESSON = 8;         // L8: AcI als satzwertige Konstruktion
@@ -221,6 +234,7 @@ const SentenceEngine = (() => {
             text, role: 'adv', lemma: nomen.latin, head: null,
             advKey: typ.key, advFrage: typ.frage, advKasus: typ.kasus,
             exp: `„${text}“ ist eine adverbiale Bestimmung im ${kasusName}: ${typ.label} - Frage: ${typ.frage}`
+                 + (typ.hinweis ? `\n\n${typ.hinweis}` : '')
         };
     }
 

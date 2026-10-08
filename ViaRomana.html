@@ -186,9 +186,9 @@
         <button class="btn-main" id="btn-start-abl" style="margin-top: 10px;">Nur Ablativ: Welche Funktion?</button>
         <p style="margin-top: 8px; font-size: 0.85rem; color: var(--ink-soft); max-width: 42ch;">
             Der zweite Modus geht eine Ebene tiefer: Der Ablativ kann sehr vieles,
-            und hier bestimmst du, <em>was</em> er im Satz tut. Dabei ist auch die
-            Richtungsangabe im Akkusativ mit von der Partie &mdash; <em>in urbem</em>
-            (wohin?) gegen <em>in urbe</em> (wo?). Ab Lektion 7.
+            und hier bestimmst du, <em>was</em> er im Satz tut &mdash; wann, wo, woher,
+            womit, mit wem. Gefragt ist immer ein Ablativ. Woran man die Funktion
+            erkennt, steht nach jeder Antwort dabei. Ab Lektion 7.
         </p>
     </div>
 
@@ -214,11 +214,14 @@
 
     <!-- Zweite Reihe: der Ablativ-Modus fragt nicht nach dem Satzglied, sondern
          nach der FUNKTION - und zwar mit dem Fragewort, das man im Unterricht
-         stellt. Der Fachbegriff steht danach in der Erklärung. -->
+         stellt. Der Fachbegriff steht danach in der Erklärung.
+
+         KEIN "Wohin?": Die Richtungsangabe steht im Akkusativ, nicht im
+         Ablativ - Begründung bei verfuegbareAdvKeys(). Der Knopf stand hier,
+         solange der Modus sie mitstellte. -->
     <div class="syntax-grid" id="abl-grid" style="display: none;">
         <button class="btn-syntax" data-adv="zeit">Wann?</button>
         <button class="btn-syntax" data-adv="ort">Wo?</button>
-        <button class="btn-syntax" data-adv="richtung">Wohin?</button>
         <button class="btn-syntax" data-adv="herkunft">Woher?</button>
         <button class="btn-syntax" data-adv="mittel">Womit?</button>
         <button class="btn-syntax" data-adv="begleitung">Mit wem?</button>
@@ -343,8 +346,22 @@
 
         /* Welche Funktionen stehen bei dieser Lektionsauswahl zur Wahl? Kommt aus
            der Engine, damit die Knöpfe nicht eigene Lektionszahlen mitschleppen. */
+        /* Welche Funktionen bietet der ABLATIV-Modus an?
+
+           Nur die im Ablativ. Die Richtungsangabe steht im AKKUSATIV
+           (in/ad + Akk., Pontes L3) und war hier zuerst mit dabei - absichtlich,
+           wegen des Kontrasts in urbem (wohin?) gegen in urbe (wo?).
+           Im Unterricht ist genau das durchgefallen: Ein Modus, der
+           "Nur Ablativ: Welche Funktion?" heisst, fragt dann nach der Funktion
+           eines Wortes, das gar kein Ablativ ist. Wer den Kasus noch lernt, kann
+           daraus nur schliessen, die Richtungsangabe sei auch einer.
+
+           Der Kontrast ist nicht verloren - er steht jetzt im Hinweis unter der
+           Loesung bei "Wo?" (ADVERBIALE[...].hinweis in sentenceEngine.js), also
+           dort, wo er erklaert wird, statt dort, wo er verwirrt. */
         function verfuegbareAdvKeys() {
             return SentenceEngine.ADVERBIALE
+                .filter(t => t.kasus === 'abl')
                 .filter(t => t.lektion <= maxSelectedLesson)
                 .map(t => t.key);
         }
@@ -443,9 +460,9 @@
 
         /* Im Ablativ-Modus wird die gesuchte Funktion REIHUM vorgegeben und dann
            so lange gebaut, bis sie im Satz steht. Würfelte man den Satz einfach
-           aus, käme heraus, was die Engine gerade häufig baut - gemessen kam die
-           Richtungsangabe dabei nur in 14 % der Fälle vor, und genau sie ist der
-           Kontrast, um den es hier geht. */
+           aus, käme heraus, was die Engine gerade häufig baut, und die selteneren
+           Funktionen kämen kaum dran - gemessen traf es die Herkunft und die
+           Begleitung, deren Wörter über den ganzen Lehrgang verstreut stehen. */
         function buildAblativRound() {
             const keys = verfuegbareAdvKeys();
             if (!keys.length) return null;
