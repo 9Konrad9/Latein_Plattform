@@ -8,6 +8,7 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
+    <script src="bedeutung.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
@@ -521,15 +522,15 @@
             document.getElementById('options-grid').style.display = 'grid';
             document.getElementById('karten-steuerung').style.display = 'none';
 
-            let wrongPool = activePool
-                .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
-                .map(i => i.meaning);
-
-            wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
-            while (wrongPool.length < 3) {
-                let fb = activePool[Math.floor(Math.random() * activePool.length)];
-                if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
-            }
+            /* Die falschen Antworten dürfen nicht AUCH richtig sein: Neben
+               „clāmāre - rufen, laut rufen" stand „rufen" (aus vocāre) als
+               falsch zur Wahl. Verglichen wurde nur der TEXT, nicht der Sinn.
+               Aus dem Unterricht gemeldet, Oktober 2026; die Begründung steht
+               in bedeutung.js. */
+            let wrongPool = LudiBedeutung.waehleDistraktoren(
+                item, activePool.filter(i => i.type === item.type), 3);
+            // Reicht die eigene Wortart nicht, zählt der ganze Topf.
+            if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3);
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
 

@@ -7,6 +7,7 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
+    <script src="bedeutung.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
@@ -297,17 +298,31 @@
 
         function germanGloss(entry) { return entry.meaning.split(',')[0].trim(); }
 
+        /* Die drei falschen Antworten dürfen nicht AUCH richtig sein.
+
+           Vorher wurde nur verglichen, ob der Text gleich ist. Damit stand
+           neben „canere - ertönen" die Antwort „singen" (aus cantāre) als
+           FALSCH zur Wahl, obwohl canere genau das heisst. Wer es wusste,
+           antwortete richtig und bekam „falsch" - gemeldet aus dem
+           Unterricht, Oktober 2026.
+
+           Gemessen traf es nur 0,2 bis 0,4 % der Runden. Das täuscht: Der
+           Vokabelkasten schiebt ein zu Unrecht als falsch gewertetes Wort
+           auf Rot, und rote Wörter kommen häufiger dran. Für das einzelne
+           Wort wird daraus eine Schleife, die sich selbst am Laufen hält.
+           17 % der Wörter bis L12 haben im eigenen Topf so einen
+           Doppelgänger (clāmāre, vidēre, agere, manēre, quaerere ...).
+
+           Gibt der Topf keine drei sauberen Distraktoren her, kommt null
+           zurück und der Aufrufer nimmt ein anderes Wort. Aufgefüllt wird
+           NICHT - eine Frage, die sich nicht sauber stellen lässt, wird
+           nicht gestellt. */
         function buildAnswerSet(target) {
             const correct = germanGloss(target);
-            const others = activePool.filter(v => v.latin !== target.latin);
-            const shuffled = [...others].sort(() => Math.random() - 0.5);
-            const distractorSet = new Set();
-            for (const item of shuffled) {
-                const gloss = germanGloss(item);
-                if (gloss !== correct) distractorSet.add(gloss);
-                if (distractorSet.size === 3) break;
-            }
-            const options = [correct, ...Array.from(distractorSet)].sort(() => Math.random() - 0.5);
+            const falsche = LudiBedeutung.waehleDistraktoren(
+                target, activePool, 3, germanGloss);
+            if (falsche.length < 3) return null;
+            const options = [correct, ...falsche].sort(() => Math.random() - 0.5);
             return { correct, options };
         }
 
@@ -405,7 +420,16 @@
                     platforms.push({ x: px, y: y, w: NEUTRAL_W, type: 'neutral' });
                     return y - gap;
                 }
-                const { correct, options } = buildAnswerSet(target);
+                /* Gibt der Topf für dieses Wort keine sauberen Antworten her,
+                   wächst hier neutraler Boden statt einer unfairen Frage. Die
+                   nächste Reihe nimmt dann ein anderes Wort. */
+                const satz = buildAnswerSet(target);
+                if (!satz) {
+                    const px2 = 20 + Math.random() * (CW - NEUTRAL_W - 40);
+                    platforms.push({ x: px2, y: y, w: NEUTRAL_W, type: 'neutral' });
+                    return y - gap;
+                }
+                const correct = satz.correct, options = satz.options;
                 const slotW = CW / 4;
                 const reihe = ++reiheZaehler;
                 for (let i = 0; i < 4; i++) {

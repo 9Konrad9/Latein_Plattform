@@ -7,6 +7,7 @@
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
+    <script src="bedeutung.js"></script>
     <script src="achievementToast.js"></script>
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
@@ -491,15 +492,12 @@
                 questionText = `Was bedeutet „${item.latin}“?`;
                 currentCorrectAnswer = item.meaning;
 
-                wrongPool = activePool
-                    .filter(i => i.type === item.type && i.meaning !== currentCorrectAnswer)
-                    .map(i => i.meaning);
-
-                wrongPool = [...new Set(wrongPool)].sort(() => Math.random() - 0.5).slice(0, 3);
-                while (wrongPool.length < 3) {
-                    let fb = activePool[Math.floor(Math.random() * activePool.length)];
-                    if (fb.meaning !== currentCorrectAnswer && !wrongPool.includes(fb.meaning)) wrongPool.push(fb.meaning);
-                }
+                /* Die falschen Antworten dürfen nicht AUCH richtig sein -
+                   verglichen wurde vorher nur der Text, nicht der Sinn.
+                   Begründung in bedeutung.js. */
+                wrongPool = LudiBedeutung.waehleDistraktoren(
+                    item, activePool.filter(i => i.type === item.type), 3);
+                if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3);
             } else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";

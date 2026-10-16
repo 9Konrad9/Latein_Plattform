@@ -48,6 +48,21 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   genau deshalb funktioniert es, obwohl die Spiele Verschiedenes merken (eine Vokabel,
   eine ganze Runde, eine Frage samt Fragetyp). Was NICHT dort liegt: wie eine Frage
   aussieht, wie sie wieder gestellt wird, und was während der Wiederholung ruht.
+- `bedeutung.js` – zerlegt eine Bedeutungsangabe in ihre **Sinne** und sagt, ob zwei Einträge
+  sich einen davon teilen (`LudiBedeutung.kollidiert`, `waehleDistraktoren`). Gebraucht von
+  allen Spielen, die nach der Bedeutung fragen (Issa springt, Circus, Duell).
+  **Wozu:** Die falschen Antworten wurden aus anderen Wörtern gezogen und nur nach dem TEXT
+  verglichen. Neben *canere* („ertönen") stand deshalb „singen" (aus *cantāre*) als FALSCHE
+  Antwort – obwohl *canere* genau das heißt. Wer es wusste, antwortete richtig und bekam
+  „falsch". Aus dem Unterricht gemeldet (Oktober 2026) und der ärgerlichste Fehler überhaupt,
+  weil er sich nicht erklären lässt.
+  **Warum die Quote täuscht:** Es traf nur 0,2–0,8 % der Runden. Aber der Leitner-Kasten
+  schiebt ein zu Unrecht als falsch gewertetes Wort auf **Rot**, und rote Wörter kommen
+  häufiger dran – für das einzelne Wort wird daraus eine Schleife, die sich selbst am Laufen
+  hält. Betroffen sein KÖNNEN 17 % der Wörter bis L12 und 27 % bis L35, darunter *clāmāre,
+  vidēre, agere, manēre, quaerere*.
+  Kommen keine drei sauberen Distraktoren zusammen, wird **weniger** zurückgegeben – nie
+  aufgefüllt. Der Aufrufer nimmt dann ein anderes Wort.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
 
 ## Aktive Spiele (Stand zuletzt)
@@ -172,6 +187,26 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     um 65 %. Weite Distraktoren gibt es nur noch, wo das Paradigma keinen näheren hergibt
     (z. B. der Infinitiv bei L5 – dort ist „*amāre* oder *amat*?" gerade die Lernfrage).
     `test-kastell.js` prüft genau das: kein Distraktor weiter weg **als nötig**.
+
+  **Eine Frage, die sich nicht sauber stellen lässt, wird nicht gestellt** (Oktober 2026, nach
+  gehäuften Fehlermeldungen aus dem Unterricht). Bei vier Knöpfen und den Labels, die eine
+  Lektionsauswahl kennt, muss ein Wort **vier unterscheidbare Formen** haben. Bis L5 kennt die
+  Nomenseite nur Nominativ und Akkusativ, also genau vier Labels – und dann scheitern:
+  - **Neutra**: *officium* hat Nom. Sg. = Akk. Sg. und Nom. Pl. = Akk. Pl.
+  - **konsonantische Deklination**: *pater, māter, frāter, soror, clāmor* haben Nom. Pl. = Akk. Pl.
+
+  Gemessen traf das **10 von 23 Nomen bei „nur L2", 13 von 30 bei L3, 19 von 44 bei L5** –
+  rund 40 % des Wortschatzes. Dort griff ein „Sicherheitsnetz", das an einen schon gewählten
+  Text ein **unsichtbares Zeichen** hängte und ihn ein zweites Mal anbot: zwei Knöpfe mit
+  derselben Beschriftung, in **63 von 120 Runden**. Und der Zweig, der nie gefeuert hat, war
+  noch schlimmer – fand sich GAR kein Distraktor, verdoppelte er die **richtige** Antwort; wer
+  den Doppelgänger angeklickt hätte, wäre für eine richtige Antwort als falsch gewertet worden.
+
+  Jetzt wird nichts mehr aufgefüllt: `brauchbareDistraktoren()` zählt, wie viele Labels
+  überhaupt taugen (gleiche FORM scheidet aus – *officia* ist Nom. UND Akk. Pl.), das Ziel wird
+  nur unter Formen mit mindestens drei gewählt, und `buildRoundFromSlots()` gibt sonst `null`.
+  `startDefense()` siebt den Topf **vor** dem Start, `showWave()` zieht notfalls ein anderes
+  Wort. `test-antworten.js` spielt dafür jede Lektionsauswahl durch – einzeln und als Bereich.
 
   **Modus 3: Nur Passivformen** (Oktober 2026, für eine 8. Klasse, die das Passiv neu hat).
   Gefragt wird ausschließlich eine Passivform; alles andere bleibt wie in Modus 2.
@@ -508,6 +543,23 @@ dieses Namens, und darauf spielt auch das Spiel an.
   Testumgebung liegt in `C:\Users\konra\latein-tests` (Node + jsdom), bewusst AUSSERHALB des
   OneDrive-Ordners – `node_modules` gehört nicht in die Synchronisierung und nicht ins Repo.
   Wiederverwendbare Testbasis dort: `harness.js` (`loadScripts([...])` → `{ ev, errors }`).
+
+  **Drei Tests prüfen quer über alle Spiele** (Oktober 2026, entstanden aus gehäuften
+  Fehlermeldungen; sie haben beide Ursachen gefunden, die die bestehenden Tests nicht sahen):
+  - `test-start.js` – startet JEDES Spiel über seinen echten Weg, mit gemocktem Lektions-
+    filter, für jede einzelne Lektion und für Bereiche. Gesucht wird nur: Wirft es, statt
+    sauber abzulehnen?
+  - `test-antworten.js` – spielt Issa und das Kastell über jede Auswahl durch und prüft, was
+    eine Schülerin SIEHT: vier Antworten, keine leere, **keine zwei, die gleich aussehen**,
+    genau eine richtige.
+  - `test-issa-lauf.js` – taktet den echten Spielablauf Bild für Bild (Physik, Kamera,
+    Gegenstände, Herzverlust, Wiederholung) über 40 Auswahlen.
+
+  **Was daran neu ist:** Die bisherigen Tests prüften, ob ein Spiel das RICHTIGE tut. Diese
+  drei prüfen, ob es etwas FALSCHES zeigt – und genau dort lagen beide Fehler. Keiner von
+  beiden war ein Absturz; kein einziges Spiel stürzt ab. Wer der Fehlermeldung „es kommen
+  Fehler" nachgeht, sucht deshalb besser nach dem, was auf dem Schirm steht, als nach einer
+  Ausnahme im Protokoll.
   Zwei Fallstricke, die dabei jedes Mal zuschlagen:
   - **`window.eval(quelltext)` funktioniert NICHT** zum Laden der Projektdateien. Deren Globals
     (`globalVocabularyPool`, `NounEngine`, `VerbEngine` ...) sind top-level `const` – solche

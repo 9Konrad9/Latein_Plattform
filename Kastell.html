@@ -289,8 +289,23 @@
            es sein: Im Passiv-Modus ist die wichtigste falsche Antwort die
            Aktivform derselben Person (capiēmur gegen capiēmus). Wer auch die
            Distraktoren einschraenkte, naehme dem Modus seinen Sinn. */
+        /* Wie viele verschiedene LABELS taugen als falsche Antwort auf diese
+           Form? Ein Slot mit derselben Form scheidet aus (er waere auch richtig:
+           "officia" ist Nom.Pl. UND Akk.Pl.), ein Slot mit demselben Label
+           ebenso. Bleiben weniger als drei, laesst sich die Frage nicht mit vier
+           Knoepfen stellen - dann wird sie nicht gestellt. */
+        function brauchbareDistraktoren(slots, ziel) {
+            const labels = new Set();
+            slots.forEach(s => {
+                if (s.form !== ziel.form && s.label !== ziel.label) labels.add(s.label);
+            });
+            return labels.size;
+        }
+
         function buildRoundFromSlots(slots, zielDarf) {
-            const zielbar = zielDarf ? slots.filter(zielDarf) : slots;
+            let zielbar = zielDarf ? slots.filter(zielDarf) : slots;
+            // Nur Formen, die vier unterscheidbare Antworten hergeben.
+            zielbar = zielbar.filter(z => brauchbareDistraktoren(slots, z) >= 3);
             if (!zielbar.length) return null;
             const weights = zielbar.map(s => s.weight || 1);
             const totalWeight = weights.reduce((a, b) => a + b, 0);
@@ -304,10 +319,13 @@
             const targetIdx = slots.indexOf(gewaehlt);
             const target = slots[targetIdx];
 
+            const falsche = waehleDistraktoren(slots, targetIdx);
+            // Lieber keine Runde als eine mit drei Knoepfen oder einem Doppelgaenger.
+            if (falsche.length < 3) return null;
             return {
                 targetForm: target.form,
                 correctLabel: target.label,
-                options: [target.label, ...waehleDistraktoren(slots, targetIdx)].sort(() => Math.random() - 0.5)
+                options: [target.label, ...falsche].sort(() => Math.random() - 0.5)
             };
         }
 
@@ -415,10 +433,26 @@
                     .forEach(k => { if (gewaehlt.length < 3) nimm(k); });
             }
 
-            // Sicherheitsnetz f\u00fcr sehr kleine Paradigmen (z.B. nur Pr\u00e4sens bekannt)
-            while (gewaehlt.length < 3) {
-                gewaehlt.push((gewaehlt[gewaehlt.length - 1] || ziel.label) + '\u200b');
-            }
+            /* Hier stand ein "Sicherheitsnetz": Reichte das Paradigma nicht fuer
+               drei Distraktoren, haengte es an einen schon gewaehlten Text ein
+               UNSICHTBARES Zeichen und bot ihn ein zweites Mal an. Auf dem Schirm
+               standen dann zwei Knoepfe mit derselben Beschriftung.
+
+               Gemessen betraf das 63 von 120 Runden bei "nur L2", "nur L3",
+               "nur L5" und "bis L3" - also die Lektionen, in denen die Nomenseite
+               erst Nominativ und Akkusativ kennt. Bei vier Knoepfen und vier
+               bekannten Labels muss ein Wort VIER unterscheidbare Formen haben,
+               und das haben 40 % nicht: Neutra (officium: Nom.Sg. = Akk.Sg.) und
+               die konsonantische Deklination (pater: Nom.Pl. = Akk.Pl. = patres).
+
+               Schlimmer noch war der Zweig, der nie gefeuert hat: Fand sich GAR
+               kein Distraktor, verdoppelte die Zeile die RICHTIGE Antwort. Wer
+               den Doppelgaenger angeklickt haette, waere fuer eine richtige
+               Antwort als falsch gewertet worden.
+
+               Jetzt wird nichts mehr aufgefuellt. Kommen keine drei zusammen,
+               gibt waehleDistraktoren() weniger zurueck, buildRoundFromSlots()
+               gibt null, und der Aufrufer nimmt ein anderes Wort. */
             return gewaehlt.slice(0, 3);
         }
 
@@ -427,6 +461,13 @@
            Nomenseite bot bisher stur alle fünf Kasus an. Weil die Distraktoren
            aus denselben Feldern kommen, verschwinden die zu frühen Formen damit
            auch aus den falschen Antwortmöglichkeiten. */
+        /* EINE Stelle, die weiss, welcher Rundenbauer zum Modus gehört. Vorher
+           stand diese Fallunterscheidung an zwei Stellen, und der Passiv-Modus
+           musste an beiden mitgedacht werden. */
+        function rundeFuer(wort) {
+            return gameMode === 'noun' ? buildNounRound(wort) : buildVerbRound(wort);
+        }
+
         function buildNounRound(nounObj) {
             const table = NounEngine.decline(nounObj);
             const erlaubteKasus = NounEngine.getKnownCases(maxSelectedLesson);
@@ -698,6 +739,26 @@
                 }
             }
 
+            /* Nur Wörter, aus denen sich überhaupt eine saubere Frage bauen
+               lässt. Bis L5 kennt die Nomenseite nur Nominativ und Akkusativ;
+               ein Neutrum (officium: Nom.Sg. = Akk.Sg.) oder ein Wort der
+               konsonantischen Deklination (pater: Nom.Pl. = Akk.Pl.) gibt dann
+               keine vier unterscheidbaren Antworten her. Gemessen traf das bei
+               "nur L2" 10 von 23 Nomen, bei "bis L5" 19 von 44.
+               Geprüft wird HIER, nicht mitten im Spiel - dasselbe Muster wie
+               bei den Verbformen und beim Passiv-Modus. */
+            const brauchbar = targetPool.filter(w => {
+                try { return !!rundeFuer(w); } catch (e) { return false; }
+            });
+            if (brauchbar.length < 4) {
+                alert("In dieser Lektionsauswahl gibt es zu wenige Wörter, die sich eindeutig bestimmen lassen.\n\n" +
+                      "Solange nur Nominativ und Akkusativ bekannt sind, haben viele Wörter gleichlautende Formen " +
+                      "(pater/patrēs, officium/officia) - dafür lassen sich keine vier verschiedenen Antworten bilden.\n\n" +
+                      "Bitte wähle weitere Lektionen aus.");
+                return;
+            }
+            targetPool = brauchbar;
+
             currentWaveIdx = 0;
             wallHealth = 100;
             LudiReview.zuruecksetzen(wdh);
@@ -721,9 +782,26 @@
                 currentTargetObj = forced.targetObj;
                 currentRound = forced.round;
             } else {
-                // Normaler Modus: gewichtete Auswahl nach Ampel-Level (rote Wörter häufiger)
-                currentTargetObj = LudiProgress.weightedPick(targetPool);
-                currentRound = gameMode === 'noun' ? buildNounRound(currentTargetObj) : buildVerbRound(currentTargetObj);
+                /* Normaler Modus: gewichtete Auswahl nach Ampel-Level (rote Wörter
+                   häufiger). Taugt ein Wort nicht für vier unterscheidbare
+                   Antworten, wird ein anderes gezogen - buildRoundFromSlots gibt
+                   dafür null zurück, statt die Frage mit einem Doppelgänger
+                   aufzufüllen. startDefense() hat den Topf zwar schon gesiebt,
+                   aber nicht jede FORM eines brauchbaren Wortes taugt. */
+                currentRound = null;
+                for (let versuch = 0; versuch < 25 && !currentRound; versuch++) {
+                    currentTargetObj = LudiProgress.weightedPick(targetPool)
+                                    || targetPool[Math.floor(Math.random() * targetPool.length)];
+                    currentRound = rundeFuer(currentTargetObj);
+                }
+                if (!currentRound) {
+                    // Kann nach dem Sieben in startDefense() nicht mehr vorkommen;
+                    // steht da, damit es auch dann so bleibt.
+                    alert("Für diese Lektionsauswahl lässt sich keine saubere Frage bauen. Bitte wähle weitere Lektionen.");
+                    document.getElementById('start-screen').style.display = '';
+                    document.getElementById('combat-box').style.display = 'none';
+                    return;
+                }
             }
 
             currentCorrectAnswer = currentRound.correctLabel;
