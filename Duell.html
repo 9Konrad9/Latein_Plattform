@@ -490,14 +490,15 @@
             if (qType === 0) {
                 categoryText = `🔮 Bedeutung — ${translateType(item.type)}`;
                 questionText = `Was bedeutet „${item.latin}“?`;
-                currentCorrectAnswer = item.meaning;
+                currentCorrectAnswer = LudiBedeutung.fuer(item, maxSelectedLesson);
 
                 /* Die falschen Antworten dürfen nicht AUCH richtig sein -
                    verglichen wurde vorher nur der Text, nicht der Sinn.
                    Begründung in bedeutung.js. */
+                const alsText = v => LudiBedeutung.fuer(v, maxSelectedLesson);
                 wrongPool = LudiBedeutung.waehleDistraktoren(
-                    item, activePool.filter(i => i.type === item.type), 3);
-                if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3);
+                    item, activePool.filter(i => i.type === item.type), 3, alsText);
+                if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3, alsText);
             } else if (qType === 1) {
                 if (item.type === "noun") {
                     categoryText = "🏛️ Genitiv & Geschlecht";

@@ -296,7 +296,12 @@
         /* ============ VOKABEL-LOGIK ============ */
         let activePool = [];
 
-        function germanGloss(entry) { return entry.meaning.split(',')[0].trim(); }
+        let maxSelectedLesson = 999;   // hoechste gewaehlte Stufe, aus der Lektionsauswahl
+
+        // Erste Bedeutung - die der gewaehlten Stufe, siehe bedeutung.js.
+        function germanGloss(entry) {
+            return LudiBedeutung.fuer(entry, maxSelectedLesson).split(',')[0].trim();
+        }
 
         /* Die drei falschen Antworten dürfen nicht AUCH richtig sein.
 
@@ -960,7 +965,11 @@
             if (typeof globalVocabularyPool === 'undefined') { alert("Fehler: vocabulary.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
             if (typeof LessonFilter === 'undefined') { alert("Fehler: lessonFilter.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
             if (typeof LudiProgress === 'undefined') { alert("Fehler: progress.js wurde nicht gefunden! Bitte prüfen, ob die Datei im selben Ordner liegt."); return; }
-            LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+            LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
+                // Die hoechste gewaehlte Stufe entscheidet mit, was ein Wort bedeutet:
+                // contendere heisst ab Caesar "eilen", im Lehrgang "behaupten".
+                maxSelectedLesson = selectedLessonNumbers && selectedLessonNumbers.length
+                                  ? Math.max.apply(null, selectedLessonNumbers) : 999;
                 activePool = filteredPool.filter(v => (v.type === 'noun' || v.type === 'verb') && !v.latin.includes(' '));
                 if (activePool.length < 8) {
                     alert("Für diese Lektionsauswahl gibt es noch zu wenig Wortschatz. Bitte mehr Lektionen wählen.");

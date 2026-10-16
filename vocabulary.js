@@ -447,7 +447,12 @@ const globalVocabularyPool = [
     { latin: "convenīre", lesson: 14, type: "verb", valenz: ["intrans", "akk"], subjBelebt: true, middle: "conveniō", perfect: "convēnī", ppp: "conventum", pppLesson: 23, gram_clue: "1. Pers. Sg.: conveniō", gram_class: "i-Konjugation", meaning: "zusammenkommen; (+ Akk.) jdn. treffen" },
     { latin: "habēre", lesson: 14, type: "verb", valenz: "akk", subjBelebt: false, middle: "habeō", perfect: "habuī", ppp: "habitum", pppLesson: 23, gram_clue: "1. Pers. Sg.: habeō", gram_class: "e-Konjugation", meaning: "haben, halten" },
     { latin: "rēx", lesson: 14, type: "noun", belebt: "person", middle: "rēgis m.", gram_clue: "Genitiv: rēgis, m.", gram_class: "konsonantische Deklination", meaning: "der König" },
-    { latin: "contendere", lesson: 14, type: "verb", valenz: "intrans", subjBelebt: true, aci: "sagen", middle: "contendō", perfect: "contendī", ppp: "contentum", pppLesson: 16, gram_clue: "1. Pers. Sg.: contendō", gram_class: "konsonantische Konjugation", meaning: "behaupten" },
+    { latin: "contendere", lesson: 14, type: "verb", valenz: "intrans", subjBelebt: true, aci: "sagen", middle: "contendō", perfect: "contendī", ppp: "contentum", pppLesson: 16, gram_clue: "1. Pers. Sg.: contendō", gram_class: "konsonantische Konjugation", meaning: "behaupten",
+      /* Ab der Lektüre eine andere Bedeutung - bei Caesar steht es in BG I 7
+         für "eilen" (in Galliam ulteriorem contendit) und in BG I 1 für
+         "kämpfen" (cotidianis proeliis cum Germanis contendunt). Im Lehrgang
+         bleibt es "behaupten"; siehe LudiBedeutung.fuer in bedeutung.js. */
+      meaningAb: { lesson: 36, meaning: "eilen, marschieren; kämpfen, sich messen; behaupten" } },
     { latin: "quod", lesson: 14, type: "conjunction", middle: "Subj.", gram_clue: "", gram_class: "", meaning: "weil" },
     { latin: "anteā", lesson: 14, type: "adverb", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "vorher, früher, zuvor" },
     { latin: "appellāre", lesson: 14, type: "verb", valenz: "akk", subjBelebt: true, middle: "appellō", perfect: "appellāvī", ppp: "appellātum", pppLesson: 16, gram_clue: "1. Pers. Sg.: appellō", gram_class: "a-Konjugation", meaning: "ansprechen, (jdn. etwas) nennen" },

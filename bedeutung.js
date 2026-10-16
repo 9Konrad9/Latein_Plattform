@@ -50,9 +50,35 @@ const LudiBedeutung = (() => {
         return t.trim();
     }
 
+    /* Manche Wörter bedeuten in der LEKTÜRE etwas anderes als im Lehrgang.
+       contendere ist im Pontes-Wortschatz „behaupten"; bei Caesar heisst es
+       „eilen, marschieren" (BG I 7) und „kämpfen" (BG I 1). Beides in einen
+       Eintrag zu schreiben wäre falsch - eine 8. Klasse, die noch keinen
+       Caesar liest, soll „behaupten" lernen und sonst nichts.
+
+       Deshalb `meaningAb`: { lesson, meaning }. Ab dieser Stufe gilt die
+       andere Angabe. EIN Eintrag je Lemma bleibt damit die Regel - zwei
+       Einträge für dasselbe Wort wären genau der Fehler, gegen den diese
+       Datei gebaut wurde: In einem Topf, der beide enthält, stünde die eine
+       Bedeutung als falsche Antwort auf die andere. */
+    function fuer(eintrag, maxLektion) {
+        if (!eintrag) return '';
+        const ab = eintrag.meaningAb;
+        if (ab && typeof maxLektion === 'number' && maxLektion >= ab.lesson) return ab.meaning;
+        return eintrag.meaning || '';
+    }
+
+    /* Beim Vergleichen zählen BEIDE Angaben. Das ist die vorsichtige
+       Richtung: Eine Antwort, die unter einer der beiden Lesarten richtig
+       wäre, soll nicht als falsche Antwort danebenstehen. */
     function kernSinne(eintrag) {
         const raus = [];
-        sinne(eintrag).forEach(s => { const k = kern(s); if (k) raus.push(k); });
+        const quellen = [eintrag && eintrag.meaning,
+                         eintrag && eintrag.meaningAb && eintrag.meaningAb.meaning];
+        quellen.filter(Boolean).forEach(q => {
+            sinne(q).forEach(s => { const k = kern(s); if (k && raus.indexOf(k) === -1) raus.push(k); });
+        });
+        if (!quellen.some(Boolean)) sinne(eintrag).forEach(s => { const k = kern(s); if (k) raus.push(k); });
         return raus;
     }
 
@@ -99,7 +125,7 @@ const LudiBedeutung = (() => {
         return raus;
     }
 
-    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren };
+    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren, fuer };
 })();
 
 // Auch unter Node erreichbar, damit die Tests es ohne Browser prüfen können.

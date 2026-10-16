@@ -93,7 +93,8 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Textdatei als Argument prüft er zusätzlich, dass **jedes Wort wirklich im Text steht** –
     dabei ist aufgefallen, dass Caesar *adsciscunt* schreibt, nicht *asciscunt*.
 - **Die Lektionsauswahl beschriftet ihre Stufen** (`LESSON_LABELS` in `lessonFilter.js`):
-  0 = „Salvē", 32–35 = „T1"–„T4", 36 = „Caesar". Vorher gab es nur den Sonderfall 0, und die
+  0 = „Salvē", 32–35 = „T1"–„T4", 36–42 = „Caesar 1"–„Caesar 7". Vorher gab es nur den
+  Sonderfall 0, und die
   Transitio-Lektionen hießen „Lektion 32" bis „Lektion 35" – im Buch heißen sie T1–T4, und
   niemand sucht sie unter einer Zahl. **Wer eine Stufe ergänzt, ergänzt sie dort.**
 - `bedeutung.js` – zerlegt eine Bedeutungsangabe in ihre **Sinne** und sagt, ob zwei Einträge
@@ -111,6 +112,8 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   vidēre, agere, manēre, quaerere*.
   Kommen keine drei sauberen Distraktoren zusammen, wird **weniger** zurückgegeben – nie
   aufgefüllt. Der Aufrufer nimmt dann ein anderes Wort.
+  **`LudiBedeutung.fuer(eintrag, maxLektion)`** gehört dazu: Manche Wörter heißen in der
+  LEKTÜRE etwas anderes als im Lehrgang. Siehe `meaningAb` unten.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
 
 ## Aktive Spiele (Stand zuletzt)
@@ -921,15 +924,23 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     stehen *culīna*, *tunica* und *statua* neben *ōtium*, *labor*, *mors* und *gaudium*.
     Auch hier wären die Sachfelder die eigentliche Lösung.
 
-- **Caesar-Bedeutungen bekannter Wörter.** Beim Aufbau des Caesar-Wortschatzes aufgefallen und
-  NICHT mitgemacht: Einige Wörter stehen längst im Pontes-Teil, bedeuten bei Caesar aber etwas
-  anderes – *contendere* ist dort „behaupten", bei Caesar „eilen, marschieren"; *fīnēs* ist im
-  Plural „das Gebiet", nicht „die Enden". Ein zweiter Eintrag mit demselben Lemma wäre der
-  falsche Weg: Zwei Einträge für *contendere* mit verschiedener Bedeutung sind genau der
-  Fehler, den `bedeutung.js` gerade behoben hat – in den Bedeutungsspielen stünde dann eine
-  richtige Übersetzung als falsche Antwort. Richtig wäre, die vorhandene `meaning` zu
-  **erweitern** („behaupten; eilen, marschieren"). Das ist eine fachliche Entscheidung je Wort
-  und gehört besprochen, nicht nebenbei erledigt.
+- **Caesar-Bedeutungen bekannter Wörter** – GEBAUT (Oktober 2026). Einige Wörter stehen längst
+  im Pontes-Teil, heißen bei Caesar aber etwas anderes. **Ein zweiter Eintrag mit demselben
+  Lemma wäre der falsche Weg** – zwei Einträge für *contendere* mit verschiedener Bedeutung
+  sind genau der Fehler, den `bedeutung.js` gerade behoben hat: In einem Topf, der beide
+  enthält, stünde die eine richtige Übersetzung als falsche Antwort auf die andere.
+  - Deshalb trägt der vorhandene Eintrag ein Feld **`meaningAb: { lesson, meaning }`**, und
+    `LudiBedeutung.fuer(eintrag, maxLektion)` wählt danach aus. Die Spiele merken sich dafür
+    die höchste gewählte Stufe (`maxSelectedLesson` aus der Lektionsauswahl).
+  - **Entschieden (Fachlehrer): erst ab Caesar.** Wer bis L31 wählt, lernt *contendere* als
+    „behaupten" und sonst nichts – die Lektüre-Bedeutung erscheint erst ab Stufe 36.
+  - **Beim VERGLEICHEN zählen beide Lesarten** (`kernSinne` vereinigt sie). Das ist die
+    vorsichtige Richtung: „eilen" darf unter keiner Auswahl als falsche Antwort auf
+    *contendere* danebenstehen, auch wenn gerade „behaupten" gefragt ist.
+  - Betroffen ist bisher **genau ein Wort**: *contendere* (BG I 1 *contendunt* „kämpfen",
+    BG I 7 *contendit* „eilt"). *fīnēs* brauchte nichts – es steht schon seit L28 mit
+    „die Grenze, das Gebiet" im Wortschatz. Wer ein weiteres Wort ergänzt, trägt `meaningAb`
+    nach; `test-bedeutung.js` prüft jedes Wort mit diesem Feld automatisch mit.
 
 - **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
   die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:

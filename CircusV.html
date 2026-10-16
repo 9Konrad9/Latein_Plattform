@@ -266,6 +266,9 @@
         let currentCorrectAnswer = "";
         let currentVocabItem = null;
         let activePool = [];
+        // Hoechste gewaehlte Stufe. Sie entscheidet mit, was ein Wort bedeutet:
+        // contendere heisst ab Caesar "eilen", im Lehrgang "behaupten".
+        let maxSelectedLesson = 999;
 
         /* Die feste zweite Runde nach dem Rennen: Was danebenging, kommt noch
            einmal - EIN Durchgang, nicht so lange, bis es sitzt. Sie zaehlt NICHT
@@ -346,8 +349,11 @@
                     }
                     spielModus = knopf.getAttribute('data-modus');
                     denkzeitProKarte = parseFloat(knopf.getAttribute('data-denkzeit')) || 0;
-                    LessonFilter.show(globalVocabularyPool, function(filteredPool) {
+                    LessonFilter.show(globalVocabularyPool, function(filteredPool, selectedLessonNumbers) {
                         activePool = filteredPool;
+                        // Entscheidet mit, was ein Wort bedeutet - siehe bedeutung.js.
+                        maxSelectedLesson = selectedLessonNumbers && selectedLessonNumbers.length
+                                          ? Math.max.apply(null, selectedLessonNumbers) : 999;
                         startRace();
                         setTimeout(resizeArena, 100);
                     });
@@ -513,7 +519,7 @@
 
             const categoryText = `🔮 Bedeutung — Wortart: ${translateType(item.type)}`;
             const questionText = `Was bedeutet das Wort „${item.latin}“?`;
-            currentCorrectAnswer = item.meaning;
+            currentCorrectAnswer = LudiBedeutung.fuer(item, maxSelectedLesson);
 
             if (spielModus === 'karten') {
                 zeigeKarte(item, categoryText, questionText);
@@ -527,10 +533,11 @@
                falsch zur Wahl. Verglichen wurde nur der TEXT, nicht der Sinn.
                Aus dem Unterricht gemeldet, Oktober 2026; die Begründung steht
                in bedeutung.js. */
+            const alsText = v => LudiBedeutung.fuer(v, maxSelectedLesson);
             let wrongPool = LudiBedeutung.waehleDistraktoren(
-                item, activePool.filter(i => i.type === item.type), 3);
+                item, activePool.filter(i => i.type === item.type), 3, alsText);
             // Reicht die eigene Wortart nicht, zählt der ganze Topf.
-            if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3);
+            if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3, alsText);
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
 
