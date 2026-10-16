@@ -48,10 +48,29 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   genau deshalb funktioniert es, obwohl die Spiele Verschiedenes merken (eine Vokabel,
   eine ganze Runde, eine Frage samt Fragetyp). Was NICHT dort liegt: wie eine Frage
   aussieht, wie sie wieder gestellt wird, und was während der Wiederholung ruht.
-- **Der Caesar-Wortschatz** (Oktober 2026) steht in `vocabulary.js` unter **`lesson: 36`** – die
-  Lektürestufe hinter T1–T4. Sie schaltet die ganze Formenlehre frei, was für die Lektüre
-  richtig ist. **81 Einträge** für *Bellum Gallicum* I 1–7: 43 Substantive, 31 Verben,
-  6 Adjektive, 1 Adverb.
+- **Der Caesar-Wortschatz** (Oktober 2026) steht in `vocabulary.js` unter **`lesson: 36` bis
+  `42`** – eine Stufe je Kapitel von *Bellum Gallicum* I 1–7, hinter T1–T4. Sie schalten die
+  ganze Formenlehre frei, was für die Lektüre richtig ist. **81 Einträge**: 43 Substantive,
+  31 Verben, 6 Adjektive, 1 Adverb.
+  - **Nach Kapiteln unterteilt** (nachträglich gewünscht, nachdem die ersten drei Kapitel
+    gelesen waren). Ein Wort steht bei dem Kapitel, in dem es **zuerst** vorkommt – gemessen
+    am Text, nicht geschätzt (`latein-tests/caesar-kapitel.js`):
+
+    | Kapitel | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+    |---|---|---|---|---|---|---|---|
+    | Stufe | 36 | 37 | 38 | 39 | 40 | 41 | 42 |
+    | neue Wörter | 24 | 15 | 20 | 6 | 6 | 2 | 8 |
+    | kumuliert | 24 | 39 | **59** | 65 | 71 | 73 | 81 |
+
+    Einzelne späte Kapitel sind zu klein für eine Runde (Kap. 6 hat zwei Wörter) – die Spiele
+    lehnen das sauber ab, und im Unterricht wählt man ohnehin mehrere Stufen.
+  - **Fallstricke beim Zuordnen am Text**, beide teuer bezahlt und deshalb notiert:
+    `middle` ist `"multitūdinis f."` mit dem Geschlecht dahinter – wer die Nichtbuchstaben
+    einfach wegwirft, sucht nach `multitudinisf` und findet elf Wörter nicht. Und beim
+    Endungsabwerfen muss die **kürzeste** passende Endung weg, nicht die erste in der Liste:
+    Von `ignis` blieb über `nis` nur `ig` übrig (zu kurz), und ein blindes Kürzen um zwei
+    Zeichen als Ersatz machte aus `efferō` ein `effe`, das `effeminandos` in Kapitel 1 traf –
+    wo *efferre* gar nicht steht.
   - **Woher die Auswahl kommt: aus dem Text.** Die 604 Wortformen von BG I 1–7 (gemeinfrei)
     wurden gegen die 917 vorhandenen Einträge gehalten; übrig blieben diese 81. Der Pontes-
     Wortschatz deckt mehr ab, als man denkt – *flūmen, oppidum, exercitus, legiō, proelium,*
@@ -815,7 +834,7 @@ im Buch stehen sie nach L31 und können in beliebiger Reihenfolge bearbeitet wer
 | T2 (33) | Verwendung des **Gerundiums**, Genitivus qualitatis | **Gerundium** |
 | T3 (34) | Verwendung des **Gerundivums** (mit und ohne *esse*), Dativus auctoris | **Gerundivum** |
 | T4 (35) | *(im vorliegenden Auszug des Inhaltsverzeichnisses nicht enthalten)* | |
-| **Caesar (36)** | **Lektüre** – keine Lektion, sondern die Stufe nach dem Lehrgang | |
+| **Caesar (36–42)** | **Lektüre** – keine Lektionen, sondern die sieben Kapitel von *BG* I 1–7 | |
 
 Wo diese Zahlen im Code stehen: `VerbEngine.TEMPUS_LESSON_AKTIV/_PASSIV`, `INFINITIV_LESSON`,
 `IMPERATIV_LESSON`, `PPA_LESSON`, `KONJUNKTIV_LESSON`, `GERUNDIUM_LESSON`, `GERUNDIVUM_LESSON`

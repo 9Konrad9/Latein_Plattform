@@ -22,7 +22,9 @@ const LessonFilter = (() => {
     const LESSON_LABELS = {
         0:  "Salvē",
         32: "T1", 33: "T2", 34: "T3", 35: "T4",
-        36: "Caesar"
+        // Die Lektürestufen: eine je Kapitel des Bellum Gallicum I.
+        36: "Caesar 1", 37: "Caesar 2", 38: "Caesar 3", 39: "Caesar 4",
+        40: "Caesar 5", 41: "Caesar 6", 42: "Caesar 7"
     };
 
     function lessonLabel(l) {
