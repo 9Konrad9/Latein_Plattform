@@ -983,5 +983,111 @@ const globalVocabularyPool = [
     { latin: "quidem", lesson: 35, type: "adverb", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "jedenfalls, freilich" },
     { latin: "mīlle", lesson: 35, type: "adjective", middle: "unregelmäßig", gram_clue: "Sg. indeklinabel; Pl. mīlia dekliniert wie ein Neutrum", gram_class: "unregelmäßig (Numerale)", meaning: "tausend" },
     { latin: "omnīnō", lesson: 35, type: "adverb", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "ganz und gar, überhaupt, völlig" },
-    { latin: "cōnsuētūdō", lesson: 35, type: "noun", belebt: "sache", middle: "cōnsuētūdinis f.", gram_clue: "Genitiv: cōnsuētūdinis, f.", gram_class: "konsonantische Deklination", meaning: "die Gewohnheit" }
+    { latin: "cōnsuētūdō", lesson: 35, type: "noun", belebt: "sache", middle: "cōnsuētūdinis f.", gram_clue: "Genitiv: cōnsuētūdinis, f.", gram_class: "konsonantische Deklination", meaning: "die Gewohnheit" },
+
+    /* ===================== LEKTÜRE: CAESAR =====================
+
+       Der Wortschatz für Caesar, Bellum Gallicum I 1-7 - die Wörter, die
+       der Pontes-Lehrgang NICHT hergibt. Lektion 36 ist die Lektürestufe;
+       sie steht hinter T1-T4 (32-35) und schaltet damit die ganze
+       Formenlehre frei, was für die Lektüre richtig ist.
+
+       Woher die Auswahl kommt: aus dem Text selbst. Die 604 Wortformen von
+       BG I 1-7 wurden gegen die 917 vorhandenen Einträge gehalten; übrig
+       blieben diese 81. Der lateinische Text ist gemeinfrei.
+
+       Warum nicht übernommen: Es gibt KEINE frei lizenzierte deutsche
+       Caesar-Wortliste. Die Dickinson College Commentaries stellen ihre
+       Kernwortschätze unter CC BY-SA, aber in dreizehn Sprachen ohne
+       Deutsch; alles Deutsche (Klett, Buchner, Reclam) ist urheberrechtlich
+       geschützt. Die Bedeutungen hier sind deshalb selbst geschrieben.
+
+       KEINE EIGENNAMEN (Entscheidung des Fachlehrers): Helvētiī, Orgetorīx,
+       Garumna und die übrigen stehen nicht hier. "Was bedeutet Orgetorix?"
+       ist keine sinnvolle Frage, und die Namen klärt der Unterricht.
+
+       Nicht aufgenommen, obwohl im Text: die Komparative ulterior und
+       īnferior. Sie würden in Villas KNG-Spiel zwischen den o-/a-Adjektiven
+       stehen und dort falsch dekliniert. Bei Bedarf eigens behandeln. */
+    { latin: "multitūdō", lesson: 36, type: "noun", belebt: "person", middle: "multitūdinis f.", gram_clue: "Genitiv: multitūdinis, f.", gram_class: "konsonantische Deklination", meaning: "die Menge, die große Zahl" },
+    { latin: "lēgātus", lesson: 36, type: "noun", belebt: "person", middle: "lēgātī m.", gram_clue: "Genitiv: lēgātī, m.", gram_class: "o-Deklination", meaning: "der Gesandte; der Legat" },
+    { latin: "lēgātiō", lesson: 36, type: "noun", belebt: "sache", middle: "lēgātiōnis f.", gram_clue: "Genitiv: lēgātiōnis, f.", gram_class: "konsonantische Deklination", meaning: "die Gesandtschaft" },
+    { latin: "mōns", lesson: 36, type: "noun", belebt: "sache", middle: "montis m.", gram_clue: "Genitiv: montis, m. (Gen. Pl. montium)", gram_class: "konsonantische Deklination", meaning: "der Berg" },
+    { latin: "iugum", lesson: 36, type: "noun", belebt: "sache", middle: "iugī n.", gram_clue: "Genitiv: iugī, n.", gram_class: "o-Deklination", meaning: "der Bergrücken; das Joch" },
+    { latin: "lacus", lesson: 36, type: "noun", belebt: "sache", middle: "lacūs m.", gram_clue: "Genitiv: lacūs, m.", gram_class: "u-Deklination", meaning: "der See" },
+    { latin: "pōns", lesson: 36, type: "noun", belebt: "sache", middle: "pontis m.", gram_clue: "Genitiv: pontis, m. (Gen. Pl. pontium)", gram_class: "konsonantische Deklination", meaning: "die Brücke" },
+    { latin: "vīcus", lesson: 36, type: "noun", belebt: "sache", middle: "vīcī m.", gram_clue: "Genitiv: vīcī, m.", gram_class: "o-Deklination", meaning: "das Dorf" },
+    { latin: "auctōritās", lesson: 36, type: "noun", belebt: "sache", middle: "auctōritātis f.", gram_clue: "Genitiv: auctōritātis, f.", gram_class: "konsonantische Deklination", meaning: "das Ansehen, der Einfluss" },
+    { latin: "prīncipātus", lesson: 36, type: "noun", belebt: "sache", middle: "prīncipātūs m.", gram_clue: "Genitiv: prīncipātūs, m.", gram_class: "u-Deklination", meaning: "die Vorherrschaft, die Führung" },
+    { latin: "nōbilitās", lesson: 36, type: "noun", belebt: "sache", middle: "nōbilitātis f.", gram_clue: "Genitiv: nōbilitātis, f.", gram_class: "konsonantische Deklination", meaning: "der Adel, die vornehme Herkunft" },
+    { latin: "cupiditās", lesson: 36, type: "noun", belebt: "sache", middle: "cupiditātis f.", gram_clue: "Genitiv: cupiditātis, f.", gram_class: "konsonantische Deklination", meaning: "die Begierde, das Verlangen" },
+    { latin: "īnstitūtum", lesson: 36, type: "noun", belebt: "sache", middle: "īnstitūtī n.", gram_clue: "Genitiv: īnstitūtī, n.", gram_class: "o-Deklination", meaning: "die Einrichtung, der Brauch" },
+    { latin: "cultus", lesson: 36, type: "noun", belebt: "sache", middle: "cultūs m.", gram_clue: "Genitiv: cultūs, m.", gram_class: "u-Deklination", meaning: "die Lebensweise; die Pflege" },
+    { latin: "hūmānitās", lesson: 36, type: "noun", belebt: "sache", middle: "hūmānitātis f.", gram_clue: "Genitiv: hūmānitātis, f.", gram_class: "konsonantische Deklination", meaning: "die Bildung, die feine Lebensart" },
+    { latin: "mercātor", lesson: 36, type: "noun", belebt: "person", middle: "mercātōris m.", gram_clue: "Genitiv: mercātōris, m.", gram_class: "konsonantische Deklination", meaning: "der Kaufmann, der Händler" },
+    { latin: "cliēns", lesson: 36, type: "noun", belebt: "person", middle: "clientis m.", gram_clue: "Genitiv: clientis, m. (Gen. Pl. clientium)", gram_class: "konsonantische Deklination", meaning: "der Gefolgsmann, der Schutzbefohlene" },
+    { latin: "obaerātus", lesson: 36, type: "noun", belebt: "person", middle: "obaerātī m.", gram_clue: "Genitiv: obaerātī, m.", gram_class: "o-Deklination", meaning: "der Schuldknecht" },
+    { latin: "mātrimōnium", lesson: 36, type: "noun", belebt: "sache", middle: "mātrimōniī n.", gram_clue: "Genitiv: mātrimōniī, n.", gram_class: "o-Deklination", meaning: "die Ehe" },
+    { latin: "spatium", lesson: 36, type: "noun", belebt: "sache", middle: "spatiī n.", gram_clue: "Genitiv: spatiī, n.", gram_class: "o-Deklination", meaning: "der Raum, die Strecke; der Zeitraum" },
+    { latin: "lātitūdō", lesson: 36, type: "noun", belebt: "sache", middle: "lātitūdinis f.", gram_clue: "Genitiv: lātitūdinis, f.", gram_class: "konsonantische Deklination", meaning: "die Breite" },
+    { latin: "longitūdō", lesson: 36, type: "noun", belebt: "sache", middle: "longitūdinis f.", gram_clue: "Genitiv: longitūdinis, f.", gram_class: "konsonantische Deklination", meaning: "die Länge" },
+    { latin: "passus", lesson: 36, type: "noun", belebt: "sache", middle: "passūs m.", gram_clue: "Genitiv: passūs, m. - mīlle passūs = eine römische Meile", gram_class: "u-Deklination", meaning: "der Schritt, der Doppelschritt" },
+    { latin: "initium", lesson: 36, type: "noun", belebt: "sache", middle: "initiī n.", gram_clue: "Genitiv: initiī, n.", gram_class: "o-Deklination", meaning: "der Anfang, der Beginn" },
+    { latin: "occāsus", lesson: 36, type: "noun", belebt: "sache", middle: "occāsūs m.", gram_clue: "Genitiv: occāsūs, m. - sōlis occāsus = der Westen", gram_class: "u-Deklination", meaning: "der Untergang" },
+    { latin: "oriēns", lesson: 36, type: "noun", belebt: "sache", middle: "orientis m.", gram_clue: "Genitiv: orientis, m. - oriēns sōl = der Osten", gram_class: "konsonantische Deklination", meaning: "die aufgehende Sonne, der Osten" },
+    { latin: "septentriōnēs", lesson: 36, type: "noun", belebt: "sache", middle: "septentriōnum m. Pl.", gram_clue: "Genitiv: septentriōnum, m. - nur im Plural", gram_class: "konsonantische Deklination", meaning: "der Norden" },
+    { latin: "nātūra", lesson: 36, type: "noun", belebt: "sache", middle: "nātūrae f.", gram_clue: "Genitiv: nātūrae, f.", gram_class: "a-Deklination", meaning: "die Natur, die Beschaffenheit" },
+    { latin: "sēmentis", lesson: 36, type: "noun", belebt: "sache", middle: "sēmentis f.", gram_clue: "Genitiv: sēmentis, f. (Gen. Pl. sēmentium)", gram_class: "i-Deklination", meaning: "die Aussaat, die Saat" },
+    { latin: "iūmentum", lesson: 36, type: "noun", belebt: "tier", middle: "iūmentī n.", gram_clue: "Genitiv: iūmentī, n.", gram_class: "o-Deklination", meaning: "das Zugtier, das Lasttier" },
+    { latin: "carrus", lesson: 36, type: "noun", belebt: "sache", middle: "carrī m.", gram_clue: "Genitiv: carrī, m.", gram_class: "o-Deklination", meaning: "der Wagen, der Karren" },
+    { latin: "cibāria", lesson: 36, type: "noun", belebt: "sache", middle: "cibāriōrum n. Pl.", gram_clue: "Genitiv: cibāriōrum, n. - nur im Plural", gram_class: "o-Deklination", meaning: "die Verpflegung, der Proviant" },
+    { latin: "facultās", lesson: 36, type: "noun", belebt: "sache", middle: "facultātis f.", gram_clue: "Genitiv: facultātis, f.", gram_class: "konsonantische Deklination", meaning: "die Möglichkeit, die Gelegenheit" },
+    { latin: "ignis", lesson: 36, type: "noun", belebt: "sache", middle: "ignis m.", gram_clue: "Genitiv: ignis, m. (Gen. Pl. ignium)", gram_class: "i-Deklination", meaning: "das Feuer" },
+    { latin: "suspīciō", lesson: 36, type: "noun", belebt: "sache", middle: "suspīciōnis f.", gram_clue: "Genitiv: suspīciōnis, f.", gram_class: "konsonantische Deklination", meaning: "der Verdacht, das Misstrauen" },
+    { latin: "amīcitia", lesson: 36, type: "noun", belebt: "sache", middle: "amīcitiae f.", gram_clue: "Genitiv: amīcitiae, f.", gram_class: "a-Deklination", meaning: "die Freundschaft, das Bündnis" },
+    { latin: "maleficium", lesson: 36, type: "noun", belebt: "sache", middle: "maleficiī n.", gram_clue: "Genitiv: maleficiī, n.", gram_class: "o-Deklination", meaning: "die Übeltat, das Verbrechen" },
+    { latin: "profectiō", lesson: 36, type: "noun", belebt: "sache", middle: "profectiōnis f.", gram_clue: "Genitiv: profectiōnis, f.", gram_class: "konsonantische Deklination", meaning: "der Aufbruch, die Abreise" },
+    { latin: "reditiō", lesson: 36, type: "noun", belebt: "sache", middle: "reditiōnis f.", gram_clue: "Genitiv: reditiōnis, f.", gram_class: "konsonantische Deklination", meaning: "die Rückkehr" },
+    { latin: "biennium", lesson: 36, type: "noun", belebt: "sache", middle: "bienniī n.", gram_clue: "Genitiv: bienniī, n.", gram_class: "o-Deklination", meaning: "der Zeitraum von zwei Jahren" },
+    { latin: "numerus", lesson: 36, type: "noun", belebt: "sache", middle: "numerī m.", gram_clue: "Genitiv: numerī, m.", gram_class: "o-Deklination", meaning: "die Zahl, die Anzahl" },
+    { latin: "senātus", lesson: 36, type: "noun", belebt: "person", middle: "senātūs m.", gram_clue: "Genitiv: senātūs, m.", gram_class: "u-Deklination", meaning: "der Senat" },
+    { latin: "cōnsul", lesson: 36, type: "noun", belebt: "person", middle: "cōnsulis m.", gram_clue: "Genitiv: cōnsulis, m.", gram_class: "konsonantische Deklination", meaning: "der Konsul" },
+    { latin: "incolere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "incolō", perfect: "incoluī", gram_clue: "1. Pers. Sg.: incolō", gram_class: "konsonantische Konjugation", meaning: "bewohnen, wohnen in" },
+    { latin: "continēre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: false, middle: "contineō", perfect: "continuī", ppp: "contentum", gram_clue: "1. Pers. Sg.: contineō", gram_class: "e-Konjugation", meaning: "umschließen, einschließen; zusammenhalten" },
+    { latin: "vergere", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: false, middle: "vergō", gram_clue: "1. Pers. Sg.: vergō (kein Perfekt gebräuchlich)", gram_class: "konsonantische Konjugation", meaning: "sich neigen, sich erstrecken nach" },
+    { latin: "attingere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: false, middle: "attingō", perfect: "attigī", ppp: "attāctum", gram_clue: "1. Pers. Sg.: attingō", gram_class: "konsonantische Konjugation", meaning: "berühren, angrenzen an" },
+    { latin: "fluere", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: false, middle: "fluō", perfect: "flūxī", gram_clue: "1. Pers. Sg.: fluō", gram_class: "konsonantische Konjugation", meaning: "fließen, strömen" },
+    { latin: "differre", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: false, middle: "differō", perfect: "distulī", ppp: "dīlātum", gram_clue: "1. Pers. Sg.: differō - unregelmäßig wie ferre", gram_class: "unregelmäßiges Verb", meaning: "sich unterscheiden; aufschieben" },
+    { latin: "praecēdere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "praecēdō", perfect: "praecessī", ppp: "praecessum", gram_clue: "1. Pers. Sg.: praecēdō", gram_class: "konsonantische Konjugation", meaning: "vorangehen; übertreffen" },
+    { latin: "coemere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "coemō", perfect: "coēmī", ppp: "coēmptum", gram_clue: "1. Pers. Sg.: coemō", gram_class: "konsonantische Konjugation", meaning: "aufkaufen, zusammenkaufen" },
+    { latin: "cōnficere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "cōnficiō", perfect: "cōnfēcī", ppp: "cōnfectum", gram_clue: "1. Pers. Sg.: cōnficiō", gram_class: "gemischte Konjugation", meaning: "vollenden, fertigstellen; zurücklegen" },
+    { latin: "suscipere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "suscipiō", perfect: "suscēpī", ppp: "susceptum", gram_clue: "1. Pers. Sg.: suscipiō", gram_class: "gemischte Konjugation", meaning: "auf sich nehmen, übernehmen" },
+    { latin: "adscīscere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "adscīscō", perfect: "adscīvī", ppp: "adscītum", gram_clue: "1. Pers. Sg.: adscīscō (auch ascīscō) - Caesar schreibt adsciscunt", gram_class: "konsonantische Konjugation", meaning: "hinzuziehen, aufnehmen" },
+    { latin: "indūcere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "indūcō", perfect: "indūxī", ppp: "inductum", gram_clue: "1. Pers. Sg.: indūcō", gram_class: "konsonantische Konjugation", meaning: "hineinführen; veranlassen, verleiten" },
+    { latin: "permovēre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "permoveō", perfect: "permōvī", ppp: "permōtum", gram_clue: "1. Pers. Sg.: permoveō", gram_class: "e-Konjugation", meaning: "heftig bewegen, veranlassen" },
+    { latin: "addūcere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "addūcō", perfect: "addūxī", ppp: "adductum", gram_clue: "1. Pers. Sg.: addūcō", gram_class: "konsonantische Konjugation", meaning: "heranführen; veranlassen, bewegen" },
+    { latin: "ēnūntiāre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "ēnūntiō", perfect: "ēnūntiāvī", ppp: "ēnūntiātum", gram_clue: "1. Pers. Sg.: ēnūntiō", gram_class: "a-Konjugation", meaning: "verraten, bekannt machen" },
+    { latin: "damnāre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "damnō", perfect: "damnāvī", ppp: "damnātum", gram_clue: "1. Pers. Sg.: damnō", gram_class: "a-Konjugation", meaning: "verurteilen" },
+    { latin: "combūrere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "combūrō", perfect: "combussī", ppp: "combustum", gram_clue: "1. Pers. Sg.: combūrō", gram_class: "konsonantische Konjugation", meaning: "verbrennen" },
+    { latin: "exūrere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "exūrō", perfect: "exussī", ppp: "exustum", gram_clue: "1. Pers. Sg.: exūrō", gram_class: "konsonantische Konjugation", meaning: "niederbrennen, verbrennen" },
+    { latin: "vagārī", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: true, middle: "vagor", perfect: "vagātus sum", gram_clue: "Deponens: passive Form, aktive Bedeutung", gram_class: "Deponens", meaning: "umherziehen, umherschweifen" },
+    { latin: "prohibēre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "prohibeō", perfect: "prohibuī", ppp: "prohibitum", gram_clue: "1. Pers. Sg.: prohibeō", gram_class: "e-Konjugation", meaning: "abhalten, hindern, fernhalten" },
+    { latin: "revertī", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: true, middle: "revertor", perfect: "reversus sum", gram_clue: "Deponens: passive Form, aktive Bedeutung", gram_class: "Deponens", meaning: "zurückkehren, umkehren" },
+    { latin: "potīrī", lesson: 36, type: "verb", valenz: "abl", subjBelebt: true, middle: "potior", perfect: "potītus sum", gram_clue: "Deponens, meist mit Ablativ: potīrī rērum = die Macht erlangen", gram_class: "Deponens", meaning: "sich bemächtigen, erlangen" },
+    { latin: "sequī", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "sequor", perfect: "secūtus sum", gram_clue: "Deponens: passive Form, aktive Bedeutung", gram_class: "Deponens", meaning: "folgen, nachfolgen" },
+    { latin: "arbitrārī", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "arbitror", perfect: "arbitrātus sum", gram_clue: "Deponens: passive Form, aktive Bedeutung", gram_class: "Deponens", meaning: "meinen, glauben" },
+    { latin: "exīstimāre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "exīstimō", perfect: "exīstimāvī", ppp: "exīstimātum", gram_clue: "1. Pers. Sg.: exīstimō", gram_class: "a-Konjugation", meaning: "glauben, meinen; einschätzen" },
+    { latin: "mātūrāre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "mātūrō", perfect: "mātūrāvī", ppp: "mātūrātum", gram_clue: "1. Pers. Sg.: mātūrō", gram_class: "a-Konjugation", meaning: "beschleunigen, sich beeilen" },
+    { latin: "rescindere", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "rescindō", perfect: "rescidī", ppp: "rescissum", gram_clue: "1. Pers. Sg.: rescindō", gram_class: "konsonantische Konjugation", meaning: "einreißen, abbrechen" },
+    { latin: "intercēdere", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: false, middle: "intercēdō", perfect: "intercessī", ppp: "intercessum", gram_clue: "1. Pers. Sg.: intercēdō", gram_class: "konsonantische Konjugation", meaning: "dazwischenliegen; dazwischentreten" },
+    { latin: "efferre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "efferō", perfect: "extulī", ppp: "ēlātum", gram_clue: "1. Pers. Sg.: efferō - unregelmäßig wie ferre", gram_class: "unregelmäßiges Verb", meaning: "hinaustragen, herausbringen" },
+    { latin: "importāre", lesson: 36, type: "verb", valenz: "akk", subjBelebt: true, middle: "importō", perfect: "importāvī", ppp: "importātum", gram_clue: "1. Pers. Sg.: importō", gram_class: "a-Konjugation", meaning: "einführen, hineinbringen" },
+    { latin: "commeāre", lesson: 36, type: "verb", valenz: "intrans", subjBelebt: true, middle: "commeō", perfect: "commeāvī", ppp: "commeātum", gram_clue: "1. Pers. Sg.: commeō", gram_class: "a-Konjugation", meaning: "hin- und herziehen, verkehren" },
+    { latin: "angustus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "eng, schmal" },
+    { latin: "extrēmus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "äußerster, letzter" },
+    { latin: "reliquus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "übrig, restlich" },
+    { latin: "fīnitimus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "benachbart, angrenzend" },
+    { latin: "cotīdiānus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "täglich" },
+    { latin: "firmus, -a, -um", lesson: 36, type: "adjective", middle: "a-/o-Deklination", gram_clue: "Adjektiv (o-/a-)", gram_class: "a-/o-Deklination", meaning: "fest, stark, zuverlässig" },
+    { latin: "continenter", lesson: 36, type: "adverb", middle: "Adv.", gram_clue: "", gram_class: "", meaning: "ununterbrochen, fortwährend" }
 ];

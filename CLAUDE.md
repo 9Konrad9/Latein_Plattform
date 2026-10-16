@@ -48,6 +48,35 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   genau deshalb funktioniert es, obwohl die Spiele Verschiedenes merken (eine Vokabel,
   eine ganze Runde, eine Frage samt Fragetyp). Was NICHT dort liegt: wie eine Frage
   aussieht, wie sie wieder gestellt wird, und was während der Wiederholung ruht.
+- **Der Caesar-Wortschatz** (Oktober 2026) steht in `vocabulary.js` unter **`lesson: 36`** – die
+  Lektürestufe hinter T1–T4. Sie schaltet die ganze Formenlehre frei, was für die Lektüre
+  richtig ist. **81 Einträge** für *Bellum Gallicum* I 1–7: 43 Substantive, 31 Verben,
+  6 Adjektive, 1 Adverb.
+  - **Woher die Auswahl kommt: aus dem Text.** Die 604 Wortformen von BG I 1–7 (gemeinfrei)
+    wurden gegen die 917 vorhandenen Einträge gehalten; übrig blieben diese 81. Der Pontes-
+    Wortschatz deckt mehr ab, als man denkt – *flūmen, oppidum, exercitus, legiō, proelium,*
+    *cōnārī, persuādēre, cōnstituere* standen längst drin.
+  - **Warum nichts übernommen wurde:** Es gibt **keine frei lizenzierte deutsche**
+    Caesar-Wortliste. Die *Dickinson College Commentaries* stellen ihre Kernwortschätze unter
+    CC BY-SA, aber in dreizehn Sprachen **ohne Deutsch**; alles Deutsche (Klett, Buchner,
+    Reclam) ist urheberrechtlich geschützt. Die Bedeutungen sind deshalb selbst geschrieben.
+    **Wer das erweitert, prüft das erneut – und schreibt die Bedeutungen selbst.**
+  - **Keine Eigennamen** (Entscheidung des Fachlehrers): *Helvētiī, Orgetorīx, Garumna* stehen
+    nicht drin. „Was bedeutet Orgetorix?" ist keine sinnvolle Frage; die Namen klärt der
+    Unterricht.
+  - **Nicht aufgenommen, obwohl im Text:** die Komparative *ulterior* und *īnferior*. Sie
+    stünden in Villas KNG-Spiel zwischen den o-/a-Adjektiven und würden dort falsch
+    dekliniert. Wer sie braucht, behandelt sie eigens.
+  - **`perfectLesson`/`pppLesson` bleiben leer.** Die beiden Felder sagen, dass eine Form
+    SPÄTER drankommt als das Wort – auf der Lektürestufe ist längst alles eingeführt.
+  - `test-caesar.js` prüft die Einträge gegen die Engines (jede Deklination, jede Konjugation),
+    gegen Dopplungen mit dem Pontes-Teil und auf die Feldkonventionen. Mit der heruntergeladenen
+    Textdatei als Argument prüft er zusätzlich, dass **jedes Wort wirklich im Text steht** –
+    dabei ist aufgefallen, dass Caesar *adsciscunt* schreibt, nicht *asciscunt*.
+- **Die Lektionsauswahl beschriftet ihre Stufen** (`LESSON_LABELS` in `lessonFilter.js`):
+  0 = „Salvē", 32–35 = „T1"–„T4", 36 = „Caesar". Vorher gab es nur den Sonderfall 0, und die
+  Transitio-Lektionen hießen „Lektion 32" bis „Lektion 35" – im Buch heißen sie T1–T4, und
+  niemand sucht sie unter einer Zahl. **Wer eine Stufe ergänzt, ergänzt sie dort.**
 - `bedeutung.js` – zerlegt eine Bedeutungsangabe in ihre **Sinne** und sagt, ob zwei Einträge
   sich einen davon teilen (`LudiBedeutung.kollidiert`, `waehleDistraktoren`). Gebraucht von
   allen Spielen, die nach der Bedeutung fragen (Issa springt, Circus, Duell).
@@ -786,6 +815,7 @@ im Buch stehen sie nach L31 und können in beliebiger Reihenfolge bearbeitet wer
 | T2 (33) | Verwendung des **Gerundiums**, Genitivus qualitatis | **Gerundium** |
 | T3 (34) | Verwendung des **Gerundivums** (mit und ohne *esse*), Dativus auctoris | **Gerundivum** |
 | T4 (35) | *(im vorliegenden Auszug des Inhaltsverzeichnisses nicht enthalten)* | |
+| **Caesar (36)** | **Lektüre** – keine Lektion, sondern die Stufe nach dem Lehrgang | |
 
 Wo diese Zahlen im Code stehen: `VerbEngine.TEMPUS_LESSON_AKTIV/_PASSIV`, `INFINITIV_LESSON`,
 `IMPERATIV_LESSON`, `PPA_LESSON`, `KONJUNKTIV_LESSON`, `GERUNDIUM_LESSON`, `GERUNDIVUM_LESSON`
@@ -871,6 +901,16 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Teil des Wortschatzes ist zeichenbar. `belebt` hilft dabei NICHT: unter `belebt: "sache"`
     stehen *culīna*, *tunica* und *statua* neben *ōtium*, *labor*, *mors* und *gaudium*.
     Auch hier wären die Sachfelder die eigentliche Lösung.
+
+- **Caesar-Bedeutungen bekannter Wörter.** Beim Aufbau des Caesar-Wortschatzes aufgefallen und
+  NICHT mitgemacht: Einige Wörter stehen längst im Pontes-Teil, bedeuten bei Caesar aber etwas
+  anderes – *contendere* ist dort „behaupten", bei Caesar „eilen, marschieren"; *fīnēs* ist im
+  Plural „das Gebiet", nicht „die Enden". Ein zweiter Eintrag mit demselben Lemma wäre der
+  falsche Weg: Zwei Einträge für *contendere* mit verschiedener Bedeutung sind genau der
+  Fehler, den `bedeutung.js` gerade behoben hat – in den Bedeutungsspielen stünde dann eine
+  richtige Übersetzung als falsche Antwort. Richtig wäre, die vorhandene `meaning` zu
+  **erweitern** („behaupten; eilen, marschieren"). Das ist eine fachliche Entscheidung je Wort
+  und gehört besprochen, nicht nebenbei erledigt.
 
 - **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
   die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:

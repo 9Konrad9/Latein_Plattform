@@ -10,8 +10,23 @@ const LessonFilter = (() => {
         return lessons.sort((a, b) => a - b);
     }
 
+    /* Nicht jede Stufe heisst "Lektion N".
+
+       Die Transitio-Lektionen stehen im Code als 32 bis 35 und hiessen hier
+       bisher "Lektion 32" bis "Lektion 35" - im Buch heissen sie T1 bis T4,
+       und niemand sucht sie unter einer Zahl. Die Lektürestufe 36 ist gar
+       keine Lektion, sondern Caesar.
+
+       Wer eine Stufe ergänzt, ergänzt sie HIER - sonst steht im Spiel eine
+       Zahl, die im Unterricht niemand benutzt. */
+    const LESSON_LABELS = {
+        0:  "Salvē",
+        32: "T1", 33: "T2", 34: "T3", 35: "T4",
+        36: "Caesar"
+    };
+
     function lessonLabel(l) {
-        return l === 0 ? "Salvē" : "Lektion " + l;
+        return LESSON_LABELS[l] || ("Lektion " + l);
     }
 
     /**
