@@ -327,7 +327,26 @@
         }
 
         /* ============ SPIELZUSTAND ============ */
-        let issa, platforms, score, lives, invulnFrames, keys, running, correctCount, wrongCount, touchDir, currentHudLatin, startledFrames;
+        /* ACHTUNG, hier steckte ein Fehler, den eine Schuelerin gemeldet hat:
+
+             TypeError: undefined is not an object (evaluating 'keys[e.key] = true')
+
+           `keys` und `touchDir` werden von EREIGNISSEN angefasst, und die
+           Ereignisse haengen seit dem Laden der Seite dran - `resetGame()`
+           dagegen laeuft erst, wenn die Runde beginnt. Zwischen Laden und
+           Start waren beide `undefined`, und jeder Tastendruck auf dem
+           Startbildschirm oder in der Lektionsauswahl warf. Also genau dort,
+           wo jede Stunde anfaengt und wo jemand ungeduldig auf die Pfeiltaste
+           drueckt.
+
+           DIE REGEL DARAUS: Was ein Ereignis anfassen kann, bekommt seinen
+           Wert bei der DEKLARATION - nicht erst beim Spielstart. Alles andere
+           darf in resetGame() warten.
+           `test-vorm-start.js` drueckt jetzt Tasten, bevor irgendetwas
+           begonnen hat, und zwar in jedem Spiel. */
+        let keys = {};          // gedrueckte Tasten - haengt am keydown/keyup der Seite
+        let touchDir = 0;       // -1, 0, 1 - haengt an den Steuerpfeilen
+        let issa, platforms, score, lives, invulnFrames, running, correctCount, wrongCount, currentHudLatin, startledFrames;
 
         /* Freigeschaltete Trophaeen werden GESAMMELT und erst am Rundenende
            gezeigt, nicht als Einblendung waehrend des Laufs. In einem Spiel,
@@ -375,6 +394,7 @@
             lives = START_LIVES;
             neueTrophaeen = [];
             invulnFrames = 0;
+            // Zuruecksetzen, nicht erstmalig anlegen - siehe die Deklaration oben.
             keys = {};
             touchDir = 0;
             running = true;

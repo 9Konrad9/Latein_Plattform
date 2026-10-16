@@ -165,6 +165,11 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - **Trophäen werden gesammelt und erst am Rundenende gezeigt**, nicht als Einblendung während
     des Laufs. In einem Spiel, das von Reaktion lebt, kostet ein Popup mitten im Sprung genau
     das Herz, das es feiern wollte. IssaJump bindet deshalb `achievementToast.js` gar nicht ein.
+  - **Der Fehlerbanner hat sich bezahlt gemacht.** IssaJump fängt `window.onerror` ab, zeigt die
+    erste Meldung samt Zeilennummer an und bittet darum, den Text der Lehrkraft zu zeigen. Genau
+    so kam der `keys`-Fehler herein – mit Zeilennummer, statt als „bei Issa kommen Fehler".
+    Eine Meldung, die niemand notiert, hilft beim Suchen nicht. **Das wäre in den anderen
+    Spielen genauso nützlich** und ist bisher nur hier eingebaut.
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.
@@ -580,6 +585,25 @@ dieses Namens, und darauf spielt auch das Spiel an.
     die Shell beides – aus einem Kommentar wird eine leere Klammer, aus einer Vorlagenzeichen-
     kette ein Aufruf, den es nicht gibt. Beides ist in dieser Sitzung zweimal passiert.
     Patch-Skripte deshalb als DATEI schreiben und dann `node datei.js` aufrufen.
+  - **Was ein EREIGNIS anfassen kann, bekommt seinen Wert bei der DEKLARATION** –
+    nicht erst beim Spielstart. In IssaJump hingen `keydown`/`keyup` seit dem Laden am
+    Fenster, `keys` bekam sein `{}` aber erst in `resetGame()`. Zwischen Laden und
+    Rundenstart war es `undefined`, und **jeder Tastendruck auf dem Startbildschirm oder in
+    der Lektionsauswahl warf**:
+
+    ```
+    TypeError: undefined is not an object (evaluating 'keys[e.key] = true')
+    ```
+
+    Von einer Schülerin gemeldet (Oktober 2026, mit Bildschirmfoto). Also genau dort, wo
+    jede Stunde anfängt und wo jemand ungeduldig auf die Pfeiltaste drückt – und deshalb
+    häufig. `test-vorm-start.js` drückt jetzt Tasten, dreht das Gerät und klickt alles
+    **Sichtbare** an, bevor irgendetwas begonnen hat, und zwar auf jeder Seite des Projekts.
+    In der Gegenprobe meldet er den Originalfehler 88-fach.
+    **Beim Erweitern dieses Tests:** Nur anfassen, was ein Mensch auch treffen kann. Die
+    erste Fassung klickte stumpf jeden Knopf im Dokument – auch die Antwortknöpfe, die vor
+    der ersten Runde ausgeblendet sind, und die hinter dem Lektionsfilter-Overlay. Neun
+    falsche Alarme, kein einziger echter Befund.
   - **jsdom kennt `innerText` nicht.** Die Spiele setzen Texte fast überall per `.innerText`; in
     jsdom legt das nur eine gewöhnliche JS-Eigenschaft an, statt den DOM-Text zu ändern.
     `.textContent` liefert deshalb weiter den HTML-Platzhalter – ein Test, der `textContent` prüft,
