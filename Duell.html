@@ -48,6 +48,13 @@
             flex-direction: column;
             overflow: hidden;
             -webkit-user-select: none;
+            /* Doppeltippen ist der zweite Weg, die Seite zu vergrössern - und
+               in einem Spiel, in dem zwei Leute auf Knöpfe hämmern, kommt es
+               von selbst zustande. `manipulation` nimmt dem Browser genau das
+               ab und lässt alles andere (auch das Rollen im Lektionsfenster)
+               in Ruhe. Das Aufziehen mit zwei Fingern deckt es NICHT ab -
+               dafür stehen die gesture*-Ereignisse im JavaScript. */
+            touch-action: manipulation;
         }
 
         .divider {
@@ -290,14 +297,32 @@
            Was trotzdem aus dem Bild ragt, fängt die Dichte-Schleife unten ab -
            die prüft seitdem gegen den FENSTERRAND. Das ist der Unterschied
            zwischen vorsorglich verschenken und nachmessen. */
+        /* Solange jemand AUFGEZOGEN hat, wird nicht gemessen.
+           Zwei Finger auf dem Schirm sind in diesem Spiel der Normalfall: Zwei
+           Leute spielen gleichzeitig, eine oben, eine unten. Safari liest das
+           leicht als Aufziehen - und user-scalable=no im viewport-Tag hilft
+           dagegen nicht, iOS ignoriert es seit Version 10.
+           Beim Aufziehen meldet visualViewport die VERGRÖSSERTE Sicht, also
+           eine kleinere Höhe: bei doppelter Vergrösserung die halbe. Wer die
+           für die Bildschirmhöhe hält, baut das Spiel mitten im Zug zusammen.
+           Gemessen bei 810 px Schirm: 405 px bei 2x, 270 px bei 3x. Genau das
+           war als "wenn die Schüler zoomen, geht das Spiel kaputt" gemeldet.
+           Der Platz ändert sich beim Aufziehen aber gar nicht - nur der
+           Ausschnitt, durch den man schaut. Es gibt also nichts neu zu rechnen,
+           und die zuletzt gute Höhe bleibt stehen. */
+        let letzteGuteHoehe = 0;
+
         function sichtbareHoehe() {
+            const vv = window.visualViewport;
+            if (vv && vv.scale > 1.01) return 0;   // aufgezogen: nicht messen
             const kandidaten = [];
-            if (window.visualViewport) kandidaten.push(window.visualViewport.height);
+            if (vv) kandidaten.push(vv.height);
             if (document.documentElement) kandidaten.push(document.documentElement.clientHeight);
             kandidaten.push(window.innerHeight);
             const brauchbar = kandidaten.filter(function (h) { return h > 200; });
             if (!brauchbar.length) return 0;
-            return Math.round(Math.min.apply(null, brauchbar));
+            letzteGuteHoehe = Math.round(Math.min.apply(null, brauchbar));
+            return letzteGuteHoehe;
         }
 
         function passeAnGeraet() {
@@ -336,7 +361,11 @@
             // Der Fensterrand ist der Ersatz für den alten pauschalen Abzug:
             // Statt vorsorglich 8 % zu verschenken, wird nur dann verdichtet,
             // wenn eine Knopfreihe wirklich aus dem Bild ragt.
-            const unterkante = sichtbareHoehe() || window.innerHeight;
+            // Beim Aufziehen liefert sichtbareHoehe() absichtlich 0. Dann gilt
+            // die zuletzt gute Höhe - NICHT innerHeight, denn auch das meldet
+            // auf iOS die vergrösserte Sicht und würde den Inhalt grundlos
+            // zusammenstauchen.
+            const unterkante = sichtbareHoehe() || letzteGuteHoehe || window.innerHeight;
             const ueberstand = () => zonen.reduce((max, z) => {
                 const zb = z.getBoundingClientRect();
                 const rb = z.querySelector('.answers-grid').getBoundingClientRect();
@@ -355,6 +384,21 @@
                 wurzel.style.setProperty('--dichte', dichte.toFixed(2));
             }
         }
+        /* Aufziehen gar nicht erst zulassen. Im viewport-Tag steht zwar
+           user-scalable=no, aber iOS ignoriert das seit Version 10 - die
+           gesture*-Ereignisse sind der Weg, der dort wirkt. Sie sind
+           Safari-eigen, und Safari ist hier das Ziel.
+           Vertretbar ist das, weil diese Seite ein Spielfeld ist und kein
+           Text: Sie füllt den Schirm genau einmal, sie scrollt nicht, und es
+           gibt nichts, was man näher heranholen müsste. Gezoomt wird hier nie
+           absichtlich, sondern mit dem zweiten Finger des Gegenübers.
+           Die Messung oben bleibt trotzdem gegen das Aufziehen gewappnet:
+           Auf Android greifen diese Ereignisse nicht, und was man nicht
+           verhindern kann, darf einen wenigstens nicht umwerfen. */
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (art) {
+            document.addEventListener(art, function (e) { e.preventDefault(); }, { passive: false });
+        });
+
         window.addEventListener('resize', passeAnGeraet);
         window.addEventListener('orientationchange', function () { setTimeout(passeAnGeraet, 250); });
         if (window.visualViewport) {

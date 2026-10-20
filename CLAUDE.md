@@ -142,12 +142,43 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   braucht einen Rückhalt, der NACHMISST – hier die Dichte-Schleife: Sie verdichtet den
   Inhalt, solange eine Knopfreihe aus ihrer Hälfte **oder aus dem Fenster** ragt. Das
   wirkt nur, wenn etwas wirklich übersteht, und kostet sonst nichts.
-  Geprüft wird das in `test-duell-format.js` am Verhalten (fünf Schritte: laden, drehen,
-  zurückdrehen, Leiste herein, Leiste heraus) **samt Gegenprobe**: Der alte Stand wird
-  testweise wieder eingebaut und muss durchfallen – er verliert beim Drehen genau die
-  335 px, die im Browser gemessen wurden. `test-layout.js` hielt bis dahin die
-  **umgekehrte** Regel fest; eine Regel, die einen Fehler festnagelt, fällt nie von
-  selbst auf.
+  **Und dann das Aufziehen** (nachgereicht: „die Schülis zoomen oft rum, und das bricht
+  das Spiel"). Das ist hier **kein Herumspielen, sondern die Bauart**: Zwei Finger auf
+  dem Schirm sind der Normalfall – zwei Leute spielen gleichzeitig, eine oben, eine
+  unten –, und Safari liest das leicht als Aufziehen.
+  - **`user-scalable=no` hilft nicht. iOS ignoriert es seit Version 10.** Es steht in
+    16 von 18 Dateien des Projekts und hat dort noch nie etwas bewirkt.
+  - Beim Aufziehen meldet `visualViewport` die **vergrösserte Sicht**, also eine
+    kleinere Höhe – bei doppelter Vergrösserung die halbe. Die wurde für die
+    Bildschirmhöhe gehalten. Gemessen bei 810 px Schirm: **405 px bei 2×, 270 px bei 3×**.
+    Das Spiel fiel also mitten im Zug auf die halbe Höhe zusammen.
+  - **Der verfügbare Platz ändert sich beim Aufziehen gar nicht** – nur der Ausschnitt,
+    durch den man schaut. Also wird in dieser Zeit nicht gemessen (`vv.scale > 1.01`),
+    und die zuletzt gute Höhe bleibt stehen.
+  - Dazu wird die Geste abgefangen: `gesturestart`/`gesturechange`/`gestureend` mit
+    `preventDefault` (Safari-eigen, und Safari ist das Ziel), und `touch-action:
+    manipulation` am Körper gegen das Doppeltippen. Vertretbar ist das, weil diese Seite
+    ein Spielfeld ist und kein Text: Sie füllt den Schirm genau einmal, sie scrollt
+    nicht, es gibt nichts heranzuholen. **Beides zusammen ist nötig** – auf Android
+    greifen die gesture-Ereignisse nicht, und was man nicht verhindern kann, darf einen
+    wenigstens nicht umwerfen.
+  **Wie schlimm es zusammen war:** Die beiden Fehler griffen ineinander. Einmal
+  aufziehen und wieder loslassen – und weil die Höhe nur sinken durfte, stand das Spiel
+  danach **bis zum Neuladen auf 270 von 810 px**. Das ist der Zustand, den die Klasse
+  beschrieben hat.
+  Geprüft wird das alles in `test-duell-format.js` am Verhalten (acht Schritte: laden,
+  drehen, zurückdrehen, Leiste herein, Leiste heraus, 2× aufziehen, 3× aufziehen,
+  loslassen) **samt zwei Gegenproben** – eine je Fehler, denn die beiden sind
+  verschieden. Der jeweils alte Stand wird testweise wieder eingebaut und muss
+  durchfallen; er verliert beim Drehen genau die 335 px und beim Aufziehen genau die
+  405/270 px, die im Browser gemessen wurden.
+  **`test-layout.js` hielt bis dahin die umgekehrte Regel fest** („die Höhe darf nur
+  verkleinern"). Eine Regel, die einen Fehler festnagelt, fällt nie von selbst auf – der
+  Test war grün, während der Fehler im Unterricht stand.
+  **Offen, bewusst nicht mitgeändert:** Die Fliegenklatsche hat dasselbe Problem von der
+  Bauart her – zwei Teams am selben Gerät, also zwei Finger. Sie rechnet ihre Höhe nicht
+  selbst aus, fällt also nicht zusammen; aufziehen lässt sie sich aber genauso. Das ist
+  ein eigener Durchgang durch alle Vollbildspiele und gehört besprochen.
 - **Principia.html** – Grundformen/Stammformen progressiv
 - **IssaJump.html** – Jump-and-Run, Bedeutungsabfrage. Das beliebteste Spiel der Arena;
   drei Dinge daran sind gemessen und nicht geraten (September 2026, nach Rückmeldung
