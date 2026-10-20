@@ -265,55 +265,54 @@
               und sogar ein versehentliches Aufziehen per Pinch-Geste. 100dvh
               kennt ältere iPads nicht, innerHeight kennt den Zoom nicht.
            2. Danach wird geprüft, ob der Inhalt einer Hälfte wirklich
-              hineinpasst. Wenn nicht, sinkt --dichte in kleinen Schritten, bis
-              er es tut. Damit ist es gleichgültig, wie hoch der Bildschirm ist,
-              wie lang die Antworten sind oder wie gross die Schrift steht.
+              hineinpasst - und zwar auch gegen den Fensterrand. Wenn nicht,
+              sinkt --dichte in kleinen Schritten, bis er es tut. Damit ist es
+              gleichgültig, wie hoch der Bildschirm ist, wie lang die Antworten
+              sind oder wie gross die Schrift steht.
+           3. Beides läuft in BEIDE Richtungen. Eine Messung, die nur schrumpfen
+              darf, ist nach der ersten Drehung veraltet und bleibt es.
 
            Ohne JavaScript bleibt das CSS mit seinen vh-Werten als Rückfall. */
         /* Die kleinste Höhe nehmen, die das Gerät nennt. iOS meldet je nach
            Zustand der Safari-Leisten verschiedene Werte; wer sich auf einen
            verlässt, baut die Seite irgendwann 120 px zu hoch - genau das ist im
            Unterricht passiert. Die kleinste ist immer die sichere. */
-        /* Wenn visualViewport eine KLEINERE Höhe meldet als innerHeight, kennt der
-           Browser den Unterschied zwischen Bildschirm und sichtbarem Bereich - dann
-           ist die Messung verlässlich und wird genau übernommen.
-           Melden beide dasselbe, weiss die Seite nicht, ob eine Browserleiste im
-           Weg ist. Auf einem Tastatur-Rechner ist das richtig so; auf einem
-           Tablet fast nie - dort steht praktisch immer eine Leiste im Bild, und
-           die Seite baut sich dann um deren Höhe zu hoch. Genau das ist auf den
-           iPads passiert, in Chrome sogar trotz svh.
-           Deshalb: Auf Geräten mit Touch in diesem Fall einen Sicherheitsabzug
-           nehmen. Ein schmaler Streifen Hintergrund unten ist der kleinere
-           Schaden gegenüber einer Knopfreihe, an die niemand herankommt. */
-        const LEISTEN_ABZUG = 0.08;   // 8 % - deckt die Leiste von Safari wie Chrome
-
+        /* Hier stand ein pauschaler Abzug von 8 %, immer dann, wenn das Gerät
+           Touch kennt und visualViewport dasselbe meldet wie innerHeight. Die
+           Annahme dahinter: In diesem Fall könne die Seite nicht wissen, ob eine
+           Browserleiste im Weg steht. Sie ist falsch. Auf iOS zieht innerHeight
+           die Safari-Leisten BEREITS ab, genau wie visualViewport - dass beide
+           übereinstimmen, ist dort der Normalfall und kein Zeichen von
+           Unsicherheit. Zu hoch gemacht hat die Seite nie innerHeight, sondern
+           die CSS-Einheit vh, und die ist mit svh längst abgelöst.
+           Der Abzug hat deshalb nur gekostet: auf dem iPad quer 65 px, hoch
+           86 px Spielfläche, ohne dass eine Leiste im Weg war (gemessen).
+           Was trotzdem aus dem Bild ragt, fängt die Dichte-Schleife unten ab -
+           die prüft seitdem gegen den FENSTERRAND. Das ist der Unterschied
+           zwischen vorsorglich verschenken und nachmessen. */
         function sichtbareHoehe() {
             const kandidaten = [];
-            const vv = window.visualViewport ? window.visualViewport.height : null;
-            if (vv) kandidaten.push(vv);
+            if (window.visualViewport) kandidaten.push(window.visualViewport.height);
             if (document.documentElement) kandidaten.push(document.documentElement.clientHeight);
             kandidaten.push(window.innerHeight);
             const brauchbar = kandidaten.filter(function (h) { return h > 200; });
             if (!brauchbar.length) return 0;
-
-            let hoehe = Math.min.apply(null, brauchbar);
-
-            const meldetUnterschied = vv && (window.innerHeight - vv) > 2;
-            const tippgeraet = (navigator.maxTouchPoints || 0) > 0;
-            if (!meldetUnterschied && tippgeraet) hoehe = hoehe * (1 - LEISTEN_ABZUG);
-
-            return Math.round(hoehe);
+            return Math.round(Math.min.apply(null, brauchbar));
         }
 
         function passeAnGeraet() {
-            /* Nur VERKLEINERN, nie vergrössern. Das CSS setzt mit 100svh bereits
-               die sichere Höhe; wenn die Messung einen grösseren Wert liefert -
-               und genau das tut iOS, solange die Safari-Leisten eingeklappt sind -
-               darf sie ihn nicht überschreiben. Vorher hat das JavaScript die
-               gute CSS-Höhe durch die schlechte gemessene ersetzt. */
+            /* In BEIDE Richtungen. Hier stand "nur verkleinern, nie vergrössern",
+               und damit blieb die einmal gesetzte Höhe für immer stehen: Wer das
+               iPad von quer auf hoch drehte, behielt die 745 px des Querformats
+               auf einem 1080 px hohen Schirm. Gemessen blieben 335 px - 31 % des
+               Bildes - leere Wand, und beide Hälften klebten oben zusammen.
+               Genau das war als "das Format stimmt nicht" gemeldet.
+               Eine Höhe, die der sichtbaren folgt, kann nicht veralten. Eine, die
+               nur fallen darf, veraltet bei der ersten Drehung und kommt nie
+               wieder zurück, weil es keinen Weg nach oben gibt. */
             const hoehe = sichtbareHoehe();
             const jetzt = document.body.clientHeight;
-            if (hoehe > 200 && hoehe < jetzt) document.body.style.height = hoehe + 'px';
+            if (hoehe > 200 && Math.abs(hoehe - jetzt) > 2) document.body.style.height = hoehe + 'px';
 
             /* Falls das Dokument zwischenzeitlich zu hoch war und verschoben
                wurde, wieder nach oben holen. Sonst bleibt die obere Hälfte hinter
@@ -333,10 +332,17 @@
             // Inhalt längst heraushängt.
             // Und in BEIDE Richtungen: Spieler 1 steht auf dem Kopf, bei ihm
             // wandert die Knopfreihe nach oben aus dem Bild.
+            // Gemessen wird gegen die eigene Hälfte UND gegen den Fensterrand.
+            // Der Fensterrand ist der Ersatz für den alten pauschalen Abzug:
+            // Statt vorsorglich 8 % zu verschenken, wird nur dann verdichtet,
+            // wenn eine Knopfreihe wirklich aus dem Bild ragt.
+            const unterkante = sichtbareHoehe() || window.innerHeight;
             const ueberstand = () => zonen.reduce((max, z) => {
                 const zb = z.getBoundingClientRect();
                 const rb = z.querySelector('.answers-grid').getBoundingClientRect();
-                return Math.max(max, (zb.top + 8) - rb.top, rb.bottom - (zb.bottom - 8));
+                return Math.max(max,
+                    (zb.top + 8) - rb.top, rb.bottom - (zb.bottom - 8),
+                    8 - rb.top, rb.bottom - (unterkante - 8));
             }, 0);
 
             let dichte = 1;
@@ -370,7 +376,9 @@
            ob ein Gerät seine Ereignisse schickt. */
         setInterval(function () {
             const soll = sichtbareHoehe();
-            if (soll > 200 && soll < document.body.clientHeight - 2) passeAnGeraet();
+            // Auch hier beide Richtungen - ein Wachhund, der nur das Schrumpfen
+            // bemerkt, holt die Seite nach dem Drehen nie wieder auf volle Höhe.
+            if (soll > 200 && Math.abs(soll - document.body.clientHeight) > 2) passeAnGeraet();
         }, 500);
 
 

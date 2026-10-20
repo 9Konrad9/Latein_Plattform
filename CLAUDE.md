@@ -119,7 +119,35 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 ## Aktive Spiele (Stand zuletzt)
 
 - **CircusV.html** – reine Bedeutungsabfrage (Circus Maximus)
-- **Duell.html** – Wortschatz-Duell, mehrere Fragetypen
+- **Duell.html** – Wortschatz-Duell, mehrere Fragetypen. Zwei Spielfelder übereinander,
+  das obere auf dem Kopf – **das einzige Spiel, das seine Höhe selbst ausrechnet**.
+  **Die Regel: Die Spielfläche FOLGT dem sichtbaren Bereich, in beide Richtungen.**
+  Dreimal ist hier dasselbe gemeldet worden („das Format stimmt auf dem iPad nicht"),
+  und zweimal hat der Versuch, auf Nummer sicher zu gehen, es schlimmer gemacht:
+  - **Ein pauschaler Abzug von 8 %** für eine Browserleiste, die gar nicht da sein muss.
+    Die Annahme dahinter: Wenn `visualViewport.height` dasselbe meldet wie `innerHeight`,
+    könne die Seite nicht wissen, ob eine Leiste im Weg steht. Das ist falsch – **auf iOS
+    zieht `innerHeight` die Safari-Leisten bereits ab**, genau wie `visualViewport`; dass
+    beide übereinstimmen, ist dort der Normalfall. Zu hoch gemacht hat die Seite nie
+    `innerHeight`, sondern die CSS-Einheit `vh`, und die ist mit `svh` längst abgelöst.
+    Gekostet hat der Abzug quer 65 px und hoch 86 px Spielfläche – gemessen.
+  - **„Nur verkleinern, nie vergrössern".** Gut gemeint: Die sichere CSS-Höhe (`100svh`)
+    sollte nicht von einer zu grossen Messung überschrieben werden. Nur **verdeckt der
+    einmal gesetzte Inline-Stil den CSS-Wert**, und damit gab es keinen Weg zurück nach
+    oben. Wer das iPad vom Quer- ins Hochformat drehte, behielt die 745 px des
+    Querformats auf einem 1080 px hohen Schirm: **335 px, 31 % des Bildes, leere Wand**,
+    beide Hälften oben zusammengeklebt. Das war der eigentliche Befund.
+  **Die Lehre:** Ein Sicherheitsabschlag, den nichts wieder zurücknimmt, ist kein
+  Sicherheitsabschlag, sondern ein dauerhafter Fehler. Wer der Messung nicht traut,
+  braucht einen Rückhalt, der NACHMISST – hier die Dichte-Schleife: Sie verdichtet den
+  Inhalt, solange eine Knopfreihe aus ihrer Hälfte **oder aus dem Fenster** ragt. Das
+  wirkt nur, wenn etwas wirklich übersteht, und kostet sonst nichts.
+  Geprüft wird das in `test-duell-format.js` am Verhalten (fünf Schritte: laden, drehen,
+  zurückdrehen, Leiste herein, Leiste heraus) **samt Gegenprobe**: Der alte Stand wird
+  testweise wieder eingebaut und muss durchfallen – er verliert beim Drehen genau die
+  335 px, die im Browser gemessen wurden. `test-layout.js` hielt bis dahin die
+  **umgekehrte** Regel fest; eine Regel, die einen Fehler festnagelt, fällt nie von
+  selbst auf.
 - **Principia.html** – Grundformen/Stammformen progressiv
 - **IssaJump.html** – Jump-and-Run, Bedeutungsabfrage. Das beliebteste Spiel der Arena;
   drei Dinge daran sind gemessen und nicht geraten (September 2026, nach Rückmeldung
