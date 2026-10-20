@@ -20,7 +20,10 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   `"abl"` | `"gen"`, oder ein Array, wenn beide Verwendungen gelten) und `subjBelebt`
   (verlangt das Verb ein Lebewesen als Subjekt?); Nomen tragen `belebt`
   (`"person" | "tier" | "sache"`). Mehrteilige Lemmata haben `satzbau: false`.
-  Diese vier Felder sind fachlich gegengelesen – NICHT im Vorbeigehen ändern.
+  Dazu seit Oktober 2026 die **Objektseite**: `objArt` (`"belebt" | "sache"`) sagt, was ein
+  Verb als Akkusativobjekt verträgt, `datArt` dasselbe für die drei Dativverben, deren
+  Dativ keine Person ist. **Fehlt das Feld, ist beides recht** – siehe „Semantik Stufe 2“.
+  Diese sechs Felder sind fachlich gegengelesen – NICHT im Vorbeigehen ändern.
 - `nounEngine.js` – zentrale Deklinations-Engine für Substantive. API: `NounEngine.decline(nounObj)`
   gibt `{ sg: {nom,gen,dat,akk,abl}, pl: {...}, gender }` zurück (Werte können `null` sein bei
   defektiven Nomen wie *vīs*!). `NounEngine.getForm(nounObj, caseKey, numerus)` für Einzelformen.
@@ -1001,12 +1004,43 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     „die Grenze, das Gebiet" im Wortschatz. Wer ein weiteres Wort ergänzt, trägt `meaningAb`
     nach; `test-bedeutung.js` prüft jedes Wort mit diesem Feld automatisch mit.
 
-- **Semantik Stufe 2: die Objektseite.** Stufe 1 (Belebtheit des Subjekts) ist umgesetzt und hat
-  die Quote semantisch unmöglicher Sätze von 41,5 % auf 0 gedrückt. Ungeprüft bleibt das Objekt:
-  rund 49 % der Aktivsätze haben eines, und *poēta vulnus legit* ist weiterhin möglich. Dafür
-  bräuchte es grobe Sachfelder an den Nomen (Flüssigkeit, Ort, Text, Abstraktum …) und die
-  passende Erwartung am Verb. Deutlich mehr Aufwand als Stufe 1 – erst angehen, wenn im Spiel
-  auffällt, dass es stört.
+- **Semantik Stufe 2a: die Objektseite, grobe Achse** – GEBAUT (Oktober 2026). Stufe 1
+  (Belebtheit des Subjekts) hatte die Quote unmöglicher Sätze von 41,5 % auf 0 gedrückt;
+  die Objektseite war ungeprüft – `baueObjekt()` griff blind in den Topf.
+  - **Die Nomenseite war schon fertig.** `belebt` steht an allen 342 Nomen. Gefehlt hat nur
+    die Erwartung am Verb – deshalb kostete diese Stufe ein einziges neues Feld.
+  - **`objArt`** (`"belebt" | "sache"`) am Verb, für den Akkusativ. **Fehlt es, ist beides
+    recht.** Von 229 Akkusativverben verlangen **54 ein Lebewesen, 105 eine Sache, bei 70
+    ist es egal**. Die Einstufung liegt als `latein-tests/objekt.json` (dort korrigieren,
+    `einbau-objektart.js` schreibt sie nach `vocabulary.js`).
+  - **Leitsatz bei der Einstufung: im Zweifel „egal".** Eine zu enge Regel nimmt richtige
+    Sätze weg, eine fehlende lässt nur den alten Zustand bestehen – das ist die harmlosere
+    Fehlerrichtung. *regere, servāre, dēfendere, tuērī, laudāre, dīligere* stehen bewusst
+    auf egal: Sie gehen mit Person UND Sache.
+  - **Der Dativ braucht kein Feld je Verb.** Ein lateinisches Dativobjekt ist fast immer
+    eine Person (*alicuī*). Von 30 Dativverben sind es drei nicht – *studēre, interesse,
+    prōvidēre* –, und die tragen `datArt`. Bei den **12 `dat+akk`-Verben greifen beide
+    Regeln ineinander** und ergeben genau das Muster, das sie alle teilen: jemandem
+    (Person) etwas (Sache). Das war keine Annahme – alle zwölf wurden nachgesehen.
+  - **Gemessen**: Vorher verstiessen **113 von 405 Objekten (28 %)** gegen die Erwartung
+    ihres Verbs, nachher 0 von 2113 über fünf Lektionsspannen. Von Hand durchgesehen waren
+    vorher 14 von 32 Sätzen klar unmöglich (*equī iūdicia alunt*, *aquās canis accūsāverat*,
+    *captīvus mīlitēs discēbat*), nachher 6 von 22.
+  - `test-objektseite.js` prüft das am Verhalten, mit **Gegenprobe** (den Verben wird die
+    Erwartung weggenommen, dann MÜSSEN Verstösse auftreten) und mit zwei Proben, die sonst
+    still schiefgehen: dass der **Rückfall** nicht der Normalfall ist (`nurSachen` gibt den
+    vollen Topf zurück, wenn nichts übrig bleibt – in kleinen Lektionstöpfen sähe die Regel
+    dann aus, als wirke sie), und dass noch Sätze **herauskommen** (400 von 400 bis L10).
+
+- **Semantik Stufe 2b: die Sachfelder** – offen, und der Rest der Quote hängt daran.
+  Was 2a nicht fängt, ist jeder Fehler INNERHALB der Sachen: *bibit urbēs* (trinkt Städte),
+  *cēnam legunt* (lesen die Mahlzeit), *hōrās regere* (die Stunden lenken). Dafür bräuchte es
+  grobe Sachfelder an den 254 Sache-Nomen (Text, Ort, Gegenstand, Nahrung, Körperteil, Zeit,
+  Natur, Abstraktum) und eine Erwartung an den wählerischen Verben.
+  **Derselbe Datenbestand trägt Quartett und Montagsmaler** – wenn eines davon gebaut wird,
+  lohnt es, die Felder gleich für alle drei anzulegen.
+  `objArt` bleibt dabei bestehen: Die grobe Achse ist nicht dieselbe Frage wie das Sachfeld
+  (*accūsāre* will eine Person, egal aus welchem Feld).
 
 - Satzwertige Konstruktionen: Der **AcI** ist in `Arcus.html` umgesetzt. Offen sind
   **Participium coniunctum** (PPP ab L18, PPA ab L20) und **Ablativus absolutus** (ab L22) –

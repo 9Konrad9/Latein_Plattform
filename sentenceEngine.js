@@ -8,6 +8,8 @@
 //
 // Die Valenz jedes Verbs steht als Feld `valenz` in vocabulary.js und entscheidet,
 // welches Objekt gebaut wird - NICHT mehr eine hartkodierte Liste im Spiel.
+// WELCHES Nomen dabei in Frage kommt, sagt `objArt` (Akkusativ) bzw. `datArt`
+// (Dativ) - siehe objektPool() weiter unten.
 // Erlaubte Werte: "akk" | "dat" | "dat+akk" | "intrans" | "abl" | "gen",
 // oder ein Array mehrerer Werte (dann wird pro Satz einer davon gewählt).
 
@@ -178,6 +180,38 @@ const SentenceEngine = (() => {
     function nurBelebte(pool) {
         const gefiltert = pool.filter(istBelebt);
         return gefiltert.length ? gefiltert : pool;
+    }
+
+    /** Das Gegenstück: nur Sachen, mit demselben Rückfall. */
+    function nurSachen(pool) {
+        const gefiltert = pool.filter(n => !istBelebt(n));
+        return gefiltert.length ? gefiltert : pool;
+    }
+
+    /**
+     * Semantik Stufe 2, die Objektseite. Stufe 1 hat gefragt, wer HANDELN kann
+     * (`subjBelebt`); hier geht es darum, was ein Verb als Objekt verträgt.
+     * Ohne das griff `baueObjekt` blind in den Topf, und heraus kamen Sätze wie
+     * „equī iūdicia alunt" (die Pferde nähren die Urteile) oder „aquās canis
+     * accūsāverat" (der Hund beschuldigte das Wasser). Durchgesehen waren 14
+     * von 32 Sätzen mit Objekt klar unmöglich.
+     *
+     * Die Erwartung steht als `objArt` am Verb ("belebt" | "sache"); FEHLT sie,
+     * ist beides recht. Diese Richtung ist Absicht: Eine zu enge Regel nimmt
+     * richtige Sätze weg, eine fehlende lässt nur den alten Zustand bestehen.
+     * 54 Verben verlangen ein Lebewesen, 105 eine Sache, bei 70 ist es egal.
+     *
+     * Der DATIV braucht kein Feld je Verb: Ein lateinisches Dativobjekt ist
+     * fast immer eine Person (alicuī). Von 30 Dativverben im Wortschatz sind es
+     * drei nicht - studēre, interesse, prōvidēre -, und die tragen `datArt`.
+     * Bei den 12 dat+akk-Verben greifen beide Regeln ineinander und ergeben
+     * genau das Muster, das sie alle teilen: jemandem (Person) etwas (Sache).
+     */
+    function objektPool(pool, kasus, verb) {
+        if (kasus === 'dat') return verb.datArt === 'sache' ? nurSachen(pool) : nurBelebte(pool);
+        if (verb.objArt === 'belebt') return nurBelebte(pool);
+        if (verb.objArt === 'sache') return nurSachen(pool);
+        return pool;
     }
 
     /**
@@ -435,7 +469,8 @@ const SentenceEngine = (() => {
     }
 
     function baueObjekt(nomen, belegt, kasus, verb) {
-        const pool = mitKasus(nomen, kasus).filter(n => !belegt.has(n.latin));
+        const pool = objektPool(
+            mitKasus(nomen, kasus).filter(n => !belegt.has(n.latin)), kasus, verb);
         if (!pool.length) return null;
         const n = waehleGewichtet(pool);
         belegt.add(n.latin);
