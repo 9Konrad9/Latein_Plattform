@@ -1017,6 +1017,12 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Sätze weg, eine fehlende lässt nur den alten Zustand bestehen – das ist die harmlosere
     Fehlerrichtung. *regere, servāre, dēfendere, tuērī, laudāre, dīligere* stehen bewusst
     auf egal: Sie gehen mit Person UND Sache.
+  - **Wie weit gegengelesen** (Oktober 2026): Die **22 strittigen Einträge** – die mit einer
+    Notiz in `objekt.json`, darunter *arcēre, perturbāre, sequī, obsidēre, parere, afficere* –
+    hat der Fachlehrer geprüft und **unverändert bestätigt**. Die übrigen 137 sind meine
+    erste Fassung und nicht einzeln abgenommen. Wer dort etwas ändert, ändert also keine
+    fachliche Entscheidung, sondern eine Schätzung – anders als bei `valenz`, `subjBelebt`
+    und `belebt`. Die Prüfseite dafür baut `bau-objektseite.js`.
   - **Der Dativ braucht kein Feld je Verb.** Ein lateinisches Dativobjekt ist fast immer
     eine Person (*alicuī*). Von 30 Dativverben sind es drei nicht – *studēre, interesse,
     prōvidēre* –, und die tragen `datArt`. Bei den **12 `dat+akk`-Verben greifen beide
