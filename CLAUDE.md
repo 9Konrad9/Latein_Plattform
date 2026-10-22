@@ -1102,6 +1102,11 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   - Die Einstufungen liegen als `latein-tests/sachfeld.json` (Nomen) und `objektfeld.json`
     (Verben); `einbau-sachfeld.js` schreibt sie nach `vocabulary.js`. Dort korrigieren, nicht
     im Wortschatz.
+  - **Wie weit gegengelesen: GAR NICHT.** Anders als bei 2a, wo die 22 strittigen Einträge
+    bestätigt sind, sind diese 254 Nomen- und 98 Verbeinstufungen durchweg meine erste
+    Fassung. Wer hier etwas ändert, ändert eine Schätzung, keine fachliche Entscheidung.
+    Die Prüfseite dafür baut `bau-objektseite.js` (drei Reiter: Objektart, Sachfeld der
+    Nomen, Felder der Verben).
 
 - Satzwertige Konstruktionen: Der **AcI** ist in `Arcus.html` umgesetzt. Offen sind
   **Participium coniunctum** (PPP ab L18, PPA ab L20) und **Ablativus absolutus** (ab L22) –
