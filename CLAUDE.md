@@ -20,10 +20,12 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   `"abl"` | `"gen"`, oder ein Array, wenn beide Verwendungen gelten) und `subjBelebt`
   (verlangt das Verb ein Lebewesen als Subjekt?); Nomen tragen `belebt`
   (`"person" | "tier" | "sache"`). Mehrteilige Lemmata haben `satzbau: false`.
-  Dazu seit Oktober 2026 die **Objektseite**: `objArt` (`"belebt" | "sache"`) sagt, was ein
-  Verb als Akkusativobjekt verträgt, `datArt` dasselbe für die drei Dativverben, deren
-  Dativ keine Person ist. **Fehlt das Feld, ist beides recht** – siehe „Semantik Stufe 2“.
-  Diese sechs Felder sind fachlich gegengelesen – NICHT im Vorbeigehen ändern.
+  Dazu seit Oktober 2026 die **Objektseite**, in zwei Stufen: `objArt` (`"belebt" | "sache"`)
+  sagt, was ein Verb als Akkusativobjekt verträgt, `datArt` dasselbe für die drei Dativverben,
+  deren Dativ keine Person ist; darunter trägt jede Sache ein `feld` (`"ding" | "ort" |
+  `"text" | "zeit" | "stoff" | "abstrakt"`) und jedes wählerische Verb ein `objFeld` mit dem,
+  was es verträgt. **Fehlt eines dieser Felder, ist alles recht** – siehe „Semantik Stufe 2a“
+  und „2b“. Diese acht Felder sind fachlich gegengelesen – NICHT im Vorbeigehen ändern.
 - `nounEngine.js` – zentrale Deklinations-Engine für Substantive. API: `NounEngine.decline(nounObj)`
   gibt `{ sg: {nom,gen,dat,akk,abl}, pl: {...}, gender }` zurück (Werte können `null` sein bei
   defektiven Nomen wie *vīs*!). `NounEngine.getForm(nounObj, caseKey, numerus)` für Einzelformen.
@@ -978,13 +980,28 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Fliegenklatsche.
   - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
     aus den Umschreibungen erraten.
-  - **Quartett.** Vier Wörter eines Sachfelds sammeln. **Hängt an den Sachfeldern an den
-    Nomen, die auch „Semantik Stufe 2" unten braucht** – ein Datenbestand, zwei Zwecke.
-    Wenn eines von beiden gebaut wird, lohnt es, die Felder gleich für beide anzulegen.
+  - **Quartett.** Vier Wörter eines Sachfelds sammeln. **Hier stand bis Oktober 2026, das
+    hänge an denselben Sachfeldern wie „Semantik Stufe 2" – ein Datenbestand, zwei Zwecke.
+    Das ist falsch, und zwar an echten Daten geprüft.** Ein THEMATISCHES Feld „Krieg", wie
+    Quartett es braucht, enthält im vorhandenen Wortschatz:
+
+    | | |
+    |---|---|
+    | *imperātor, mīles, hostis, exercitus* | Personen |
+    | *gladius, arma* | anfassbare Dinge |
+    | *castra* | ein Ort |
+    | *bellum, pūgna, victōria* | Abstrakta und Ereignisse |
+
+    Für den Satzbau sagt das **nichts**: *gladium ferre* geht, *victōriam ferre* geht als
+    Wendung, *castra ferre* nicht. Die thematische Achse und die Achse, die Sätze rettet,
+    sind zwei verschiedene Achsen. Quartett braucht also ein **eigenes, zweites Feld** an
+    den Nomen – die vorhandenen `feld`-Werte helfen ihm nicht.
   - Noch in der Diskussion: **Montagsmaler**. Das Hindernis ist die Wortauswahl – nur ein
     Teil des Wortschatzes ist zeichenbar. `belebt` hilft dabei NICHT: unter `belebt: "sache"`
     stehen *culīna*, *tunica* und *statua* neben *ōtium*, *labor*, *mors* und *gaudium*.
-    Auch hier wären die Sachfelder die eigentliche Lösung.
+    **`feld` hilft weiter, reicht aber nicht**: `ding` und `ort` sind fast durchweg zeichenbar,
+    `abstrakt` fast durchweg nicht – damit ist die Auswahl grob vorsortiert. Die Entscheidung
+    „kann man das malen?" bleibt trotzdem eine eigene.
 
 - **Caesar-Bedeutungen bekannter Wörter** – GEBAUT (Oktober 2026). Einige Wörter stehen längst
   im Pontes-Teil, heißen bei Caesar aber etwas anderes. **Ein zweiter Eintrag mit demselben
@@ -1038,15 +1055,53 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     vollen Topf zurück, wenn nichts übrig bleibt – in kleinen Lektionstöpfen sähe die Regel
     dann aus, als wirke sie), und dass noch Sätze **herauskommen** (400 von 400 bis L10).
 
-- **Semantik Stufe 2b: die Sachfelder** – offen, und der Rest der Quote hängt daran.
-  Was 2a nicht fängt, ist jeder Fehler INNERHALB der Sachen: *bibit urbēs* (trinkt Städte),
-  *cēnam legunt* (lesen die Mahlzeit), *hōrās regere* (die Stunden lenken). Dafür bräuchte es
-  grobe Sachfelder an den 254 Sache-Nomen (Text, Ort, Gegenstand, Nahrung, Körperteil, Zeit,
-  Natur, Abstraktum) und eine Erwartung an den wählerischen Verben.
-  **Derselbe Datenbestand trägt Quartett und Montagsmaler** – wenn eines davon gebaut wird,
-  lohnt es, die Felder gleich für alle drei anzulegen.
-  `objArt` bleibt dabei bestehen: Die grobe Achse ist nicht dieselbe Frage wie das Sachfeld
-  (*accūsāre* will eine Person, egal aus welchem Feld).
+- **Semantik Stufe 2b: die Sachfelder** – GEBAUT (Oktober 2026). Was 2a nicht fing, war jeder
+  Fehler INNERHALB der Sachen: *bibit urbēs*, *cēnam legunt*, *hōrās regere*, *facinora obsidēre*.
+  - **Sechs Felder an den 254 Sache-Nomen** (`feld`), dazu `objFeld` an 98 wählerischen Verben.
+    Die übrigen 131 Akkusativverben vertragen jedes Feld und tragen nichts.
+
+    | Feld | Zahl | was darunter fällt |
+    |---|---|---|
+    | `ding` | 40 | Gegenstände, Körperteile, Himmelskörper |
+    | `ort` | 53 | Siedlungen, Bauwerke, Wege **und Naturräume** (*silva, flūmen, mōns*) |
+    | `text` | 14 | was aus Wörtern besteht – *carmen, epistula, lēx, verbum, tabula* |
+    | `zeit` | 9 | *hōra, diēs, nox, annus* |
+    | `stoff` | 7 | **nur Essbares und Trinkbares** |
+    | `abstrakt` | 131 | alles Übrige |
+
+  - **Die Felder sind danach geschnitten, was ein Verb mit der Sache anfangen kann –
+    nicht nach Themen.** Deshalb stehen Naturräume unter `ort` (man betritt einen Wald wie
+    eine Stadt) statt in einem eigenen Feld `natur`, das für kein Verb etwas vorhersagte.
+  - **`stoff` ist bewusst eng.** Nur Essbares und Trinkbares – *aurum*, *ignis*, *cinis*
+    stehen unter `ding`. Wäre `stoff` „alles Materielle", sähe *bibere* wieder fast jede
+    Sache, und genau dafür gibt es das Feld. Es ist das einzige Verb, das `stoff` wirklich
+    braucht; *intermittere* ist das einzige mit `zeit`.
+  - **Lebewesen tragen kein Feld.** Ob eine Person als Objekt taugt, sagt `objArt` allein –
+    ein Feld an ihnen wäre eine zweite Antwort auf dieselbe Frage. `objFeld` filtert deshalb
+    nur unter den Sachen: *mittere* trägt `[ding, text, abstrakt]` und schickt trotzdem
+    weiter Boten.
+  - **DIE ENTSCHEIDUNG, AN DER ES HÄNGT: beim Feld gibt es KEINEN Rückfall.** `nurBelebte`
+    und `nurSachen` geben den vollen Topf zurück, wenn nichts übrig bleibt („lieber ein
+    schiefer Satz als gar keiner"). Beim Feld wäre das genau der Fehler, den es verhindern
+    soll: Steht in der Lektionsauswahl nichts Trinkbares, lieferte der Rückfall wieder
+    *urbēs bibere*. Stattdessen gibt `baueObjekt` `null`, und **`build()` nimmt in seiner
+    Schleife über 20 Versuche einfach ein anderes Verb**. Das kostet nichts: In allen sechs
+    geprüften Lektionsspannen entstehen weiterhin ~400 von 400 Sätzen.
+    Das ist keine Kleinigkeit – *bibere* hat im GANZEN Wortschatz sieben mögliche Objekte,
+    in einer kleinen Lektionsauswahl null. Ein leerer Feldtopf ist der Normalfall, nicht die
+    Ausnahme. `test-sachfeld.js` prüft genau das an *bibere* mit einem Topf ohne Trinkbares.
+  - **Gemessen**: Vorher lagen **65 von 330 Objekten (20 %)** im falschen Feld, nachher 0 von
+    1800 über fünf Lektionsspannen – und das ZUSÄTZLICH zu den 28 %, die 2a abgefangen hat.
+    Von Hand durchgesehen: vor 2a 14 von 32 Sätzen klar unmöglich, nach 2a 6 von 22, nach 2b
+    7 von 36.
+  - **Was jetzt noch falsch ist, ist LEXIKALISCH, nicht strukturell**: *incipere perīculum*
+    („die Gefahr beginnen"), *solvere bellum*, *dōnāre vulnus*. Alle drei passen ins Feld –
+    *incipere* will eine Tätigkeit, nicht irgendein Abstraktum. Das abzufangen hiesse, Felder
+    in Unterfelder zu teilen, und dort hört der Ertrag auf: Jede weitere Stufe kostet mehr
+    Einstufungsarbeit und fängt weniger. **Hier ist ein guter Punkt zum Aufhören.**
+  - Die Einstufungen liegen als `latein-tests/sachfeld.json` (Nomen) und `objektfeld.json`
+    (Verben); `einbau-sachfeld.js` schreibt sie nach `vocabulary.js`. Dort korrigieren, nicht
+    im Wortschatz.
 
 - Satzwertige Konstruktionen: Der **AcI** ist in `Arcus.html` umgesetzt. Offen sind
   **Participium coniunctum** (PPP ab L18, PPA ab L20) und **Ablativus absolutus** (ab L22) –

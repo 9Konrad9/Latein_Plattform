@@ -9,7 +9,8 @@
 // Die Valenz jedes Verbs steht als Feld `valenz` in vocabulary.js und entscheidet,
 // welches Objekt gebaut wird - NICHT mehr eine hartkodierte Liste im Spiel.
 // WELCHES Nomen dabei in Frage kommt, sagt `objArt` (Akkusativ) bzw. `datArt`
-// (Dativ) - siehe objektPool() weiter unten.
+// (Dativ), und unter den Sachen noch einmal `objFeld` am Verb gegen `feld` am
+// Nomen - siehe objektPool() weiter unten.
 // Erlaubte Werte: "akk" | "dat" | "dat+akk" | "intrans" | "abl" | "gen",
 // oder ein Array mehrerer Werte (dann wird pro Satz einer davon gewählt).
 
@@ -207,11 +208,40 @@ const SentenceEngine = (() => {
      * Bei den 12 dat+akk-Verben greifen beide Regeln ineinander und ergeben
      * genau das Muster, das sie alle teilen: jemandem (Person) etwas (Sache).
      */
+    /**
+     * Semantik Stufe 2b: das Sachfeld. Jede Sache trägt `feld` (ding | ort |
+     * text | zeit | stoff | abstrakt), jedes wählerische Verb `objFeld` mit
+     * dem, was es verträgt. Fehlt `objFeld`, ist jedes Feld recht.
+     *
+     * Lebewesen kommen hier nicht vor: Ob eine Person als Objekt taugt, sagt
+     * allein `objArt`. `mittere` trägt deshalb [ding, text, abstrakt] und
+     * schickt trotzdem weiter Boten.
+     */
+    function feldPasst(nounObj, verb) {
+        const felder = verb.objFeld;
+        if (!felder || !felder.length) return true;
+        if (istBelebt(nounObj)) return true;
+        return felder.indexOf(nounObj.feld) !== -1;
+    }
+
     function objektPool(pool, kasus, verb) {
         if (kasus === 'dat') return verb.datArt === 'sache' ? nurSachen(pool) : nurBelebte(pool);
-        if (verb.objArt === 'belebt') return nurBelebte(pool);
-        if (verb.objArt === 'sache') return nurSachen(pool);
-        return pool;
+
+        let raus = pool;
+        if (verb.objArt === 'belebt') raus = nurBelebte(raus);
+        else if (verb.objArt === 'sache') raus = nurSachen(raus);
+
+        /* Das Sachfeld filtert OHNE Rückfall - anders als nurBelebte und
+           nurSachen, die den vollen Topf zurückgeben, wenn nichts übrig
+           bleibt. Hier wäre das genau der Fehler, den das Feld verhindern
+           soll: Steht in der Lektionsauswahl nichts Trinkbares, lieferte der
+           Rückfall wieder „urbēs bibere". Lieber kein Satz mit diesem Verb -
+           baueObjekt gibt dann null, und der Aufrufer nimmt ein anderes.
+           `bibere` hat im GANZEN Wortschatz nur sieben mögliche Objekte; in
+           einer kleinen Lektionsauswahl sind es null, und das ist der
+           Normalfall, nicht die Ausnahme. */
+        if (verb.objFeld && verb.objFeld.length) raus = raus.filter(n => feldPasst(n, verb));
+        return raus;
     }
 
     /**
