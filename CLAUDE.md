@@ -900,6 +900,46 @@ dieses Namens, und darauf spielt auch das Spiel an.
   Generatoren liefern oft ein abweichendes Magenta (gemessen 322° und 333°). Ausgabe ist
   palettiertes PNG mit 128 Farben; bei diesen flachen Flächen spart das rund 85 % ohne
   sichtbaren Verlust.
+
+- **Die Bilder-Diät** (Oktober 2026): `assets/` wog **7,84 MB**, jetzt 4,3 MB – bei einer
+  Seite ohne Server ist das die Ladezeit über das Schul-WLAN. Der Befund dahinter ist
+  simpler, als er klingt: **Die beiden grössten Dateien hatten gar keinen Alphakanal.**
+  `circus/background.png` (1,27 MB) und `issajump/background.png` (834 KB) waren PNG ohne
+  jeden Grund – als JPEG sind es 164 und 62 KB. Dazu `heart_full.png` mit 146 KB, während
+  `heart_empty.png` bei *genau denselben Maßen* 3 KB wiegt: eine Datei, die schlicht nie
+  durch `freistellen.js` gelaufen war.
+  Gemacht wird das mit `latein-tests/bilder-diaet.js` (`--schreiben` ersetzt wirklich).
+  Alle `ui/`-Assets sparen **0 %** – die sind längst palettiert, dort ist nichts zu holen.
+  - **Die Qualitätsstufe wird NICHT gesetzt, sondern gemessen.** Eine feste Stufe ist für
+    einen flachen Zeichentrickwagen zu hoch und für einen feinkörnigen Hintergrund zu
+    niedrig. Das Werkzeug geht die Leiter hoch, bis die Abweichung unter der Schwelle liegt.
+  - **Verglichen wird leicht WEICHGEZEICHNET** (1,2 px) – und das ist der Punkt, an dem die
+    erste Fassung danebenlag. Punktgenau verglichen, fiel der Circus-Hintergrund bis
+    Qualität 98 durch, obwohl dort nichts zu sehen ist: Er hat einen mittleren Sprung von
+    **20,7/255 zum Nachbarpunkt** (Issas: 4,5) und 163 000 verschiedene Farben. Die Messung
+    strafte JPEG also dafür ab, dass es Feinkorn glättet – für genau das, wofür es gemacht
+    ist. Streifenbildung überlebt das Weichzeichnen, denn sie ist ein **großflächiger**
+    Fehler; verziehen wird nur das Korn.
+  - **DER MASSSTAB, DEN ERST DIE GEGENPROBE ERZWUNGEN HAT: der Maximalausschlag.** Mit
+    Mittelwert und Anteil allein kamen zwei offensichtlich zu starke Fassungen durch –
+    Issas Hintergrund bei Qualität 25 (Mittel 1,87, 2,6 % deutlich) und ein Wagen auf acht
+    Farben (1,28 / 2,1 %). Beide sehen harmlos aus, wenn der Fehler auf wenigen Kanten
+    sitzt. Die Maxima trennen sauber: brauchbare Fassungen bleiben **unter 22**, die zu
+    starken liegen **ab 45**. `gegenprobe-diaet.js` hält das fest. Ein Riegel, an dem nichts
+    hängenbleibt, prüft womöglich nichts – das war hier keine Floskel, sondern der Befund.
+
+- **`test-assets.js` prüft, dass jede Bildreferenz auf eine Datei zeigt, die es gibt.**
+  Eine tote Referenz **stürzt nicht ab** – der Browser lädt das Bild einfach nicht, und auf
+  dem Schirm fehlt lautlos etwas. Dieselbe Fehlerklasse wie bei `test-antworten.js`: nicht
+  „wirft es?", sondern „fehlt da was?". Zwei Fallstricke, beide beim ersten Lauf aufgetreten:
+  - **Nur in ZEICHENKETTEN suchen.** Stumpf im Text gesucht, traf der Test Silentiums
+    Kommentar, der Circus’ Hintergrund als Größenvergleich erwähnt – gemeldet als tote
+    Referenz, wo gar keine ist.
+  - **Ein PRÄFIX muss selbst etwas treffen.** Villa baut seine Stufen als
+    `'assets/villa/villa_stage_' + stufe + '.jpg'`. Macht man daraus `villa_stufe_`, trägt
+    das keine Endung, wird also nie als Referenz geprüft – die sechs Bilder wären still
+    unter „unbenutzt" gelandet und das Spiel hätte im Unterricht sechs leere Baustufen
+    gezeigt. Gefunden hat das `gegenprobe-assets.js`, nicht das Lesen.
 - **Es gibt genau ZWEI Knöpfe im Projekt**, beide vollständig in `theme.css` (September 2026).
   Die Unterscheidung ist nicht dekorativ, sondern eine Rolle:
   - **Porphyrrot heißt: hier wird gehandelt.** Runde starten, weiter, zurück, Werkzeug.

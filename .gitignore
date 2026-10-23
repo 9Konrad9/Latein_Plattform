@@ -2,3 +2,7 @@
 # Rohbilder, Zwischenstaende, Versuche - nichts davon gehoert nach GitHub.
 # Fertige Assets werden bewusst nach assets/ kopiert, dann sind sie dabei.
 werkstatt/
+
+# Die .claude-Ablage ist Werkzeug der Sitzung (Vorschau-Server u. a.),
+# kein Teil des Projekts - wie die Testumgebung in latein-tests.
+.claude/
