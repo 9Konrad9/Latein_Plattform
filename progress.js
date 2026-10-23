@@ -325,14 +325,35 @@ const LudiProgress = (() => {
            "Formen & Wortarten". Die Höhe erschien dadurch zwischen den
            Wortarten. Wer hier eine Trophäe ergänzt, vergisst die Liste dort
            sonst wieder. */
-        { id: 'hoehe', icon: '☁️', title: 'Himmelsstürmerin', unit: 'Meter mit Issa erklettert', thresholds: [200, 500, 1000, 2000], bereich: 'bestleistung' }
+        { id: 'hoehe', icon: '☁️', title: 'Himmelsstürmerin', unit: 'Meter mit Issa erklettert', thresholds: [200, 500, 1000, 2000], bereich: 'bestleistung' },
+
+        /* Scrīnium. Die Schwellen sind aus der Taktsimulation abgeleitet
+           (latein-tests/probe-takt.js), nicht geschätzt: Gegen fünf Tempi von
+           1,5 bis 6,5 Sekunden je Rolle kommen 56 / 47 / 40 / 27 / 18 Rollen
+           heraus. Die unterste Stufe soll also fast jede erreichen, die
+           oberste über der schnellsten simulierten Spielerin liegen. */
+        { id: 'rollen', icon: '📜', title: 'Archivmeister', unit: 'Rollen in einer Runde einsortiert', thresholds: [15, 30, 45, 60], bereich: 'bestleistung' },
+
+        /* Zehn Fächer statt fünf: Die Entscheidung dauert länger, also rückt
+           dieselbe Leiter eine Stufe nach unten. */
+        { id: 'rollen-numerus', icon: '🗂️', title: 'Tabellenfest', unit: 'Rollen mit Numerus einsortiert', thresholds: [10, 20, 32, 45], bereich: 'bestleistung' },
+
+        /* Die eigentliche Lernmarke dieses Spiels. Gemessen sind 32 % aller
+           Nomenformen mehrdeutig (patribus = Dat. UND Abl.), in einer Runde
+           von 40 Rollen also rund 13. Wer die sicher wegräumt, hat begriffen,
+           dass eine Endung mehr als einen Fall tragen kann - und DAS ist der
+           Grund, warum das Spiel mehrdeutige Formen nicht aussortiert. */
+        { id: 'doppelformen', icon: '👀', title: 'Doppelblick', unit: 'mehrdeutige Formen in einer Runde richtig eingeordnet', thresholds: [4, 10, 16, 24], bereich: 'bestleistung' }
     ];
 
     /* Bestleistungen, die zusätzlich eine Trophäe tragen. Die Tabelle sagt,
        WO der Wert steht - damit recordBest() und getAchievementOverview()
        dieselbe Quelle lesen und nicht auseinanderlaufen. */
     const BEST_ACHIEVEMENTS = [
-        { achievement: 'hoehe', gameId: 'issajump', best: 'hoehe' }
+        { achievement: 'hoehe', gameId: 'issajump', best: 'hoehe' },
+        { achievement: 'rollen', gameId: 'scrinium', best: 'rollen' },
+        { achievement: 'rollen-numerus', gameId: 'scrinium', best: 'rollen-numerus' },
+        { achievement: 'doppelformen', gameId: 'scrinium', best: 'doppelformen' }
     ];
 
     // Schwellwerte für alle Kategorie-spezifischen Achievements (Wortarten in

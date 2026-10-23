@@ -454,6 +454,29 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
       Im ersten Modus ist `numerus` null – dann zählt jede Form des Kasus, gleich welcher
       Zahl. Das Gegenstück im Gitter: `max-height: 100%` am Fach musste weg, sonst rechnet es
       gegen eine gedehnte Gitterzeile und schrumpft die Fächer auf 79 px (gemessen).
+  - **Drei Trophäen, alle aus derselben Simulation abgeleitet** (`probe-takt.js`):
+    *Archivmeister* (📜, 15/30/45/60 Rollen), *Tabellenfest* (🗂️, 10/20/32/45 – zehn Fächer
+    brauchen länger je Rolle, also rückt dieselbe Leiter eine Stufe herunter) und
+    ***Doppelblick*** (👀, 4/10/16/24 mehrdeutige Formen in einer Runde).
+    Die dritte ist die eigentliche Lernmarke: 32 % aller Nomenformen sind mehrdeutig, in
+    einer Runde von 40 Rollen also rund 13. Wer die sicher wegräumt, hat begriffen, dass eine
+    Endung mehr als einen Fall tragen kann – und genau deshalb sortiert das Spiel
+    mehrdeutige Formen nicht aus.
+    Alle drei tragen `bereich: 'bestleistung'` **und** einen Eintrag in `BEST_ACHIEVEMENTS`;
+    ohne den zweiten findet `recordBest` sie nie. `test-scrinium.js` prüft beides.
+    Gezeigt werden sie **am Rundenende**, nicht während des Laufs – wie bei IssaJump, und
+    deshalb bindet auch dieses Spiel `achievementToast.js` nicht ein.
+  - **Der Anschlag musste von 2000 auf 1100 ms** (beim Setzen der Schwellen aufgefallen).
+    Mit 2000 ms **verlor niemand mehr, der 2,0 Sekunden je Rolle schafft** – das Modell kam
+    auf 2097 Rollen in 71 Minuten, bei 1,5 s auf 10 000. Der Anschlag lag also ÜBER der
+    menschlichen Grenze, und in kleinen Lektionen mit nur zwei Fächern ist 2 s leicht zu
+    unterbieten. Gemessen ändert sich **unterhalb von 1100 ms nichts mehr**: Die Leiter
+    lautet 56 / 47 / 40 / 27 / 18 Rollen, und die drei langsameren Tempi sind von der
+    Änderung gar nicht betroffen – der Takt zieht je EINGEORDNETER Rolle an, sie kommen nie
+    in die Nähe des Anschlags.
+    **Die Lehre ist dieselbe wie oben, nur andersherum:** Ein Anschlag, den ein Mensch
+    unterbieten kann, macht aus dem Spiel eine Endlosschleife – und aus jeder Bestleistung
+    eine Zufallszahl. Wer am Takt dreht, prüft beide Enden.
   - `test-scrinium.js` prüft Fächerzahl und -reihenfolge (mit Gegenprobe gegen die
     Engine-Reihenfolge), dass eine mehrdeutige Form in BEIDEN Fächern zählt, dass der
     Vokabelkasten schweigt (am Verhalten, nicht am Quelltext – im Quelltext steht das Wort

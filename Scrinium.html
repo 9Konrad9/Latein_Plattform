@@ -337,7 +337,14 @@ body {
    46 bis 67 Sekunden. */
 const PLAETZE      = 6;
 const TAKT_START   = 7000;
-const TAKT_MIN     = 2000;
+/* 1100, nicht 2000: Mit 2000 ms verlor niemand mehr, der 2,0 s je Rolle
+   schafft - das Modell kam auf 2097 Rollen in 71 Minuten, bei 1,5 s auf
+   10 000. Der Anschlag lag also ÜBER der menschlichen Grenze, und gerade in
+   kleinen Lektionen mit nur zwei Fächern ist 2 s leicht zu unterbieten.
+   Gemessen ändert sich unterhalb von 1100 ms nichts mehr - dort verliert
+   jede auf eigene Rechnung. Die langsameren Tempi merken davon ohnehin
+   nichts: Der Takt zieht je EINGEORDNETER Rolle an, sie kommen nie hin. */
+const TAKT_MIN     = 1100;
 const TAKT_FAKTOR  = 0.96;
 /* Solange das Pult mehr als halb voll ist, zieht der Takt NICHT weiter an.
    Sonst wird es genau dann schneller, wenn man ohnehin nicht nachkommt. */
@@ -368,6 +375,9 @@ let plaetze = [];
 let takt = TAKT_START;
 let timer = null;
 let zahl = 0, fehler = 0, versuche = 0;
+/* Mehrdeutige Formen, die richtig weggeräumt wurden - die eigentliche
+   Lernmarke dieses Spiels, siehe die Trophäe "Doppelblick". */
+let doppel = 0;
 let laeuft = false;
 let gewaehlt = null;
 let letzteForm = null;
@@ -526,7 +536,7 @@ function starten() {
     phGewicht = {};
     baueRegal();
     bauePlaetze();
-    zahl = 0; fehler = 0; versuche = 0; takt = TAKT_START;
+    zahl = 0; fehler = 0; versuche = 0; doppel = 0; takt = TAKT_START;
     gewaehlt = null; letzteForm = null; laeuft = true;
     anzeige();
     clearTimeout(timer);
@@ -779,6 +789,7 @@ function einsortieren(el, fach) {
 
     // Die zweite Lesart zeigen - genau dafuer ist die Mehrdeutigkeit da.
     if (keys.length > 1) {
+        doppel++;
         const andere = keys.filter(k => k !== fach.dataset.key).map(feldLabel);
         melde('Richtig – und auch ' + andere.join(' und ') + '.');
     }
@@ -837,15 +848,35 @@ function ende() {
     const fach = modus === 'numerus' ? 'rollen-numerus' : 'rollen';
     const best = LudiProgress.getBest('scrinium', fach) || 0;
     const neuerRekord = zahl > best;
-    if (neuerRekord) LudiProgress.recordBest('scrinium', fach, zahl);
+
+    /* recordBest gibt die frisch freigeschaltete Trophaee zurueck. Gezeigt
+       werden sie am RUNDENENDE, nicht waehrend des Laufs - aus demselben
+       Grund wie bei Issa: Ein Popup mitten im Sortieren kostet genau die
+       Rolle, die es feiern wollte. Deshalb bindet auch dieses Spiel
+       achievementToast.js nicht ein. */
+    const trophaeen = [];
+    if (neuerRekord) {
+        const r = LudiProgress.recordBest('scrinium', fach, zahl);
+        if (r && r.unlock) trophaeen.push(r.unlock);
+    }
+    const d = LudiProgress.recordBest('scrinium', 'doppelformen', doppel);
+    if (d && d.unlock) trophaeen.push(d.unlock);
 
     document.getElementById('ende-titel').textContent = 'Das Pult ist voll';
     document.getElementById('ende-text').textContent =
         zahl + (zahl === 1 ? ' Rolle' : ' Rollen') + ' eingeordnet, ' +
         fehler + (fehler === 1 ? ' Griff' : ' Griffe') + ' daneben.';
-    document.getElementById('ende-best').textContent = neuerRekord
+    const bestZeile = neuerRekord
         ? 'Neue Bestleistung!'
         : 'Bestleistung: ' + Math.max(best, zahl) + ' Rollen.';
+    /* Das Unlock traegt { id, tier, tierName, threshold, icon, title, unit } -
+       kein 'wert'. Die Stufe ist die Nachricht, nicht die Zahl. */
+    const trophaeenZeile = trophaeen.map(function (t) {
+        return t.icon + ' ' + t.title + ' in ' + t.tierName;
+    }).join(' · ');
+    document.getElementById('ende-best').textContent =
+        bestZeile + (doppel ? '  Davon ' + doppel + ' mehrdeutige Formen.' : '') +
+        (trophaeenZeile ? '  ' + trophaeenZeile : '');
 
     const knopf = document.getElementById('btn-review');
     if (LudiReview.anzahl(wdh) > 0) {
