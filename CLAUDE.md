@@ -737,6 +737,26 @@ dieses Namens, und darauf spielt auch das Spiel an.
   hartkodieren, sondern im Datensatz ergänzen (z.B. bei *mors*, *bōs* nachträglich gefunden).
 - **Defektive Nomen** (*vīs* u.a.) liefern `null` für fehlende Kasus – IMMER prüfen, bevor eine
   Form als Distraktor/Zielwort verwendet wird, sonst tauchen `null`/`undefined` im UI auf.
+- **Pluralia tantum haben GAR KEINEN Singular** (Oktober 2026 repariert). Das abschließende
+  `Pl.` in `middle` (`"ruīnārum f. Pl."`) sagt: Die Form davor ist der Genitiv **Plural**.
+  `parseMiddle` hat den Marker zwar erkannt, aber **weggeworfen** – der Genitiv Plural ging
+  als `genSg` weiter, und die Deklination zog ihm die Singular-Endung ab. Aus *ruīnārum*
+  wurde der Stamm *ruīnār-* und daraus *ruīnārae*, *ruīnārārum*, *ruīnāram*.
+  **Gemessen: 20 von 24 Pluralia tantum waren betroffen** – *castra* → *castrōrua*,
+  *litterae* → *litterārae*, *vīrēs* → *vīriēs*, *arma* → *armōrua*. Diese Nicht-Wörter
+  standen im Formen-Kastell als Zielform UND als Distraktor. Gefunden wurde es nicht beim
+  Lesen, sondern weil in Scrīnium *„ruīnārārum"* auf einer Rolle stand.
+  Jetzt gilt: **Singular komplett `null`** (wie bei *vīs* die fehlenden Kasus), und zwei
+  Formen werden gar nicht geraten – der Nominativ Plural IST das Lemma, der Genitiv Plural
+  steht in `middle`. Abgeleitet werden nur Dativ, Akkusativ und Ablativ.
+  Mehrwortige Lemmata (*patrēs cōnscrīptī*) lassen sich nicht über einen Stamm beugen; dort
+  bleiben Dativ/Akkusativ/Ablativ `null` – **lieber eine Lücke als eine erfundene Form**.
+  Folge, die man kennen muss: Die `SentenceEngine` verlangt in `mitKasus` Singular UND
+  Plural, also fallen Pluralia tantum jetzt aus dem Satzbau heraus. Das ist richtig so.
+  `latein-tests/nomen-goldstand.js` hat den Umbau abgesichert: 342 Nomen vorher aufgenommen,
+  **genau 24 geändert, 318 unberührt**. Dabei fiel auf, dass `test-caesar.js` stillschweigend
+  annahm, jedes Nomen habe einen Nominativ Singular – die Annahme war die veraltete, nicht
+  der Code.
 - **Testverfahren**: Jede Änderung wird vor Auslieferung mit jsdom getestet (Syntax-Check per
   `node --check`, dann funktionaler Test durch Laden der HTML-Datei mit `runScripts: 'dangerously'`).
   localStorage funktioniert unter `file://`-URLs in jsdom nicht zuverlässig – bei Bedarf mit

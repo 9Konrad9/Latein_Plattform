@@ -54,12 +54,69 @@ const NounEngine = (() => {
      * Entfernt vorher ein eventuelles " Pl." (bei reinen Pluraliatantum wie "castra").
      */
     function parseMiddle(middle) {
+        /* Das abschliessende "Pl." markiert ein Pluraletantum - dann ist die
+           Form davor der Genitiv PLURAL, nicht der Singular. Bis Oktober 2026
+           wurde der Marker hier zwar erkannt, aber weggeworfen: Der Genitiv
+           Plural ging als genSg weiter, und die Deklination zog ihm die
+           Singular-Endung ab. Aus "ruīnārum" wurde so der Stamm "ruīnār-" und
+           daraus "ruīnārae", "ruīnārārum", "ruīnāram". Gemessen waren 20 von
+           24 Pluralia tantum betroffen - castra wurde zu castrōrua, litterae
+           zu litterārae, vīrēs zu vīriēs. Im Formen-Kastell standen diese
+           Nicht-Woerter als Zielform und als Distraktor. */
+        const nurPlural = /\s*Pl\.\s*$/.test(middle);
         const cleaned = middle.replace(/\s*Pl\.\s*$/, '');
         const m = cleaned.match(/^(.*?)\s*(m|f|n)\.\s*$/);
         return {
             genSg: m ? m[1].trim() : cleaned,
-            gender: m ? m[2] : 'm'
+            gender: m ? m[2] : 'm',
+            nurPlural: nurPlural
         };
+    }
+
+    /**
+     * Die Tabelle eines Pluraletantum (castra, litterae, moenia, vīrēs ...).
+     * Der Singular bleibt vollstaendig leer - wie bei vīs die fehlenden Kasus.
+     *
+     * Zwei Formen muessen nicht geraten werden, sie stehen im Datensatz:
+     * der Nominativ Plural IST das Lemma, der Genitiv Plural steht in `middle`.
+     * Abgeleitet werden nur Dativ, Akkusativ und Ablativ.
+     */
+    function declinePluraleTantum(nomPl, genPl, gender, gramClass) {
+        const leer = { nom: null, gen: null, dat: null, akk: null, abl: null };
+
+        /* Mehrwortige Lemmata (patrēs cōnscrīptī) lassen sich nicht ueber einen
+           Stamm beugen. Lieber eine Luecke als eine erfundene Form - die Spiele
+           ueberspringen null ohnehin. */
+        if (/\s/.test(nomPl)) {
+            return { sg: Object.assign({}, leer),
+                     pl: { nom: nomPl, gen: genPl, dat: null, akk: null, abl: null },
+                     gender: gender };
+        }
+
+        let stem, dat, akk;
+        if (gramClass.includes('a-Deklination')) {
+            stem = genPl.slice(0, -4);        // 'ārum'
+            dat = stem + 'īs'; akk = stem + 'ās';
+        } else if (gramClass.includes('o-Deklination')) {
+            stem = genPl.slice(0, -4);        // 'ōrum'
+            dat = stem + 'īs';
+            akk = gender === 'n' ? nomPl : stem + 'ōs';
+        } else if (gramClass.includes('e-Deklination')) {
+            stem = genPl.slice(0, -4);        // 'ērum'
+            dat = stem + 'ēbus'; akk = stem + 'ēs';
+        } else if (gramClass.includes('u-Deklination')) {
+            stem = genPl.slice(0, -3);        // 'uum'
+            dat = stem + 'ibus'; akk = stem + 'ūs';
+        } else {
+            // konsonantisch und i-Staemme: "um" oder "ium"
+            stem = genPl.replace(/i?um$/, '');
+            dat = stem + 'ibus';
+            // Maskulina/Feminina haben -ēs im Nom. UND Akk., Neutra -a in beiden.
+            akk = nomPl;
+        }
+        return { sg: Object.assign({}, leer),
+                 pl: { nom: nomPl, gen: genPl, dat: dat, akk: akk, abl: dat },
+                 gender: gender };
     }
 
     /**
@@ -84,9 +141,14 @@ const NounEngine = (() => {
             return { sg: { ...ex.sg }, pl: { ...ex.pl }, gender };
         }
 
-        const { genSg, gender } = parseMiddle(nounObj.middle);
+        const { genSg, gender, nurPlural } = parseMiddle(nounObj.middle);
         const gramClass = nounObj.gram_class;
         const nomSg = nounObj.latin;
+
+        // Pluralia tantum haben keinen Singular - und ihr "genSg" ist in
+        // Wahrheit der Genitiv Plural.
+        if (nurPlural) return declinePluraleTantum(nomSg, genSg, gender, gramClass);
+
         let stem, sg, pl;
 
         if (gramClass.includes('o-Deklination')) {
