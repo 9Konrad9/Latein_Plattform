@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrīnium - Kasusformen einsortieren</title>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="review.js"></script>
+    <script src="lessonFilter.js"></script>
+    <script src="nounEngine.js"></script>
+    <script src="verbEngine.js"></script>
+    <script src="formen.js"></script>
+    <link rel="stylesheet" href="theme.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; overflow: hidden; }
+
+body {
+    font-family: var(--font-body);
+    /* Die Schriftfarbe gilt den SCHICHTEN: .start-overlay und .end-screen aus
+       theme.css setzen einen hellen Grund, aber keine eigene Farbe - sie erben
+       diese hier. Auf dem Spielgrund selbst steht kein Text; was dort liegt
+       (Kopfleiste, Faecher, Rollen) setzt seine Farbe selbst. */
+    color: var(--ink);   /* kontrast-ok: 12,2 auf dem Putz der Schichten */
+    /* svh, nicht dvh - die Lehre aus dem Duell: dvh ist gross, solange die
+       Safari-Leisten eingeklappt sind, und das Dokument danach zu hoch. */
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;            /* schaltet das 100vh aus theme.css ab */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Doppeltippen soll nicht vergroessern; das Aufziehen faengt das
+       JavaScript ab (iOS ignoriert user-scalable=no seit Version 10). */
+    touch-action: manipulation;
+    background: #4a3726 url('assets/scrinium/hintergrund.jpg') center / cover no-repeat;
+}
+
+/* ====== Kopfzeile ====== */
+#kopf {
+    flex: 0 0 auto;
+    display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline;
+    padding: 6px max(10px, env(safe-area-inset-left, 0px));
+    /* Deckend, nicht durchscheinend: Ueber einem Bild laesst sich kein
+       Kontrast nachrechnen - weder von mir noch von pruefe-theme.js.
+       Gemessen auf #241a10: Marmor 13,78, der Melder 12,91, Gold 5,79. */
+    background: #241a10;
+    color: var(--marmor);   /* kontrast-ok: 13,78 auf #241a10 */
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+#kopf b { font-family: var(--font-display); font-size: 1rem; }
+#kopf #k-melder { color: #cfe8b8;        /* kontrast-ok: 12,91 auf #241a10 */
+                  font-weight: bold; }
+#kopf #k-runde  { color: var(--gold);    /* kontrast-ok: 5,79 auf #241a10 */
+                  font-family: var(--font-display); }
+
+/* ====== Das Regal: zwei bis fuenf Faecher, je nach Lektionsauswahl ====== */
+#regal {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: clamp(4px, 1.5vw, 18px);
+    padding: clamp(6px, 2vh, 20px) 10px 0;
+}
+
+.fach {
+    position: relative;
+    flex: 0 1 clamp(90px, 17vw, 190px);
+    aspect-ratio: 300 / 266;           /* die Maße von fach.png */
+    max-height: 100%;
+    background: url('assets/scrinium/fach.png') center / 100% 100% no-repeat;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Die Beschriftung liegt auf einem Pergamentband, NICHT auf dem Holz.
+   Gemessen: --ink auf der Holzleiste nur 3,91 - zu wenig. Auf Pergament
+   sind es 11,3. Dieselbe Lehre wie beim Bingo, wo das aufgerufene Wort
+   von der Ziegelwand auf die Rolle wandern musste. */
+.fach-schild {
+    position: relative;
+    bottom: 4%;
+    width: 92%;
+    padding: 2px 10px;
+    border-style: solid;
+    border-width: clamp(5px, 1.4vh, 10px) clamp(8px, 2vw, 16px);
+    border-image: url('assets/ui/pergament.png') 12 40 12 40 fill;
+    font-family: var(--font-display);
+    font-size: clamp(0.6rem, 1.9vh, 0.95rem);
+    font-weight: bold;
+    color: #3b2a18;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fach.treffer { filter: brightness(1.25) saturate(1.1); }
+.fach.daneben { filter: brightness(0.75) saturate(0.6); }
+.fach.ziel    { outline: 3px solid var(--gold); outline-offset: -3px; }
+
+/* ====== Das Pult ====== */
+#pult-raum {
+    flex: 0 0 auto;
+    position: relative;
+    padding: 0 max(8px, env(safe-area-inset-left, 0px))
+             max(8px, env(safe-area-inset-bottom, 0px));
+}
+
+#pult {
+    position: relative;
+    /* Gemessen an pult.png (900x351): linkes Bein bis x=164, rechtes ab x=736.
+       Die Werte sind BILDPIXEL und skalieren nicht mit - bei einem neuen
+       Asset neu messen. Nur die Seiten sind Schnittkanten, oben und unten
+       wird nichts abgeschnitten. */
+    border-style: solid;
+    border-width: 0 clamp(30px, 8vw, 90px);
+    border-image: url('assets/scrinium/pult.png') 0 164 0 165 fill;
+    min-height: clamp(104px, 22vh, 168px);
+}
+
+#plaetze {
+    position: absolute;
+    left: 4%; right: 4%;
+    top: 6%;
+    display: flex;
+    gap: clamp(3px, 0.8vw, 10px);
+    align-items: center;
+    justify-content: center;
+}
+
+.platz {
+    flex: 1 1 0;
+    min-width: 0;
+    height: clamp(52px, 11vh, 86px);
+    border-radius: 4px;
+    background: rgba(60, 40, 22, 0.16);
+    box-shadow: inset 0 1px 3px rgba(40, 25, 12, 0.3);
+}
+.platz.belegt { background: transparent; box-shadow: none; }
+
+/* ====== Die Schriftrolle ====== */
+.rolle {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(3px, 0.9vh, 8px) 5px;
+    border-style: solid;
+    border-width: clamp(6px, 1.6vh, 11px) clamp(7px, 1.8vw, 14px);
+    border-image: url('assets/ui/pergament.png') 12 40 12 40 fill;
+    color: #3b2a18;   /* kontrast-ok: 11,3 auf dem Pergamentfeld #f6e8cb */
+    text-align: center;
+    line-height: 1.1;
+    /* Ohne das deutet der Browser das Ziehen als Scrollen und nimmt es weg. */
+    touch-action: none;
+    cursor: grab;
+    will-change: transform;
+    z-index: 5;
+}
+.rolle::before, .rolle::after {
+    content: '';
+    position: absolute;
+    top: -6%;
+    height: 112%;
+    width: clamp(7px, 1.6vh, 13px);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+.rolle::before { left: calc(-1 * clamp(7px, 1.6vh, 13px) + 2px); background-image: url('assets/ui/rolle-links.png'); }
+.rolle::after  { right: calc(-1 * clamp(7px, 1.6vh, 13px) + 2px); background-image: url('assets/ui/rolle-rechts.png'); }
+
+.rolle .form {
+    font-family: var(--font-display);
+    font-weight: bold;
+    font-size: clamp(0.9rem, 3vh, 1.45rem);
+    white-space: nowrap;
+}
+.rolle .lemma {
+    font-size: clamp(0.6rem, 1.8vh, 0.92rem);
+    opacity: 0.8;
+    white-space: nowrap;
+}
+.rolle.greift { cursor: grabbing; z-index: 50; filter: drop-shadow(0 6px 10px rgba(20, 12, 6, 0.45)); }
+.rolle.gewaehlt { outline: 3px solid var(--gold); outline-offset: 2px; }
+.rolle.zurueck { animation: ruettel 0.3s; }
+@keyframes ruettel {
+    0%, 100% { transform: translate(var(--tx), var(--ty)); }
+    25% { transform: translate(calc(var(--tx) - 7px), var(--ty)); }
+    75% { transform: translate(calc(var(--tx) + 7px), var(--ty)); }
+}
+
+/* ====== Schichten: die geteilten Klassen aus theme.css ====== */
+.start-overlay, .end-screen { text-align: center; }
+.start-overlay h1, .end-screen h1 {
+    font-family: var(--font-display); font-size: 1.9rem;
+    color: var(--pompeji); margin-bottom: 10px;
+}
+.start-overlay p, .end-screen p { max-width: 46ch; margin-bottom: 12px; line-height: 1.5; }
+.klein { font-size: 0.85rem; color: var(--ink-soft); }
+
+/* Der Fehlerbanner. In IssaJump hat genau der den `keys`-Absturz hereingebracht -
+   mit Zeilennummer, statt als "bei Issa kommen Fehler". */
+#fehler-banner {
+    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+    background: var(--falsch, #8d2f2f); color: #fff;
+    padding: 10px max(12px, env(safe-area-inset-left, 0px))
+             max(10px, env(safe-area-inset-bottom, 0px));
+    font-size: 0.82rem; line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏠</a>
+
+<div id="kopf">
+    <span>eingeordnet <b id="k-zahl">0</b></span>
+    <span>daneben <b id="k-fehler">0</b></span>
+    <span id="k-runde"></span>
+    <span id="k-melder"></span>
+</div>
+
+<div id="regal"></div>
+
+<div id="pult-raum">
+    <div id="pult"><div id="plaetze"></div></div>
+</div>
+
+<div class="start-overlay" id="start">
+    <h1>Scrīnium</h1>
+    <p>Die Rollen landen auf dem Pult. Räum sie ins richtige Fach – <b>zieh</b> sie
+       hinüber oder <b>tipp</b> erst die Rolle, dann das Fach an.</p>
+    <p class="klein">Manche Formen passen in <b>zwei</b> Fächer. Beide sind richtig –
+       wer das weiß, ist schneller.</p>
+    <p class="klein">Falsch einsortiert kostet kein Leben, nur Zeit: Die Rolle kommt
+       zurück aufs Pult. Ist das Pult voll, ist Schluss.</p>
+    <button class="start-btn" id="btn-start">Lektionen wählen</button>
+</div>
+
+<div class="end-screen" id="ende">
+    <h1 id="ende-titel">Das Pult ist voll</h1>
+    <p id="ende-text"></p>
+    <p class="klein" id="ende-best"></p>
+    <button class="start-btn wiederholen" id="btn-review" style="display:none;"></button>
+    <br>
+    <button class="start-btn" id="btn-neu">Noch einmal</button>
+    <br>
+    <a href="index.html" class="start-btn zweitrangig">Zurück zur Übersicht</a>
+</div>
+
+<div id="fehler-banner"></div>
+
+<script>
+/* ============ Scrīnium: Kasusformen einsortieren ============
+
+   Der Name ist NEU VERGEBEN: Eine Datei Tabularium.html gab es schon einmal
+   (ein Genitiv-Spiel mit Besitzurkunden) und sie wurde bewusst geloescht.
+   Deshalb heisst dieses Spiel anders - scrinium ist die roemische Buchkapsel,
+   in der Schriftrollen aufbewahrt wurden.
+
+   Geuebt wird der Kasus an der ISOLIERTEN Form, mit dem Lemma daneben wie im
+   Vokabelheft. Dass manche Formen mehrdeutig sind, ist hier nicht der Stoerfall,
+   sondern der Lerngegenstand: patrēs ist Nominativ UND Akkusativ, patribus
+   Dativ UND Ablativ. Gemessen ueber den ganzen Wortschatz hat eine Nomenform
+   in 64 % der Faelle genau einen Kasus, in 32 % zwei. Beide Faecher gelten. */
+
+/* ---------- Die Stellschrauben ----------
+   Start und Anschlag klammern die menschliche Spanne ein. Durchgerechnet in
+   latein-tests/probe-takt.js gegen vier Tempi (2,2 / 3,2 / 4,5 / 6,5 Sekunden
+   je Rolle - Form lesen, Lemma lesen, Kasus entscheiden, hinueberziehen):
+
+   - Der STARTTAKT muss ueber der langsamsten Sortierzeit liegen. Mit 4500 ms
+     lag, wer 6,5 s braucht, schon ab der ersten Rolle hinten: 6 Rollen in
+     46 Sekunden, dann war die Runde vorbei. Mit 7000 ms sind es 18.
+   - Der ANSCHLAG muss unter der schnellsten liegen, sonst endet das Spiel
+     nie. Mit 2200 ms kam das Modell auf 2066 Rollen in 77 Minuten.
+
+   Gemessen mit diesen Zahlen: 80 / 35 / 27 / 18 Rollen - die Runde misst also
+   das Koennen und nicht die Uhr. Vorher waren es 24 / 17 / 11 / 6 bei durchweg
+   46 bis 67 Sekunden. */
+const PLAETZE      = 6;
+const TAKT_START   = 7000;
+const TAKT_MIN     = 2000;
+const TAKT_FAKTOR  = 0.96;
+/* Solange das Pult mehr als halb voll ist, zieht der Takt NICHT weiter an.
+   Sonst wird es genau dann schneller, wenn man ohnehin nicht nachkommt. */
+const BREMSE_AB    = 0.5;
+
+const KASUS_NAME = { nom: 'Nominativ', gen: 'Genitiv', dat: 'Dativ', akk: 'Akkusativ', abl: 'Ablativ' };
+/* Die Faecher stehen in der SCHULREIHENFOLGE, nicht in der der Engine.
+   NounEngine.getKnownCases liefert nom, akk, gen, abl, dat - das ist die
+   Reihenfolge der Einfuehrung. Im Regal muss aber stehen, was die Klasse
+   aufsagt: Nominativ, Genitiv, Dativ, Akkusativ, Ablativ. */
+const KASUS_ORDNUNG = ['nom', 'gen', 'dat', 'akk', 'abl'];
+
+let formenTopf = [];      // alle ziehbaren Formen der Lektionsauswahl
+let maxLektion = 0;
+let faecher = [];
+let plaetze = [];
+let takt = TAKT_START;
+let timer = null;
+let zahl = 0, fehler = 0, versuche = 0;
+let laeuft = false;
+let gewaehlt = null;
+let letzteForm = null;
+
+const wdh = LudiReview.neu();   // Buchfuehrung in review.js
+
+/* ---------- Der Fehlerbanner ----------
+   Eine Meldung, die niemand notiert, hilft beim Suchen nicht. In IssaJump kam
+   der `keys`-Absturz genau so herein - mit Zeilennummer. */
+window.onerror = function (nachricht, datei, zeile) {
+    const b = document.getElementById('fehler-banner');
+    if (!b || b.style.display === 'block') return;
+    b.textContent = 'Fehler: ' + nachricht + ' (Zeile ' + zeile + ') – bitte diesen Text der Lehrkraft zeigen.';
+    b.style.display = 'block';
+};
+
+/* ---------- Aufziehen abfangen (iOS ignoriert user-scalable=no) ---------- */
+['gesturestart', 'gesturechange', 'gestureend'].forEach(art => {
+    document.addEventListener(art, e => e.preventDefault(), { passive: false });
+});
+
+/* ============ Das Phaenomen, nicht das Lemma ============
+   Entscheidung des Fachlehrers: Wer eine Form verfehlt, soll das PHAENOMEN
+   oefter wiedersehen - nicht dasselbe Wort. Ein Fehler bei `patribus` heisst
+   meist nicht "ich kenne pater nicht", sondern "ich wusste nicht, dass Dativ
+   und Ablativ Plural der konsonantischen Deklination gleich aussehen".
+
+   Deshalb gibt es hier KEIN recordVocabAttempt: Der Leitner-Kasten in
+   progress.js ist lemma-basiert und kann gar nichts anderes als das Wort
+   haeufiger ziehen. Die Gewichtung hier haengt stattdessen an
+
+       Deklination | Kasusmenge | Numerus
+
+   also z. B. "konsonantische Deklination|Dativ+Ablativ|Plural". Gemessen gibt
+   das 14 Phaenomene bis L5, 32 bis L20 und 57 ueber den ganzen Wortschatz -
+   jedes mit dutzenden Formen. Wer patribus verfehlt, bekommt also maetribus
+   und servis: dasselbe Endungsproblem an anderen Woertern.
+
+   Die Gewichtung gilt fuer die laufende Runde. Dauerhaft zu speichern waere
+   ein eigener Kasten neben dem von progress.js - das gehoert besprochen. */
+const PH_MAX = 8;          // mehr als achtfach wird kein Phaenomen gewichtet
+let phGewicht = {};
+
+function phSchluessel(eintrag) {
+    return (eintrag.klasse || '?') + '|' + eintrag.kasusNamen.join('+') + '|' + eintrag.numerus;
+}
+
+/* ---------- Lektionsauswahl ---------- */
+document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+
+function promptLessonsAndStart() {
+    LessonFilter.show(globalVocabularyPool, (gefiltert, gewaehlteLektionen) => {
+        maxLektion = gewaehlteLektionen && gewaehlteLektionen.length
+                   ? Math.max.apply(null, gewaehlteLektionen) : 999;
+        const nomen = gefiltert.filter(v => v.type === 'noun' && !v.latin.includes(' '));
+
+        const bekannt = NounEngine.getKnownCases(maxLektion);
+        faecher = KASUS_ORDNUNG.filter(k => bekannt.indexOf(k) !== -1);
+        if (faecher.length < 2) {
+            alert('Bis hierher ist nur ein Kasus eingeführt – zum Einsortieren braucht es mindestens zwei. Bitte mehr Lektionen wählen.');
+            return;
+        }
+
+        formenTopf = baueFormenTopf(nomen);
+        if (formenTopf.length < 8) {
+            alert('Für diese Lektionsauswahl gibt es noch zu wenig Formen. Bitte mehr Lektionen wählen.');
+            return;
+        }
+        document.getElementById('start').style.display = 'none';
+        starten();
+    });
+}
+document.getElementById('btn-neu').addEventListener('click', () => {
+    document.getElementById('ende').style.display = 'none';
+    starten();
+});
+document.getElementById('btn-review').addEventListener('click', starteWiederholung);
+
+/* ---------- Der Formentopf ----------
+   Einmal je Runde gebaut, statt bei jeder Rolle neu zu wuerfeln: Nur so kann
+   die Gewichtung ueberhaupt greifen - sie braucht alle Formen nebeneinander. */
+function baueFormenTopf(nomen) {
+    const raus = [];
+    nomen.forEach(wort => {
+        let slots;
+        try { slots = LudiFormen.nomenSlots(wort, maxLektion); } catch (e) { return; }
+        const nach = new Map();
+        slots.forEach(s => {
+            if (!nach.has(s.form)) nach.set(s.form, []);
+            nach.get(s.form).push(s);
+        });
+        nach.forEach((gruppe, form) => {
+            const kasusNamen = [...new Set(gruppe.map(s => s.merkmale.kasus))].sort();
+            const keys = faecher.filter(k => kasusNamen.indexOf(KASUS_NAME[k]) !== -1);
+            if (!keys.length) return;
+            const numeri = [...new Set(gruppe.map(s => s.merkmale.numerus))].sort();
+            raus.push({
+                wort, form, keys, kasusNamen,
+                numerus: numeri.join('+'),
+                klasse: wort.gram_class || null
+            });
+        });
+    });
+    return raus;
+}
+
+/** Gewichtete Wahl: verfehlte Phaenomene kommen oefter. */
+function waehleForm() {
+    const topf = formenTopf.filter(e => e.form !== letzteForm);
+    if (!topf.length) return null;
+    let summe = 0;
+    const gewichte = topf.map(e => {
+        const g = phGewicht[phSchluessel(e)] || 1;
+        summe += g;
+        return summe;
+    });
+    const wurf = Math.random() * summe;
+    const eintrag = topf[gewichte.findIndex(g => g > wurf)] || topf[0];
+    letzteForm = eintrag.form;
+    return eintrag;
+}
+
+/* ---------- Runde ---------- */
+function starten() {
+    LudiReview.zuruecksetzen(wdh);
+    phGewicht = {};
+    baueRegal();
+    bauePlaetze();
+    zahl = 0; fehler = 0; versuche = 0; takt = TAKT_START;
+    gewaehlt = null; letzteForm = null; laeuft = true;
+    anzeige();
+    clearTimeout(timer);
+    timer = setTimeout(neueRolle, takt);
+}
+
+function baueRegal() {
+    const regal = document.getElementById('regal');
+    regal.textContent = '';
+    faecher.forEach(k => {
+        const el = document.createElement('div');
+        el.className = 'fach';
+        el.dataset.kasus = k;
+        el.innerHTML = '<div class="fach-schild">' + KASUS_NAME[k] + '</div>';
+        regal.appendChild(el);
+    });
+}
+
+function bauePlaetze() {
+    const wrap = document.getElementById('plaetze');
+    wrap.textContent = '';
+    plaetze = [];
+    document.querySelectorAll('.rolle').forEach(r => r.remove());
+    for (let i = 0; i < PLAETZE; i++) {
+        const el = document.createElement('div');
+        el.className = 'platz';
+        wrap.appendChild(el);
+        plaetze.push({ el, rolle: null });
+    }
+}
+
+function neueRolle(vorgabe) {
+    if (!laeuft) return;
+    const frei = plaetze.find(p => !p.rolle);
+    if (!frei) { ende(); return; }
+
+    const daten = vorgabe || waehleForm();
+    if (!daten) { if (!LudiReview.laeuft(wdh)) timer = setTimeout(neueRolle, takt); return; }
+
+    const el = document.createElement('div');
+    el.className = 'rolle';
+    el.innerHTML = '<span class="form">' + daten.form + '</span>' +
+                   '<span class="lemma">' + lemmaZeile(daten.wort) + '</span>';
+    el.dataset.keys = daten.keys.join(',');
+    el._daten = daten;
+    document.body.appendChild(el);
+
+    frei.rolle = el;
+    el._platz = frei;
+    frei.el.classList.add('belegt');
+    legeAufPlatz(el, frei);
+    passeSchriftAn(el);
+    zieherAnhaengen(el);
+
+    anzeige();
+    if (!LudiReview.laeuft(wdh)) timer = setTimeout(neueRolle, takt);
+}
+
+/* Das Wort steht dabei wie im Vokabelheft. Ohne den Genitiv waere die
+   Deklination nicht zu erkennen - und damit der Kasus nicht zu bestimmen. */
+function lemmaZeile(wort) {
+    const g = (wort.middle || '').trim();
+    return g ? wort.latin + ', ' + g : wort.latin;
+}
+
+/* Lange Formen (discipulōrum, amphitheātrī) sind breiter als ihr Platz und
+   wurden an beiden Enden abgeschnitten - mitten im Wort, also unlesbar.
+   Statt die Rolle breiter zu machen (dann ueberlappen sich die Plaetze)
+   schrumpft die Schrift, bis sie hineinpasst. */
+function passeSchriftAn(el) {
+    ['.form', '.lemma'].forEach(wahl => {
+        const t = el.querySelector(wahl);
+        const platz = el.clientWidth;
+        if (!platz || !t.scrollWidth) return;
+        const faktor = platz / t.scrollWidth;
+        if (faktor >= 1) return;
+        const jetzt = parseFloat(getComputedStyle(t).fontSize);
+        t.style.fontSize = Math.max(7, jetzt * faktor * 0.97) + 'px';
+    });
+}
+
+/** Setzt die Rolle mittig auf ihren Platz - in Fensterkoordinaten. */
+function legeAufPlatz(el, platz) {
+    const p = platz.el.getBoundingClientRect();
+    el.style.width = Math.round(p.width) + 'px';
+    el.style.left = '0px';
+    el.style.top = '0px';
+    const r = el.getBoundingClientRect();
+    const x = p.left + (p.width - r.width) / 2;
+    const y = p.top + (p.height - r.height) / 2;
+    setze(el, x, y);
+    el._heim = { x, y };
+}
+
+function setze(el, x, y) {
+    el.style.setProperty('--tx', x + 'px');
+    el.style.setProperty('--ty', y + 'px');
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+}
+
+/* ---------- Ziehen UND Tippen ----------
+   HTML5-Drag-and-Drop faellt aus: dragstart feuert auf iOS-Safari nie.
+   Pointer Events decken Maus, Finger und Stift in einem Pfad ab. */
+function zieherAnhaengen(el) {
+    let ziehtAb = null, start = null, bewegt = 0;
+
+    el.addEventListener('pointerdown', e => {
+        if (!laeuft) return;
+        e.preventDefault();
+        // Sonst reisst der Zug ab, sobald der Finger die Rolle verlaesst.
+        // In try/catch, weil setPointerCapture bei einem Zeiger, den das
+        // Element nicht wirklich haelt, wirft - und dann bliebe der Rest
+        // des Handlers liegen und die Rolle unbeweglich.
+        try { el.setPointerCapture(e.pointerId); } catch (err) {}
+        const r = el.getBoundingClientRect();
+        ziehtAb = { x: e.clientX - r.left, y: e.clientY - r.top };
+        start = { x: e.clientX, y: e.clientY };
+        bewegt = 0;
+        el.classList.add('greift');
+    });
+
+    el.addEventListener('pointermove', e => {
+        if (!ziehtAb) return;
+        bewegt = Math.max(bewegt, Math.hypot(e.clientX - start.x, e.clientY - start.y));
+        setze(el, e.clientX - ziehtAb.x, e.clientY - ziehtAb.y);
+        zeigeZiel(e.clientX, e.clientY);
+    });
+
+    const los = e => {
+        if (!ziehtAb) return;
+        ziehtAb = null;
+        el.classList.remove('greift');
+        document.querySelectorAll('.fach.ziel').forEach(f => f.classList.remove('ziel'));
+
+        // Kaum bewegt? Dann war es ein Tipp - Rolle merken, Fach folgt.
+        if (bewegt < 10) { waehle(el); return; }
+
+        const fach = fachUnter(e.clientX, e.clientY);
+        if (fach) einsortieren(el, fach);
+        else zurueck(el);
+    };
+    el.addEventListener('pointerup', los);
+    el.addEventListener('pointercancel', los);
+}
+
+function fachUnter(x, y) {
+    return [...document.querySelectorAll('.fach')].find(f => {
+        const r = f.getBoundingClientRect();
+        return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+    }) || null;
+}
+
+function zeigeZiel(x, y) {
+    const treffer = fachUnter(x, y);
+    document.querySelectorAll('.fach').forEach(f => f.classList.toggle('ziel', f === treffer));
+}
+
+function waehle(el) {
+    if (gewaehlt === el) { el.classList.remove('gewaehlt'); gewaehlt = null; return; }
+    if (gewaehlt) gewaehlt.classList.remove('gewaehlt');
+    gewaehlt = el;
+    el.classList.add('gewaehlt');
+}
+
+document.getElementById('regal').addEventListener('click', e => {
+    const fach = e.target.closest('.fach');
+    if (!fach || !gewaehlt || !laeuft) return;
+    const el = gewaehlt;
+    gewaehlt = null;
+    el.classList.remove('gewaehlt');
+    einsortieren(el, fach);
+});
+
+/* ---------- Einsortieren ---------- */
+function einsortieren(el, fach) {
+    const keys = el.dataset.keys.split(',');
+    const passt = keys.indexOf(fach.dataset.kasus) !== -1;
+    const schluessel = phSchluessel(el._daten);
+    versuche++;
+
+    /* Die Trophaeen-Zaehler laufen auch in der Wiederholung weiter - sie
+       zaehlen Fleiss. Einen Vokabelkasten gibt es hier bewusst nicht: Nicht
+       das Wort soll oefter kommen, sondern das Phaenomen (siehe oben). */
+    LudiProgress.recordCategoryAttempt('Substantiv', passt);
+
+    if (!passt) {
+        fehler++;
+        // Verfehltes Phaenomen wiegt schwerer - gedeckelt, damit eine Runde
+        // nicht in einer einzigen Endung steckenbleibt.
+        phGewicht[schluessel] = Math.min(PH_MAX, (phGewicht[schluessel] || 1) * 2);
+        LudiReview.merken(wdh, el._daten);
+        fach.classList.add('daneben');
+        setTimeout(() => fach.classList.remove('daneben'), 260);
+        zurueck(el);
+        anzeige();
+        return;
+    }
+
+    if (LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
+    // Gewusst heisst: etwas weniger dringend, aber nie unter normal.
+    if (phGewicht[schluessel]) phGewicht[schluessel] = Math.max(1, phGewicht[schluessel] / 2);
+
+    fach.classList.add('treffer');
+    setTimeout(() => fach.classList.remove('treffer'), 220);
+
+    const r = fach.getBoundingClientRect();
+    el.style.transition = 'transform 0.22s ease-in, opacity 0.22s ease-in';
+    setze(el, r.left + (r.width - el.getBoundingClientRect().width) / 2, r.top + r.height * 0.25);
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 230);
+
+    el._platz.rolle = null;
+    el._platz.el.classList.remove('belegt');
+    zahl++;
+
+    // Die zweite Lesart zeigen - genau dafuer ist die Mehrdeutigkeit da.
+    if (keys.length > 1) {
+        const andere = keys.filter(k => k !== fach.dataset.kasus).map(k => KASUS_NAME[k]);
+        melde('Richtig – und auch ' + andere.join(' und ') + '.');
+    }
+
+    if (LudiReview.laeuft(wdh)) {
+        const naechste = LudiReview.naechste(wdh);
+        if (naechste) setTimeout(() => neueRolle(naechste), 260);
+        else setTimeout(endeWiederholung, 400);
+    } else {
+        // Der Takt zieht an - aber nur, wenn das Pult nicht schon voll laeuft.
+        if (plaetze.filter(p => p.rolle).length < PLAETZE * BREMSE_AB) {
+            takt = Math.max(TAKT_MIN, takt * TAKT_FAKTOR);
+        }
+    }
+    anzeige();
+}
+
+function zurueck(el) {
+    const h = el._heim;
+    el.classList.add('zurueck');
+    setze(el, h.x, h.y);
+    setTimeout(() => el.classList.remove('zurueck'), 320);
+}
+
+let meldeTimer = null;
+function melde(text) {
+    const m = document.getElementById('k-melder');
+    m.textContent = text;
+    clearTimeout(meldeTimer);
+    meldeTimer = setTimeout(() => { m.textContent = ''; }, 2200);
+}
+
+function anzeige() {
+    document.getElementById('k-zahl').textContent = zahl;
+    document.getElementById('k-fehler').textContent = fehler;
+    const r = document.getElementById('k-runde');
+    if (LudiReview.laeuft(wdh)) {
+        const f = LudiReview.fortschritt(wdh);
+        // Gedeckelt: Zwischen der letzten richtigen Rolle und endeWiederholung
+        // steht der Zeiger schon hinter der Liste - ohne das zeigte die Leiste
+        // fuer einen Moment 'Wiederholung 6 von 5'.
+        r.textContent = 'Wiederholung ' + Math.min(f.nummer, f.gesamt) + ' von ' + f.gesamt;
+    } else r.textContent = '';
+}
+
+/* ---------- Ende der ersten Runde ---------- */
+function ende() {
+    laeuft = false;
+    clearTimeout(timer);
+    document.querySelectorAll('.rolle').forEach(r => r.remove());
+    plaetze.forEach(p => { p.rolle = null; p.el.classList.remove('belegt'); });
+
+    LudiProgress.saveGameResult('scrinium', zahl, Math.max(1, versuche));
+    const best = LudiProgress.getBest('scrinium', 'rollen') || 0;
+    const neuerRekord = zahl > best;
+    if (neuerRekord) LudiProgress.recordBest('scrinium', 'rollen', zahl);
+
+    document.getElementById('ende-titel').textContent = 'Das Pult ist voll';
+    document.getElementById('ende-text').textContent =
+        zahl + (zahl === 1 ? ' Rolle' : ' Rollen') + ' eingeordnet, ' +
+        fehler + (fehler === 1 ? ' Griff' : ' Griffe') + ' daneben.';
+    document.getElementById('ende-best').textContent = neuerRekord
+        ? 'Neue Bestleistung!'
+        : 'Bestleistung: ' + Math.max(best, zahl) + ' Rollen.';
+
+    const knopf = document.getElementById('btn-review');
+    if (LudiReview.anzahl(wdh) > 0) {
+        knopf.textContent = LudiReview.knopfText(wdh, 'Form', 'Formen');
+        knopf.style.display = '';
+    } else knopf.style.display = 'none';
+
+    document.getElementById('ende').style.display = 'flex';
+}
+
+/* ---------- Die Wiederholungsrunde ----------
+   Ohne Takt und ohne Pultgrenze: Das Spiel ist entschieden, wiederholt wird
+   nur noch. Eine Rolle nach der anderen, so lange, bis die Liste durch ist -
+   EIN Durchgang, nicht bis alles sitzt. */
+function starteWiederholung() {
+    document.getElementById('ende').style.display = 'none';
+    const erste = LudiReview.start(wdh);
+    if (!erste) return;
+    bauePlaetze();
+    clearTimeout(timer);
+    laeuft = true;
+    gewaehlt = null;
+    anzeige();
+    neueRolle(erste);
+}
+
+function endeWiederholung() {
+    laeuft = false;
+    const bilanz = LudiReview.beenden(wdh);
+    document.querySelectorAll('.rolle').forEach(r => r.remove());
+    plaetze.forEach(p => { p.rolle = null; p.el.classList.remove('belegt'); });
+
+    document.getElementById('ende-titel').textContent = 'Wiederholung geschafft';
+    document.getElementById('ende-text').textContent =
+        'Beim zweiten Mal saßen ' + bilanz.richtig + ' von ' + bilanz.gesamt + '.';
+    document.getElementById('ende-best').textContent = '';
+    document.getElementById('btn-review').style.display = 'none';
+    document.getElementById('ende').style.display = 'flex';
+    anzeige();
+}
+
+/* Beim Drehen oder Groessenwechsel liegen die Rollen sonst daneben. */
+window.addEventListener('resize', () => {
+    plaetze.forEach(p => { if (p.rolle) { legeAufPlatz(p.rolle, p); passeSchriftAn(p.rolle); } });
+});
+</script>
+</body>
+</html>

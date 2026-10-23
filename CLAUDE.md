@@ -372,6 +372,70 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Passivformen weiterhin an (*venīmur* & Co.), nur eben seltener, weil dort auch Aktivformen
     drankommen. Dieselbe Prüfung ließe sich dort einhängen – das ändert aber einen
     bestehenden Modus und gehört besprochen, nicht nebenbei erledigt.
+- **Scrinium.html** – **Kasusformen einsortieren** (Oktober 2026). Schriftrollen landen auf
+  einem Pult, jede trägt eine Nomenform und darunter das Lemma wie im Vokabelheft
+  (*patribus* / *pater, patris m.*). Sie gehören ins Fach ihres Kasus – gezogen oder
+  getippt. Ist das Pult voll, ist Schluss. Nutzt `formen.js`.
+  - **Der Name ist NEU VERGEBEN.** `Tabularium.html` gab es schon einmal (ein Genitiv-Spiel
+    mit Besitzurkunden) und steht unten in der Liste der bewusst gelöschten Dateien. Damit
+    niemand denkt, das alte Spiel sei zurück, heißt dieses *scrīnium* – die römische
+    Buchkapsel, in der Schriftrollen standen.
+  - **Die Mehrdeutigkeit ist der Lerngegenstand, nicht der Störfall.** Gemessen über den
+    ganzen Wortschatz hat eine Nomenform in **64 % der Fälle genau einen Kasus, in 32 %
+    zwei**; die Zweideutigkeit verteilt sich auf fünf Muster, allen voran Dativ+Ablativ
+    (232 Formen bis L20) und Nominativ+Akkusativ (140). **Beide Fächer gelten**, und die
+    Rückmeldung nennt die zweite Lesart: „Richtig – und auch Ablativ." So lernt man sie beim
+    Richtigliegen, nicht beim Scheitern.
+    Daraus folgt auch, warum das Spiel **ohne Satz** auskommt: Im Satz wäre der Kasus
+    eindeutig, aber dann übt man Syntax. Hier geht es um die Form allein – deshalb steht das
+    Lemma dabei, sonst wäre *servīs* nicht entscheidbar (es könnte von *servāre* kommen).
+  - **Die Fächer stehen in der SCHULREIHENFOLGE** (Nom–Gen–Dat–Akk–Abl) und nur so viele,
+    wie die Lektionsauswahl kennt: zwei bis L5, drei ab L6, vier ab L7, fünf ab L9.
+    `NounEngine.getKnownCases` liefert die Reihenfolge der EINFÜHRUNG (nom, akk, gen, abl,
+    dat) – wer die übernimmt, hängt ein Regal auf, das keine Klasse aufsagt. Die
+    Schwierigkeitskurve kommt damit umsonst aus dem Lehrgang: In L1 ist noch **jede** Form
+    eindeutig.
+  - **Gewichtet wird das PHÄNOMEN, nicht das Lemma** (Entscheidung des Fachlehrers).
+    Ein Fehler bei *patribus* heißt meist nicht „ich kenne *pater* nicht", sondern „ich
+    wusste nicht, dass Dativ und Ablativ Plural der konsonantischen Deklination gleich
+    aussehen". Deshalb gibt es hier **kein `recordVocabAttempt`**: Der Leitner-Kasten in
+    `progress.js` ist lemma-basiert und könnte nur das Wort häufiger ziehen.
+    Der Schlüssel ist stattdessen **Deklination | Kasusmenge | Numerus** – gemessen ergibt
+    das 14 Phänomene bis L5, 32 bis L20, 57 über den ganzen Wortschatz, jedes mit dutzenden
+    Formen. Wer *patribus* verfehlt, bekommt *mātribus* und *servīs*. Die Gewichtung gilt
+    für die laufende Runde; ein dauerhafter zweiter Kasten neben dem von `progress.js`
+    gehört besprochen, nicht nebenbei gebaut.
+  - **Der Takt klammert die menschliche Spanne ein** (7000 → 2000 ms, Faktor 0,96, sechs
+    Plätze). Durchgerechnet in `latein-tests/probe-takt.js` gegen vier Tempi (2,2 / 3,2 /
+    4,5 / 6,5 Sekunden je Rolle):
+    - Der **Starttakt muss über der langsamsten Sortierzeit liegen**. Mit 4500 ms lag, wer
+      6,5 s braucht, ab der ersten Rolle hinten: **6 Rollen in 46 Sekunden**. Und die Spanne
+      war flach – 46 bis 67 Sekunden für alle. Nicht das Können entschied, sondern die Uhr.
+    - Der **Anschlag muss unter der schnellsten liegen**, sonst endet das Spiel nie: Mit
+      2200 ms kam das Modell auf **2066 Rollen in 77 Minuten**.
+    Gemessen mit den heutigen Zahlen: **80 / 35 / 27 / 18 Rollen**.
+    Dazu eine **Bremse**: Solange das Pult mehr als halb voll ist, zieht der Takt nicht
+    weiter an – sonst wird es genau dann schneller, wenn man ohnehin nicht nachkommt.
+  - **Keine Herzen.** Falsch einsortiert kostet Zeit, nicht Leben: Die Rolle kehrt aufs Pult
+    zurück. Verloren wird nicht an einem Fehler, sondern daran, dass man nicht nachkommt –
+    das verzeiht einzelne Patzer und bestraft Raten zuverlässig, weil es Plätze blockiert.
+  - **Ziehen UND Tippen.** HTML5-Drag-and-Drop fällt aus: `dragstart` feuert auf iOS-Safari
+    nie. Gebaut mit Pointer Events, dazu `touch-action: none` an der Rolle (sonst deutet der
+    Browser das Ziehen als Scrollen) und `setPointerCapture` in `try/catch` (wirft es, bliebe
+    der halbe Handler liegen und die Rolle unbeweglich).
+  - **Die Beschriftung der Fächer liegt auf einem Pergamentband, nicht auf dem Holz.**
+    Gemessen: `--ink` auf der Holzleiste nur **3,91**, auf Pergament 11,3. Dieselbe Lehre wie
+    beim Bingo. Die Kopfleiste ist **deckend** (#241a10) statt durchscheinend – über einem
+    Bild lässt sich kein Kontrast nachrechnen, weder von Hand noch von `pruefe-theme.js`.
+  - Bild-Assets in `assets/scrinium/`. Das Pult wird per `border-image` gedehnt, Schnitt
+    `0 164 0 165 fill` – **an pult.png gemessen** (linkes Bein bis x=164, rechtes ab x=736).
+    Das Fach ist EIN Fach und wird zwei- bis fünfmal nebeneinandergesetzt; ein fertiges
+    Fünferregal wäre ab Lektion 1 falsch.
+  - `test-scrinium.js` prüft Fächerzahl und -reihenfolge (mit Gegenprobe gegen die
+    Engine-Reihenfolge), dass eine mehrdeutige Form in BEIDEN Fächern zählt, dass der
+    Vokabelkasten schweigt (am Verhalten, nicht am Quelltext – im Quelltext steht das Wort
+    in einem Kommentar), dass das Phänomen gewichtet wird und genug andere Wörter es teilen,
+    und dass die Wiederholungsrunde sich nicht selbst füttert.
 - **Villa.html** (Aedificium Rōmānum) – KNG-Kongruenz. Drei Adjektiv-Modi (regulär -us/-a/-um,
   i-Deklination, gemischt). Sechs Bild-Stufen für den Baufortschritt in `assets/villa/`.
 - **ViaRomana.html** – **zwei Modi.**

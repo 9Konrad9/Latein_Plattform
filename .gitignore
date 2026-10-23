@@ -1,0 +1,4 @@
+# Werkstatt: hier wird gebaut, bevor etwas ins Projekt wandert.
+# Rohbilder, Zwischenstaende, Versuche - nichts davon gehoert nach GitHub.
+# Fertige Assets werden bewusst nach assets/ kopiert, dann sind sie dabei.
+werkstatt/
