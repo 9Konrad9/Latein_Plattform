@@ -431,6 +431,29 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     `0 164 0 165 fill` – **an pult.png gemessen** (linkes Bein bis x=164, rechtes ab x=736).
     Das Fach ist EIN Fach und wird zwei- bis fünfmal nebeneinandergesetzt; ein fertiges
     Fünferregal wäre ab Lektion 1 falsch.
+  - **Modus 2: zehn Fächer – Kasus MAL Numerus** (Oktober 2026, gleich nachgereicht).
+    Gefragt ist dann nicht mehr „welcher Fall", sondern „welche Form genau".
+    - **Das Regal IST die Paradigmentabelle**: Spalten sind die Kasus, Zeilen Singular und
+      Plural. Beschriftet wird **einmal am Rand**, nicht zehnmal im Fach – so bleibt Platz,
+      und das Ablesen der Tabelle ist gerade die Übung. Die Fächer wachsen wieder mit dem
+      Lehrgang: **2 bis L1, 4 ab L2** (Plural), 6 ab L6, 8 ab L7, **10 ab L9**.
+    - **Zehn Fächer waren nicht selbstverständlich spielbar** – deshalb vorher gemessen
+      (`latein-tests/probe-kasusnumerus.js`): Eine Form passt in **63 % der Fälle in genau
+      ein Fach, in 32 % in zwei, nie in mehr als drei**. Das ist fast dieselbe Verteilung
+      wie bei fünf Fächern – **schwerer wird der Modus durch die Auswahl, nicht durch die
+      Zweideutigkeit**. Wäre eine Form in vier Fächern richtig, wäre es keine Aufgabe mehr;
+      `test-scrinium.js` prüft genau das.
+    - Die häufigsten Doppelbelegungen liegen **in derselben Zeile** (Dat.+Abl. Pl. 116-mal
+      bis L12, Nom.+Akk. Pl. 57-mal, Dat.+Abl. Sg. 39-mal). Die eine, die die Zeilen kreuzt,
+      ist **das *-ae* der a-Deklination**: *fīliae* ist Gen. Sg., Dat. Sg. UND Nom. Pl.,
+      35-mal bis L12. Genau dort zahlt sich die Rückmeldung aus: Wer *fīliae* in den Genitiv
+      Singular legt, liest „Richtig – und auch Dativ Singular und Nominativ Plural."
+    - **Getrennte Bestleistung je Modus** (`rollen` und `rollen-numerus`). Zehn Fächer sind
+      eine andere Aufgabe; eine gemeinsame Zahl wäre im leichteren Modus nie zu schlagen.
+    - **Ein Fach ist seitdem `{ key, kasus, numerus, label }`**, nicht mehr ein Kasus-Kürzel.
+      Im ersten Modus ist `numerus` null – dann zählt jede Form des Kasus, gleich welcher
+      Zahl. Das Gegenstück im Gitter: `max-height: 100%` am Fach musste weg, sonst rechnet es
+      gegen eine gedehnte Gitterzeile und schrumpft die Fächer auf 79 px (gemessen).
   - `test-scrinium.js` prüft Fächerzahl und -reihenfolge (mit Gegenprobe gegen die
     Engine-Reihenfolge), dass eine mehrdeutige Form in BEIDEN Fächern zählt, dass der
     Vokabelkasten schweigt (am Verhalten, nicht am Quelltext – im Quelltext steht das Wort

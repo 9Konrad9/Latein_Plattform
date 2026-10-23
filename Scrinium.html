@@ -44,7 +44,9 @@ body {
 #kopf {
     flex: 0 0 auto;
     display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline;
-    padding: 6px max(10px, env(safe-area-inset-left, 0px));
+    /* Links sitzt der Haus-Knopf aus theme.css - ohne den Abstand liegt die
+       erste Zahl darunter und ist nicht zu lesen. */
+    padding: 6px max(10px, env(safe-area-inset-right, 0px)) 6px max(52px, env(safe-area-inset-left, 0px));
     /* Deckend, nicht durchscheinend: Ueber einem Bild laesst sich kein
        Kontrast nachrechnen - weder von mir noch von pruefe-theme.js.
        Gemessen auf #241a10: Marmor 13,78, der Melder 12,91, Gold 5,79. */
@@ -69,6 +71,43 @@ body {
     gap: clamp(4px, 1.5vw, 18px);
     padding: clamp(6px, 2vh, 20px) 10px 0;
 }
+
+/* Im zweiten Modus ist das Regal die PARADIGMENTABELLE: Spalten sind die
+   Kasus, Zeilen Singular und Plural. Beschriftet wird einmal am Rand, nicht
+   zehnmal im Fach - so bleibt Platz, und das Ablesen der Tabelle ist gerade
+   die Uebung. */
+#regal.gitter {
+    display: grid;
+    grid-template-columns: auto repeat(var(--spalten, 5), 1fr);
+    /* Die Zeilen sollen oben zusammenstehen und sich NICHT ueber die ganze
+       Regalhoehe verteilen - sonst liest es sich nicht als Tabelle. */
+    align-content: start;
+    align-items: start;
+    justify-items: stretch;
+    gap: clamp(2px, 0.7vw, 10px);
+    width: min(1000px, 100%);
+    margin: 0 auto;
+}
+/* Im Gitter bestimmt die SPALTE die Breite, und die Hoehe folgt dem
+   Seitenverhaeltnis. Das max-height aus der Reihenfassung wuerde hier gegen
+   eine gedehnte Gitterzeile rechnen und die Faecher auf 79 px schrumpfen. */
+#regal.gitter .fach {
+    flex: none;
+    width: 100%;
+    height: auto;
+    max-height: none;
+}
+.spaltenkopf, .zeilenkopf {
+    font-family: var(--font-display);
+    font-weight: bold;
+    color: var(--marmor);
+    text-shadow: 0 1px 3px rgba(20, 12, 6, 0.9);   /* kontrast-ok: Marmor auf dunklem Regalgrund, Schatten traegt */
+    font-size: clamp(0.62rem, 1.9vh, 1rem);
+    text-align: center;
+    white-space: nowrap;
+}
+.zeilenkopf { padding-right: 6px; text-align: right; min-width: 2.4em; }
+.eckzelle { }
 
 .fach {
     position: relative;
@@ -248,7 +287,11 @@ body {
        wer das weiß, ist schneller.</p>
     <p class="klein">Falsch einsortiert kostet kein Leben, nur Zeit: Die Rolle kommt
        zurück aufs Pult. Ist das Pult voll, ist Schluss.</p>
-    <button class="start-btn" id="btn-start">Lektionen wählen</button>
+    <button class="start-btn" id="btn-start">Nur der Kasus</button>
+    <br>
+    <button class="start-btn" id="btn-start-numerus">Kasus <b>und</b> Numerus</button>
+    <p class="klein" style="margin-top:10px">Im zweiten Modus ist das Regal die
+       Deklinationstabelle: Spalten sind die Fälle, Zeilen Singular und Plural.</p>
 </div>
 
 <div class="end-screen" id="ende">
@@ -309,6 +352,17 @@ const KASUS_ORDNUNG = ['nom', 'gen', 'dat', 'akk', 'abl'];
 
 let formenTopf = [];      // alle ziehbaren Formen der Lektionsauswahl
 let maxLektion = 0;
+/* 'kasus'   - fuenf Faecher, der Numerus ist egal
+   'numerus' - zehn Faecher, Kasus MAL Singular/Plural
+   Gemessen aendert der zweite Modus die Mehrdeutigkeit kaum (63 % der Formen
+   passen in genau ein Fach, 32 % in zwei, nie in mehr als drei) - schwerer
+   wird er durch die Auswahl, nicht durch die Zweideutigkeit. Die haeufigsten
+   Doppelbelegungen liegen in DERSELBEN Zeile (Dat.+Abl. Pl. 116-mal bis L12,
+   Nom.+Akk. Pl. 57-mal); die eine lehrreiche Ausnahme kreuzt die Zeilen: das
+   -ae der a-Deklination ist Gen. Sg., Dat. Sg. UND Nom. Pl. (35-mal). */
+let modus = 'kasus';
+/* Ein Fach ist { key, kasus, numerus, label }. Im ersten Modus ist numerus
+   null - dann zaehlt jede Form des Kasus, gleich welcher Zahl. */
 let faecher = [];
 let plaetze = [];
 let takt = TAKT_START;
@@ -362,16 +416,41 @@ function phSchluessel(eintrag) {
 }
 
 /* ---------- Lektionsauswahl ---------- */
-document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+document.getElementById('btn-start').addEventListener('click', () => promptLessonsAndStart('kasus'));
+document.getElementById('btn-start-numerus').addEventListener('click', () => promptLessonsAndStart('numerus'));
 
-function promptLessonsAndStart() {
+/* Die Faecher, die eine Lektionsauswahl hergibt. Sie wachsen mit dem Lehrgang:
+   im Kasus-Modus zwei bis L5, drei ab L6, vier ab L7, fuenf ab L9 - im
+   Numerus-Modus das Doppelte, sobald der Plural da ist (L2). */
+function baueFaecher() {
+    const bekannt = NounEngine.getKnownCases(maxLektion);
+    const kasus = KASUS_ORDNUNG.filter(k => bekannt.indexOf(k) !== -1);
+    if (modus !== 'numerus') {
+        return kasus.map(k => ({ key: k, kasus: KASUS_NAME[k], numerus: null,
+                                 label: KASUS_NAME[k] }));
+    }
+    const numeri = NounEngine.isPluralKnown(maxLektion) ? ['Singular', 'Plural'] : ['Singular'];
+    const raus = [];
+    numeri.forEach(n => kasus.forEach(k => raus.push({
+        key: k + '|' + n, kasus: KASUS_NAME[k], numerus: n,
+        label: KASUS_NAME[k] + ' ' + n
+    })));
+    return raus;
+}
+
+function feldLabel(key) {
+    const f = faecher.filter(x => x.key === key)[0];
+    return f ? f.label : key;
+}
+
+function promptLessonsAndStart(gewaehlterModus) {
+    modus = gewaehlterModus === 'numerus' ? 'numerus' : 'kasus';
     LessonFilter.show(globalVocabularyPool, (gefiltert, gewaehlteLektionen) => {
         maxLektion = gewaehlteLektionen && gewaehlteLektionen.length
                    ? Math.max.apply(null, gewaehlteLektionen) : 999;
         const nomen = gefiltert.filter(v => v.type === 'noun' && !v.latin.includes(' '));
 
-        const bekannt = NounEngine.getKnownCases(maxLektion);
-        faecher = KASUS_ORDNUNG.filter(k => bekannt.indexOf(k) !== -1);
+        faecher = baueFaecher();
         if (faecher.length < 2) {
             alert('Bis hierher ist nur ein Kasus eingeführt – zum Einsortieren braucht es mindestens zwei. Bitte mehr Lektionen wählen.');
             return;
@@ -407,7 +486,12 @@ function baueFormenTopf(nomen) {
         });
         nach.forEach((gruppe, form) => {
             const kasusNamen = [...new Set(gruppe.map(s => s.merkmale.kasus))].sort();
-            const keys = faecher.filter(k => kasusNamen.indexOf(KASUS_NAME[k]) !== -1);
+            // Ein Fach passt, wenn EINE der Lesarten dieser Form darauf passt -
+            // im Kasus-Modus zaehlt nur der Kasus, im Numerus-Modus beides.
+            const keys = faecher.filter(f => gruppe.some(sl =>
+                sl.merkmale.kasus === f.kasus &&
+                (!f.numerus || sl.merkmale.numerus === f.numerus)
+            )).map(f => f.key);
             if (!keys.length) return;
             const numeri = [...new Set(gruppe.map(s => s.merkmale.numerus))].sort();
             raus.push({
@@ -452,12 +536,47 @@ function starten() {
 function baueRegal() {
     const regal = document.getElementById('regal');
     regal.textContent = '';
-    faecher.forEach(k => {
+    regal.classList.toggle('gitter', modus === 'numerus');
+
+    const fachEl = f => {
         const el = document.createElement('div');
         el.className = 'fach';
-        el.dataset.kasus = k;
-        el.innerHTML = '<div class="fach-schild">' + KASUS_NAME[k] + '</div>';
-        regal.appendChild(el);
+        el.dataset.key = f.key;
+        el.setAttribute('aria-label', f.label);
+        // Im Gitter beschriftet die Tabelle, nicht das einzelne Fach.
+        if (modus !== 'numerus') el.innerHTML = '<div class="fach-schild">' + f.label + '</div>';
+        return el;
+    };
+
+    if (modus !== 'numerus') {
+        faecher.forEach(f => regal.appendChild(fachEl(f)));
+        return;
+    }
+
+    const kasus = [];
+    faecher.forEach(f => { if (kasus.indexOf(f.kasus) === -1) kasus.push(f.kasus); });
+    const numeri = [];
+    faecher.forEach(f => { if (numeri.indexOf(f.numerus) === -1) numeri.push(f.numerus); });
+    regal.style.setProperty('--spalten', kasus.length);
+
+    const ecke = document.createElement('div');
+    ecke.className = 'eckzelle';
+    regal.appendChild(ecke);
+    kasus.forEach(k => {
+        const kopf = document.createElement('div');
+        kopf.className = 'spaltenkopf';
+        kopf.textContent = k;
+        regal.appendChild(kopf);
+    });
+    numeri.forEach(n => {
+        const kopf = document.createElement('div');
+        kopf.className = 'zeilenkopf';
+        kopf.textContent = n === 'Singular' ? 'Sg.' : 'Pl.';
+        regal.appendChild(kopf);
+        kasus.forEach(k => {
+            const f = faecher.filter(x => x.kasus === k && x.numerus === n)[0];
+            regal.appendChild(fachEl(f));
+        });
     });
 }
 
@@ -619,7 +738,7 @@ document.getElementById('regal').addEventListener('click', e => {
 /* ---------- Einsortieren ---------- */
 function einsortieren(el, fach) {
     const keys = el.dataset.keys.split(',');
-    const passt = keys.indexOf(fach.dataset.kasus) !== -1;
+    const passt = keys.indexOf(fach.dataset.key) !== -1;
     const schluessel = phSchluessel(el._daten);
     versuche++;
 
@@ -660,7 +779,7 @@ function einsortieren(el, fach) {
 
     // Die zweite Lesart zeigen - genau dafuer ist die Mehrdeutigkeit da.
     if (keys.length > 1) {
-        const andere = keys.filter(k => k !== fach.dataset.kasus).map(k => KASUS_NAME[k]);
+        const andere = keys.filter(k => k !== fach.dataset.key).map(feldLabel);
         melde('Richtig – und auch ' + andere.join(' und ') + '.');
     }
 
@@ -713,9 +832,12 @@ function ende() {
     plaetze.forEach(p => { p.rolle = null; p.el.classList.remove('belegt'); });
 
     LudiProgress.saveGameResult('scrinium', zahl, Math.max(1, versuche));
-    const best = LudiProgress.getBest('scrinium', 'rollen') || 0;
+    // Getrennte Bestleistung je Modus: Zehn Faecher sind eine andere Aufgabe,
+    // und eine gemeinsame Zahl waere im leichteren Modus nie zu schlagen.
+    const fach = modus === 'numerus' ? 'rollen-numerus' : 'rollen';
+    const best = LudiProgress.getBest('scrinium', fach) || 0;
     const neuerRekord = zahl > best;
-    if (neuerRekord) LudiProgress.recordBest('scrinium', 'rollen', zahl);
+    if (neuerRekord) LudiProgress.recordBest('scrinium', fach, zahl);
 
     document.getElementById('ende-titel').textContent = 'Das Pult ist voll';
     document.getElementById('ende-text').textContent =
