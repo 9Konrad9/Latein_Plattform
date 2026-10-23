@@ -46,6 +46,21 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   und die erhaltene Gewichtung; ohne die zweite Probe könnte die Sperre die Gewichtung
   unbemerkt einebnen.
   (`LudiProgress.recordCategoryAttempt`, `getAchievementOverview`). Speichert in `localStorage`.
+- `formen.js` – **der Formenkatalog** (Oktober 2026). Die Engines rechnen, aber sie sagen
+  nicht, WELCHE Formen eine Lektionsauswahl hergibt, wie häufig eine Form ist und wie sie
+  heißt. `LudiFormen.nomenSlots(nounObj, maxLesson)` und `verbSlots(verbObj, maxLesson)`
+  geben Listen von `{ form, label, weight, merkmale }` zurück; dazu `istPassivform(slot)`
+  und `kannPersoenlichesPassiv(verbObj)`.
+  **Die `merkmale` sind der Grund für das Modul**: An ihnen (art, modus, tempus, genus,
+  person, numerus, kasus) hängt, welche Formen einander ähnlich sehen – im Kastell für die
+  Distraktoren, und in jedem weiteren Spiel, das Formen vergleicht.
+  **Die Lektionsgrenzen stehen hier NICHT noch einmal**, sondern kommen durchweg aus den
+  Engines (`getKnownCases`, `getKnownCombinations`, `isImperativeKnown` …). Zwei Stellen mit
+  denselben Zahlen driften auseinander.
+  Bis Oktober 2026 stand das alles in `Kastell.html` – 194 Zeilen, die ein zweites
+  Formenspiel hätte abschreiben müssen. Was im Kastell BLIEB, ist das Bauen einer Runde:
+  welche vier Antworten nebeneinander stehen (`buildRoundFromSlots`, `waehleDistraktoren`,
+  die Achsen-Logik). Das ist eine andere Frage als „welche Formen gibt es".
 - `achievementToast.js` – Popup-Benachrichtigung bei neu freigeschalteten Achievements.
 - `review.js` – die Wiederholungsrunde am Rundenende (`LudiReview`). Führt Buch darüber,
   was danebenging, was noch aussteht und wie viel davon beim zweiten Mal saß. **Der
@@ -288,6 +303,8 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.
+  **Welche Formen es überhaupt gibt, steht seit Oktober 2026 in `formen.js`** – hier bleibt,
+  was eine RUNDE daraus macht.
   **Die Distraktoren folgen einer Regel, nicht dem Zufall** (September 2026, nach Rückmeldung
   des Fachlehrers beim Passiv-Üben in L15):
   - Jede Form trägt ihre Merkmale mit (`merkmale`: art, modus, tempus, genus, person, numerus,
@@ -674,6 +691,26 @@ dieses Namens, und darauf spielt auch das Spiel an.
     genau eine richtige.
   - `test-issa-lauf.js` – taktet den echten Spielablauf Bild für Bild (Physik, Kamera,
     Gegenstände, Herzverlust, Wiederholung) über 40 Auswahlen.
+
+  **Für einen reinen Umbau: erst aufnehmen, dann vergleichen.** Als der Formenkatalog aus
+  `Kastell.html` nach `formen.js` wanderte, durfte sich NICHTS ändern. Dafür nimmt
+  `latein-tests/formen-goldstand.js` vorher auf, was das Kastell zu 640 Wort-Lektions-
+  Kombinationen erzeugt (35 249 einzelne Formen mit Label, Gewicht und Merkmalen), und
+  vergleicht danach Zeichen für Zeichen. Gegenprobe vorweg: Ein einziges geändertes Zeichen
+  in einem Label schlug in 128 Einträgen durch – erst damit war die Aufnahme etwas wert.
+  Die Nomen-Slots entstehen inline und werden sofort weitergereicht; statt sie nachzubauen
+  (was genau die Fehlerquelle wäre, die der Test finden soll) fängt die Aufnahme die
+  Übergabe an `buildRoundFromSlots` ab.
+  **Der Goldstand ist ein WERKZEUG, kein Dauertest** – er würde den Katalog einfrieren, und
+  der soll sich ändern dürfen. Den Vertrag prüft `test-formen.js`: dass jeder Slot eine
+  echte Form, ein Label und Merkmale aus bekannten Mengen hat, und dass das Gating hält –
+  jede Probe mit Gegenprobe, sonst wäre „kein Passiv vor L15" auch grün, wenn es gar kein
+  Passiv mehr gäbe.
+  **Und die Grenze des Verfahrens, teuer gelernt:** Der Goldstand deckt nur ab, was er
+  AUFRUFT. Beim Herausschneiden ging `buildVerbRound` mit verloren – es stand zwischen zwei
+  Blöcken, die beide wegsollten. Der Goldstand blieb grün, weil er `verbSlots` direkt
+  aufruft und die Runde gar nicht baut; gefunden haben es `test-kastell.js` und
+  `test-gating.js`. Ein Goldstand ersetzt die anderen Tests nicht, er ergänzt sie.
 
   **Was daran neu ist:** Die bisherigen Tests prüften, ob ein Spiel das RICHTIGE tut. Diese
   drei prüfen, ob es etwas FALSCHES zeigt – und genau dort lagen beide Fehler. Keiner von

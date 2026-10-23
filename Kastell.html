@@ -12,6 +12,7 @@
     <script src="lessonFilter.js"></script>
     <script src="nounEngine.js"></script>
     <script src="verbEngine.js"></script>
+    <script src="formen.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
 
@@ -215,21 +216,13 @@
     </div>
 
     <script>
-        const persons = [
-            "1. Person Singular", "2. Person Singular", "3. Person Singular",
-            "1. Person Plural", "2. Person Plural", "3. Person Plural"
-        ];
-        const CASE_LABELS = { Nom: 'Nominativ', Gen: 'Genitiv', Dat: 'Dativ', Akk: 'Akkusativ', Abl: 'Ablativ' };
-        const CASE_KEYS = ['Nom', 'Gen', 'Dat', 'Akk', 'Abl'];
-
-        // Frequenz-Gewichtung der Verbformen: häufige Grundformen tauchen deutlich
-        // öfter auf als seltene/periphrastische Formen. Bezugsgröße 1 = "normal".
-        const FORM_WEIGHT = {
-            hoch: 3,       // Präsens Aktiv/Passiv, Perfekt Aktiv
-            mittel: 2,     // Imperfekt/Futur, Imperativ, Infinitiv Präsens, Perfekt Passiv
-            niedrig: 1,    // Plusquamperfekt, PPA, Konjunktiv Präs./Impf./Perf./Plusquampf. Aktiv, Infinitiv Perfekt Aktiv
-            selten: 0.5    // Konjunktiv Perfekt/Plusquamperfekt Passiv, Infinitiv Perfekt Passiv, Gerundium, Gerundivum
-        };
+        /* Welche Formen es gibt, wie sie heissen und wie haeufig sie sind, steht
+           seit Oktober 2026 in formen.js - sonst muesste jedes weitere Formenspiel
+           es abschreiben. Hier bleibt, was eine RUNDE daraus macht: welche vier
+           Antworten nebeneinander stehen. */
+        const verbSlots = v => LudiFormen.verbSlots(v, maxSelectedLesson);
+        const istPassivform = LudiFormen.istPassivform;
+        const kannPersoenlichesPassiv = LudiFormen.kannPersoenlichesPassiv;
 
         let wallHealth = 100;
         let currentWaveIdx = 0;
@@ -469,191 +462,16 @@
         }
 
         function buildNounRound(nounObj) {
-            const table = NounEngine.decline(nounObj);
-            const erlaubteKasus = NounEngine.getKnownCases(maxSelectedLesson);
-            const numeri = NounEngine.isPluralKnown(maxSelectedLesson) ? ['Sg', 'Pl'] : ['Sg'];
-            const slots = [];
-            CASE_KEYS.forEach(c => {
-                const caseKey = { Nom: 'nom', Gen: 'gen', Dat: 'dat', Akk: 'akk', Abl: 'abl' }[c];
-                if (erlaubteKasus.indexOf(caseKey) === -1) return;
-                numeri.forEach(n => {
-                    const numKey = n === 'Sg' ? 'sg' : 'pl';
-                    const form = table[numKey] ? table[numKey][caseKey] : null;
-                    if (form) {
-                        const numerus = n === 'Sg' ? 'Singular' : 'Plural';
-                        slots.push({ form: form, label: CASE_LABELS[c] + ' ' + numerus, merkmale: {
-                            art: 'nomen', kasus: CASE_LABELS[c], numerus
-                        } });
-                    }
-                });
-            });
-            return buildRoundFromSlots(slots);
+            return buildRoundFromSlots(LudiFormen.nomenSlots(nounObj, maxSelectedLesson));
         }
 
-        // Die sechs Formen aus getFormsForTempus in ihre Merkmale übersetzt.
-        const PERSON_NR   = ['1', '2', '3', '1', '2', '3'];
-        const NUMERUS_VON = ['Singular', 'Singular', 'Singular', 'Plural', 'Plural', 'Plural'];
-
-        /* Aufgeteilt, damit auch anderswo nachgesehen werden kann, WELCHE Formen
-           eine Lektionsauswahl ueberhaupt hergibt - ohne gleich eine Runde zu bauen. */
-        // Welche Formen sind im Passiv-Modus ueberhaupt zielbar? Alles, was das
-        //    Merkmal traegt - Indikativ, Konjunktiv und der Infinitiv Passiv.
-        // PPA, Gerundium und Gerundivum tragen `genus: null` und fallen damit
-        // von selbst heraus; sie sind keine Passivformen im Sinne von L15.
-        function istPassivform(slot) {
-            return !!(slot.merkmale && slot.merkmale.genus === "Passiv");
-        }
-
-        /* Ein persönliches Passiv braucht ein Akkusativobjekt, das zum Subjekt
-           werden kann. Die Engine BILDET zwar zu fast jedem Verb Passivformen -
-           sie konjugiert, sie denkt nicht -, aber „venīmur" heisst nichts.
-           Gemessen bei L15: 39 von 142 Verben im Passiv-Topf sind intransitiv
-           oder stehen mit dem Dativ (venīre, currere, clāmāre, respondēre,
-           placēre ...). Das wäre mehr als jede vierte Frage auf einer Form,
-           die es nicht gibt.
-
-           `valenz` ist dafür da und fachlich gegengelesen; sie ist mal ein
-           String, mal ein Array (wenn beide Verwendungen gelten).
-
-           Das unpersönliche Passiv (curritur - „man läuft") bleibt damit
-           draussen. Das ist Absicht: Pontes führt in L15 das persönliche ein,
-           und eine Form ohne Person passt nicht in ein Spiel, das nach Person
-           und Numerus fragt. */
-        function kannPersoenlichesPassiv(verbObj) {
-            const val = verbObj.valenz;
-            if (!val) return false;
-            return (Array.isArray(val) ? val : [val])
-                .some(v => String(v).indexOf('akk') !== -1);
-        }
+        /* Welche Formen im Passiv-Modus zielbar sind und welche Verben ueberhaupt
+           ein persoenliches Passiv bilden koennen, sagt der Katalog - siehe die
+           beiden Aliasse oben. */
 
         function buildVerbRound(verbObj) {
             return buildRoundFromSlots(verbSlots(verbObj),
                                        gameMode === "passiv" ? istPassivform : null);
-        }
-
-        function verbSlots(verbObj) {
-            const knownCombos = VerbEngine.getKnownCombinations(maxSelectedLesson); // [{tempus, genus}, ...]
-            // L1 kennt nur die 3. Person Singular, L2 dazu die 3. Plural, ab L3
-            // alle - sonst stehen Formen im Spiel, die nie drankamen.
-            const bekanntePersonen = VerbEngine.getKnownPersonIndices(maxSelectedLesson);
-            const knownTempora = [...new Set(knownCombos.map(c => c.tempus))];
-            const passivKnown = knownCombos.some(c => c.genus === 'Passiv') && VerbEngine.isGenusApplicable(verbObj, 'Passiv');
-            const showTempus = knownTempora.length > 1; // Solange nur Präsens bekannt ist, Tempus nicht extra nennen
-            const slots = [];
-
-            // --- Indikativ Aktiv/Passiv (5 Tempora) ---
-            knownCombos.forEach(({ tempus, genus }) => {
-                if (genus === 'Passiv' && !passivKnown) return;
-                if (!VerbEngine.isGenusApplicable(verbObj, genus)) return;
-                if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && genus === 'Aktiv' && !verbObj.perfect) return;
-                if ((tempus === 'Perfekt' || tempus === 'Plusquamperfekt') && genus === 'Passiv' && !verbObj.ppp && verbObj.gram_class !== 'Deponens' && verbObj.latin !== 'fierī') return;
-                let forms;
-                try { forms = VerbEngine.getFormsForTempus(verbObj, tempus, genus); } catch (e) { return; }
-                const tLabel = tempus === 'FuturI' ? 'Futur I' : tempus;
-                const weight = (tempus === 'Präsens' || (tempus === 'Perfekt' && genus === 'Aktiv'))
-                    ? FORM_WEIGHT.hoch
-                    : (tempus === 'Plusquamperfekt') ? FORM_WEIGHT.niedrig : FORM_WEIGHT.mittel;
-                forms.forEach((form, i) => {
-                    if (bekanntePersonen.indexOf(i) === -1) return;
-                    let label = persons[i];
-                    if (showTempus) label += ', ' + tLabel;
-                    if (passivKnown && genus === 'Passiv') label += ', Passiv';
-                    slots.push({ form, label, weight, merkmale: {
-                        art: 'finit', modus: 'Indikativ', tempus, genus,
-                        person: PERSON_NR[i], numerus: NUMERUS_VON[i]
-                    } });
-                });
-            });
-
-            // --- Imperativ ---
-            if (VerbEngine.isImperativeKnown(maxSelectedLesson) && VerbEngine.isImperativeApplicable(verbObj)) {
-                const imp = VerbEngine.getImperative(verbObj);
-                slots.push({ form: imp.sg, label: '2. Person Singular (Imperativ)', weight: FORM_WEIGHT.mittel,
-                    merkmale: { art: 'Imperativ', modus: 'Imperativ', tempus: 'Präsens', genus: 'Aktiv', person: '2', numerus: 'Singular' } });
-                slots.push({ form: imp.pl, label: '2. Person Plural (Imperativ)', weight: FORM_WEIGHT.mittel,
-                    merkmale: { art: 'Imperativ', modus: 'Imperativ', tempus: 'Präsens', genus: 'Aktiv', person: '2', numerus: 'Plural' } });
-            }
-
-            // --- Infinitive (4 Kombinationen) ---
-            [['Präsens', 'Aktiv', FORM_WEIGHT.mittel], ['Perfekt', 'Aktiv', FORM_WEIGHT.niedrig],
-             ['Präsens', 'Passiv', FORM_WEIGHT.mittel], ['Perfekt', 'Passiv', FORM_WEIGHT.selten]].forEach(([t, g, w]) => {
-                if (!VerbEngine.isInfinitiveKnown(t, g, maxSelectedLesson)) return;
-                if (!VerbEngine.isInfinitiveApplicable(verbObj, t, g)) return;
-                const form = VerbEngine.getInfinitive(verbObj, t, g);
-                slots.push({ form, label: `Infinitiv ${t} ${g}`, weight: w, merkmale: {
-                    art: 'Infinitiv', modus: 'Infinitiv', tempus: t, genus: g, person: null, numerus: null
-                } });
-            });
-
-            // --- PPA (vollständige Deklination) ---
-            if (VerbEngine.isPPAKnown(maxSelectedLesson) && VerbEngine.isPPAApplicable(verbObj)) {
-                const d = VerbEngine.getPPADeclension(verbObj);
-                const ppaSlots = [
-                    [d.sg.nom, 'PPA Nominativ Singular'], [d.sg.gen, 'PPA Genitiv Singular'],
-                    [d.sg.dat, 'PPA Dativ Singular'], [d.sg.akkM, 'PPA Akkusativ Singular (m./f.)'],
-                    [d.sg.abl, 'PPA Ablativ Singular'], [d.pl.nomM, 'PPA Nominativ Plural (m./f.)'],
-                    [d.pl.gen, 'PPA Genitiv Plural'], [d.pl.dat, 'PPA Dativ Plural'],
-                    [d.pl.akkM, 'PPA Akkusativ Plural (m./f.)'], [d.pl.abl, 'PPA Ablativ Plural']
-                ];
-                ppaSlots.forEach(([form, label]) => slots.push({ form, label, weight: FORM_WEIGHT.niedrig, merkmale: {
-                    art: 'PPA', modus: 'PPA', tempus: null, genus: null, person: null,
-                    numerus: /Plural/.test(label) ? 'Plural' : 'Singular',
-                    kasus: (label.match(/(Nominativ|Genitiv|Dativ|Akkusativ|Ablativ)/) || [])[1] || null
-                } }));
-            }
-
-            // --- Konjunktiv (4 Tempora x Aktiv/Passiv) ---
-            if (VerbEngine.isKonjunktivKnown('Präsens', maxSelectedLesson) || VerbEngine.isKonjunktivKnown('Imperfekt', maxSelectedLesson)) {
-                ['Präsens', 'Imperfekt', 'Perfekt', 'Plusquamperfekt'].forEach(t => {
-                    if (!VerbEngine.isKonjunktivKnown(t, maxSelectedLesson)) return;
-                    ['Aktiv', 'Passiv'].forEach(g => {
-                        if (g === 'Passiv' && !passivKnown) return;
-                        if (!VerbEngine.isGenusApplicable(verbObj, g)) return;
-                        if ((t === 'Perfekt' || t === 'Plusquamperfekt') && g === 'Aktiv' && !verbObj.perfect) return;
-                        if ((t === 'Perfekt' || t === 'Plusquamperfekt') && g === 'Passiv' && !verbObj.ppp && verbObj.gram_class !== 'Deponens' && verbObj.latin !== 'fierī') return;
-                        let forms;
-                        try { forms = VerbEngine.getSubjunctiveForms(verbObj, t, g); } catch (e) { return; }
-                        const tLabel = t === 'FuturI' ? 'Futur I' : t;
-                        const weight = (t === 'Perfekt' || t === 'Plusquamperfekt') && g === 'Passiv' ? FORM_WEIGHT.selten : FORM_WEIGHT.niedrig;
-                        forms.forEach((form, i) => {
-                            if (bekanntePersonen.indexOf(i) === -1) return;
-                            let label = `Konjunktiv, ${persons[i]}, ${tLabel}`;
-                            if (passivKnown && g === 'Passiv') label += ', Passiv';
-                            slots.push({ form, label, weight, merkmale: {
-                                art: 'finit', modus: 'Konjunktiv', tempus: t, genus: g,
-                                person: PERSON_NR[i], numerus: NUMERUS_VON[i]
-                            } });
-                        });
-                    });
-                });
-            }
-
-            // --- Gerundium / Gerundivum ---
-            // Getrennt gestaffelt: Gerundium kommt in T2, das Gerundivum erst in T3.
-            if (VerbEngine.isGerundiveApplicable(verbObj)) {
-                if (VerbEngine.isGerundiumKnown(maxSelectedLesson)) {
-                    const g = VerbEngine.getGerundium(verbObj);
-                    [['gen', 'Genitiv'], ['dat', 'Dativ'], ['akk', 'Akkusativ'], ['abl', 'Ablativ']].forEach(([k, name]) => {
-                        slots.push({ form: g[k], label: 'Gerundium ' + name, weight: FORM_WEIGHT.selten, merkmale: {
-                            art: 'Gerundium', modus: 'Gerundium', tempus: null, genus: null,
-                            person: null, numerus: 'Singular', kasus: name
-                        } });
-                    });
-                }
-
-                if (VerbEngine.isGerundivumKnown(maxSelectedLesson)) {
-                    const gd = VerbEngine.getGerundivumDeclension(verbObj);
-                    [[gd.sg.nom, 'Nominativ', 'Singular'], [gd.sg.akk, 'Akkusativ', 'Singular'],
-                     [gd.pl.nom, 'Nominativ', 'Plural']].forEach(([form, kasus, numerus]) => {
-                        slots.push({ form, label: 'Gerundivum ' + kasus + ' ' + numerus, weight: FORM_WEIGHT.selten, merkmale: {
-                            art: 'Gerundivum', modus: 'Gerundivum', tempus: null, genus: null,
-                            person: null, numerus, kasus
-                        } });
-                    });
-                }
-            }
-
-            return slots;
         }
 
         function startDefense() {
