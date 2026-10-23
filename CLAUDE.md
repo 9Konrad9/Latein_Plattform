@@ -548,7 +548,7 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **Silentium.html** – **kein Spiel, sondern ein Werkzeug für die Lehrkraft** (September 2026,
   nach einer Idee des Fachlehrers). Es läuft auf EINEM Gerät, das im Raum steht oder mit der
   Lehrkraft mitwandert: Solange es still bleibt, kommt Besuch auf das Landgut der Cornelier;
-  wird es zu laut, flieht alles auf einmal und die Stille-Strähne fällt auf null.
+  wird es zu laut, geht ein Gast und die Stille-Strähne fällt auf null.
   Daraus folgt dreierlei, und das ist bewusst so:
   - **Kein Eintrag in den Vokabelkasten, keine Achievement-Zähler.** Stillsein ist keine
     Lernleistung, und die Zähler messen Lernleistung. `test-silentium.js` prüft, dass im
@@ -558,7 +558,8 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     **längste Stille, die dieses Gerät je gesehen hat**. Eigener Schlüssel, damit sie überlebt,
     wenn das Buch einmal geleert wird. Sie steht auf dem Start- und dem Schlussbild, **nicht in
     der laufenden Leiste**: Ein Ziel vor Augen motiviert, ein Ziel im Blickfeld während der
-    Arbeit lädt zum Mitzählen ein. Geschlagen wird sie nur von einer längeren Strähne, nicht
+    Arbeit lädt zum Mitzählen ein. (Genau an dieser Regel sind Pegel und Stille-Uhr
+    vorbeigelaufen – siehe „Das Werkzeug muss langweilig sein" weiter unten.) Geschlagen wird sie nur von einer längeren Strähne, nicht
     von einer längeren Stunde; `test-silentium.js` prüft das am Verhalten (400 setzen, 200
     darf nicht überschreiben, 500 muss heben) samt Gegenprobe, dass nur der wirklich
     geschlagene Rekord gefeiert wird.
@@ -593,6 +594,57 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     oben ziehen und die Schwelle für den ganzen Lauf verderben.
     Der Lautlos-Schalter stört hier nicht – er betrifft nur die Ausgabe. Deshalb ist das
     Schlussbild auch **sichtbar** und nicht hörbar (siehe Bomba).
+  - **DAS WERKZEUG MUSS WÄHREND DER ARBEIT LANGWEILIG SEIN** (Oktober 2026, nach dem
+    zweiten Klassentest). Gemeldet wurde nicht, dass etwas nicht funktioniert, sondern:
+    „Die Klasse nimmt das Spiel nicht ernst und ist zu abgelenkt davon." Nachgefragt kamen
+    zwei Ursachen heraus – **sie spielten mit dem Pegel**, und **Lautwerden lohnte sich**.
+    Beide saßen im Code, und beide waren einmal gut gemeint:
+    - **Der Pegelbalken ist aus der laufenden Leiste verschwunden** und steht jetzt auf dem
+      Pausen- und dem Eichschirm – dort, wo auch der Regler sitzt. Im Quelltext stand als
+      Begründung: „Er zeigt, WARUM etwas passiert ist. Ohne ihn rät die Klasse, was zu laut
+      war." Das Argument ist nicht falsch, es war nur das kleinere. Ein Balken, der **alle
+      0,08 Sekunden auf jedes Geräusch ausschlägt**, ist kein Hinweis, sondern ein
+      Instrument – und wer eines vor sich hat, probiert es aus. Das „Warum" steht jetzt im
+      Moment der Störung in der Meldung statt dauernd auf dem Schirm.
+    - **Kein rotes Aufblitzen mehr.** Es war das dramatischste Ereignis des Spiels und damit
+      ein Erfolgserlebnis für den, der es ausgelöst hat. Ein Werkzeug, das die Störung
+      feiert, arbeitet gegen sich selbst.
+    - **Es flieht nicht mehr alles, sondern EIN zufälliger Gast** (Entscheidung des
+      Fachlehrers; zufällig statt „der zuletzt gekommene" war sein Zusatz, und er ist der
+      bessere: So kann es auch Merkur oder die Wölfin erwischen, und niemand weiß vorher,
+      wen). Das alte Alles-oder-nichts hatte neben dem Auftritt einen zweiten Fehler: den
+      Zustand **„nichts mehr zu verlieren"** – auf einer leeren Wiese kostet Lärm nichts.
+      **Teuer bleibt es trotzdem**, denn neue Gäste hängen an der Strähne
+      (`pruefeAnkunft` vergleicht gegen `stilleSeit`): Nach einer Störung kommt erst einmal
+      minutenlang niemand nach, die Wiese leert sich bei anhaltendem Lärm also weiter von
+      selbst – nur eben still.
+      Einen **seltenen** Gast trifft es endgültig: Er wurde bereits ausgewürfelt, und an
+      dieser Regel wird nicht gerüttelt (siehe unten).
+    - **Die Stille-Uhr zeigt volle Minuten, keine Sekunden.** Dieselbe Regel wie beim
+      Klassenrekord, die direkt darüber schon stand: Was sich im Takt bewegt, lädt zum
+      Mitzählen ein. Die Feinarbeit machen ohnehin die Gäste.
+    - **Was bewusst BLIEB:** die Meldung („Zu laut — der Esel ist fort.") und das kurze rote
+      Einfärben der Uhr. Die Lehrkraft muss sehen, dass und warum etwas passiert ist; nur
+      gefeiert werden darf es nicht. (Die zwei Gäste mit Mehrzahl – *gallīnae*, *ānserēs* –
+      tragen dafür ein `mehrzahl: true`, sonst stünde dort „die Hühner ist fort".)
+    `test-silentium.js` prüft alles davon am Verhalten, mit Gegenprobe: Der alte Stand
+      (alles flieht) muss durchfallen, über 300 Störungen muss jeder der acht Plätze
+      drankommen, und `mmss()` muss weiterhin 3:07 liefern – die Restzeit braucht die
+      Sekunden ja.
+  - **In der Pause wird weiter GEMESSEN, nur ohne Folgen.** Vorher übersprang die Pause den
+    ganzen Messblock. Solange der Balken in der Leiste hing, fiel das niemandem auf – jetzt
+    sitzt er neben dem Regler, und ein toter Balken wäre dort schlimmer als gar keiner: Die
+    Lehrkraft stellte die Empfindlichkeit gegen ein eingefrorenes Bild ein.
+  - **Die Leiste bricht um** (`flex-wrap`). Beim Nachmessen nach dem Umbau gefunden: Sie
+    braucht 589 px, und der Körper hat `overflow: hidden` – auf einem 375-px-Schirm stand
+    der **Pause-Knopf** von 494 bis 589 außerhalb des Bildes, und es gab nicht einmal eine
+    Bildlaufleiste, die es verraten hätte. Ausgerechnet der Knopf, den nur die Lehrkraft
+    braucht. **Wort für Wort derselbe Fehler wie in der Fußzeile des Bingos** – dort steht
+    er seit Oktober 2026 beschrieben, geprüft hat ihn nie jemand. Der Pegel in der Leiste
+    hatte die Not vorher um weitere 120 px verschärft.
+    Gemessen: 375 px → zwei Reihen, 92 statt 57 px hoch, nichts außerhalb; 1024 px →
+    unverändert einreihig. Die Probe im Test ist eine **Quelltextprobe** – jsdom hat keine
+    Layout-Engine, `getBoundingClientRect` liefert dort überall Nullen.
   - **Die Empfindlichkeit ist ein ABSTAND, kein Pegel.** Die Zahl am Regler sagt, wie viel
     lauter als der geeichte Raum es werden darf – und weil ein dB-Abstand ein Verhältnis ist,
     gilt sie unabhängig davon, wie empfindlich das Mikrofon des jeweiligen Geräts ist.

@@ -23,8 +23,18 @@
             padding: 0;
         }
 
+        /* Die Leiste BRICHT UM. Ohne das brauchte sie 589 px und der Koerper
+           hat "overflow: hidden" - auf einem 375er Schirm stand der
+           Pause-Knopf also von 494 bis 589, ausserhalb des Bildes, und es
+           gab nicht einmal eine Bildlaufleiste, die es verraten haette.
+           Ausgerechnet der Knopf, den nur die Lehrkraft braucht.
+           Derselbe Fehler wie in der Fusszeile des Bingos, und dieselbe
+           Loesung. Gefunden beim Messen, nachdem der Pegel aus der Leiste
+           gewandert war - der hatte die Not vorher noch um 120 px
+           verschaerft, ohne dass es jemandem aufgefallen waere. */
         .leiste {
             display: flex; align-items: center; gap: 14px;
+            flex-wrap: wrap;
             padding: 8px 14px 8px 62px;
             background: var(--putz);
             border-bottom: 2px solid var(--bronze);
@@ -36,8 +46,14 @@
             margin-right: auto;
         }
 
-        /* Die Stille-Uhr ist die wichtigste Zahl im Raum - sie muss vom letzten
-           Platz aus lesbar sein. */
+        /* Die Stille-Uhr zeigt VOLLE MINUTEN, nicht Sekunden - und das ist
+           dieselbe Regel wie beim Rekord gleich darunter: Was sich im Takt
+           bewegt, laedt zum Mitzaehlen ein. Eine Sekundenuhr auf 1,7 rem ist
+           ein Zaehlwerk, dem man beim Laufen zusieht; "3 Min" aendert sich
+           alle sechzig Sekunden einmal und sagt trotzdem, wie es steht.
+           Die Feinarbeit machen ohnehin die Gaeste: Sie kommen langsam, leise
+           und genau dann, wenn es still bleibt. Lesbar vom letzten Platz aus
+           muss die Zahl weiterhin sein. */
         .stille { font-family: var(--font-display); font-size: 1.7rem; font-weight: bold; color: var(--richtig); }
         .stille.gestoert { color: var(--falsch); }
         .restzeit { font-family: var(--font-display); font-size: 1.1rem; color: var(--ink-soft); }
@@ -53,8 +69,21 @@
         }
         .rekord strong { color: var(--richtig); }
 
-        /* Der Pegelbalken: Er zeigt, WARUM etwas passiert ist. Ohne ihn raet die
-           Klasse, was zu laut war. */
+        /* Der Pegelbalken steht auf dem Pausen- und dem Eichschirm, NICHT in
+           der laufenden Leiste.
+
+           Hier stand das Gegenteil ("er zeigt, WARUM etwas passiert ist; ohne
+           ihn raet die Klasse, was zu laut war"), und das Argument war nicht
+           falsch - es war nur das kleinere. Aus dem Unterricht gemeldet
+           (Oktober 2026): Die Klasse SPIELTE mit dem Pegel. Ein Balken, der
+           alle 0,08 Sekunden auf jedes Geraeusch ausschlaegt, ist kein
+           Hinweis, sondern ein Instrument - und wer eines vor sich hat,
+           probiert es aus.
+
+           Das "Warum" ist damit nicht verloren: Es steht jetzt im Moment der
+           Stoerung in der Meldung, statt dauernd auf dem Schirm. Und die
+           Lehrkraft, die wirklich nachsehen muss, ob die Empfindlichkeit
+           stimmt, findet den Balken dort, wo auch der Regler sitzt. */
         .pegel {
             position: relative; width: 120px; height: 12px;
             background: var(--wand-tief); border: 2px solid var(--bronze); border-radius: 7px;
@@ -66,14 +95,6 @@
 
         .szene { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
         #szene-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
-
-        /* Kurzes rotes Aufblitzen, wenn es zu laut wurde. */
-        .stoerung-blitz {
-            position: absolute; inset: 0; pointer-events: none;
-            background: radial-gradient(ellipse at center, rgba(176,48,48,0) 40%, rgba(176,48,48,0.45) 100%);
-            opacity: 0; transition: opacity 0.2s ease;
-        }
-        .stoerung-blitz.an { opacity: 1; }
 
         .meldung {
             position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
@@ -117,7 +138,12 @@
         @media (max-width: 620px) {
             .leiste h1 { font-size: 0.95rem; letter-spacing: 1px; }
             .stille { font-size: 1.35rem; }
-            .pegel { width: 80px; }
+            /* Kein .pegel hier mehr: Der Balken hing in der Leiste und musste
+               auf schmalen Schirmen Platz machen. Jetzt steht er auf dem
+               Pausen- und dem Eichschirm, beide mit einer Inline-Breite, die
+               diese Regel ohnehin ueberstimmt haette - eine tote Regel also,
+               und die ist schlimmer als gar keine: Sie sieht aus, als waere
+               die Sache geregelt. */
         }
     </style>
 </head>
@@ -126,10 +152,6 @@
 
 <div class="leiste">
     <h1>Silentium</h1>
-    <div class="pegel" title="Lautstärke im Raum">
-        <div class="pegel-fuellung" id="pegel-fuellung"></div>
-        <div class="pegel-marke" id="pegel-marke" style="left: 60%;"></div>
-    </div>
     <div class="besucherzahl" id="besucherzahl">0 Besucher</div>
     <div class="restzeit" id="restzeit">20:00</div>
     <div class="stille" id="stille">0:00</div>
@@ -139,7 +161,6 @@
 
 <div class="szene">
     <canvas id="szene-canvas"></canvas>
-    <div class="stoerung-blitz" id="blitz"></div>
     <div class="meldung" id="meldung"></div>
 
     <!-- START -->
@@ -210,6 +231,13 @@
         </div>
         <div class="zeile" style="margin-top:-4px;">
             <span class="besucherzahl" id="schwelle-lage-2">…</span>
+        </div>
+        <!-- Der Pegel LEBT hier: Wer die Empfindlichkeit einstellt, muss
+             sehen, was der Raum gerade macht. -->
+        <div class="pegel" style="width:260px; height:14px; margin-top:4px;"
+             title="Lautstärke im Raum">
+            <div class="pegel-fuellung" id="pegel-fuellung"></div>
+            <div class="pegel-marke" id="pegel-marke" style="left: 60%;"></div>
         </div>
         <p style="max-width:460px; font-size:0.9rem; color:var(--ink-soft); line-height:1.45;">
             Der gemessene Grundpegel liegt bei <span id="grundpegel-anzeige">—</span>. Die Zahl
@@ -282,7 +310,7 @@ const GAESTE = [
       kultur: 'Catull hat ein ganzes Gedicht auf den Sperling seiner Geliebten geschrieben.' },
     { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60, hoehe: 35,
       kultur: 'Katzen kamen erst spät nach Rom - gegen Mäuse hielt man vorher Wiesel.' },
-    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, hoehe: 42,
+    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, hoehe: 42, mehrzahl: true,
       kultur: 'Aus dem Fressverhalten heiliger Hühner las man vor der Schlacht den Willen der Götter.' },
     { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160, hoehe: 32,
       kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
@@ -296,7 +324,7 @@ const GAESTE = [
       kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
     { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460, hoehe: 105,
       kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
-    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, hoehe: 78,
+    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, hoehe: 78, mehrzahl: true,
       kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
     { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580, hoehe: 82,
       kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
@@ -619,11 +647,17 @@ function schleife(jetzt) {
     const dt = Math.min(0.25, (jetzt - letzterTick) / 1000);
     letzterTick = jetzt;
 
-    if (!pausiert) {
-        const pegel = geglaetteterPegel();
-        const schwelle = grundpegel + empfindlichkeit;
-        pegelBalken(pegel, schwelle);
+    /* Gemessen und angezeigt wird AUCH in der Pause - nur Folgen hat es dann
+       keine. Vorher uebersprang die Pause den ganzen Block, und damit stand
+       der Balken still. Solange er in der Leiste hing, fiel das niemandem
+       auf; jetzt sitzt er auf dem Pausenschirm neben dem Regler, und ein
+       toter Balken waere dort schlimmer als gar keiner - die Lehrkraft
+       stellte die Empfindlichkeit gegen ein eingefrorenes Bild ein. */
+    const pegel = geglaetteterPegel();
+    const schwelle = grundpegel + empfindlichkeit;
+    pegelBalken(pegel, schwelle);
 
+    if (!pausiert) {
         if (pegel > schwelle) stoerung();
         else {
             if (stoerpause > 0) stoerpause -= dt;
@@ -643,15 +677,38 @@ function schleife(jetzt) {
     requestAnimationFrame(schleife);
 }
 
+/* Zu laut: Die Straehne faellt auf null, und EIN Gast geht - ein zufaelliger.
+
+   Vorher floh alles auf einmal, mit rotem Aufblitzen ueber das ganze Bild.
+   Aus dem Unterricht gemeldet (Oktober 2026): Die Klasse nahm das Werkzeug
+   nicht ernst, und zwar aus zwei Gruenden, die beide hier sassen.
+
+   LAUTWERDEN LOHNTE SICH. Das Aufblitzen und die auf einen Schlag leere
+   Wiese waren das groesste Ereignis des Spiels - also ein Erfolgserlebnis
+   fuer den, der es ausgeloest hat. Ein Werkzeug, das die Stoerung feiert,
+   arbeitet gegen sich selbst.
+
+   UND ES GAB DEN ZUSTAND "NICHTS MEHR ZU VERLIEREN". Auf einer leeren Wiese
+   kostet Laerm nichts, und bis der erste Gast wiederkommt, dauert es.
+
+   Teuer bleibt es trotzdem, auch ohne Auftritt: Neue Gaeste haengen an der
+   Straehne (pruefeAnkunft vergleicht gegen stilleSeit), nach einer Stoerung
+   kommt also erst einmal minutenlang niemand nach. Bei anhaltendem Laerm
+   leert sich die Wiese weiter von selbst - nur eben still.
+
+   Es trifft einen ZUFAELLIGEN, nicht den zuletzt gekommenen: So kann es auch
+   Merkur oder die Woelfin erwischen. Wer geht, weiss vorher niemand, und das
+   ist der Einsatz. Einen seltenen Gast trifft es endgueltig - er wurde
+   bereits ausgewuerfelt (gewuerfelt), und daran wird nicht geruettelt: Das
+   ist die Regel, an der die Wahrscheinlichkeiten haengen. */
 function stoerung() {
     if (anwesend.length === 0 && stilleSeit < 1) { stilleSeit = 0; return; }
     if (anwesend.length) {
-        const blitz = document.getElementById('blitz');
-        blitz.classList.add('an');
-        setTimeout(() => blitz.classList.remove('an'), 260);
-        zeigeMeldung('Zu laut — alles ist geflohen.');
+        const fort = anwesend.splice(
+            Math.floor(Math.random() * anwesend.length), 1)[0].gast;
+        zeigeMeldung('Zu laut — ' + fort.de +
+                     (fort.mehrzahl ? ' sind fort.' : ' ist fort.'));
     }
-    anwesend = [];
     stilleSeit = 0;
     // Kurze Ruhepause, sonst flackert die Szene bei jedem Stuhlruecken.
     stoerpause = 10;
@@ -800,7 +857,8 @@ function mmss(s) {
 }
 
 function anzeigeAuffrischen() {
-    document.getElementById('stille').innerText = mmss(stilleSeit);
+    document.getElementById('stille').innerText =
+        Math.floor(Math.max(0, stilleSeit) / 60) + ' Min';
     document.getElementById('restzeit').innerText = mmss(restSekunden);
     document.getElementById('besucherzahl').innerText =
         anwesend.length + (anwesend.length === 1 ? ' Besucher' : ' Besucher');
