@@ -168,9 +168,9 @@
         <h2>Silentium</h2>
         <div class="notice-box">
             <h3>📜 So läuft's</h3>
-            <p>Solange es im Raum still bleibt, kommt Besuch auf das Landgut der Cornelier — erst Sperlinge
-               und Hühner, später Seltenes. Wird es zu laut, <strong>flieht alles auf einmal</strong>, und die
-               stille Zeit beginnt von vorn.</p>
+            <p>Solange es im Raum still bleibt, kommt Besuch auf das Landgut der Cornelier — wer kommt,
+               ist jedes Mal anders: Sperling und Katze oft, Pfau und Adler selten. Wird es zu laut,
+               <strong>geht einer von ihnen wieder</strong>, und die stille Zeit beginnt von vorn.</p>
             <p style="margin-top:10px;">Was einmal da war, bleibt im <strong>Buch</strong> stehen, auch wenn die
                Szene sich leert. Manche Gäste kommen nur mit Glück — Merkur schaut nach zehn Minuten Stille
                vorbei, wenn er will, Iuppiter frühestens nach fünfzehn.</p>
@@ -306,27 +306,27 @@ const REKORD = 'ludi_silentium_rekord';
    Wuerfelte man im Takt weiter, waere Merkur bei 33 % nach zehn weiteren
    Minuten praktisch sicher da - und 33 % waeren gelogen. */
 const GAESTE = [
-    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        ankunft: 20, hoehe: 15,
+    { id: 'passer',   lat: 'passer',            de: 'der Sperling',        gewicht: 10, hoehe: 15,
       kultur: 'Catull hat ein ganzes Gedicht auf den Sperling seiner Geliebten geschrieben.' },
-    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           ankunft: 60, hoehe: 35,
+    { id: 'felis',    lat: 'fēlēs',             de: 'die Katze',           gewicht: 9, hoehe: 35,
       kultur: 'Katzen kamen erst spät nach Rom - gegen Mäuse hielt man vorher Wiesel.' },
-    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          ankunft: 110, hoehe: 42, mehrzahl: true,
+    { id: 'gallina',  lat: 'gallīnae',          de: 'die Hühner',          gewicht: 8, hoehe: 42, mehrzahl: true,
       kultur: 'Aus dem Fressverhalten heiliger Hühner las man vor der Schlacht den Willen der Götter.' },
-    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', ankunft: 160, hoehe: 32,
+    { id: 'issa',     lat: 'Issa',              de: 'die catella der Cornelier', gewicht: 8, hoehe: 32,
       kultur: 'Martial besingt eine Hündin namens Issa: „Issa ist schelmischer als Catulls Sperling."' },
-    { id: 'columba',  lat: 'columba',           de: 'die Taube',           ankunft: 220, hoehe: 28,
+    { id: 'columba',  lat: 'columba',           de: 'die Taube',           gewicht: 7, hoehe: 28,
       kultur: 'Die Taube gehört der Venus; ein Taubenpaar zieht ihren Wagen.' },
-    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        ankunft: 280, hoehe: 9, nah: true,
+    { id: 'lacerta',  lat: 'lacerta',           de: 'die Eidechse',        gewicht: 6, hoehe: 9, nah: true,
       kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
-    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            ankunft: 340, hoehe: 125,
+    { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            gewicht: 5, hoehe: 125,
       kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
-    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', ankunft: 400, hoehe: 170,
+    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', gewicht: 3, hoehe: 170,
       kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
-    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            ankunft: 460, hoehe: 105,
+    { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            gewicht: 3, hoehe: 105,
       kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
-    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           ankunft: 520, hoehe: 78, mehrzahl: true,
+    { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           gewicht: 3, hoehe: 78, mehrzahl: true,
       kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
-    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           ankunft: 580, hoehe: 82,
+    { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           gewicht: 2, hoehe: 82,
       kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
     { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, hoehe: 85, chance: 0.5,
       kultur: 'Die Wölfin säugte Romulus und Remus - ohne sie gäbe es Rom nicht.' },
@@ -535,11 +535,15 @@ function zeichneBuch(ziel, nurNeue) {
         } else {
             // Kein Name, keine Silhouette: Was noch nicht da war, bleibt eine
             // Leerstelle - sonst ist die Ueberraschung vorweggenommen.
-            // 'etwa', weil die Ankunft der sicheren Gäste um ein Viertel streut.
-            // Die seltenen behalten ihre Minute - dort steht sie deshalb genau.
-            karte.innerHTML = '<span class="lat">?</span><span class="kultur">noch nicht dagewesen · ab ' +
-                (g.chance ? '' : 'etwa ') + Math.round(g.ankunft / 60) + ' Min' +
-                (g.chance ? ', mit Glück' : '') + '</span>';
+            // Die Seltenen behalten ihre Minute, die steht deshalb genau da.
+            // Ein sicherer Gast hat seit dem Pool KEINE eigene Minute mehr -
+            // er kann beim ersten Platz kommen oder beim elften. Statt einer
+            // Zahl, die nicht mehr stimmt, steht dort, wie oft er kommt.
+            const hinweis = g.chance
+                ? 'ab ' + Math.round(g.ankunft / 60) + ' Min, mit Glück'
+                : 'kommt ' + haeufigkeitswort(g.gewicht);
+            karte.innerHTML = '<span class="lat">?</span><span class="kultur">noch nicht dagewesen · ' +
+                hinweis + '</span>';
         }
         gitter.appendChild(karte);
     });
@@ -630,7 +634,7 @@ function starten() {
     empfindlichkeit = parseInt(document.getElementById('schwelle-regler').value, 10);
     restSekunden = dauerMinuten * 60;
     stilleSeit = 0; besteStraehne = 0; anwesend = []; gewuerfelt = new Set();
-    ankuenfteWuerfeln();
+    ankuenfteWuerfeln();   // setzt auch warteschlange und naechsterPlatz zurueck
     neuImBuch = []; stoerpause = 0; pausiert = false;
 
     document.getElementById('start-overlay').style.display = 'none';
@@ -706,6 +710,7 @@ function stoerung() {
     if (anwesend.length) {
         const fort = anwesend.splice(
             Math.floor(Math.random() * anwesend.length), 1)[0].gast;
+        stelltSichWiederAn(fort);
         zeigeMeldung('Zu laut — ' + fort.de +
                      (fort.mehrzahl ? ' sind fort.' : ' ist fort.'));
     }
@@ -730,40 +735,106 @@ function stoerung() {
 
    Gewuerfelt wird EINMAL je Durchgang, beim Start. Wuerfelte man im Takt
    weiter, waere die Schwelle eines Gastes keine Schwelle mehr, sondern ein
-   Zittern um sie herum - derselbe Fehler wie beim Wuerfel der Seltenen. */
+   Zittern um sie herum - derselbe Fehler wie beim Wuerfel der Seltenen.
+
+   ZEIT UND GAST SIND GETRENNT (Oktober 2026, gewuenscht vom Fachlehrer).
+   Vorher trug jeder Gast seine eigene Minute, und die Streuung verschob nur
+   Nachbarn gegeneinander. Gemessen ueber 500 Durchgaenge war das viel zu
+   wenig: Platz 1 war zu 100 % der Sperling, Platz 2 zu 100 % die Katze,
+   Platz 3 zu 98 % die Huehner - fuer die ersten DREI gab es ganze ZWEI
+   verschiedene Reihenfolgen. Und weil eine Klasse in fuenf Minuten
+   ununterbrochener Stille im Schnitt 5,9 Gaeste sieht, ist genau dieser
+   festliegende Anfang der Teil, den sie ueberhaupt erlebt.
+   (Der alte Test sagte "in 85-91 % der Durchgaenge tauschen benachbarte
+   Gaeste die Reihenfolge" - wahr, und trotzdem nichtssagend: Getauscht wurde
+   weit hinten, wo im Unterricht kaum jemand hinkommt.)
+
+   Jetzt steht die LEITER fest - wann jemand kommt - und WER kommt, wird
+   gewichtet gezogen. Die Leiter sind genau die frueheren elf Zeiten, der
+   Takt der Ankuenfte aendert sich also nicht. Gestreut wird weiterhin, denn
+   sonst wuerde die Stunde wieder zur Stoppuhr: Man wuesste zwar nicht mehr
+   WER, aber dass ueberhaupt jemand kommt.
+
+   Die Gewichte laufen gegenlaeufig zur frueheren Leiter: Was der alte
+   Fahrplan hinten hatte, ist jetzt selten. Damit bleibt die Steigerung
+   erhalten, nur statistisch statt fest - der Adler kommt in rund 3 % der
+   Durchgaenge zuerst, und das ist dann eine Ueberraschung und nicht die
+   Regel. Weil von elf Plaetzen im Unterricht selten mehr als sechs erreicht
+   werden, entscheidet der Zug wirklich, WELCHE Tiere kommen. */
 const ANKUNFT_STREUUNG = 0.25;
-let ankunftHeute = {};
+const ANKUNFT_LEITER = [20, 60, 110, 160, 220, 280, 340, 400, 460, 520, 580];
+let ankunftHeute = {};      // nur noch fuer die Seltenen
+let leiterHeute = [];       // die gestreuten Zeiten
+let warteschlange = [];     // sichere Gaeste, die noch kommen - in gezogener Reihenfolge
+let naechsterPlatz = 0;     // wie weit die Leiter abgearbeitet ist
+
+/* Gewichtet ziehen, ohne Zuruecklegen. */
+function gewichtetZiehen(pool) {
+    const rest = pool.slice(), raus = [];
+    while (rest.length) {
+        let w = Math.random() * rest.reduce((sum, g) => sum + g.gewicht, 0);
+        let i = 0;
+        while (i < rest.length - 1 && (w -= rest[i].gewicht) > 0) i++;
+        raus.push(rest.splice(i, 1)[0]);
+    }
+    return raus;
+}
 
 function ankuenfteWuerfeln() {
     ankunftHeute = {};
     GAESTE.forEach(g => {
-        if (g.chance !== undefined) { ankunftHeute[g.id] = g.ankunft; return; }
-        const streu = 1 + (Math.random() * 2 - 1) * ANKUNFT_STREUUNG;
-        ankunftHeute[g.id] = Math.round(g.ankunft * streu);
+        if (g.chance !== undefined) ankunftHeute[g.id] = g.ankunft;
     });
+    leiterHeute = ANKUNFT_LEITER.map(t =>
+        Math.round(t * (1 + (Math.random() * 2 - 1) * ANKUNFT_STREUUNG)));
+    warteschlange = gewichtetZiehen(GAESTE.filter(g => g.chance === undefined));
+    naechsterPlatz = 0;
 }
 
 function ankunftVon(gast) {
     return ankunftHeute[gast.id] !== undefined ? ankunftHeute[gast.id] : gast.ankunft;
 }
 
+/* Wer bei einer Stoerung geht, stellt sich wieder an - aber nicht unbedingt
+   vorn. Ohne das koennte sich die Wiese nur noch leeren, und eine Klasse,
+   die frueh laut war und sich dann faengt, haette nichts davon. Genau diese
+   Verbesserung soll das Werkzeug aber belohnen.
+   Die Seltenen kommen NICHT zurueck: Fuer sie wurde bereits gewuerfelt, und
+   an dieser Regel haengen ihre Prozentzahlen. */
+function stelltSichWiederAn(gast) {
+    if (gast.chance !== undefined) return;
+    warteschlange.splice(Math.floor(Math.random() * (warteschlange.length + 1)), 0, gast);
+}
+
 function pruefeAnkunft() {
     const daIds = new Set(anwesend.map(a => a.gast.id));
-    // Nach der HEUTIGEN Zeit durchgehen, nicht nach der Listenreihenfolge:
-    // Sonst laege die Reihenfolge trotz Streuung wieder fest.
-    const reihe = GAESTE.slice().sort((a, b) => ankunftVon(a) - ankunftVon(b));
-    for (const g of reihe) {
+
+    /* Erst die Leiter. naechsterPlatz zaehlt nur vorwaerts - nach einer
+       Stoerung dauert es also laenger bis zum naechsten Gast, je weiter die
+       Stunde schon war. Das ist gewollt: Wer mehr hat, riskiert mehr.
+       Ueber die Leiter hinaus (moeglich, wenn jemand ging und wiederkam)
+       gilt der letzte Abstand weiter. */
+    const naechster = warteschlange.find(g => !daIds.has(g.id));
+    if (naechster) {
+        const wann = leiterHeute[Math.min(naechsterPlatz, leiterHeute.length - 1)];
+        if (stilleSeit >= wann) {
+            warteschlange.splice(warteschlange.indexOf(naechster), 1);
+            naechsterPlatz++;
+            eintreten(naechster);
+            return;   // hoechstens einer je Bild
+        }
+    }
+
+    /* Dann die Seltenen, unveraendert: eigene Minute, genau ein Wurf. */
+    for (const g of GAESTE) {
+        if (g.chance === undefined) continue;
         if (daIds.has(g.id)) continue;
         if (stilleSeit < ankunftVon(g)) continue;
-
-        if (g.chance !== undefined) {
-            // GENAU EINMAL wuerfeln, beim Erreichen der Minute.
-            if (gewuerfelt.has(g.id)) continue;
-            gewuerfelt.add(g.id);
-            if (Math.random() > g.chance) continue;
-        }
+        if (gewuerfelt.has(g.id)) continue;
+        gewuerfelt.add(g.id);
+        if (Math.random() > g.chance) continue;
         eintreten(g);
-        return;   // hoechstens einer je Bild
+        return;
     }
 }
 
@@ -1021,14 +1092,27 @@ function beenden() {
 }
 
 /* ---------- Bedienung ---------- */
+/* Drei Baender statt einer Zahl: "Gewicht 7 von 64" sagt einer Klasse
+   nichts, "kommt oft" schon. */
+function haeufigkeitswort(gewicht) {
+    if (gewicht >= 8) return 'oft';
+    if (gewicht >= 5) return 'manchmal';
+    return 'selten';
+}
+
 function erreichbarText() {
     const min = parseInt(document.getElementById('timer-regler').value, 10);
     // Mit dem spaetestmoeglichen Zeitpunkt rechnen: Die Zusage muss auch dann
-    // stimmen, wenn der Wuerfel einen Gast ans obere Ende schiebt.
-    const spaetestens = g => g.chance !== undefined ? g.ankunft : g.ankunft * (1 + ANKUNFT_STREUUNG);
-    const wie = GAESTE.filter(g => spaetestens(g) <= min * 60).length;
+    // stimmen, wenn der Wuerfel einen Platz ans obere Ende schiebt.
+    // Gezaehlt werden PLAETZE, nicht Gaeste: Seit dem Pool hat kein sicherer
+    // Gast mehr seine eigene Minute - erreichbar ist jeder von ihnen, die
+    // Frage ist nur, wie viele in die Stunde passen. "bis zu" deshalb, weil
+    // auch die Seltenen dabei sind, die erst gewuerfelt werden muessen.
+    const plaetze = ANKUNFT_LEITER.filter(t => t * (1 + ANKUNFT_STREUUNG) <= min * 60).length;
+    const selten = GAESTE.filter(g => g.chance !== undefined && g.ankunft <= min * 60).length;
     document.getElementById('erreichbar').innerText =
-        'Bei ' + min + ' Minuten sind ' + wie + ' von ' + GAESTE.length + ' Gästen überhaupt erreichbar.';
+        'Bei ' + min + ' Minuten können bis zu ' + (plaetze + selten) +
+        ' von ' + GAESTE.length + ' Gästen kommen.';
 }
 
 function schwelleZeigen() {

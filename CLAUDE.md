@@ -563,22 +563,63 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     von einer längeren Stunde; `test-silentium.js` prüft das am Verhalten (400 setzen, 200
     darf nicht überschreiben, 500 muss heben) samt Gegenprobe, dass nur der wirklich
     geschlagene Rekord gefeiert wird.
-  - **Die Ankunftszeiten streuen um ein Viertel – aber nicht bei den Seltenen.** Feste
-    Sekunden machen aus der Stunde eine Stoppuhr: Wer zweimal dabei war, weiß, dass der
-    Sperling nach zwanzig Sekunden kommt, und zählt mit, statt zu arbeiten. Gemessen tauschen
-    dadurch in 91 % der Durchgänge benachbarte Gäste die Reihenfolge – die Streuung ändert
-    also wirklich etwas und wackelt nicht nur.
-    Die seltenen Gäste behalten ihre Minute auf die Sekunde: „Merkur schaut nach zehn Minuten
-    vorbei" steht so auf dem Startbildschirm, und unberechenbar genug sind sie durch den
-    Würfel. Das Buch sagt deshalb **„ab etwa 5 Min"** bei den sicheren und **„ab 10 Min, mit
-    Glück"** bei den seltenen.
-    **Gewürfelt wird EINMAL je Durchgang, beim Start** (`ankuenfteWuerfeln()`). Im Takt
-    weitergewürfelt wäre die Schwelle eines Gastes keine Schwelle mehr, sondern ein Zittern
-    um sie herum – derselbe Fehler wie beim Würfel der Seltenen.
-    Wo sonst noch mit `ankunft` gerechnet wird, muss der **Rand** her, nicht der Mittelwert:
-    Der Hinweis „Bei 10 Minuten sind N Gäste erreichbar" nimmt den spätestmöglichen
-    Zeitpunkt, sonst stimmt die Zusage in genau den Durchgängen nicht, in denen der Würfel
-    jemanden nach hinten schiebt.
+  - **ZEIT UND GAST SIND GETRENNT** (Oktober 2026, gewünscht vom Fachlehrer). Die **Leiter**
+    `ANKUNFT_LEITER` sagt, WANN jemand kommt (20 / 60 / 110 … 580 s, gestreut um ein
+    Viertel); WER kommt, wird **gewichtet aus dem Topf gezogen** (`gewichtetZiehen`), einmal
+    je Durchgang. Die elf sicheren Gäste tragen dafür ein `gewicht` statt einer `ankunft`.
+    - **Warum:** Vorher trug jeder Gast seine eigene Minute, und die Streuung verschob nur
+      Nachbarn gegeneinander. Gemessen über 500 Durchgänge war das viel zu wenig: **Platz 1
+      zu 100 % der Sperling, Platz 2 zu 100 % die Katze, Platz 3 zu 98 % die Hühner** – für
+      die ersten DREI gab es ganze **zwei** verschiedene Reihenfolgen, die häufigste in 98 %
+      der Durchgänge. Und weil eine Klasse in fünf Minuten ununterbrochener Stille im Schnitt
+      **5,9 Gäste** sieht, ist genau dieser festliegende Anfang der Teil, den sie überhaupt
+      erlebt. Nachher: 11 Tiere auf Platz 1 (häufigster 16 %), **382 verschiedene Anfänge**.
+    - **Der alte Test war grün und nichtssagend.** Er sagte „in 85–91 % der Durchgänge
+      tauschen benachbarte Gäste die Reihenfolge" – wahr, und trotzdem wertlos: Getauscht
+      wurde weit hinten, wo im Unterricht kaum jemand hinkommt. Eine Kennzahl, die über
+      *irgendein* Paar mittelt, verdeckt genau das, worauf es ankommt.
+    - **Die Streuung bleibt trotzdem.** Feste Sekunden machen aus der Stunde eine Stoppuhr.
+      Man weiß jetzt zwar nicht mehr, WER kommt – aber ohne Streuung wüsste man, DASS
+      jemand kommt, und zählte wieder mit.
+    - **Gewichtet, nicht gleichverteilt** (Entscheidung des Fachlehrers). Summe 64:
+      *passer* 10, *fēlēs* 9, *gallīnae*/Issa 8, *columba* 7, *lacerta* 6, *asinus* 5,
+      *Cornēliī*/*pāvō*/*ānserēs* 3, *aquila* 2. Die Gewichte laufen gegenläufig zur früheren
+      Leiter, damit die **Steigerung erhalten bleibt – nur statistisch statt fest**: Der
+      Adler kommt in 3,1 % der Durchgänge zuerst, und das ist dann eine Überraschung und
+      nicht die Regel. Weil von elf Plätzen im Unterricht selten mehr als sechs erreicht
+      werden, entscheidet der Zug wirklich, WELCHE Tiere kommen.
+      Dass die Ziehung stimmt, ist eigens nachgemessen (`probe-gewichte.js`, 20 000
+      Durchgänge, größte Abweichung 1,6 σ). Im Test selbst ist die Schwelle bewusst
+      großzügig (Faktor 2 statt 5), denn 600 Durchgänge sind für den leichtesten Gast
+      verrauscht – dort geht es nur darum, dass die Gewichtung nicht EINGEEBNET wurde.
+    - **Wer bei einer Störung geht, stellt sich wieder an** (`stelltSichWiederAn`), an einer
+      zufälligen Stelle der Warteschlange. Ohne das könnte sich die Wiese nur noch leeren,
+      und eine Klasse, die früh laut war und sich dann fängt, hätte nichts davon – genau
+      diese Besserung soll das Werkzeug aber belohnen. **Die Seltenen kommen nicht zurück:**
+      Für sie wurde schon gewürfelt, und daran hängen ihre Prozentzahlen.
+      `naechsterPlatz` zählt dabei **nur vorwärts**: Je weiter die Stunde war, desto länger
+      dauert es bis zum nächsten Gast. Das ist gewollt – wer mehr hat, riskiert mehr.
+    - Die seltenen Gäste behalten ihre Minute auf die Sekunde: „Merkur schaut nach zehn
+      Minuten vorbei" steht so auf dem Startbildschirm, und unberechenbar genug sind sie
+      durch den Würfel.
+    - **Die beiden Anzeigen mussten mit.** Ein sicherer Gast hat keine eigene Minute mehr,
+      also sagt das Buch statt „ab etwa 5 Min" jetzt **„kommt oft / manchmal / selten"**
+      (drei Bänder aus dem Gewicht – „Gewicht 7 von 64" sagt einer Klasse nichts). Und der
+      Hinweis auf dem Startbild zählt **Plätze statt Gäste**: „Bei 10 Minuten können bis zu
+      11 von 14 Gästen kommen." Gerechnet wird weiter mit dem **Rand**, nicht dem
+      Mittelwert, sonst stimmt die Zusage in genau den Durchgängen nicht, in denen der
+      Würfel einen Platz nach hinten schiebt.
+    - **UND DER ERKLÄRTEXT.** Auf dem Startbildschirm stand weiterhin „erst Sperlinge und
+      Hühner, später Seltenes" und „flieht alles auf einmal" – zwei Regeln, die es nicht
+      mehr gibt. **Gefunden hat das kein Test, sondern der Blick auf den Schirm: Kein Test
+      liest Prosa.** Wer die Regeln ändert, ändert deshalb immer DREI Stellen – den Code,
+      den Erklärtext und das Buch.
+    **Gewürfelt wird EINMAL je Durchgang, beim Start** (`ankuenfteWuerfeln()`), Leiter wie
+    Reihenfolge. Im Takt weitergewürfelt wäre die Schwelle keine Schwelle mehr, sondern ein
+    Zittern um sie herum – derselbe Fehler wie beim Würfel der Seltenen.
+    **`pruefeAnkunft()` setzt voraus, dass `ankuenfteWuerfeln()` lief** – sonst ist die
+    Warteschlange leer und es kommt schlicht niemand. Im Spiel sorgt `starten()` dafür; eine
+    Testprobe, die es vergaß, stürzte ab, statt still nichts zu tun.
   - Es steht **nicht als Karte zwischen den Spielen**, sondern als kleine Pille oben rechts
     im Hauptmenü (`#silentium-btn` in `theme.css`, das Gegenstück zum Haus-Knopf oben links).
   - **DIE REGEL, AN DER ALLES HÄNGT:** Ein seltener Gast wird **genau einmal** ausgewürfelt,
