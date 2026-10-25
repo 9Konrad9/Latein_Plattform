@@ -432,6 +432,37 @@ function groessenFaktor(gast) {
     return GROESSE_BEI_1_M * Math.pow(cm / 100, GROESSE_STAUCHUNG);
 }
 
+/* Das waagerechte Gegenstueck zu sichtbareWiese() - und es hat gefehlt.
+
+   Der Hintergrund wird formatfuellend gezeichnet. Auf BREITEN Schirmen
+   faellt oben und unten etwas weg, und dagegen gibt es sichtbareWiese()
+   seit September 2026. Auf HOHEN, schmalen Schirmen faellt dasselbe links
+   und rechts weg - nur suchte platzSuchen() sein x weiterhin im ganzen
+   RAHMEN statt im sichtbaren Teil.
+
+   Gemessen ueber 150 echte Laeufe je Format: Auf dem iPad im Hochformat
+   (820x900) ragten 20,2 % der Gaeste seitlich aus dem Bild, im schlimmsten
+   Fall um 321 Bildpunkte - jeder fuenfte Gast also halb oder ganz weg.
+   Quer war nie etwas betroffen, deshalb ist es nie aufgefallen: Der Beamer
+   und das iPad im Querformat liegen bei 0,0 %.
+   Der alte Test hat nur die TIEFE geprueft ("alle zwischen 0.52 und 0.94"),
+   nie die Breite.
+
+   Die Verengung nach hinten (enge) bleibt davon unberuehrt: Sie gehoert zum
+   GELAENDE - links das Landgut, rechts die Trockenmauer - und steht im
+   Rahmen, nicht auf dem Schirm. Beides wird geschnitten, nicht ersetzt. */
+function sichtbareBreite() {
+    let links = 0, rechts = 1;
+    if (bildRahmen && bildRahmen.w > 0) {
+        const rand = 0.02;   // niemand klebt genau an der Kante
+        links = Math.max(0, (0 - bildRahmen.x) / bildRahmen.w + rand);
+        rechts = Math.min(1, (canvas.width - bildRahmen.x) / bildRahmen.w - rand);
+        // Notausgang wie bei der Tiefe: lieber die ganze Breite als gar keine.
+        if (rechts - links < 0.08) { links = 0; rechts = 1; }
+    }
+    return { links: links, rechts: rechts };
+}
+
 function sichtbareWiese() {
     let hinten = WIESE_HINTEN, vorn = WIESE_VORN;
     if (bildRahmen && bildRahmen.h > 0) {
@@ -460,11 +491,19 @@ const BILDER = {
     aquila:  'assets/silentium/aquila.png',
     lupa:    'assets/silentium/lupa.png',
     mercurius: 'assets/silentium/mercurius.png',
-    iuppiter:  'assets/silentium/iuppiter.png'
-    /* Noch ohne Bild und deshalb als Pergamentplaettchen auf der Wiese:
-       ceres, faunus, diana, pegasus. Wer eines ergaenzt, traegt es hier
-       ein - eine falsche Kennung faellt sonst nicht auf, denn das
-       Plaettchen ist ja der vorgesehene Ersatz. */
+    iuppiter:  'assets/silentium/iuppiter.png',
+    ceres:     'assets/silentium/ceres.png',
+    faunus:    'assets/silentium/faunus.png',
+    diana:     'assets/silentium/diana.png',
+    /* Pegasus liegt quer und wurde deshalb auf 240 statt 160 Bildpunkte
+       Breite gebracht: Gezeichnet wird nach HOEHE, und bei 158 Punkten
+       waere er am Beamer (bis 186 hoch) hochskaliert worden. */
+    pegasus:   'assets/silentium/pegasus.png'
+    /* Seit Oktober 2026 hat jeder Gast ein Bild. Das Pergamentplaettchen
+       bleibt als Ersatz im Code - wer einen Gast ergaenzt, traegt ihn hier
+       ein, und bis dahin erscheint er als Plaettchen. Eine FALSCHE Kennung
+       faellt dadurch nicht auf; test-silentium.js prueft sie deshalb gegen
+       die Gaesteliste. */
 };
 
 /* ---------- Zustand ---------- */
@@ -901,6 +940,7 @@ const PLATZ_VORSCHLAEGE = 60;
 
 function platzSuchen(gast) {
     const w = sichtbareWiese();
+    const b = sichtbareBreite();
     const hinten = gast.nah ? (w.hinten + w.vorn) / 2 : w.hinten;
     const R = bildRahmen || { w: canvas.width, h: canvas.height };
     // Gezeichnete Hoehe, ohne das Bild zu brauchen - als Mass fuer den Platzbedarf.
@@ -914,7 +954,22 @@ function platzSuchen(gast) {
            den Zypressen (ab etwa 0,74). Ganz hinten bleibt also nur die Mitte,
            vorn ist die volle Breite frei. */
         const enge = 0.05 + 0.30 * (1 - (y - WIESE_HINTEN) / (WIESE_VORN - WIESE_HINTEN));
-        const x = enge + Math.random() * (1 - 2 * enge);
+        /* Drei Einschraenkungen, und alle gelten: die Verengung durch das
+           GELAENDE (enge, im Rahmen), der sichtbare AUSSCHNITT (auf hohen
+           Schirmen faellt links und rechts etwas weg) und die HALBE BREITE
+           der Figur selbst - x ist ihre Mitte, nicht ihr Rand.
+           Ohne das Letzte blieben 3 % der Gaeste teilweise draussen: Der
+           Mittelpunkt lag brav im Bild, die Figur ragte trotzdem hinaus.
+           Gerechnet wird mit der GEDECKELTEN Breite (R.h * 0,16), also der
+           groesstmoeglichen - platzSuchen() kennt das Bild nicht. */
+        const halbe = (R.h * 0.16 * groessenFaktor(gast) * tiefenFaktor(y) / 2) / R.w;
+        let vonX = Math.max(enge, b.links + halbe);
+        let bisX = Math.min(1 - enge, b.rechts - halbe);
+        if (bisX - vonX < 0.04) {
+            // Notausgang: lieber mittig als gar nicht platziert.
+            vonX = bisX = (b.links + b.rechts) / 2;
+        }
+        const x = vonX + Math.random() * (bisX - vonX);
 
         let luecke = Infinity;
         const meine = spanne(gast, y);

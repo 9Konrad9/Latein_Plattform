@@ -752,9 +752,11 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     `test-silentium.js` prüft, dass **beide** Regler – Startbild und Pause – dieselben Grenzen
     haben (zwei Regler, die auseinanderlaufen, fallen sonst nie auf), dass jede Stellung einen
     Namen trägt und dass der oberste Anschlag über der Zimmerlautstärke liegt.
-  - **Dreizehn der siebzehn Gäste haben ein Bild.** Ohne sind noch `ceres`, `faunus`,
-    `diana` und `pegasus`. Wer keines hat, erscheint als Pergamentplättchen mit seinem
-    lateinischen Namen – der Ersatz ist vorgesehen, kein Notbehelf.
+  - **Alle siebzehn Gäste haben ein Bild** (seit Oktober 2026). Wer keines hat, erscheint
+    als Pergamentplättchen mit seinem lateinischen Namen – der Ersatz bleibt im Code, denn
+    ein neuer Gast beginnt immer dort. **Pēgasus ist auf 240 statt 160 Bildpunkte Breite
+    gebracht**: Er liegt quer, gezeichnet wird aber nach HÖHE, und bei 158 Punkten wäre er
+    am Beamer (bis 186 hoch) hochskaliert worden.
     **Eine Vorgabe aus dem Code, die man beim Zeichnen kennen muss:** Die Breite wird bei
     **1,88 : 1** gedeckelt (`maxB = R.h * 0.16` gegen die Nennhöhe `R.h * 0.085`), und
     darüber schrumpft die HÖHE mit. Ein breites Bild wird auf der Wiese also kleiner, nicht
@@ -779,8 +781,27 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     dazwischen (`GROESSE_STAUCHUNG = 0.55`) – im Bild 5,7×, in der Natur 23×.
     `test-silentium.js` prüft die Reihenfolge (größer im Bild = größer in der Natur) und dass
     die Stauchung eine Stauchung bleibt: nicht flach, nicht maßstäblich.
-  - **Drei Regeln dafür, wo jemand hintritt.** Alle gemessen, und alle fallen nicht auf,
+  - **Vier Regeln dafür, wo jemand hintritt.** Alle gemessen, und alle fallen nicht auf,
     wenn sie fehlen – es erscheint ja nichts Falsches, sondern nichts.
+    - **NIEMAND TRITT SEITLICH AUS DEM BILD** (`sichtbareBreite()`, Oktober 2026). Das
+      waagerechte Gegenstück zur Regel direkt darunter – und es hat anderthalb Monate
+      gefehlt. Auf **hohen, schmalen** Schirmen schneidet der formatfüllende Hintergrund
+      links und rechts ab, `platzSuchen()` suchte sein x aber weiter im ganzen RAHMEN.
+      Gemessen über 150 echte Läufe je Format: Auf dem **iPad im Hochformat ragten 20,2 %
+      der Gäste seitlich heraus**, im schlimmsten Fall um 321 Bildpunkte – jeder fünfte
+      Gast also halb oder ganz weg. Quer war nie etwas betroffen (0,0 %), und genau deshalb
+      ist es nie aufgefallen.
+      **Die halbe Breite der Figur gehört dazu**: `x` ist ihre Mitte, nicht ihr Rand. Ohne
+      das blieben 3 % teilweise draußen – der Mittelpunkt lag brav im Bild, die Figur ragte
+      trotzdem hinaus. Gerechnet wird mit der gedeckelten Breite (`R.h * 0,16`), der
+      größtmöglichen, denn `platzSuchen()` kennt das Bild nicht.
+      Die Verengung nach hinten (`enge`) bleibt davon unberührt: Sie gehört zum GELÄNDE und
+      steht im Rahmen, nicht auf dem Schirm. Beides wird geschnitten, nicht ersetzt.
+      **Warum es so lange überlebt hat:** Der Test prüfte für jedes Format nur die TIEFE
+      („alle zwischen 0.52 und 0.94"), nie die Breite – eine Probe, die die halbe Frage
+      stellt, sieht aus wie eine ganze. Jetzt prüft er beides, mit Gegenprobe
+      (`gegenprobe-breite.js` baut beide alten Stände wieder ein; sie finden 22 bzw. 2 von
+      680 Gästen).
     - **Niemand tritt unter den Bildrand.** Der Hintergrund wird formatfüllend gezeichnet und
       auf breiten Schirmen oben und unten beschnitten. Gemessen bei 1280×663: Rahmen 1280×859,
       je 98 Punkte fallen weg, **13 % der Wiese liegen unter der Fläche**. Wer dort eintrat,
