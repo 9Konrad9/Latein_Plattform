@@ -172,8 +172,9 @@
                ist jedes Mal anders: Sperling und Katze oft, Pfau und Adler selten. Wird es zu laut,
                <strong>geht einer von ihnen wieder</strong>, und die stille Zeit beginnt von vorn.</p>
             <p style="margin-top:10px;">Was einmal da war, bleibt im <strong>Buch</strong> stehen, auch wenn die
-               Szene sich leert. Manche Gäste kommen nur mit Glück — Merkur schaut nach zehn Minuten Stille
-               vorbei, wenn er will, Iuppiter frühestens nach fünfzehn.</p>
+               Szene sich leert. Manche Gäste kommen nur mit Glück — Cerēs sieht ab dreieinhalb Minuten
+               Stille nach dem Hof, Merkur ab sechs, Iuppiter ab acht. Pēgasus zeigt sich erst nach neun
+               Minuten am Stück, und auch dann selten.</p>
         </div>
         <div class="datenschutz">
             <strong>Zum Mikrofon:</strong> Diese Seite misst nur die Lautstärke im Raum.
@@ -320,20 +321,45 @@ const GAESTE = [
       kultur: 'An sonnenwarmen Mauern sitzt sie noch heute so wie damals.' },
     { id: 'asinus',   lat: 'asinus',            de: 'der Esel',            gewicht: 5, hoehe: 125,
       kultur: 'Der Esel trug auf dem Landgut, was das Pferd nicht tragen wollte.' },
-    { id: 'cornelii', lat: 'Cornēliī',          de: 'die Familie Cornelia', gewicht: 3, hoehe: 170,
-      kultur: 'Quīntus Cornēlius Prīscus, Valeria, Aulus und Cornēlia treten auf den Hof.' },
     { id: 'pavo',     lat: 'pāvō',              de: 'der Pfau',            gewicht: 3, hoehe: 105,
       kultur: 'Der Pfau ist der Vogel der Iuno; die Augen in seinem Rad stammen vom Riesen Argus.' },
     { id: 'anseres',  lat: 'ānserēs',           de: 'die Gänse',           gewicht: 3, hoehe: 78, mehrzahl: true,
       kultur: 'Die Gänse der Iuno retteten das Kapitol - ausgerechnet, weil sie Lärm machten.' },
     { id: 'aquila',   lat: 'aquila',            de: 'der Adler',           gewicht: 2, hoehe: 82,
       kultur: 'Die aquila ist das Feldzeichen der Legion. Sie zu verlieren war die größte Schande.' },
-    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 480, hoehe: 85, chance: 0.5,
+    /* Die sieben Seltenen liegen zwischen 3:30 und 9:00 - und das ist im
+       Oktober 2026 deutlich nach vorn gerueckt (vorher 8 bis 18 Minuten).
+
+       DER GRUND, vom Fachlehrer gemeldet: Eine Stillarbeitsphase geht
+       selten auf zwanzig Minuten zu. Die Seltenen haengen aber an der
+       UNUNTERBROCHENEN Straehne - unter sechs Minuten am Stueck passierte
+       also gar nichts Seltenes, und Jupiter auf 15 Minuten war praktisch
+       unerreichbar. Das Problem war nicht neu: Jupiter stand von Anfang an
+       dort, und der Satz 'Merkur schaut nach zehn Minuten vorbei' im
+       Quelltext las sich wie ein Versprechen, das man nicht anfasst.
+
+       Jetzt sind die zehn Tiere nach 8:40 vollzaehlig, die Goetter liegen
+       also dazwischen: WER EINE STRAEHNE VON NEUN MINUTEN SCHAFFT, HAT ALLE
+       SIEBEN WUERFE GEHABT. Besonders bleibt Jupiter trotzdem - nicht durch
+       die Minute, sondern durch seine 20 %.
+       Erwartungswert in einer ununterbrochen stillen Phase: 2,3 von sieben.
+
+       Die vier Letzten sind im selben Zug dazugekommen (Wunsch des
+       Fachlehrers: lieber Goetter als die Lehrbuchfamilie). */
+    { id: 'ceres',    lat: 'Cerēs',             de: 'Cerēs',               ankunft: 210, hoehe: 175, chance: 0.45,
+      kultur: 'Von ihr hat das Getreide seinen Namen - in „Cerealien" steckt sie noch heute.' },
+    { id: 'lupa',     lat: 'lupa',              de: 'die Wölfin',          ankunft: 270, hoehe: 85, chance: 0.5,
       kultur: 'Die Wölfin säugte Romulus und Remus - ohne sie gäbe es Rom nicht.' },
-    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 600, hoehe: 180, chance: 0.33,
+    { id: 'faunus',   lat: 'Faunus',            de: 'Faunus',              ankunft: 315, hoehe: 165, chance: 0.4,
+      kultur: 'Wer im Wald eine Stimme hörte, die niemandem gehörte, sagte: Faunus hat gesprochen.' },
+    { id: 'mercurius',lat: 'Mercurius',         de: 'Merkur',              ankunft: 360, hoehe: 180, chance: 0.33,
       kultur: 'Der Götterbote mit den Flügelschuhen sieht im Vorbeifliegen nach dem Rechten.' },
-    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 900, hoehe: 210, chance: 0.2,
-      kultur: 'Iuppiter Optimus Maximus selbst. Wer ihn sieht, hat lange geschwiegen.' }
+    { id: 'diana',    lat: 'Diāna',             de: 'Diana',               ankunft: 420, hoehe: 175, chance: 0.28,
+      kultur: 'Ihr Hain am Nemisee hatte einen Priester, der sein Amt im Zweikampf gewann.' },
+    { id: 'iuppiter', lat: 'Iuppiter',          de: 'Jupiter',             ankunft: 480, hoehe: 210, chance: 0.2,
+      kultur: 'Iuppiter Optimus Maximus selbst. Wer ihn sieht, hat lange geschwiegen.' },
+    { id: 'pegasus',  lat: 'Pēgasus',           de: 'Pegasus',             ankunft: 540, hoehe: 220, chance: 0.12,
+      kultur: 'Wo sein Huf den Berg traf, entsprang die Quelle der Musen.' }
 ];
 
 /* Wer ein Bild hat, bekommt es; alle anderen einen Platzhalter mit Namen.
@@ -432,7 +458,13 @@ const BILDER = {
     pavo:    'assets/silentium/pavo.png',
     anseres: 'assets/silentium/anseres.png',
     aquila:  'assets/silentium/aquila.png',
-    lupa:    'assets/silentium/lupa.png'
+    lupa:    'assets/silentium/lupa.png',
+    mercurius: 'assets/silentium/mercurius.png',
+    iuppiter:  'assets/silentium/iuppiter.png'
+    /* Noch ohne Bild und deshalb als Pergamentplaettchen auf der Wiese:
+       ceres, faunus, diana, pegasus. Wer eines ergaenzt, traegt es hier
+       ein - eine falsche Kennung faellt sonst nicht auf, denn das
+       Plaettchen ist ja der vorgesehene Ersatz. */
 };
 
 /* ---------- Zustand ---------- */
@@ -762,7 +794,12 @@ function stoerung() {
    Regel. Weil von elf Plaetzen im Unterricht selten mehr als sechs erreicht
    werden, entscheidet der Zug wirklich, WELCHE Tiere kommen. */
 const ANKUNFT_STREUUNG = 0.25;
-const ANKUNFT_LEITER = [20, 60, 110, 160, 220, 280, 340, 400, 460, 520, 580];
+/* Zehn Plaetze fuer zehn sichere Gaeste. Es waren elf - die Familie
+   Cornelia ist im Oktober 2026 herausgefallen (sie begleitet das Lehrbuch
+   nicht mehr lange, Entscheidung des Fachlehrers). Weggefallen ist der
+   LETZTE Platz: Damit sind die Tiere etwas frueher vollzaehlig, und die
+   spaeten Minuten gehoeren den Goettern. */
+const ANKUNFT_LEITER = [20, 60, 110, 160, 220, 280, 340, 400, 460, 520];
 let ankunftHeute = {};      // nur noch fuer die Seltenen
 let leiterHeute = [];       // die gestreuten Zeiten
 let warteschlange = [];     // sichere Gaeste, die noch kommen - in gezogener Reihenfolge
@@ -851,7 +888,16 @@ function pruefeAnkunft() {
    Luecke genommen. Gemessen wird in BILDPUNKTEN und von Rand zu Rand: Zwei
    Sperlinge duerfen naeher beieinander stehen als zwei Esel, und dieselbe
    Luecke im Bild ist vorn weniger Weg als hinten. */
-const PLATZ_VORSCHLAEGE = 14;
+/* 60, nicht mehr 14. Die Gaesteliste ist im Oktober 2026 von 14 auf 17
+   gewachsen, und die vier neuen sind GOETTER: Sie kommen zuletzt und sind
+   die groessten. Bis sie eintreffen, haben die kleinen Tiere die Wiese
+   belegt - genau der Fall, in dem platzSuchen() keinen Platz mehr findet.
+   Gemessen in der echten Ankunftsreihenfolge ueber 300 Durchgaenge:
+   mit 14 Vorschlaegen ueberschneidet sich in 2,3 % der Wiesen ein Paar,
+   mit 60 in keiner einzigen. Die engste Luecke steigt von 35 auf 50 px.
+   Gekostet hat das 2,4 ms - je STUNDE, nicht je Bild: platzSuchen() laeuft
+   einmal pro Ankunft, also rund dreizehnmal in zwanzig Minuten. */
+const PLATZ_VORSCHLAEGE = 60;
 
 function platzSuchen(gast) {
     const w = sichtbareWiese();

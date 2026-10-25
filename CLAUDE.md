@@ -622,6 +622,49 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Testprobe, die es vergaß, stürzte ab, statt still nichts zu tun.
   - Es steht **nicht als Karte zwischen den Spielen**, sondern als kleine Pille oben rechts
     im Hauptmenü (`#silentium-btn` in `theme.css`, das Gegenstück zum Haus-Knopf oben links).
+  - **SIEBEN SELTENE STATT DREI, UND ALLE DEUTLICH FRÜHER** (Oktober 2026).
+    - **Die Familie Cornelia ist herausgefallen** (Entscheidung des Fachlehrers: sie
+      begleitet das Lehrbuch nicht mehr lange). Dafür kamen **Cerēs, Faunus, Diāna und
+      Pēgasus** dazu – alle vier als SELTENE mit eigener Minute und Wahrscheinlichkeit, nicht
+      auf der Leiter. Die Leiter steht dadurch auf **zehn** Plätzen statt elf; weggefallen
+      ist der letzte (580 s), damit die Tiere früher vollzählig sind und die späten Minuten
+      den Göttern gehören.
+    - **DER FAHRPLAN LIEGT JETZT ZWISCHEN 3:30 UND 9:00**, vorher zwischen 8 und 18 Minuten.
+      Gemeldet hat das der Fachlehrer: *Eine Stillarbeitsphase geht selten auf zwanzig
+      Minuten zu.* Die Seltenen hängen aber an der **ununterbrochenen** Strähne – unter sechs
+      Minuten am Stück passierte also gar nichts Seltenes, und Jupiter auf 15 Minuten war
+      praktisch unerreichbar. **Das Problem war nicht neu:** Jupiter stand von Anfang an
+      dort, und der Satz „Merkur schaut nach zehn Minuten vorbei" las sich wie ein
+      Versprechen, das man nicht anfasst. Es war aber nur eine Zahl.
+      Jetzt: Cerēs 3:30/45 %, lupa 4:30/50 %, Faunus 5:15/40 %, Merkur 6:00/33 %,
+      Diāna 7:00/28 %, Iuppiter 8:00/20 %, Pēgasus 9:00/12 %. Die zehn Tiere sind nach 8:40
+      vollzählig, die Götter liegen also dazwischen: **Wer EINE Strähne von neun Minuten
+      schafft, hat alle sieben Würfe gehabt.** Besonders bleibt Jupiter trotzdem – nicht
+      durch die Minute, sondern durch seine 20 %. Erwartungswert je stiller Phase: 2,3 von
+      sieben.
+    - **`PLATZ_VORSCHLAEGE` musste von 14 auf 60.** Die vier Neuen sind Götter: Sie kommen
+      zuletzt und sind die größten, und bis dahin haben die kleinen Tiere die Wiese belegt.
+      Gemessen in der echten Ankunftsreihenfolge: mit 14 überschneidet sich in 2,3 % der
+      Wiesen ein Paar, mit 60 in keiner. Gekostet hat das **2,4 ms je Stunde** – nicht je
+      Bild: `platzSuchen()` läuft einmal je Ankunft.
+    - **Der Test meldete dafür 65 %, und das war falsch.** Seine Probe setzte ALLE Gäste auf
+      einmal und in LISTENREIHENFOLGE – also die großen Götter ganz zuletzt, der schlimmste
+      denkbare Fall statt des wirklichen. Dazu waren es 17 Gäste, was hieße, dass jeder der
+      sieben Würfe gelingt (0,02 %); gemessen stehen in 99 % der Durchgänge höchstens 15 da,
+      meist 12 bis 13. Die Probe lässt die Wiese jetzt wachsen wie im Spiel.
+      **Ein Test, dessen Aufbau nicht zum Spiel passt, meldet einen Fehler, den es so nicht
+      gibt – und verdeckt damit, ob es einen echten gibt.**
+    - **Wer geht, kommt zurück – außer den Seltenen.** `stelltSichWiederAn()` stellt einen
+      sicheren Gast an zufälliger Stelle wieder in die Warteschlange; ein Seltener bleibt
+      fort, denn für ihn wurde schon gewürfelt. `test-silentium.js` prüft **beide Hälften
+      gezielt** – auf gut Glück zu stören traf mal den einen, mal den anderen und färbte den
+      Test zufällig rot.
+    - **Die Toleranz der Häufigkeitsprobe ist jetzt statistisch** (vier Standardabweichungen)
+      statt fester acht Prozentpunkte. Mit sieben Seltenen fiel die feste Grenze rein
+      zufällig rund einmal in 150 Läufen – und ein Test, der grundlos rot wird, erzieht dazu,
+      Rot zu ignorieren. Dass die Würfel stimmen, ist eigens nachgemessen
+      (`probe-seltene.js`, 4000 Durchgänge: größte Abweichung 1,8 σ, und jeder Seltene
+      bekommt in jedem Durchgang genau einen Wurf).
   - **DIE REGEL, AN DER ALLES HÄNGT:** Ein seltener Gast wird **genau einmal** ausgewürfelt,
     nämlich wenn die Strähne seine Sekunde erreicht. Würfelte man im Takt weiter, wäre Merkur
     bei 33 % nach zehn weiteren Minuten praktisch sicher da – und die 33 % wären gelogen.
@@ -709,10 +752,13 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     `test-silentium.js` prüft, dass **beide** Regler – Startbild und Pause – dieselben Grenzen
     haben (zwei Regler, die auseinanderlaufen, fallen sonst nie auf), dass jede Stellung einen
     Namen trägt und dass der oberste Anschlag über der Zimmerlautstärke liegt.
-  - **Elf der vierzehn Gäste haben ein Bild.** Ohne sind noch die drei, die eine Entscheidung
-    brauchen: `cornelii` (muss zur Familie im Lehrbuch passen), `mercurius`, `iuppiter`. Wer
-    keines hat, erscheint als Pergamentplättchen mit seinem lateinischen Namen – der Ersatz ist
-    vorgesehen, kein Notbehelf. Der Weg: Canva liefert 200×200 auf Magenta, `freistellen.js`
+  - **Dreizehn der siebzehn Gäste haben ein Bild.** Ohne sind noch `ceres`, `faunus`,
+    `diana` und `pegasus`. Wer keines hat, erscheint als Pergamentplättchen mit seinem
+    lateinischen Namen – der Ersatz ist vorgesehen, kein Notbehelf.
+    **Eine Vorgabe aus dem Code, die man beim Zeichnen kennen muss:** Die Breite wird bei
+    **1,88 : 1** gedeckelt (`maxB = R.h * 0.16` gegen die Nennhöhe `R.h * 0.085`), und
+    darüber schrumpft die HÖHE mit. Ein breites Bild wird auf der Wiese also kleiner, nicht
+    größer – Pegasus darf die Flügel deshalb nur halb heben. Der Weg: Canva liefert 200×200 auf Magenta, `freistellen.js`
     macht daraus ein palettiertes PNG von 4–12 KB. **Nur Hintergründe gehen so nicht** – das
     Original ist signiert, die Vorschau mit 200 px zu klein.
     **Issa ist dasselbe Bild wie im Sprungspiel**, nur kleiner gerechnet (`issa_idle.png`,
