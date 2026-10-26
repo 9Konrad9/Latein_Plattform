@@ -8,6 +8,7 @@
     <script src="zoomsperre.js"></script>
     <script src="vocabulary.js"></script>
     <script src="lessonFilter.js"></script>
+    <script src="bedeutung.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
         /* Palette und geteilte Bausteine stehen in theme.css.
@@ -326,21 +327,12 @@ let bingoGemeldet = false;
 
    Genommen wird die ERSTE Bedeutungsangabe, abgeschnitten vor Komma,
    Semikolon und Klammer: „arbeiten, sich bemühen; (+ Abl.) an etwas leiden"
-   passt auf keine Kachel, „arbeiten" schon. */
+   passt auf keine Kachel, „arbeiten" schon.
+
+   Seit Oktober 2026 steht die Siebung in bedeutung.js - Memory braucht
+   genau dieselbe, und ein drittes Spiel käme sonst zur dritten Kopie. */
 function baueTopf(pool) {
-    const erste = m => String(m || '').split(/[,;(]/)[0].trim();
-    const nach = new Map();
-    pool.forEach(v => {
-        const b = erste(v.meaning);
-        if (!b || b.length > 24) return;
-        if (!nach.has(b)) nach.set(b, []);
-        nach.get(b).push(v);
-    });
-    const raus = [];
-    nach.forEach((treffer, bedeutung) => {
-        if (treffer.length === 1) raus.push({ latin: treffer[0].latin, bedeutung: bedeutung });
-    });
-    return raus;
+    return LudiBedeutung.eindeutigerTopf(pool);
 }
 
 function mische(a) {

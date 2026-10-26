@@ -125,7 +125,47 @@ const LudiBedeutung = (() => {
         return raus;
     }
 
-    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren, fuer };
+    /* ---------- Der Topf mit EINDEUTIGER Bedeutung ----------
+
+       Fuer Spiele, bei denen ein Wort und eine Bedeutung einander
+       zugeordnet werden muessen und das Ergebnis NACHPRUEFBAR sein soll:
+       Bingo (die Lehrkraft ruft das lateinische Wort auf) und Memory (zwei
+       Karten bilden ein Paar oder nicht).
+
+       Ohne diese Siebung steht auf der Karte 'rufen', aufgerufen wird
+       'vocāre' - und die Kachel stammte von 'clāmāre'. Beim Nachpruefen
+       stuende das falsche Wort da, und niemand koennte entscheiden, wer
+       recht hat. Bei Memory waere es dasselbe: zwei Karten, die beide
+       passen, aber nicht als Paar gelten.
+
+       Genommen wird die ERSTE Bedeutungsangabe, abgeschnitten vor Komma,
+       Semikolon und Klammer: 'arbeiten, sich bemühen; (+ Abl.) an etwas
+       leiden' passt auf keine Karte, 'arbeiten' schon. Zu lange Angaben
+       (ueber 24 Zeichen) fallen weg - sie passen auf keine Kachel.
+
+       Gemessen kostet die Siebung wenig: bis L12 fallen 42 von 386
+       Woertern weg (et/-que/atque fuer 'und', caedere/occidere fuer
+       'toeten'), bis L22 sind es 68 von 625.
+
+       Hier und nicht im Spiel, weil es das zweite Spiel braucht - und ein
+       drittes kaeme sonst zur dritten Kopie. */
+    function eindeutigerTopf(pool) {
+        const erste = m => String(m || '').split(/[,;(]/)[0].trim();
+        const nach = new Map();
+        pool.forEach(v => {
+            const b = erste(v.meaning);
+            if (!b || b.length > 24) return;
+            if (!nach.has(b)) nach.set(b, []);
+            nach.get(b).push(v);
+        });
+        const raus = [];
+        nach.forEach((treffer, bedeutung) => {
+            if (treffer.length === 1) raus.push({ latin: treffer[0].latin, bedeutung: bedeutung });
+        });
+        return raus;
+    }
+
+    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren, fuer, eindeutigerTopf };
 })();
 
 // Auch unter Node erreichbar, damit die Tests es ohne Browser prüfen können.

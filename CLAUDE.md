@@ -182,6 +182,11 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   aufgefüllt. Der Aufrufer nimmt dann ein anderes Wort.
   **`LudiBedeutung.fuer(eintrag, maxLektion)`** gehört dazu: Manche Wörter heißen in der
   LEKTÜRE etwas anderes als im Lehrgang. Siehe `meaningAb` unten.
+  **`LudiBedeutung.eindeutigerTopf(pool)`** ebenso: Wörter, deren erste Bedeutungsangabe im
+  Topf nur EINMAL vorkommt. Gebraucht von Bingo und Memoria – überall dort, wo ein Wort und
+  eine Bedeutung einander zugeordnet werden und das Ergebnis nachprüfbar sein muss. Ohne
+  die Siebung steht auf der Karte „rufen", aufgerufen wird *vocāre*, und die Kachel stammte
+  von *clāmāre*. Gemessen kostet sie wenig: bis L12 fallen 42 von 386 Wörtern weg.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
 
 ## Aktive Spiele (Stand zuletzt)
@@ -883,6 +888,33 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
   Wortkacheln auf Marmortafeln (`assets/ui/marmor.png` per `border-image`, Randbreiten in **em**,
   damit der Rahmen von 9 bis 64 px Schrift mitwächst). Zwei Teams, Punkte von Hand.
   Kein Richtig/Falsch, deshalb **kein** `recordVocabAttempt`.
+- **Memory.html** – **Memoria** (Oktober 2026), zu zweit an EINEM Gerät: das ruhige
+  Gegenstück zur Fliegenklatsche. Verdeckte Karten, je ein Paar aus lateinischem Wort und
+  deutscher Bedeutung; wer ein Paar aufdeckt, ist noch einmal dran. 16 oder 24 Karten.
+  - **Kein Vokabelkasten** (Entscheidung des Fachlehrers). Ein Fehlgriff heißt meist „ich
+    habe vergessen, wo die Karte lag", nicht „ich kenne das Wort nicht" – der Leitner-Kasten
+    würde Gedächtnis mit Wortschatz verwechseln. Dazu spielen zwei am selben Gerät, und
+    niemand soll für den Fehlgriff der anderen Person haften (dasselbe Argument wie bei
+    Bomba). `progress.js` wird deshalb gar nicht erst eingebunden.
+  - **Nur Wörter mit EINDEUTIGER Bedeutung**, sonst gäbe es zwei Karten, die beide passen,
+    und das Paar wäre nicht zu entscheiden. Die Siebung steht seit jetzt in `bedeutung.js`
+    als `LudiBedeutung.eindeutigerTopf()` – sie stand inline im Bingo, und Memoria braucht
+    genau dieselbe. Der Umzug ist mit `latein-tests/topf-goldstand.js` abgesichert: 85
+    Lektionsauswahlen, 22 576 Einträge, Zeichen für Zeichen gleich (Gegenprobe vorweg – ein
+    geändertes Zeichen wird gefunden).
+  - **8 Paare gehen in 40 von 43 Einzellektionen** (gemessen). Zu klein sind nur Caesar 4
+    bis 6, die ohnehin zwei bis sechs Wörter haben. Eine zu kleine Auswahl wird **vorher**
+    abgelehnt, nicht mittendrin – dasselbe Muster wie `startDefense()` im Kastell.
+  - **Das Feld füllt seine Hülle ganz, Spalten UND Zeilen werden gesetzt.** Beides ist
+    nötig: Ein Grid mit `1fr`-Spalten in einem zentrierten Flexkasten hat keine
+    Breitenbasis und schrumpft auf den Inhalt; mit `aspect-ratio` an den Karten fiel alles
+    zu einem Klumpen von rund 70 × 60 px in der Bildmitte zusammen. **Im Browser gesehen,
+    nicht gerechnet** – der Test war grün, weil er die Spiellogik prüft und kein Layout
+    (jsdom hat keines).
+  - Gemessene Kontraste: offene Karte **6,99**, gefundene Karte (Deckkraft 0,72) **5,48**,
+    Rückseite **6,08**. Die Rückseite stand zuerst bei 2,55 (Gold auf Porphyr) und damit
+    unter den 3,0, die selbst große Schrift braucht; jetzt Marmorcreme – dieselbe Farbe,
+    die die Porphyr-Knöpfe ohnehin benutzen.
 - **Bingo.html** – **Vokabel-Bingo** (Oktober 2026). Das erste Spiel, bei dem die ganze Klasse
   GLEICHZEITIG am eigenen Gerät spielt – und es braucht trotzdem keinen Server. Eine Datei,
   zwei Rollen: *Beamer: Wörter aufrufen* (Lehrkraft, ruft die lateinischen Wörter auf, führt
@@ -1023,6 +1055,14 @@ dieses Namens, und darauf spielt auch das Spiel an.
   - `test-start.js` – startet JEDES Spiel über seinen echten Weg, mit gemocktem Lektions-
     filter, für jede einzelne Lektion und für Bereiche. Gesucht wird nur: Wirft es, statt
     sauber abzulehnen?
+    **Er führt die Spiele als Liste von Hand – und prüft seit Oktober 2026, dass die Liste
+    VOLLSTÄNDIG ist.** Memoria war beim ersten Lauf nicht darin, und der Test blieb grün:
+    Er prüft ja nur, was in der Liste steht. Seiten ohne Runde (Hauptmenü, Trophäen, Quiz,
+    Silentium, diagnose) stehen in einer begründeten Ausnahmeliste; alles andere muss
+    aufgenommen werden, sonst schlägt er fehl.
+    Startfunktionen mit Argument (Memorias Feldgröße) laufen über `argumente` und werden
+    damit in allen Varianten durchgespielt. **Gleich beim Aufnehmen hat er zugeschlagen:**
+    Ohne Argument lief `starte(undefined)` und stürzte in allen 49 Auswahlen ab.
   - `test-antworten.js` – spielt Issa und das Kastell über jede Auswahl durch und prüft, was
     eine Schülerin SIEHT: vier Antworten, keine leere, **keine zwei, die gleich aussehen**,
     genau eine richtige.
@@ -1393,8 +1433,7 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   EINEM Gerät oder am Beamer für alle.
   - ~~Vokabel-Bingo~~ – **gebaut** (Oktober 2026), siehe „Aktive Spiele" oben.
   - ~~Bomba~~ – **gebaut**, siehe „Aktive Spiele" oben.
-  - **Memory.** Latein ↔ Deutsch, zu zweit an einem iPad. Das ruhige Gegenstück zur
-    Fliegenklatsche.
+  - ~~Memory~~ – **gebaut** (Oktober 2026) als `Memory.html`, siehe „Aktive Spiele" oben.
   - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
     aus den Umschreibungen erraten.
   - **Quartett.** Vier Wörter eines Sachfelds sammeln. **Hier stand bis Oktober 2026, das

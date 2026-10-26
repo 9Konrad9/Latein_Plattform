@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Memoria - Lūdī Rōmānī</title>
+    <script src="fehlerbanner.js"></script>
+    <script src="zoomsperre.js"></script>
+    <script src="vocabulary.js"></script>
+    <script src="lessonFilter.js"></script>
+    <script src="bedeutung.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Palette und geteilte Bausteine stehen in theme.css.
+           Hier nur, was Memoria allein braucht.
+
+           Das Spiel laeuft zu zweit an EINEM Geraet - das ruhige Gegenstueck
+           zur Fliegenklatsche. Daraus folgt dreierlei:
+           - Kein Vokabelkasten (Entscheidung des Fachlehrers). Ein Fehlgriff
+             heisst meist "ich habe vergessen, wo die Karte lag", nicht "ich
+             kenne das Wort nicht"; der Leitner-Kasten wuerde Gedaechtnis mit
+             Wortschatz verwechseln. Und niemand soll fuer den Fehlgriff der
+             anderen Person haften - dasselbe Argument wie bei Bomba.
+           - Kein Fortschrittsband im Hauptmenue, wie bei allen Gruppenspielen.
+           - Zwei Finger auf dem Schirm sind der Normalfall, also die
+             Zoomsperre (siehe zoomsperre.js). */
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html { height: 100%; }
+
+        /* Ein Spielfeld, kein Text: Es faellt genau einmal aus und scrollt
+           nicht. Genau daran erkennt test-zoomsperre.js, dass die Sperre
+           hier hingehoert. vh zuerst als Rueckfall, dann svh; min-height: 0
+           schaltet das geerbte 100vh aus theme.css ab. */
+        body {
+            font-family: var(--font-body);
+            color: var(--ink);
+            height: 100vh;
+            height: 100svh;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--wand);
+        }
+
+        /* ---------- Kopfleiste: wer ist dran, wer hat wie viele ---------- */
+        .leiste {
+            display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+            padding: 8px 14px 8px 62px;
+            background: var(--putz);
+            border-bottom: 2px solid var(--bronze);
+            flex-shrink: 0;
+        }
+        .leiste h1 {
+            font-family: var(--font-display); color: var(--pompeji);
+            font-size: 1.15rem; text-transform: uppercase; letter-spacing: 2px;
+            margin-right: auto;
+        }
+        /* Die beiden Teams. Wer dran ist, wird hervorgehoben - sonst muss man
+           sich merken, wer gerade tippt, und genau das will das Spiel nicht
+           auch noch verlangen. */
+        .team {
+            font-family: var(--font-display); font-size: 1.05rem;
+            padding: 4px 12px; border-radius: 18px;
+            border: 2px solid transparent; color: var(--ink-soft);
+        }
+        .team.dran {
+            border-color: var(--bronze); background: var(--putz-hell);
+            color: var(--ink);
+        }
+        .team .punkte { font-weight: bold; color: var(--pompeji); }
+
+        /* ---------- Das Feld ---------- */
+        .feld-huelle {
+            flex: 1 1 auto; min-height: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px;
+        }
+        /* Das Feld fuellt die Huelle GANZ, und die Zeilen werden ebenso
+           gesetzt wie die Spalten. Beides ist noetig:
+           Ein Grid mit 1fr-Spalten in einem zentrierten Flexkasten hat
+           keine Breitenbasis - es schrumpft auf den Inhalt. Und die Karten
+           hatten aspect-ratio ohne diese Basis, also fiel alles zu einem
+           Klumpen in der Mitte zusammen (im Browser gesehen, nicht
+           gerechnet: 24 Karten auf etwa 70 mal 60 Bildpunkten).
+           Die Karten fuellen jetzt ihre Zelle, statt ihre Form selbst zu
+           bestimmen - so passt das Feld auf jeden Schirm, ohne zu scrollen. */
+        .feld {
+            display: grid; gap: clamp(5px, 1.2vmin, 12px);
+            width: 100%; height: 100%;
+        }
+
+        .karte {
+            position: relative;
+            cursor: pointer;
+            /* Nur die Karte dreht sich, nicht die Seite. */
+            perspective: 600px;
+            /* min-*: 0 ist bei Grid-Kindern noetig, sonst wachsen sie ueber
+               ihre Zelle hinaus, sobald der Inhalt breiter ist. */
+            min-width: 0; min-height: 0;
+        }
+        .karte-innen {
+            position: absolute; inset: 0;
+            transform-style: preserve-3d;
+            transition: transform 0.35s ease;
+            border-radius: 8px;
+        }
+        .karte.offen .karte-innen { transform: rotateY(180deg); }
+
+        .karte-seite {
+            position: absolute; inset: 0;
+            backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 6px;
+            overflow: hidden;
+        }
+
+        /* Rueckseite: schlicht, damit sich nichts einpraegt ausser der
+           Position. Ein Muster mit Varianten waere ein verstecktes Merkmal. */
+        .karte-rueck {
+            background: var(--pompeji);
+            border: 2px solid var(--bronze);
+            /* Marmorcreme, nicht Gold: Gold auf Porphyr ergibt gemessen nur
+               2,55 und liegt damit unter den 3,0, die selbst grosse Schrift
+               braucht. Marmor kommt auf 6,08 - und ist genau die Farbe, die
+               die Porphyr-Knoepfe im Projekt ohnehin benutzen. */
+            color: var(--marmor);
+            font-family: var(--font-display);
+            font-size: clamp(0.9rem, 3.4vmin, 1.8rem);
+        }
+
+        .karte-vorn {
+            transform: rotateY(180deg);
+            background: var(--putz-hell);
+            border: 2px solid var(--bronze);
+            font-size: clamp(0.62rem, 2.1vmin, 1.1rem);
+            line-height: 1.25;
+            hyphens: auto;
+            word-break: break-word;
+        }
+        /* Latein kursiv wie ueberall im Projekt, Deutsch aufrecht - so sieht
+           man auf einen Blick, welche Haelfte man vor sich hat. */
+        .karte-vorn.latein {
+            font-family: var(--font-display); font-style: italic;
+            color: var(--pompeji);
+        }
+
+        /* Gefundene Paare bleiben offen liegen, treten aber zurueck: Sie
+           gehoeren zum Spielstand, nicht mehr zum Suchen. */
+        .karte.gefunden { cursor: default; }
+        .karte.gefunden .karte-vorn {
+            background: var(--putz);
+            border-color: var(--richtig);
+            opacity: 0.72;
+        }
+        .karte.daneben .karte-vorn { border-color: var(--falsch); }
+
+        .meldung {
+            flex-shrink: 0; text-align: center;
+            padding: 6px 14px; min-height: 2.1em;
+            font-size: 0.95rem; color: var(--ink-soft);
+        }
+        .meldung strong { color: var(--pompeji); }
+
+        @media (max-width: 620px) {
+            .leiste h1 { font-size: 0.95rem; letter-spacing: 1px; }
+            .team { font-size: 0.9rem; padding: 3px 9px; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏛️</a>
+
+<div class="leiste">
+    <h1>Memoria</h1>
+    <div class="team dran" id="team-1">Team I <span class="punkte" id="punkte-1">0</span></div>
+    <div class="team" id="team-2">Team II <span class="punkte" id="punkte-2">0</span></div>
+    <button class="werkzeug-btn" id="btn-neu">Neues Spiel</button>
+</div>
+
+<div class="feld-huelle">
+    <div class="feld" id="feld"></div>
+</div>
+
+<div class="meldung" id="meldung"></div>
+
+<!-- ---------- Startbildschirm ---------- -->
+<div class="start-overlay" id="start-overlay">
+    <h2 class="seiten-titel">Memoria</h2>
+    <p class="seiten-untertitel">Zu zweit an einem Gerät</p>
+
+    <div class="notice-box">
+        <h3>📜 So läuft's</h3>
+        <p>Alle Karten liegen verdeckt. Wer dran ist, dreht <strong>zwei</strong> um:
+           ein lateinisches Wort und eine deutsche Bedeutung. Passen sie zusammen,
+           bleiben sie offen liegen und <strong>dasselbe Team ist noch einmal dran</strong>.
+           Passen sie nicht, drehen sie sich wieder zurück.</p>
+        <p style="margin-top:10px;">Wer am Ende mehr Paare hat, gewinnt.</p>
+        <p style="margin-top:10px; font-size:0.9rem; color:var(--ink-soft);">
+           Dieses Spiel zählt <strong>nicht</strong> in den Vokabelkasten: Ein Fehlgriff heißt
+           meist „ich habe vergessen, wo die Karte lag“ — und am selben Gerät spielen zwei.</p>
+    </div>
+
+    <button class="start-btn" id="btn-kurz">Kurze Runde · 16 Karten</button>
+    <button class="start-btn" id="btn-lang" style="margin-top:10px;">Lange Runde · 24 Karten</button>
+    <a href="index.html" class="start-btn zweitrangig" style="margin-top:14px;">Zurück zum Menü</a>
+</div>
+
+<!-- ---------- Schlussbild ---------- -->
+<div class="start-overlay" id="end-overlay" style="display:none;">
+    <h2 class="seiten-titel" id="end-titel">Alle Paare gefunden</h2>
+    <p class="seiten-untertitel" id="end-text"></p>
+    <button class="start-btn" id="btn-nochmal" style="margin-top:18px;">Noch eine Runde</button>
+    <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
+</div>
+
+<script>
+/* ============ Die Zahlen ============ */
+const PAARE = { kurz: 8, lang: 12 };
+/* Spalten je Feldgroesse. Hochformat bekommt schmalere Reihen, damit die
+   Karten nicht zu Streifen werden. */
+const SPALTEN = { 8: { quer: 4, hoch: 4 }, 12: { quer: 6, hoch: 4 } };
+/* Wie lange ein danebengegangenes Paar offen liegen bleibt. Kuerzer, und man
+   kann es sich nicht merken - genau darum geht das Spiel aber. */
+const ZEIGEDAUER = 1400;
+
+let topf = [];
+let karten = [];          // { id, art: 'latein'|'deutsch', paar, offen, gefunden }
+let ersteKarte = null;
+let sperre = false;       // waehrend ein Paar gezeigt wird: keine Eingabe
+let amZug = 0;            // 0 oder 1
+const punkte = [0, 0];
+let letzteGroesse = 'kurz';
+
+/* ============ Hilfen ============ */
+function mische(a) {
+    const b = a.slice();
+    for (let i = b.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [b[i], b[j]] = [b[j], b[i]];
+    }
+    return b;
+}
+
+function melde(html) { document.getElementById('meldung').innerHTML = html || ''; }
+
+/* Spalten UND Zeilen setzen - an einer Stelle, weil es beim Bauen und beim
+   Drehen gebraucht wird. Zwei Stellen mit derselben Rechnung driften
+   auseinander. */
+function raster(feld, paare) {
+    const hoch = window.innerHeight > window.innerWidth;
+    const spalten = SPALTEN[paare][hoch ? 'hoch' : 'quer'];
+    const zeilen = Math.ceil(paare * 2 / spalten);
+    feld.style.gridTemplateColumns = 'repeat(' + spalten + ', 1fr)';
+    feld.style.gridTemplateRows = 'repeat(' + zeilen + ', 1fr)';
+}
+
+/* ============ Das Feld bauen ============ */
+function baueFeld(paare) {
+    const gewaehlt = mische(topf).slice(0, paare);
+    karten = [];
+    gewaehlt.forEach((w, i) => {
+        karten.push({ paar: i, art: 'latein',  text: w.latin,     offen: false, gefunden: false });
+        karten.push({ paar: i, art: 'deutsch', text: w.bedeutung, offen: false, gefunden: false });
+    });
+    karten = mische(karten);
+
+    const feld = document.getElementById('feld');
+    feld.innerHTML = '';
+    raster(feld, paare);
+
+    karten.forEach((k, i) => {
+        const el = document.createElement('div');
+        el.className = 'karte';
+        el.dataset.i = String(i);
+        el.innerHTML =
+            '<div class="karte-innen">' +
+              '<div class="karte-seite karte-rueck">SPQR</div>' +
+              '<div class="karte-seite karte-vorn ' + (k.art === 'latein' ? 'latein' : '') + '"></div>' +
+            '</div>';
+        /* textContent statt innerHTML: Die Bedeutungen kommen aus der
+           Vokabeldatenbank und sind Text, kein Markup. */
+        el.querySelector('.karte-vorn').textContent = k.text;
+        el.addEventListener('click', () => tippe(i));
+        feld.appendChild(el);
+        k.el = el;
+    });
+}
+
+/* ============ Ein Zug ============ */
+function tippe(i) {
+    if (sperre) return;
+    const k = karten[i];
+    if (!k || k.gefunden || k.offen) return;
+
+    k.offen = true;
+    k.el.classList.add('offen');
+
+    if (!ersteKarte) { ersteKarte = k; melde(''); return; }
+
+    const zwei = k;
+    const eins = ersteKarte;
+    ersteKarte = null;
+
+    if (eins.paar === zwei.paar) {
+        eins.gefunden = zwei.gefunden = true;
+        eins.el.classList.add('gefunden');
+        zwei.el.classList.add('gefunden');
+        punkte[amZug]++;
+        zeigePunkte();
+        const lat = eins.art === 'latein' ? eins.text : zwei.text;
+        const de  = eins.art === 'latein' ? zwei.text : eins.text;
+        melde('<strong>' + lat + '</strong> — ' + de + '. Noch einmal!');
+        if (karten.every(x => x.gefunden)) setTimeout(beenden, 700);
+        return;
+    }
+
+    /* Daneben: beide kurz offen lassen, dann zurueckdrehen und wechseln. */
+    sperre = true;
+    eins.el.classList.add('daneben');
+    zwei.el.classList.add('daneben');
+    melde('Passt nicht zusammen.');
+    setTimeout(() => {
+        [eins, zwei].forEach(x => {
+            x.offen = false;
+            x.el.classList.remove('offen', 'daneben');
+        });
+        sperre = false;
+        amZug = 1 - amZug;
+        zeigePunkte();
+        melde('');
+    }, ZEIGEDAUER);
+}
+
+function zeigePunkte() {
+    document.getElementById('punkte-1').textContent = String(punkte[0]);
+    document.getElementById('punkte-2').textContent = String(punkte[1]);
+    document.getElementById('team-1').classList.toggle('dran', amZug === 0);
+    document.getElementById('team-2').classList.toggle('dran', amZug === 1);
+}
+
+function beenden() {
+    const [a, b] = punkte;
+    document.getElementById('end-titel').textContent =
+        a === b ? 'Unentschieden' : (a > b ? 'Team I gewinnt' : 'Team II gewinnt');
+    document.getElementById('end-text').textContent =
+        'Team I ' + a + ' Paare, Team II ' + b + ' Paare.';
+    document.getElementById('end-overlay').style.display = 'flex';
+}
+
+/* ============ Start ============ */
+function starte(groesse) {
+    letzteGroesse = groesse;
+    const paare = PAARE[groesse];
+
+    LessonFilter.show(globalVocabularyPool, function (gefiltert) {
+        /* Nur Woerter mit EINDEUTIGER Bedeutung - sonst gaebe es zwei Karten,
+           die beide passen, und das Paar waere nicht zu entscheiden. Die
+           Siebung steht in bedeutung.js, weil das Bingo sie genauso braucht. */
+        topf = LudiBedeutung.eindeutigerTopf(gefiltert);
+
+        /* Vorher ablehnen, nicht mittendrin stehenbleiben - dasselbe Muster
+           wie startDefense() im Kastell und startGame() in ViaRomana.
+           Gemessen reichen 8 Paare in 40 von 43 Einzellektionen; zu klein
+           sind nur Caesar 4 bis 6, die ohnehin zwei bis sechs Woerter haben. */
+        if (topf.length < paare) {
+            alert('Für ' + paare + ' Paare braucht es ' + paare + ' Wörter mit eindeutiger ' +
+                  'Bedeutung; in dieser Auswahl sind es ' + topf.length + '.\n\n' +
+                  'Bitte wähle weitere Lektionen aus — oder nimm die kürzere Runde.');
+            return;
+        }
+
+        punkte[0] = punkte[1] = 0;
+        amZug = 0;
+        ersteKarte = null;
+        sperre = false;
+        zeigePunkte();
+        melde('');
+        baueFeld(paare);
+
+        document.getElementById('start-overlay').style.display = 'none';
+        document.getElementById('end-overlay').style.display = 'none';
+    });
+}
+
+document.getElementById('btn-kurz').addEventListener('click', () => starte('kurz'));
+document.getElementById('btn-lang').addEventListener('click', () => starte('lang'));
+document.getElementById('btn-nochmal').addEventListener('click', () => starte(letzteGroesse));
+document.getElementById('btn-neu').addEventListener('click', function () {
+    document.getElementById('end-overlay').style.display = 'none';
+    document.getElementById('start-overlay').style.display = 'flex';
+});
+
+/* Beim Drehen die Spaltenzahl neu waehlen - sonst werden die Karten im
+   Hochformat zu Streifen. Nur das Raster, nicht die Karten: Ein Neubau
+   mitten im Spiel wuerde die Positionen verraten. */
+window.addEventListener('resize', function () {
+    if (!karten.length) return;
+    raster(document.getElementById('feld'), karten.length / 2);
+});
+</script>
+</body>
+</html>
