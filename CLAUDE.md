@@ -86,6 +86,29 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - Geprüft wird am VERHALTEN: Fehler auslösen, dann muss die Meldung im Dokument stehen.
     Eine Suche nach `addEventListener('error'` bliebe auch dann grün, wenn der Banner nie
     erscheint. `gegenprobe-fehlerbanner.js` baut sechs Defekte ein und findet alle.
+- `zoomsperre.js` – gegen das Aufziehen, **nur in den acht Vollbildspielen** (Oktober 2026).
+  Fängt `gesturestart`/`gesturechange`/`gestureend` ab und setzt `touch-action: manipulation`.
+  - **NUR in Spielfelder einbinden.** Auf einer Textseite wäre eine Zoomsperre ein Schaden –
+    wer schlecht sieht, muss heranholen können. Die Einbindung IST die Zustimmung; es gibt
+    keine Automatik, die sich über alle Seiten legt.
+  - **Woran man ein Spielfeld erkennt:** `html`/`body` haben `height: 100vh` und
+    `overflow: hidden` – die Seite füllt den Schirm genau einmal, scrollt nicht, es gibt
+    nichts heranzuholen. Das ist zugleich die Begründung dafür, dass die Sperre dort
+    vertretbar ist. **`test-zoomsperre.js` LEITET die Liste daraus ab**, statt sie noch
+    einmal hinzuschreiben, und prüft beide Richtungen: jedes Spielfeld hat sie, keine
+    andere Seite hat sie.
+  - **Beide Hälften sind nötig.** Die `gesture`-Ereignisse sind Safari-eigen (und Safari
+    ist das Ziel), auf Android greifen sie nicht; dort nimmt `touch-action: manipulation`
+    wenigstens das Doppeltippen. `user-scalable=no` hilft bei beidem nicht – **iOS ignoriert
+    es seit Version 10** und es steht trotzdem in fast jeder Datei des Projekts.
+  - **NICHT im Modul:** dass ein Spiel beim Aufziehen falsch misst. Das betrifft nur das
+    Duell – als einziges rechnet es seine Höhe selbst aus –, und die Regel dafür
+    (`vv.scale > 1.01`: nicht messen) steht dort, wo gemessen wird.
+  - Dabei gefundener Testfehler, der leicht wiederkommt: Die Probe „Duells Messschutz ist
+    noch da" suchte im Quelltext nach `vv.scale > 1.01` – und blieb an dem **Kommentar**
+    hängen, der genau diesen Schutz erklärt. Der Schutz war ausgebaut, der Test grün.
+    Kommentare müssen vor solchen Proben raus; derselbe Fehler steckte in
+    `test-silentium.js` bei der Suche nach `MediaRecorder`.
 - `achievementToast.js` – Popup-Benachrichtigung bei neu freigeschalteten Achievements.
 - `review.js` – die Wiederholungsrunde am Rundenende (`LudiReview`). Führt Buch darüber,
   was danebenging, was noch aussteht und wie viel davon beim zweiten Mal saß. **Der
@@ -220,10 +243,11 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   **`test-layout.js` hielt bis dahin die umgekehrte Regel fest** („die Höhe darf nur
   verkleinern"). Eine Regel, die einen Fehler festnagelt, fällt nie von selbst auf – der
   Test war grün, während der Fehler im Unterricht stand.
-  **Offen, bewusst nicht mitgeändert:** Die Fliegenklatsche hat dasselbe Problem von der
-  Bauart her – zwei Teams am selben Gerät, also zwei Finger. Sie rechnet ihre Höhe nicht
-  selbst aus, fällt also nicht zusammen; aufziehen lässt sie sich aber genauso. Das ist
-  ein eigener Durchgang durch alle Vollbildspiele und gehört besprochen.
+  **Der Durchgang durch alle Vollbildspiele ist erledigt** (Oktober 2026): Das Abfangen
+  steckt jetzt in `zoomsperre.js` und läuft in allen acht – die Fliegenklatsche hatte
+  dasselbe Problem von der Bauart her (zwei Teams, zwei Finger), Bomba und das Bingo
+  ebenso. Hier im Duell bleibt nur, was wirklich hierher gehört: die Messung, die sich
+  vom Aufziehen nicht umwerfen lassen darf.
 - **Principia.html** – Grundformen/Stammformen progressiv
 - **IssaJump.html** – Jump-and-Run, Bedeutungsabfrage. Das beliebteste Spiel der Arena;
   drei Dinge daran sind gemessen und nicht geraten (September 2026, nach Rückmeldung

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scrīnium - Kasusformen einsortieren</title>
     <script src="fehlerbanner.js"></script>
+    <script src="zoomsperre.js"></script>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
@@ -377,10 +378,7 @@ const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
 /* Der Fehlerbanner steckt seit Oktober 2026 in fehlerbanner.js. */
 
-/* ---------- Aufziehen abfangen (iOS ignoriert user-scalable=no) ---------- */
-['gesturestart', 'gesturechange', 'gestureend'].forEach(art => {
-    document.addEventListener(art, e => e.preventDefault(), { passive: false });
-});
+/* Das Aufziehen faengt zoomsperre.js ab. */
 
 /* ============ Das Phaenomen, nicht das Lemma ============
    Entscheidung des Fachlehrers: Wer eine Form verfehlt, soll das PHAENOMEN

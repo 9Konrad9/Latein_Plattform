@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Gladiatoren-Duell - Split-Screen</title>
     <script src="fehlerbanner.js"></script>
+    <script src="zoomsperre.js"></script>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
@@ -385,20 +386,13 @@
                 wurzel.style.setProperty('--dichte', dichte.toFixed(2));
             }
         }
-        /* Aufziehen gar nicht erst zulassen. Im viewport-Tag steht zwar
-           user-scalable=no, aber iOS ignoriert das seit Version 10 - die
-           gesture*-Ereignisse sind der Weg, der dort wirkt. Sie sind
-           Safari-eigen, und Safari ist hier das Ziel.
-           Vertretbar ist das, weil diese Seite ein Spielfeld ist und kein
-           Text: Sie füllt den Schirm genau einmal, sie scrollt nicht, und es
-           gibt nichts, was man näher heranholen müsste. Gezoomt wird hier nie
-           absichtlich, sondern mit dem zweiten Finger des Gegenübers.
-           Die Messung oben bleibt trotzdem gegen das Aufziehen gewappnet:
-           Auf Android greifen diese Ereignisse nicht, und was man nicht
-           verhindern kann, darf einen wenigstens nicht umwerfen. */
-        ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (art) {
-            document.addEventListener(art, function (e) { e.preventDefault(); }, { passive: false });
-        });
+        /* Das Aufziehen faengt zoomsperre.js ab - hier stand eine eigene
+           Fassung, in Scrinium eine zweite. Die Begruendung steht dort.
+           Was HIER bleiben muss: Die Messung oben darf sich vom Aufziehen
+           nicht umwerfen lassen (vv.scale > 1.01). Auf Android greifen die
+           gesture-Ereignisse naemlich nicht, und was man nicht verhindern
+           kann, darf einen wenigstens nicht umwerfen. Das Duell ist das
+           einzige Spiel, das seine Hoehe selbst ausrechnet. */
 
         window.addEventListener('resize', passeAnGeraet);
         window.addEventListener('orientationchange', function () { setTimeout(passeAnGeraet, 250); });
