@@ -1564,13 +1564,49 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Die Prüfseite dafür baut `bau-objektseite.js` (drei Reiter: Objektart, Sachfeld der
     Nomen, Felder der Verben).
 
-- Satzwertige Konstruktionen: Der **AcI** ist in `Arcus.html` umgesetzt. Offen sind
-  **Participium coniunctum** (PPP ab L18, PPA ab L20) und **Ablativus absolutus** (ab L22) –
-  gedacht als weitere Modi desselben Spiels, mit einem gemischten Modus als eigentlichem Ziel:
-  Der Unterschied zwischen PC und Abl. abs. ist genau die Frage, ob das Bezugswort des Partizips
-  im Hauptsatz steht, also ob `head` dorthin zeigt oder nicht.
-  Dafür fehlt in `verbEngine.js` noch eine PPP-Deklination (das us/a/um-Muster gibt es bereits
-  in `getGerundivumDeclension` und ließe sich nachnutzen).
+- **Satzwertige Konstruktionen: die ENGINE-Seite ist gebaut** (Oktober 2026), die Modi in
+  `Arcus.html` stehen noch aus.
+  - **`VerbEngine.getPPPForm(verb, kasus, numerus, genus)`** liefert eine einzelne PPP-Form.
+    `getGerundivumDeclension` ließ sich NICHT nachnutzen, anders als hier vermutet: Es gibt
+    Anzeigestrings wie *amandus/a/um* zurück – gut für eine Paradigmentabelle, unbrauchbar
+    für einen Satz. Gebraucht wird genau eine Form, kongruent zum Bezugswort.
+  - **Ein PPP ist PASSIV, also braucht es ein Akkusativobjekt.** `isPPPApplicable` prüft die
+    `valenz`: *venīre* hat zwar ein `ppp` im Wortschatz (*ventum*, ein unpersönliches
+    Supinum), aber *ventus puer* gibt es nicht. Gemessen bilden **210 von 270** Verben mit
+    `ppp` ein attributives Partizip; ausgeschlossen sind u. a. *clāmāre, currere,*
+    *respondēre, placēre*. Dieselbe Überlegung wie bei `kannPersoenlichesPassiv()` in
+    `formen.js` – nur dass die Engine ihre eigene Prüfung braucht, weil `formen.js` auf ihr
+    aufbaut und nicht umgekehrt.
+  - **`SentenceEngine.buildParticipium({ variante, art })`** baut beides. `variante` ist
+    `pc` oder `ablabs`, `art` ist `ppp` oder `ppa`; beides lässt sich offen lassen und wird
+    dann im Rahmen der Lektionsspanne ausgewürfelt.
+    **Der Unterschied steckt allein im `head`**: Beim PC zeigt das Partizip auf ein Token
+    mit einer Hauptsatz-Rolle (`sub`), beim Abl. abs. auf ein Token der eigenen Rolle
+    `ablAbsSub`, das zu keinem Satzglied gehört. Genau daran unterscheidet ein Spiel die
+    beiden – mehr braucht es nicht.
+  - **Gating, gegen die Lehrgangstabelle geprüft:** bis L17 gar nichts, L18–19 nur PPP im
+    PC, ab L20 das PPA dazu, ab L22 der Abl. abs. `PC_PPA_LESSON` wird aus
+    `VerbEngine.PPA_LESSON` **abgeleitet** – die Zahl steht nicht zweimal da.
+  - **DER FEHLER, IN DEN ICH SELBST GELAUFEN BIN:** `bezugPasst` prüfte die Semantik erst
+    über `objektPool([nomen], 'akk', verb)`. Der hat aber einen **Rückfall** auf den vollen
+    Topf, wenn nichts übrig bleibt – und bei einem Topf aus EINEM Nomen feuert der immer.
+    Heraus kamen *puella condita* („das gegründete Mädchen") und *sacerdōs cōnstrūctus*.
+    Genau dieser Rückfall steht weiter oben als Fallstrick, und `test-objektseite.js` prüft
+    eigens, dass er nicht der Normalfall ist. Jetzt werden `objArt` und `objFeld` direkt
+    gefragt.
+  - **Deponentien erst ab L31**: Ihr Partizip hat passive Form und aktive Bedeutung
+    (*profectus* = „aufgebrochen"). **Die Sperre lässt sich heute nicht zum Feuern bringen** –
+    im Wortschatz steht kein Deponens vor L31 (alle 20 ab L31). Das steht so im Test, damit
+    niemand den grünen Haken für mehr hält, als er ist.
+  - `test-partizip.js` prüft all das am Verhalten; `gegenprobe-partizip.js` baut fünf
+    Defekte ein und findet alle. **Zwei davon waren erst nach einer Korrektur zu finden:**
+    Die PPA-Sperre ist DOPPELT gesichert (Variantenliste und `partizipVerbTauglich`), eine
+    davon zu brechen ändert nichts – die Gegenprobe muss beide brechen. Eine Gegenprobe, die
+    nur eine von zwei Sicherungen löst, beweist nichts.
+  - **Noch offen:** die Modi in `Arcus.html`. Entschieden ist (Fachlehrer): erst das
+    Partizip anklicken, dann sein Bezugswort (die zwei Pfeiler des Bogens), ab L20 das
+    Zeitverhältnis als Schlussstein; im gemischten Modus zuerst einordnen (PC oder
+    Abl. abs.?) und dann dieselben zwei Pfeiler markieren.
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
   eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
   (Kulturwissen, kein Wortschatz).

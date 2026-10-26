@@ -700,6 +700,96 @@ const VerbEngine = (() => {
     }
 
     // ============================================================
+    // PPP (Partizip Perfekt Passiv) als Adjektiv der o-/a-Deklination
+    // ============================================================
+    //
+    // Das PPP steht im Wortschatz als NEUTRUM Singular auf "-um"
+    // (clāmātum, ventum, lūsum); adjStemFromPPP macht daraus den Stamm.
+    // Gebeugt wird es wie bonus/bona/bonum.
+    //
+    // WARUM EINZELFORMEN. getGerundivumDeclension liefert Anzeigestrings
+    // wie "amandus/a/um" - gut für eine Paradigmentabelle, unbrauchbar für
+    // einen Satz. Das Participium coniunctum und der Ablativus absolutus
+    // brauchen GENAU EINE Form, kongruent zu ihrem Bezugswort.
+    //
+    // Die FORM gibt es ab L16, die Verwendung im PC ab L18 - deshalb steht
+    // hier nur die Form; die Lektion der Verwendung gehört zur Syntax und
+    // steht in sentenceEngine.js.
+
+    const PPP_LESSON = 16;   // Pontes L16: PPP als Form
+
+    /** Bildet dieses Verb ein PPP, das sich attributiv gebrauchen lässt?
+     *
+     *  Zweierlei muss stimmen:
+     *  - Es muss eines hinterlegt sein.
+     *  - Das Verb muss ein Akkusativobjekt haben können. Ein PPP ist PASSIV;
+     *    venīre ist intransitiv, und "ventus puer" gibt es nicht - obwohl
+     *    ventum im Wortschatz steht (als unpersönliches Supinum). Dieselbe
+     *    Regel wie bei kannPersoenlichesPassiv() in formen.js, nur dass die
+     *    Engine ihre eigene Valenz-Prüfung braucht: formen.js baut auf der
+     *    Engine auf, nicht umgekehrt.
+     *
+     *  DEPONENTIEN sind hier NICHT ausgeschlossen, obwohl ihr PPP aktiv
+     *  bedeutet (profectus = "aufgebrochen", nicht "losgeschickt worden").
+     *  Die FORM ist korrekt, und Pontes führt das in L31 eigens ein. Wer
+     *  vorher keine will, filtert beim Satzbau - das ist eine didaktische
+     *  Entscheidung und keine der Formenlehre.
+     */
+    function isPPPApplicable(verbObj) {
+        if (!verbObj || !verbObj.ppp) return false;
+        const val = verbObj.valenz;
+        if (!val) return false;
+        return (Array.isArray(val) ? val : [val])
+            .some(v => String(v).indexOf('akk') !== -1);
+    }
+
+    function isPPPKnown(maxSelectedLesson) {
+        return maxSelectedLesson >= PPP_LESSON;
+    }
+
+    const PPP_ENDUNG = {
+        sg: {
+            nom: { m: 'us', f: 'a',  n: 'um' },
+            gen: { m: 'ī',  f: 'ae', n: 'ī'  },
+            dat: { m: 'ō',  f: 'ae', n: 'ō'  },
+            akk: { m: 'um', f: 'am', n: 'um' },
+            abl: { m: 'ō',  f: 'ā',  n: 'ō'  }
+        },
+        pl: {
+            nom: { m: 'ī',    f: 'ae',    n: 'a'     },
+            gen: { m: 'ōrum', f: 'ārum', n: 'ōrum' },
+            dat: { m: 'īs',   f: 'īs',   n: 'īs'   },
+            akk: { m: 'ōs',   f: 'ās',   n: 'a'     },
+            abl: { m: 'īs',   f: 'īs',   n: 'īs'   }
+        }
+    };
+
+    /** Eine einzelne PPP-Form, kongruent zu Kasus, Numerus und Genus. */
+    function getPPPForm(verbObj, kasus, numerus, genus) {
+        if (!isPPPApplicable(verbObj)) {
+            throw new Error(`VerbEngine: "${verbObj && verbObj.latin}" bildet kein attributives PPP.`);
+        }
+        const n = PPP_ENDUNG[numerus === 'pl' ? 'pl' : 'sg'];
+        const k = n[kasus];
+        if (!k) throw new Error(`VerbEngine: Kasus "${kasus}" gibt es nicht.`);
+        return adjStemFromPPP(verbObj.ppp) + (k[genus] || k.m);
+    }
+
+    /** Die vollständige Deklination, zum Anzeigen und zum Prüfen. */
+    function getPPPDeclension(verbObj) {
+        const raus = { sg: {}, pl: {} };
+        ['sg', 'pl'].forEach(num => {
+            Object.keys(PPP_ENDUNG[num]).forEach(kasus => {
+                raus[num][kasus] = {};
+                ['m', 'f', 'n'].forEach(g => {
+                    raus[num][kasus][g] = getPPPForm(verbObj, kasus, num, g);
+                });
+            });
+        });
+        return raus;
+    }
+
+    // ============================================================
     // KONJUNKTIV (Präsens, Imperfekt, Perfekt, Plusquamperfekt x Aktiv/Passiv)
     // ============================================================
     // Konjunktiv Imperfekt ist bei ALLEN Verben mit "-re"-Infinitiv (reguläre
@@ -929,6 +1019,11 @@ const VerbEngine = (() => {
         getPPAStems,
         getPPADeclension,
         PPA_LESSON,
+        isPPPApplicable,
+        isPPPKnown,
+        getPPPForm,
+        getPPPDeclension,
+        PPP_LESSON,
         isKonjunktivKnown,
         getSubjunctiveForms,
         KONJUNKTIV_LESSON,

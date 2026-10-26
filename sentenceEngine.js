@@ -553,6 +553,245 @@ const SentenceEngine = (() => {
 
     // ================= Wortstellung & Abschluss =================
 
+    // ================= Participium coniunctum und Ablativus absolutus =================
+    //
+    // Der Unterschied zwischen beiden ist GENAU EINE Frage: Steht das
+    // Bezugswort des Partizips im Hauptsatz oder nicht?
+    //   PC:       puerum vocātum magister laudat   - "puerum" ist Objekt des Hauptsatzes
+    //   Abl.abs.: urbe captā hostēs discēdunt      - "urbe" gehört zu KEINEM Satzglied
+    // Im Token heisst das: partizip.head zeigt auf ein Token mit einer
+    // Hauptsatz-Rolle - oder auf das eigene ablAbsSub. Daran, und nur daran,
+    // unterscheidet Arcus die beiden.
+
+    const PC_LESSON = 18;        // L18: PPP im Participium coniunctum
+    /* L20, aber NICHT noch einmal hingeschrieben: Die Zahl gehört der Engine,
+       die das PPA bildet. Zwei Stellen mit derselben Zahl driften auseinander -
+       und hier wäre es nicht einmal aufgefallen, denn partizipVerbTauglich
+       fragt ohnehin VerbEngine.isPPAKnown. Die Gegenprobe hat genau das
+       gezeigt: Diese Sperre zu brechen änderte gar nichts. */
+    const PC_PPA_LESSON = VerbEngine.PPA_LESSON;
+    const ABL_ABS_LESSON = 22;   // L22: Ablativus absolutus
+    const DEPONENS_PARTIZIP_LESSON = 31;   // L31: Partizip der Deponentien
+
+    const PARTIZIP_ROLLEN = ['partizip', 'ablAbsSub'];
+
+    /** Eine einzelne Partizipform, kongruent zum Bezugswort.
+     *  PPP: o-/a-Deklination. PPA: dritte Deklination, einendig - dort
+     *  teilen sich Maskulinum und Femininum eine Form, und im Singular gilt
+     *  der Nominativ für alle drei Geschlechter. */
+    function partizipForm(verb, art, kasus, numerus, genus) {
+        if (art === 'ppp') return VerbEngine.getPPPForm(verb, kasus, numerus, genus);
+        const d = VerbEngine.getPPADeclension(verb);
+        const t = numerus === 'pl' ? d.pl : d.sg;
+        if (numerus === 'pl') {
+            if (kasus === 'nom') return genus === 'n' ? t.nomN : t.nomM;
+            if (kasus === 'akk') return genus === 'n' ? t.akkN : t.akkM;
+            return t[kasus];
+        }
+        if (kasus === 'nom') return t.nom;
+        if (kasus === 'akk') return genus === 'n' ? t.akkN : t.akkM;
+        return t[kasus];
+    }
+
+    /** Taugt dieses Verb als Partizip dieser Art in dieser Lektionsspanne? */
+    function partizipVerbTauglich(verb, art, maxLesson) {
+        if (!verbTauglich(verb)) return false;
+        /* Deponentien tragen ihr Partizip in passiver FORM mit aktiver
+           BEDEUTUNG (profectus = "aufgebrochen"). Pontes führt das eigens in
+           L31 ein - vorher wäre es die eine Form, die das Falsche beibringt.
+           Dieselbe Überlegung wie beim Passiv-Modus im Kastell. */
+        if (istDeponens(verb) && maxLesson < DEPONENS_PARTIZIP_LESSON) return false;
+        if (art === 'ppp') return VerbEngine.isPPPApplicable(verb);
+        return VerbEngine.isPPAApplicable(verb)
+            && VerbEngine.isPPAKnown(maxLesson);
+    }
+
+    /** Passt dieses Nomen als Bezugswort zu diesem Partizip?
+     *
+     *  Ein PPP ist PASSIV - sein Bezugswort ist das, was die Handlung
+     *  ERLEIDET, also ein plausibles Objekt des Partizipverbs. Dafür gibt es
+     *  die Semantik aus Stufe 2a/2b schon: objArt (belebt/Sache) und objFeld
+     *  (ding/ort/text/zeit/stoff/abstrakt). Ohne das käme "hōra capta"
+     *  heraus - die Form stimmt, der Satz ist Unsinn.
+     *
+     *  Ein PPA ist AKTIV - sein Bezugswort ist der Handelnde, also prüft es
+     *  subjBelebt statt der Objektseite. */
+    function bezugPasst(nomen, verb, art) {
+        if (art === 'ppa') {
+            return !verb.subjBelebt || istBelebt(nomen);
+        }
+        /* Die Erwartungen des Verbs DIREKT prüfen, nicht über objektPool.
+           Der hat einen Rückfall auf den vollen Topf, wenn nichts übrig
+           bleibt - und bei einem Topf aus einem einzigen Nomen feuert der
+           immer, also kam alles durch. Gemessen hiess das "puella condita"
+           (das gegründete Mädchen) und "sacerdōs cōnstrūctus" (der gebaute
+           Priester). Genau dieser Rückfall steht in CLAUDE.md als Fallstrick;
+           test-objektseite.js prüft eigens, dass er nicht der Normalfall ist. */
+        if (verb.objArt === 'belebt' && !istBelebt(nomen)) return false;
+        if (verb.objArt === 'sache' && istBelebt(nomen)) return false;
+        if (verb.objFeld && verb.objFeld.length && !istBelebt(nomen)) {
+            if (!feldPasst(nomen, verb)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Baut ein Participium coniunctum oder einen Ablativus absolutus.
+     *
+     * optionen:
+     *   nounPool, verbPool, maxLesson  wie bei build()
+     *   variante   'pc' | 'ablabs' | null (null = auswürfeln, was erlaubt ist)
+     *   art        'ppp' | 'ppa' | null (null = auswürfeln)
+     *
+     * Rückgabe wie build(): { tokens, tempus, genus, verbLemma, explanation,
+     * variante, art } oder null.
+     */
+    function buildParticipium(optionen) {
+        const opt = optionen || {};
+        const maxLesson = opt.maxLesson != null ? opt.maxLesson : 999;
+        if (maxLesson < PC_LESSON) return null;
+
+        /* Was ist in dieser Spanne überhaupt erlaubt? */
+        const vartenFrei = ['pc'];
+        if (maxLesson >= ABL_ABS_LESSON) vartenFrei.push('ablabs');
+        const variante = opt.variante || waehle(vartenFrei);
+        if (vartenFrei.indexOf(variante) === -1) return null;
+
+        const artenFrei = ['ppp'];
+        if (maxLesson >= PC_PPA_LESSON) artenFrei.push('ppa');
+        const art = opt.art || waehle(artenFrei);
+        if (artenFrei.indexOf(art) === -1) return null;
+
+        const nomen = (opt.nounPool || []).filter(nomenTauglich);
+        const verben = (opt.verbPool || []).filter(verbTauglich);
+        const partVerben = (opt.verbPool || []).filter(v => partizipVerbTauglich(v, art, maxLesson));
+        if (nomen.length < 2 || !verben.length || !partVerben.length) return null;
+
+        const nomNomen = mitKasus(nomen, 'nom');
+        const ablNomen = mitKasus(nomen, 'abl');
+        if (!nomNomen.length) return null;
+        if (variante === 'ablabs' && !ablNomen.length) return null;
+
+        const kombis = VerbEngine.getKnownCombinations(maxLesson);
+        const tempora = [...new Set(kombis.filter(k => k.genus === 'Aktiv').map(k => k.tempus))];
+        if (!tempora.length) return null;
+
+        for (let versuch = 0; versuch < 30; versuch++) {
+            const satz = variante === 'ablabs'
+                ? baueAblAbs(nomen, nomNomen, ablNomen, verben, partVerben, tempora, maxLesson, art)
+                : bauePC(nomen, nomNomen, verben, partVerben, tempora, maxLesson, art);
+            if (satz) return satz;
+        }
+        return null;
+    }
+
+    /** Hauptsatz aus Subjekt und Prädikat - die gemeinsame Grundlage. */
+    function baueHauptsatz(nomNomen, verben, tempora, belegt) {
+        const verb = waehleGewichtet(verben.filter(v => !valenzen(v).some(x => x === 'akk')));
+        if (!verb) return null;
+        const pool = verb.subjBelebt ? nurBelebte(nomNomen) : nomNomen;
+        const sub = frischesNomen(pool, belegt);
+        if (!sub) return null;
+        const numerus = Math.random() < 0.3 ? 'pl' : 'sg';
+        const subForm = form(sub, 'nom', numerus);
+        if (!subForm) return null;
+        const tempus = waehle(tempora);
+        let verbForm;
+        try {
+            const formen = VerbEngine.getFormsForTempus(verb, tempus, 'Aktiv');
+            verbForm = formen[numerus === 'pl' ? 5 : 2];
+        } catch (e) { return null; }
+        if (!verbForm) return null;
+        belegt.add(sub.latin);
+        return { verb, sub, numerus, subForm, verbForm, tempus };
+    }
+
+    /** Participium coniunctum: Das Partizip hängt am SUBJEKT des Hauptsatzes.
+     *  Bewusst nur am Subjekt und nicht auch am Objekt - im Nominativ ist die
+     *  Kongruenz am deutlichsten zu sehen, und genau sie ist der Lerngegenstand. */
+    function bauePC(nomen, nomNomen, verben, partVerben, tempora, maxLesson, art) {
+        const belegt = new Set();
+        const h = baueHauptsatz(nomNomen, verben, tempora, belegt);
+        if (!h) return null;
+
+        const passende = partVerben.filter(v => v.latin !== h.verb.latin && bezugPasst(h.sub, v, art));
+        if (!passende.length) return null;
+        const pVerb = waehleGewichtet(passende);
+        const gender = NounEngine.decline(h.sub).gender;
+        let pForm;
+        try { pForm = partizipForm(pVerb, art, 'nom', h.numerus, gender); } catch (e) { return null; }
+        if (!pForm) return null;
+
+        const zeit = art === 'ppp' ? 'vorzeitig' : 'gleichzeitig';
+        const tokens = [
+            { text: h.subForm, role: 'sub', lemma: h.sub.latin, head: null,
+              exp: `<strong>${h.subForm}</strong> ist das Subjekt (Nominativ).` },
+            { text: pForm, role: 'partizip', lemma: pVerb.latin, head: 0,
+              exp: `<strong>${pForm}</strong> ist das Partizip (${art.toUpperCase()}, ${zeit}). ` +
+                   `Es kongruiert mit <strong>${h.subForm}</strong> - und weil dieses Wort ein ` +
+                   `Satzglied des Hauptsatzes ist (Subjekt), liegt ein <strong>Participium ` +
+                   `coniunctum</strong> vor.` },
+            { text: h.verbForm, role: 'praed', lemma: h.verb.latin, head: null,
+              exp: `<strong>${h.verbForm}</strong> ist das Prädikat (${h.tempus}).` }
+        ];
+        return {
+            tokens, tempus: h.tempus, genus: 'Aktiv', verbLemma: h.verb.latin,
+            variante: 'pc', art, zeit,
+            explanation: `<strong>${pForm}</strong> gehört zu <strong>${h.subForm}</strong>, und ` +
+                `dieses Wort ist das Subjekt des Hauptsatzes. Ein Partizip, dessen Bezugswort im ` +
+                `Satz eine Rolle spielt, heisst <strong>Participium coniunctum</strong>. ` +
+                `Das ${art.toUpperCase()} ist ${zeit}.`
+        };
+    }
+
+    /** Ablativus absolutus: Nomen und Partizip stehen beide im Ablativ, und
+     *  das Nomen gehört zu KEINEM Satzglied des Hauptsatzes. Genau das ist
+     *  der Unterschied - deshalb bekommt es eine eigene Rolle. */
+    function baueAblAbs(nomen, nomNomen, ablNomen, verben, partVerben, tempora, maxLesson, art) {
+        const belegt = new Set();
+        const h = baueHauptsatz(nomNomen, verben, tempora, belegt);
+        if (!h) return null;
+
+        const pVerb = waehleGewichtet(partVerben.filter(v => v.latin !== h.verb.latin));
+        if (!pVerb) return null;
+
+        /* Das Nomen des Abl. abs. muss zum Partizip passen - und es darf
+           nicht dasselbe sein wie das Subjekt, sonst wäre es ein PC. */
+        const frei = ablNomen.filter(n => !belegt.has(n.latin) && bezugPasst(n, pVerb, art));
+        if (!frei.length) return null;
+        const abl = waehleGewichtet(frei);
+        const numerus = Math.random() < 0.3 ? 'pl' : 'sg';
+        const ablForm = form(abl, 'abl', numerus);
+        if (!ablForm) return null;
+        const gender = NounEngine.decline(abl).gender;
+        let pForm;
+        try { pForm = partizipForm(pVerb, art, 'abl', numerus, gender); } catch (e) { return null; }
+        if (!pForm) return null;
+
+        const zeit = art === 'ppp' ? 'vorzeitig' : 'gleichzeitig';
+        const tokens = [
+            { text: ablForm, role: 'ablAbsSub', lemma: abl.latin, head: null,
+              exp: `<strong>${ablForm}</strong> steht im Ablativ und ist KEIN Satzglied des ` +
+                   `Hauptsatzes - es gehört zum Partizip.` },
+            { text: pForm, role: 'partizip', lemma: pVerb.latin, head: 0,
+              exp: `<strong>${pForm}</strong> ist das Partizip (${art.toUpperCase()}, ${zeit}) ` +
+                   `und steht ebenfalls im Ablativ. Weil sein Bezugswort <strong>${ablForm}</strong> ` +
+                   `im Hauptsatz keine Rolle spielt, liegt ein <strong>Ablativus absolutus</strong> vor.` },
+            { text: h.subForm, role: 'sub', lemma: h.sub.latin, head: null,
+              exp: `<strong>${h.subForm}</strong> ist das Subjekt des Hauptsatzes (Nominativ).` },
+            { text: h.verbForm, role: 'praed', lemma: h.verb.latin, head: null,
+              exp: `<strong>${h.verbForm}</strong> ist das Prädikat (${h.tempus}).` }
+        ];
+        return {
+            tokens, tempus: h.tempus, genus: 'Aktiv', verbLemma: h.verb.latin,
+            variante: 'ablabs', art, zeit,
+            explanation: `<strong>${ablForm} ${pForm}</strong> stehen beide im Ablativ. ` +
+                `<strong>${ablForm}</strong> ist weder Subjekt noch Objekt des Hauptsatzes - ` +
+                `der Satz käme ohne die beiden aus. Das ist ein <strong>Ablativus absolutus</strong>. ` +
+                `Das ${art.toUpperCase()} ist ${zeit}.`
+        };
+    }
+
     function abschliessen(satz, wortstellung) {
         const tokens = ordne(satz.tokens, wortstellung);
         return {
@@ -782,6 +1021,12 @@ const SentenceEngine = (() => {
     return {
         build,
         buildAcI,
+        buildParticipium,
+        PARTIZIP_ROLLEN,
+        PC_LESSON,
+        PC_PPA_LESSON,
+        ABL_ABS_LESSON,
+        DEPONENS_PARTIZIP_LESSON,
         ALLE_ROLLEN,
         ACI_ROLLEN,
         ACI_LESSON,
