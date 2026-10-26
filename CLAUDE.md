@@ -588,9 +588,39 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
        gegen fünf andere Funktionen durchsetzen.
 - **Pendel.html** – klassische Pendelmethode (Subjekt → Prädikat → Objekt schrittweise), generiert
   aus echtem Wortschatz, mit Erklärung statt Übersetzungsauswahl am Ende.
-- **Arcus.html** – AcI (ab L8). Zwei Schritte: Subjektsakkusativ und Infinitiv im Satz anklicken,
-  ab L10 zusätzlich das Zeitverhältnis (gleichzeitig/vorzeitig). Bildmetapher ist der römische
-  Bogen: zwei Pfeiler und ein Schlussstein. Nutzt `SentenceEngine.buildAcI()`.
+- **Arcus.html** – satzwertige Konstruktionen, **vier Modi** (Oktober 2026). Bildmetapher ist
+  der römische Bogen: **zwei Pfeiler und ein Schlussstein**, und das trägt alle vier.
+  - *AcI* (ab L8): Subjektsakkusativ, Infinitiv, ab L10 das Zeitverhältnis.
+  - *Participium coniunctum* (ab L18) und *Ablativus absolutus* (ab L22): **Partizip, dann
+    sein Bezugswort** (Entscheidung des Fachlehrers), ab L20 das Zeitverhältnis.
+  - *Gemischt* (ab L22): **erst einordnen, dann belegen** – PC oder Abl. abs.?, danach
+    dieselben zwei Pfeiler. So wird die Entscheidung bewusst getroffen und gleich belegt;
+    bei einem Fehlgriff sieht man am Bezugswort, woran man es hätte merken können. Es geht
+    auch nach einem Fehlgriff weiter zu den Pfeilern – genau dafür sind sie da.
+  - **Der Umbau steckt in einer Zeile:** `handleWordClick` verglich `token.role ===
+    currentStep`, der Schritt WAR also die Rolle. Das Bezugswort hat aber keine eigene
+    Rolle – es ist das, worauf `head` zeigt. Deshalb entscheidet jetzt `istTreffer(idx)`,
+    und `markiereTreffer` leuchtet genau das eine Wort an statt aller seiner Rolle (im
+    Hauptsatz kann ein zweites Subjekt stehen).
+  - **Alles Modusabhängige steht in `MODI`**: Titel, Schrittfolge, Bogenbeschriftung, die
+    Baufunktion und die nötige Lektion. Die Lektionszahlen kommen aus den Engines
+    (`SentenceEngine.ACI_LESSON`, `PC_LESSON`, `ABL_ABS_LESSON`), nicht aus dieser Datei.
+  - **`startGame()` lehnt vorher ab**, mit Lektionsnummer in der Meldung, und probt
+    zusätzlich einmal, ob sich überhaupt ein Satz bauen lässt – dasselbe Muster wie
+    `startDefense()` im Kastell und `startGame()` in ViaRomana.
+  - **Das Zeitverhältnis ist beim Partizip erst ab L20 eine Frage**: Bis L19 gibt es nur das
+    PPP, und das ist immer vorzeitig – danach zu fragen hieße, eine Frage mit nur einer
+    Antwort zu stellen. Die Zahl kommt aus `VerbEngine.isPPAKnown`.
+  - Gemessene Kontraste der Markierungen: Partizip **8,34**, Bezugswort **6,87** (weiß auf
+    denselben zwei Farben wie beim AcI – es sind dieselben zwei Pfeiler). **Im Kommentar
+    standen zuerst geschätzte Zahlen; eine falsche Zahl im Kommentar ist schlimmer als
+    keine.**
+  - **Im Browser gesehen, nicht gerechnet:** Die Modusknöpfe tragen eine zweite Zeile im
+    `<small>`. Ohne eigene Regel läuft die INLINE mit, und weil `.start-btn`
+    `text-transform: uppercase` trägt, stand dort „ACISUBJEKTSAKKUSATIV UND INFINITIV".
+    Geändert wurden nur Schriftbild und Umbruch – Farbe und Rand bleiben dem Theme.
+  - `test-arcus.js` spielt alle vier Modi durch; `gegenprobe-arcus.js` baut fünf Defekte ein
+    und findet alle.
 - **Pronomina.html** – vier Modi: Possessiv (handkuratierte Sätze), Personal, Demonstrativ
   (hic/ille/is, KNG-Kongruenz-generiert), Relativ (quī/quae/quod – Kasus kommt von der Funktion
   im Nebensatz, NICHT vom Bezugswort!).
@@ -1603,10 +1633,8 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Die PPA-Sperre ist DOPPELT gesichert (Variantenliste und `partizipVerbTauglich`), eine
     davon zu brechen ändert nichts – die Gegenprobe muss beide brechen. Eine Gegenprobe, die
     nur eine von zwei Sicherungen löst, beweist nichts.
-  - **Noch offen:** die Modi in `Arcus.html`. Entschieden ist (Fachlehrer): erst das
-    Partizip anklicken, dann sein Bezugswort (die zwei Pfeiler des Bogens), ab L20 das
-    Zeitverhältnis als Schlussstein; im gemischten Modus zuerst einordnen (PC oder
-    Abl. abs.?) und dann dieselben zwei Pfeiler markieren.
+  - **Die Modi in `Arcus.html` sind gebaut** – siehe dort. Drei neue Achievement-Kategorien
+    dafür in `progress.js`: *Partizip*, *Bezugswort*, *Partizipialkonstruktion*.
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
   eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
   (Kulturwissen, kein Wortschatz).

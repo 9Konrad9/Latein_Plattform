@@ -133,6 +133,11 @@
         .latin-word:hover { background: rgba(128,0,0,0.10); }
         .latin-word.found-aciSub { background: #6f3487; color: #fff; cursor: default; }
         .latin-word.found-aciInf { background: #1f5f89; color: #fff; cursor: default; }
+        /* Dieselben zwei Farben wie beim AcI - es sind dieselben zwei Pfeiler.
+           Gemessen im Browser: weiss auf #6f3487 ergibt 8,34, auf #1f5f89
+           6,87 - beides deutlich ueber den 4,5 fuer Fliesstext. */
+        .latin-word.found-partizip { background: #6f3487; color: #fff; cursor: default; }
+        .latin-word.found-bezug    { background: #1f5f89; color: #fff; cursor: default; }
         .latin-word.rest { color: #6f6049; cursor: default; /* kontrast-ok: 5,03 auf dem Pergament #f6e8cb, nicht auf dem Wandgrund */ }
         .latin-word.wrong-flash { background: var(--falsch); color: #fff; }
 
@@ -168,6 +173,19 @@
         }
         .time-btn:not(:disabled):active { transform: translateY(2px); }
         .time-btn small { display: block; font-family: var(--font-body); font-weight: normal; font-size: 0.72rem; color: #4a3a26; margin-top: 3px; text-shadow: none; }
+        /* Die Modusknoepfe tragen eine zweite Zeile. Ohne diese Regel laeuft
+           das <small> INLINE mit, und weil .start-btn text-transform:
+           uppercase traegt, stand dort 'ACISUBJEKTSAKKUSATIV UND INFINITIV'.
+           Im Browser gesehen, nicht gerechnet - der Test prueft Mechanik,
+           kein Layout. Geaendert wird nur Schriftbild und Umbruch; Farbe und
+           Rand des Knopfes bleiben dem Theme (siehe pruefe-theme.js). */
+        .start-btn small {
+            display: block; margin-top: 4px;
+            font-family: var(--font-body); font-weight: normal;
+            font-size: 0.74rem; letter-spacing: 0; text-transform: none;
+            opacity: 0.88;
+        }
+
         .time-btn.correct { border-image-source: url('assets/ui/plaque-richtig.png'); }
         .time-btn.wrong { border-image-source: url('assets/ui/plaque-falsch.png'); }
 
@@ -191,7 +209,7 @@
     <div class="saeule-rechts" aria-hidden="true"></div>
 
     <h1 class="seiten-titel">🏛️ Arcus</h1>
-    <div class="seiten-untertitel">Der AcI-Bogen</div>
+    <div class="seiten-untertitel" id="seiten-untertitel">Der AcI-Bogen</div>
 
     <div class="trenner" aria-hidden="true"></div>
 
@@ -201,13 +219,18 @@
         <div id="start-screen" class="start-screen">
             <div class="notice-box">
                 <h3>🏛️ Der Auftrag</h3>
-                <p>Ein <strong>AcI</strong> trägt sich selbst — wie ein römischer Bogen. Er braucht zwei Pfeiler:</p>
-                <p style="margin-top:10px;"><span class="step">1</span> den <strong>Subjektsakkusativ</strong> — er steht im Akkusativ, ist aber <em>kein Objekt</em>, sondern das Subjekt des AcI.</p>
-                <p style="margin-top:6px;"><span class="step">2</span> den <strong>Infinitiv</strong> — das Prädikat des AcI.</p>
-                <p style="margin-top:10px;">Ab Lektion 10 kommt der <strong>Schlussstein</strong> dazu: Ist die Handlung <em>gleichzeitig</em> oder <em>vorzeitig</em>?</p>
-                <p style="margin-top:10px; color: var(--ink-soft); font-size:0.92rem;">Der AcI wird in Lektion 8 eingeführt — wähle also mindestens Lektion 8 mit aus.</p>
+                <p>Eine satzwertige Konstruktion trägt sich selbst — wie ein römischer Bogen.
+                   Sie braucht <strong>zwei Pfeiler</strong>, und ab einer gewissen Lektion kommt
+                   der <strong>Schlussstein</strong> dazu: das Zeitverhältnis.</p>
+                <p style="margin-top:10px; color: var(--ink-soft); font-size:0.92rem;">
+                   Jeder Modus braucht seine Lektion: AcI ab 8, Participium coniunctum ab 18,
+                   Ablativus absolutus ab 22. Wähle sie mit aus.</p>
             </div>
-            <button class="start-btn" id="btn-start">Bogen bauen</button>
+
+            <button class="start-btn" id="btn-aci">AcI<small>Subjektsakkusativ und Infinitiv — ab L8</small></button>
+            <button class="start-btn" id="btn-pc" style="margin-top:10px;">Participium coniunctum<small>Partizip und sein Bezugswort im Satz — ab L18</small></button>
+            <button class="start-btn" id="btn-ablabs" style="margin-top:10px;">Ablativus absolutus<small>Partizip und ein Bezugswort, das NICHT im Satz steht — ab L22</small></button>
+            <button class="start-btn" id="btn-gemischt" style="margin-top:10px;">Gemischt: PC oder Abl. abs.?<small>Erst einordnen, dann belegen — ab L22</small></button>
         </div>
 
         <!-- SPIEL -->
@@ -224,6 +247,7 @@
                     <img class="arch-teil links"   id="arch-left"  src="assets/ui/bogen.png" alt="">
                     <img class="arch-teil rechts"  id="arch-right" src="assets/ui/bogen.png" alt="">
                     <img class="arch-teil schluss" id="arch-key"   src="assets/ui/bogen.png" alt="">
+                    <!-- Beschriftung je Modus, siehe MODI im Skript -->
                     <span class="arch-label" id="lbl-left">Akkusativ</span>
                     <span class="arch-label" id="lbl-right">Infinitiv</span>
                 </div>
@@ -234,8 +258,14 @@
             <div class="instruction-line" id="instruction"></div>
 
             <div class="time-choice" id="time-choice">
-                <button class="time-btn" id="btn-gleichzeitig">gleichzeitig<small>Infinitiv Präsens</small></button>
-                <button class="time-btn" id="btn-vorzeitig">vorzeitig<small>Infinitiv Perfekt</small></button>
+                <button class="time-btn" id="btn-gleichzeitig">gleichzeitig<small id="hint-gleichzeitig">Infinitiv Präsens</small></button>
+                <button class="time-btn" id="btn-vorzeitig">vorzeitig<small id="hint-vorzeitig">Infinitiv Perfekt</small></button>
+            </div>
+
+            <!-- Nur im gemischten Modus: erst einordnen, dann belegen. -->
+            <div class="time-choice" id="art-choice" style="display:none;">
+                <button class="time-btn" id="btn-wahl-pc">Participium coniunctum<small>Das Bezugswort ist ein Satzglied</small></button>
+                <button class="time-btn" id="btn-wahl-ablabs">Ablativus absolutus<small>Das Bezugswort steht für sich</small></button>
             </div>
         </div>
 
@@ -261,10 +291,58 @@
 <script>
     // Schritt → Achievement-Kategorie (siehe CATEGORY_META in progress.js)
     const STEP_CATEGORY = {
-        aciSub: 'Subjektsakkusativ',
-        aciInf: 'AcI-Infinitiv',
-        zeit:   'Zeitverhältnis'
+        aciSub:    'Subjektsakkusativ',
+        aciInf:    'AcI-Infinitiv',
+        partizip:  'Partizip',
+        bezug:     'Bezugswort',
+        einordnen: 'Partizipialkonstruktion',
+        zeit:      'Zeitverhältnis'
     };
+
+    /* Die vier Modi. Alles, was sie unterscheidet, steht hier - der Rest der
+       Mechanik ist derselbe: zwei Pfeiler, dann der Schlussstein.
+
+       `lektion` kommt aus den Engines, nicht aus einer Zahl an dieser Stelle:
+       Zwei Stellen mit derselben Zahl driften auseinander. */
+    const MODI = {
+        aci: {
+            titel: 'Der AcI-Bogen',
+            lektion: () => SentenceEngine.ACI_LESSON,
+            schritte: ['aciSub', 'aciInf'],
+            label: ['Akkusativ', 'Infinitiv'],
+            baue: () => SentenceEngine.buildAcI({ nounPool, verbPool, maxLesson: maxSelectedLesson })
+        },
+        pc: {
+            titel: 'Das Participium coniunctum',
+            lektion: () => SentenceEngine.PC_LESSON,
+            schritte: ['partizip', 'bezug'],
+            label: ['Partizip', 'Bezugswort'],
+            baue: () => SentenceEngine.buildParticipium(
+                { nounPool, verbPool, maxLesson: maxSelectedLesson, variante: 'pc' })
+        },
+        ablabs: {
+            titel: 'Der Ablativus absolutus',
+            lektion: () => SentenceEngine.ABL_ABS_LESSON,
+            schritte: ['partizip', 'bezug'],
+            label: ['Partizip', 'Bezugswort'],
+            baue: () => SentenceEngine.buildParticipium(
+                { nounPool, verbPool, maxLesson: maxSelectedLesson, variante: 'ablabs' })
+        },
+        gemischt: {
+            titel: 'PC oder Ablativus absolutus?',
+            lektion: () => SentenceEngine.ABL_ABS_LESSON,
+            /* Erst einordnen, dann belegen (Entscheidung des Fachlehrers):
+               So wird die Entscheidung bewusst getroffen - und bei einem
+               Fehlgriff sieht man am Bezugswort, woran man es hätte merken
+               können. */
+            schritte: ['einordnen', 'partizip', 'bezug'],
+            label: ['Partizip', 'Bezugswort'],
+            baue: () => SentenceEngine.buildParticipium(
+                { nounPool, verbPool, maxLesson: maxSelectedLesson })
+        }
+    };
+
+    let modus = 'aci';
 
     let activePool = [];
     let nounPool = [];
@@ -283,7 +361,13 @@
     const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
     window.onload = function () {
-        document.getElementById('btn-start').addEventListener('click', promptLessonsAndStart);
+        ['aci', 'pc', 'ablabs', 'gemischt'].forEach(m => {
+            document.getElementById('btn-' + m).addEventListener('click', () => {
+                modus = m; promptLessonsAndStart();
+            });
+        });
+        document.getElementById('btn-wahl-pc').addEventListener('click', () => chooseArt('pc'));
+        document.getElementById('btn-wahl-ablabs').addEventListener('click', () => chooseArt('ablabs'));
         document.getElementById('btn-next').addEventListener('click', onNextClicked);
         document.getElementById('btn-again').addEventListener('click', promptLessonsAndStart);
         document.getElementById('btn-review').addEventListener('click', startReview);
@@ -317,10 +401,29 @@
     }
 
     function startGame() {
+        /* Vorher ablehnen statt mittendrin stehenzubleiben - dasselbe Muster
+           wie startDefense() im Kastell und startGame() in ViaRomana. Die
+           Zahlen kommen aus der Engine. */
+        const noetig = MODI[modus].lektion();
+        if (maxSelectedLesson < noetig) {
+            alert(MODI[modus].titel + ' wird in Lektion ' + noetig + ' eingeführt.\n\n' +
+                  'Du hast bis Lektion ' + maxSelectedLesson + ' gewählt. ' +
+                  'Bitte wähle Lektion ' + noetig + ' mit aus.');
+            return;
+        }
+        /* Und eine Probe: Lässt sich überhaupt ein Satz bauen? In kleinen
+           Lektionsauswahlen fehlen sonst die passenden Verben oder Nomen. */
+        if (!buildRound()) {
+            alert('Mit dieser Auswahl ließ sich kein Satz bilden.\n\n' +
+                  'Bitte wähle weitere Lektionen mit aus.');
+            return;
+        }
+
         roundIdx = 0;
         correctCount = 0;
         LudiReview.zuruecksetzen(wdh);
 
+        document.getElementById('seiten-untertitel').textContent = MODI[modus].titel;
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('end-box').style.display = 'none';
         document.getElementById('game-box').style.display = 'flex';
@@ -330,20 +433,33 @@
 
     function buildRound() {
         for (let versuch = 0; versuch < 10; versuch++) {
-            const s = SentenceEngine.buildAcI({ nounPool, verbPool, maxLesson: maxSelectedLesson });
+            const s = MODI[modus].baue();
             if (s) return s;
         }
         return null;
+    }
+
+    /* Index des Partizips und seines Bezugsworts. Daran - und NUR daran -
+       unterscheiden sich PC und Abl. abs.: Zeigt head auf ein Satzglied des
+       Hauptsatzes oder auf das eigene ablAbsSub? */
+    function partizipIdx() {
+        return currentRound.tokens.findIndex(t => t.role === 'partizip');
+    }
+    function bezugIdx() {
+        const p = partizipIdx();
+        return p === -1 ? -1 : currentRound.tokens[p].head;
     }
 
     function showRound(forced) {
         currentRound = forced || buildRound();
         if (!currentRound) { alert('Es ließ sich kein Satz bilden. Bitte wähle weitere Lektionen mit aus.'); return; }
 
-        currentStep = 'aciSub';
+        currentStep = MODI[modus].schritte[0];
         stepHadError = false;
         roundHadError = false;
         locked = false;
+        document.getElementById('lbl-left').textContent  = MODI[modus].label[0];
+        document.getElementById('lbl-right').textContent = MODI[modus].label[1];
 
         document.getElementById('round-number').innerText = LudiReview.laeuft(wdh)
             ? 'WIEDERHOLUNG ' + (LudiReview.fortschritt(wdh).nummer) + ' VON ' + LudiReview.fortschritt(wdh).gesamt
@@ -355,6 +471,12 @@
         renderSentence();
         updateInstruction();
         document.getElementById('time-choice').style.display = 'none';
+        document.getElementById('art-choice').style.display =
+            currentStep === 'einordnen' ? 'flex' : 'none';
+        ['btn-wahl-pc', 'btn-wahl-ablabs'].forEach(id => {
+            const b = document.getElementById(id);
+            b.disabled = false; b.className = 'time-btn';
+        });
     }
 
     // Den Bogenlauf trägt jetzt das Bild selbst - es gibt nur noch die drei
@@ -380,7 +502,12 @@
     // Ist das Zeitverhältnis in dieser Lektionsspanne überhaupt eine Frage?
     // Vor L10 gibt es nur den Infinitiv Präsens, also nur Gleichzeitigkeit.
     function zeitIstFrage() {
-        return VerbEngine.isInfinitiveKnown('Perfekt', 'Aktiv', maxSelectedLesson);
+        if (modus === 'aci') return VerbEngine.isInfinitiveKnown('Perfekt', 'Aktiv', maxSelectedLesson);
+        /* Beim Partizip ist es erst eine Frage, wenn es BEIDE Arten gibt:
+           Bis L19 gibt es nur das PPP, und das ist immer vorzeitig - danach
+           zu fragen hiesse, eine Frage zu stellen, die nur eine Antwort hat.
+           Die Zahl kommt aus der Engine, nicht von hier. */
+        return VerbEngine.isPPAKnown(maxSelectedLesson);
     }
 
     function updateInstruction() {
@@ -389,8 +516,38 @@
             el.innerHTML = 'Welches Wort ist der <strong>Subjektsakkusativ</strong>?<small>Es steht im Akkusativ — aber es ist kein Objekt.</small>';
         } else if (currentStep === 'aciInf') {
             el.innerHTML = 'Und welches Wort ist der <strong>Infinitiv</strong>?<small>Das Prädikat des AcI.</small>';
+        } else if (currentStep === 'einordnen') {
+            el.innerHTML = 'Steht hier ein <strong>Participium coniunctum</strong> oder ein <strong>Ablativus absolutus</strong>?<small>Die Frage ist nur: Spielt das Bezugswort des Partizips im Satz eine Rolle?</small>';
+        } else if (currentStep === 'partizip') {
+            el.innerHTML = 'Welches Wort ist das <strong>Partizip</strong>?<small>Es endet auf -us/-a/-um oder auf -ns.</small>';
+        } else if (currentStep === 'bezug') {
+            el.innerHTML = 'Und welches Wort ist sein <strong>Bezugswort</strong>?<small>Es stimmt mit dem Partizip in Kasus, Numerus und Genus überein.</small>';
         } else if (currentStep === 'zeit') {
-            el.innerHTML = 'Ist die Handlung des AcI <strong>gleichzeitig</strong> oder <strong>vorzeitig</strong>?<small>Schau auf die Form des Infinitivs.</small>';
+            el.innerHTML = modus === 'aci'
+                ? 'Ist die Handlung des AcI <strong>gleichzeitig</strong> oder <strong>vorzeitig</strong>?<small>Schau auf die Form des Infinitivs.</small>'
+                : 'Ist die Handlung des Partizips <strong>gleichzeitig</strong> oder <strong>vorzeitig</strong>?<small>Schau auf die Form des Partizips.</small>';
+        }
+    }
+
+    /* Welcher Index ist in diesem Schritt der richtige?
+       Beim AcI ist das eine ROLLE, beim Partizip nicht: Das Bezugswort hat
+       keine eigene Rolle, es ist das, worauf head zeigt. Deshalb entscheidet
+       hier eine Funktion und nicht ein Rollenvergleich. */
+    function istTreffer(idx) {
+        if (currentStep === 'bezug') return idx === bezugIdx();
+        return currentRound.tokens[idx].role === currentStep;
+    }
+
+    /* Was nach einem Treffer aufleuchtet. Beim Bezugswort genau DAS Wort,
+       nicht alle seiner Rolle: Im Hauptsatz kann noch ein zweites Subjekt
+       stehen, und markiert gehört nur das, worauf das Partizip zeigt. */
+    function markiereTreffer(idx) {
+        if (currentStep === 'bezug') {
+            const sp = document.querySelector('.latin-word[data-idx="' + idx + '"]');
+            sp.classList.add('found-bezug');
+            sp.style.cursor = 'default';
+        } else {
+            markiere(currentStep);
         }
     }
 
@@ -403,27 +560,36 @@
         });
     }
 
+    const WORT_SCHRITTE = ['aciSub', 'aciInf', 'partizip', 'bezug'];
+
     function handleWordClick(idx) {
-        if (locked || (currentStep !== 'aciSub' && currentStep !== 'aciInf')) return;
+        if (locked || WORT_SCHRITTE.indexOf(currentStep) === -1) return;
 
-        const token = currentRound.tokens[idx];
         const span = document.querySelector('.latin-word[data-idx="' + idx + '"]');
+        const schritte = MODI[modus].schritte;
+        const pos = schritte.indexOf(currentStep);
+        const ersterPfeiler = pos === schritte.length - 2;
 
-        if (token.role === currentStep) {
+        if (istTreffer(idx)) {
             melde(STEP_CATEGORY[currentStep], !stepHadError);
             stepHadError = false;
 
-            markiere(currentStep);
-            document.getElementById(currentStep === 'aciSub' ? 'arch-left' : 'arch-right').classList.add('set');
-            document.getElementById(currentStep === 'aciSub' ? 'lbl-left' : 'lbl-right').classList.add('set');
+            markiereTreffer(idx);
+            document.getElementById(ersterPfeiler ? 'arch-left' : 'arch-right').classList.add('set');
+            document.getElementById(ersterPfeiler ? 'lbl-left' : 'lbl-right').classList.add('set');
 
-            if (currentStep === 'aciSub') {
-                currentStep = 'aciInf';
+            if (ersterPfeiler) {
+                currentStep = schritte[pos + 1];
                 updateInstruction();
             } else {
-                // Beide Pfeiler stehen - es fehlt nur noch der Schlussstein
+                // Beide Pfeiler stehen - es fehlt nur noch der Schlussstein.
+                // Abgeblendet wird alles, was WEDER Pfeiler ist: beim AcI der
+                // Hauptsatz, beim Partizip alles ausser Partizip und Bezugswort.
+                const pfeiler = modus === 'aci'
+                    ? currentRound.tokens.map((t, i) => (t.role === 'aciSub' || t.role === 'aciInf') ? i : -1)
+                    : [partizipIdx(), bezugIdx()];
                 currentRound.tokens.forEach((t, i) => {
-                    if (t.role === 'sub' || t.role === 'praed') {
+                    if (pfeiler.indexOf(i) === -1) {
                         document.querySelector('.latin-word[data-idx="' + i + '"]').classList.add('rest');
                     }
                 });
@@ -431,6 +597,12 @@
                 if (zeitIstFrage()) {
                     currentStep = 'zeit';
                     updateInstruction();
+                    /* Der Hinweis unter dem Knopf nennt die FORM, an der man
+                       es sieht - und die ist je Modus eine andere. */
+                    document.getElementById('hint-gleichzeitig').textContent =
+                        modus === 'aci' ? 'Infinitiv Präsens' : 'PPA (-ns)';
+                    document.getElementById('hint-vorzeitig').textContent =
+                        modus === 'aci' ? 'Infinitiv Perfekt' : 'PPP (-us/-a/-um)';
                     document.getElementById('time-choice').style.display = 'flex';
                     document.getElementById('btn-gleichzeitig').disabled = false;
                     document.getElementById('btn-vorzeitig').disabled = false;
@@ -449,18 +621,46 @@
         }
     }
 
+    /* Der gemischte Modus: erst einordnen, dann belegen.
+       Entschieden wird an dem, woran es auch im Text zu entscheiden ist -
+       ob das Bezugswort des Partizips ein Satzglied des Hauptsatzes ist.
+       Die Antwort steht im Satz selbst (variante), nicht in einer zweiten
+       Herleitung hier. */
+    function chooseArt(wahl) {
+        if (locked || currentStep !== 'einordnen') return;
+        const richtig = (wahl === currentRound.variante);
+        if (!richtig) { roundHadError = true; stepHadError = true; }
+        melde(STEP_CATEGORY.einordnen, richtig);
+
+        document.getElementById('btn-wahl-' + wahl).classList.add(richtig ? 'correct' : 'wrong');
+        if (!richtig) document.getElementById('btn-wahl-' + currentRound.variante).classList.add('correct');
+        ['btn-wahl-pc', 'btn-wahl-ablabs'].forEach(id => document.getElementById(id).disabled = true);
+
+        /* Auch bei einem Fehlgriff geht es weiter zu den Pfeilern: Dort
+           sieht man am Bezugswort, woran man es haette merken koennen. */
+        setTimeout(function () {
+            document.getElementById('art-choice').style.display = 'none';
+            currentStep = MODI[modus].schritte[1];
+            stepHadError = false;
+            updateInstruction();
+        }, richtig ? 450 : 1100);
+    }
+
     function chooseTime(wahl) {
         if (locked || currentStep !== 'zeit') return;
         locked = true;
         document.getElementById('btn-gleichzeitig').disabled = true;
         document.getElementById('btn-vorzeitig').disabled = true;
 
-        const richtig = (wahl === currentRound.zeitverhaeltnis);
+        /* Der AcI nennt es zeitverhaeltnis, die Partizipien zeit - beide
+           sagen dasselbe. */
+        const soll = currentRound.zeitverhaeltnis || currentRound.zeit;
+        const richtig = (wahl === soll);
         if (!richtig) roundHadError = true;
         melde(STEP_CATEGORY.zeit, richtig);
 
         document.getElementById('btn-' + wahl).classList.add(richtig ? 'correct' : 'wrong');
-        if (!richtig) document.getElementById('btn-' + currentRound.zeitverhaeltnis).classList.add('correct');
+        if (!richtig) document.getElementById('btn-' + soll).classList.add('correct');
         if (richtig) document.getElementById('arch-key').classList.add('set');
 
         setTimeout(finishRound, richtig ? 350 : 850);

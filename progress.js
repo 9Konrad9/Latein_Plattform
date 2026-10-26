@@ -404,7 +404,12 @@ const LudiProgress = (() => {
         // Satzwertige Konstruktionen (Arcus)
         'Subjektsakkusativ': { icon: '🏛️', label: 'Subjektsakkusativ' },
         'AcI-Infinitiv': { icon: '🪧', label: 'Infinitiv im AcI' },
-        'Zeitverhältnis': { icon: '⏱️', label: 'Zeitverhältnis' }
+        'Zeitverhältnis': { icon: '⏱️', label: 'Zeitverhältnis' },
+
+        // Partizipialkonstruktionen (Arcus, ab L18)
+        'Partizip': { icon: '🧱', label: 'Partizip finden' },
+        'Bezugswort': { icon: '🪢', label: 'Bezugswort des Partizips' },
+        'Partizipialkonstruktion': { icon: '⚖️', label: 'PC oder Abl. abs.?' }
     };
 
     function _todayString() {
