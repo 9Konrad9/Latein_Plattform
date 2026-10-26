@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scrīnium - Kasusformen einsortieren</title>
+    <script src="fehlerbanner.js"></script>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
@@ -249,15 +250,6 @@ body {
 .start-overlay p, .end-screen p { max-width: 46ch; margin-bottom: 12px; line-height: 1.5; }
 .klein { font-size: 0.85rem; color: var(--ink-soft); }
 
-/* Der Fehlerbanner. In IssaJump hat genau der den `keys`-Absturz hereingebracht -
-   mit Zeilennummer, statt als "bei Issa kommen Fehler". */
-#fehler-banner {
-    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
-    background: var(--falsch, #8d2f2f); color: #fff;
-    padding: 10px max(12px, env(safe-area-inset-left, 0px))
-             max(10px, env(safe-area-inset-bottom, 0px));
-    font-size: 0.82rem; line-height: 1.4;
-}
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
@@ -305,7 +297,6 @@ body {
     <a href="index.html" class="start-btn zweitrangig">Zurück zur Übersicht</a>
 </div>
 
-<div id="fehler-banner"></div>
 
 <script>
 /* ============ Scrīnium: Kasusformen einsortieren ============
@@ -384,15 +375,7 @@ let letzteForm = null;
 
 const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
-/* ---------- Der Fehlerbanner ----------
-   Eine Meldung, die niemand notiert, hilft beim Suchen nicht. In IssaJump kam
-   der `keys`-Absturz genau so herein - mit Zeilennummer. */
-window.onerror = function (nachricht, datei, zeile) {
-    const b = document.getElementById('fehler-banner');
-    if (!b || b.style.display === 'block') return;
-    b.textContent = 'Fehler: ' + nachricht + ' (Zeile ' + zeile + ') – bitte diesen Text der Lehrkraft zeigen.';
-    b.style.display = 'block';
-};
+/* Der Fehlerbanner steckt seit Oktober 2026 in fehlerbanner.js. */
 
 /* ---------- Aufziehen abfangen (iOS ignoriert user-scalable=no) ---------- */
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(art => {

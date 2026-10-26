@@ -61,6 +61,31 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   Formenspiel hätte abschreiben müssen. Was im Kastell BLIEB, ist das Bauen einer Runde:
   welche vier Antworten nebeneinander stehen (`buildRoundFromSlots`, `waehleDistraktoren`,
   die Achsen-Logik). Das ist eine andere Frage als „welche Formen gibt es".
+- `fehlerbanner.js` – **auf JEDER der 19 Seiten, und als erstes Skript** (Oktober 2026).
+  Fängt `error` und `unhandledrejection` ab und zeigt die Meldung samt Zeilennummer in
+  einem roten Band oben, mit der Bitte, den Text der Lehrkraft zu zeigen.
+  **Wozu:** Aus dem Unterricht kommt sonst „bei Issa kommen Fehler" – damit lässt sich
+  nicht suchen. Mit Banner kam der `keys`-Absturz als Meldung MIT ZEILENNUMMER herein,
+  fotografiert von einer Schülerin. Das war der Unterschied zwischen „irgendwo" und
+  „Zeile 612".
+  - **Als erstes Skript eingebunden**, vor `vocabulary.js` und den Engines – sonst fängt
+    er deren Fehler nicht, und gerade die sind die interessanten. `test-fehlerbanner.js`
+    prüft das.
+  - **Er legt sein Element selbst an.** Müsste jede Seite einen Platz dafür vorsehen,
+    würde der beim nächsten Umbau vergessen. Er hängt am `body` und liegt `fixed` oben:
+    Ein `filter` auf einem Vorfahren machte daraus ein `absolute` (siehe das Pergament in
+    IssaJump), deshalb bewusst direkt am Körper.
+  - **`unhandledrejection` gehört dazu**: Eine abgelehnte Promise löst kein `error` aus
+    und bliebe sonst völlig unsichtbar.
+  - **Warum ein Modul:** Den Banner gab es zweimal – in IssaJump und in Scrīnium – und die
+    beiden waren schon auseinandergelaufen: verschiedene Element-Kennungen (`error-banner`
+    gegen `fehler-banner`), verschiedene Mechanismen (`addEventListener` gegen
+    `window.onerror`), verschiedenes Verhalten (Liste mit Zähler gegen nur die erste
+    Meldung), und Scrīnium saß unten mit `safe-area-insets`, IssaJump oben ohne. Die 17
+    übrigen Seiten hätten eine dritte Fassung bekommen.
+  - Geprüft wird am VERHALTEN: Fehler auslösen, dann muss die Meldung im Dokument stehen.
+    Eine Suche nach `addEventListener('error'` bliebe auch dann grün, wenn der Banner nie
+    erscheint. `gegenprobe-fehlerbanner.js` baut sechs Defekte ein und findet alle.
 - `achievementToast.js` – Popup-Benachrichtigung bei neu freigeschalteten Achievements.
 - `review.js` – die Wiederholungsrunde am Rundenende (`LudiReview`). Führt Buch darüber,
   was danebenging, was noch aussteht und wie viel davon beim zweiten Mal saß. **Der
@@ -295,11 +320,9 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - **Trophäen werden gesammelt und erst am Rundenende gezeigt**, nicht als Einblendung während
     des Laufs. In einem Spiel, das von Reaktion lebt, kostet ein Popup mitten im Sprung genau
     das Herz, das es feiern wollte. IssaJump bindet deshalb `achievementToast.js` gar nicht ein.
-  - **Der Fehlerbanner hat sich bezahlt gemacht.** IssaJump fängt `window.onerror` ab, zeigt die
-    erste Meldung samt Zeilennummer an und bittet darum, den Text der Lehrkraft zu zeigen. Genau
-    so kam der `keys`-Fehler herein – mit Zeilennummer, statt als „bei Issa kommen Fehler".
-    Eine Meldung, die niemand notiert, hilft beim Suchen nicht. **Das wäre in den anderen
-    Spielen genauso nützlich** und ist bisher nur hier eingebaut.
+  - **Der Fehlerbanner hat sich bezahlt gemacht** – hier kam der `keys`-Fehler mit
+    Zeilennummer herein statt als „bei Issa kommen Fehler". Er steckt seit Oktober 2026
+    in `fehlerbanner.js` und läuft auf **allen** Seiten; die eigene Fassung hier ist weg.
 - **Kastell.html** – Formen-Kastell: Substantiv- UND Verbformen, nutzt die komplette VerbEngine
   (Aktiv/Passiv, Imperativ, Infinitive, PPA, Konjunktiv, Gerundium/Gerundivum), gewichtet nach
   Häufigkeit. Bild-Assets in `assets/kastell/`.
@@ -1016,6 +1039,9 @@ dieses Namens, und darauf spielt auch das Spiel an.
     und `achievementToast.js` enthalten sie im Einbinde-Hinweis-Kommentar. Im Browser harmlos (die
     Dateien werden per `src` geladen), beim Inlinen bricht der HTML-Parser dort das Script-Tag ab –
     die Datei lädt dann still nur zur Hälfte.
+    **`fehlerbanner.js` hätte die fünfte werden können** und schreibt den Hinweis deshalb mit
+    einem Schrägstrich (`<\/script>`). Wer ein neues Modul anlegt, macht es genauso – die Falle
+    muss nicht noch einmal aufgestellt werden.
   - **Patch-Skripte: erst auf LF vereinheitlichen, DANN auf die Zeilenenden der Datei
     bringen.** Wer einen schon mit CRLF verbundenen Text noch einmal umwandelt, erzeugt
     `\r\r\n`. Beim Lesen fällt das nicht auf, im Browser auch nicht – aber git erkennt die

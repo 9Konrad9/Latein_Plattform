@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Issa Springt! - Vokabel-Jump'n'Run</title>
+    <script src="fehlerbanner.js"></script>
     <script src="vocabulary.js"></script>
     <script src="progress.js"></script>
     <script src="review.js"></script>
@@ -118,7 +119,6 @@
 <a href="index.html" id="global-menu-btn" onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt in dieser Runde geht verloren.');" title="Zurück zum Hauptmenü">🏠</a>
 
     <h1 class="seiten-titel">🐕 Issa Springt!</h1>
-    <div id="error-banner" style="display:none; background: var(--falsch); color:#fff; padding:8px 14px; font-size:0.85rem; text-align:center; max-width:90%; border-radius:6px; margin-bottom:6px;"></div>
     <div class="seiten-untertitel">Vokabel-Jump'n'Run</div>
 
     <div class="stage-wrapper">
@@ -163,23 +163,10 @@
     </div>
 
     <script>
-        /* Der Banner ist die einzige Spur, die von einem Fehler auf einem fremden
-           Gerät bleibt. Deshalb sammelt er die Meldungen (die erste ist die
-           interessante, danach wiederholt sich meist dieselbe in jedem Frame) und
-           bittet ausdrücklich darum, den Text weiterzugeben - eine Meldung, die
-           niemand notiert, hilft beim Suchen nicht. */
-        window.__fehlerListe = [];
-        window.addEventListener('error', function (e) {
-            const text = (e.message || 'unbekannter Fehler') + ' (Zeile ' + (e.lineno || '?') + ')';
-            if (window.__fehlerListe.indexOf(text) === -1) window.__fehlerListe.push(text);
-            const banner = document.getElementById('error-banner');
-            if (banner) {
-                banner.style.display = 'block';
-                banner.innerText = '⚠️ Fehler: ' + window.__fehlerListe[0] +
-                    (window.__fehlerListe.length > 1 ? '  (und ' + (window.__fehlerListe.length - 1) + ' weitere)' : '') +
-                    ' — bitte diesen Text der Lehrkraft zeigen.';
-            }
-        });
+        /* Der Fehlerbanner steckt seit Oktober 2026 in fehlerbanner.js -
+           er legt sein Element selbst an und faengt auch abgelehnte
+           Promises. Hier stand eine eigene Fassung, in Scrinium eine zweite,
+           und die beiden waren schon auseinandergelaufen. */
 
         /* ============ KONSTANTEN ============ */
         const CW = 400, CH = 650;
