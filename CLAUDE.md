@@ -20,6 +20,13 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   `"abl"` | `"gen"`, oder ein Array, wenn beide Verwendungen gelten) und `subjBelebt`
   (verlangt das Verb ein Lebewesen als Subjekt?); Nomen tragen `belebt`
   (`"person" | "tier" | "sache"`). Mehrteilige Lemmata haben `satzbau: false`.
+  Dazu seit Oktober 2026 das **thematische Feld** `thema` an allen 342 Nomen – zwölf
+  Themen, **genau eines je Wort**. Es ist für das **Quartett** da und hat mit `feld`
+  NICHTS zu tun: `feld` ist danach geschnitten, was ein VERB mit einer Sache anfangen
+  kann, `thema` danach, worüber ein Wort handelt. *gladius* ist `thema: krieg` /
+  `feld: ding`, *silva* ist `natur` / `ort`, *oculus* ist `koerper` / `ding` – zwei
+  Achsen, zwei Felder. Gepflegt wird es in `latein-tests/thema.json`,
+  `einbau-thema.js` schreibt es nach `vocabulary.js`.
   Dazu seit Oktober 2026 die **Objektseite**, in zwei Stufen: `objArt` (`"belebt" | "sache"`)
   sagt, was ein Verb als Akkusativobjekt verträgt, `datArt` dasselbe für die drei Dativverben,
   deren Dativ keine Person ist; darunter trägt jede Sache ein `feld` (`"ding" | "ort" |
@@ -1482,6 +1489,43 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Wendung, *castra ferre* nicht. Die thematische Achse und die Achse, die Sätze rettet,
     sind zwei verschiedene Achsen. Quartett braucht also ein **eigenes, zweites Feld** an
     den Nomen – die vorhandenen `feld`-Werte helfen ihm nicht.
+    **Das Feld ist seit Oktober 2026 da** (`thema`, siehe oben), das Spiel noch nicht.
+    Zwölf Themen, 342 Nomen eingestuft:
+
+    | mensch 42 | staat 41 | natur 41 | alltag 39 | krieg 33 | gefuehl 32 |
+    |---|---|---|---|---|---|
+    | **sprache 27** | **koerper 26** | **ort 26** | **zeit 13** | **spiele 12** | **religion 10** |
+
+    - **Genau EIN Thema je Wort** (Entscheidung des Fachlehrers). Sonst wäre beim Quartett
+      nicht zu entscheiden, auf welchen Stapel eine Karte gehört – und ein Streit darüber
+      nicht zu schlichten. Der Preis: Manches ist Ermessenssache, und die 15 strittigsten
+      tragen eine `notiz` in `thema.json`.
+    - **Alle Tiere gehen zu `natur`**, auch die im Haus (*catella, canis, equus*). Eine
+      Ausnahme für Haustiere wäre eine zweite Regel, die man sich merken muss, und das
+      Quartett lebt davon, dass die Stapel vorhersagbar sind.
+    - **DIE ZAHL, AN DER DAS SPIEL HÄNGT:** Ein Quartett braucht vier Wörter EINES Themas in
+      der gewählten Spanne. Gemessen gilt das **ab L12 für alle zwölf Themen**; bis L10 nur
+      für sieben, bis L6 nur für fünf. Wer das Spiel baut, muss die zu dünnen Themen aus
+      der Runde nehmen oder die Auswahl ablehnen – wie Memoria es tut.
+    - **Wie weit gegengelesen: GAR NICHT.** Die 342 Einstufungen sind meine erste Fassung.
+      Die Prüfseite dafür baut `bau-thema.js` (ein Block je Thema, die strittigen gelb).
+    - `test-thema.js` prüft Vollständigkeit, erfundene Lemmata, unbekannte Themen und die
+      Vier-Wörter-Bedingung; `gegenprobe-thema.js` beschädigt die Zuordnung auf vier Arten
+      und findet alle – und zwar über die ganze Kette aus `thema.json`, `einbau-thema.js`
+      und Test.
+    - **FÜR DEN SATZBAU BRINGT ES NICHTS, und das ist gemessen.** Die Erwartung war, dass
+      thematisch stimmige Kombinationen besser lesbare Sätze ergeben. Über 391 Sätze bis
+      L20 mit Subjekt UND Objekt: Nur **7,2 %** haben beide im selben Thema, verteilt auf
+      97 verschiedene Themenpaare. Beim Durchlesen zeigte sich aber, dass die schiefen
+      Sätze nicht deswegen schief sind: *bōs grātiae cēnās collēgit* und *lacrimam avium*
+      *victor iaciēbat* stören wegen ihrer **Genitiv-Attribute**, während *saxa victor*
+      *dēlēgerat*, *servī equōs urserant* und *puer audītōris tunicam portābit* trotz
+      verschiedener Themen tadellos sind. **Ein Mensch kann mit fast allem umgehen** – die
+      Themenachse sagt über Möglichkeit nichts, und über Stimmigkeit zu wenig, als dass
+      sich eine Bevorzugung lohnte. Sie würde die Kombinationen stark verengen und die
+      Sätze eintönig machen.
+      **Was sich damit machen LIESSE**, aber ein Feature wäre und keine Verbesserung: ein
+      Modus „Sätze zum Thema Krieg".
   - Noch in der Diskussion: **Montagsmaler**. Das Hindernis ist die Wortauswahl – nur ein
     Teil des Wortschatzes ist zeichenbar. `belebt` hilft dabei NICHT: unter `belebt: "sache"`
     stehen *culīna*, *tunica* und *statua* neben *ōtium*, *labor*, *mors* und *gaudium*.
