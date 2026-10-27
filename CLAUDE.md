@@ -68,7 +68,7 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   Formenspiel hätte abschreiben müssen. Was im Kastell BLIEB, ist das Bauen einer Runde:
   welche vier Antworten nebeneinander stehen (`buildRoundFromSlots`, `waehleDistraktoren`,
   die Achsen-Logik). Das ist eine andere Frage als „welche Formen gibt es".
-- `fehlerbanner.js` – **auf JEDER der 19 Seiten, und als erstes Skript** (Oktober 2026).
+- `fehlerbanner.js` – **auf JEDER der 21 Seiten, und als erstes Skript** (Oktober 2026).
   Fängt `error` und `unhandledrejection` ab und zeigt die Meldung samt Zeilennummer in
   einem roten Band oben, mit der Bitte, den Text der Lehrkraft zu zeigen.
   **Wozu:** Aus dem Unterricht kommt sonst „bei Issa kommen Fehler" – damit lässt sich
@@ -952,6 +952,65 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     Rückseite **6,08**. Die Rückseite stand zuerst bei 2,55 (Gold auf Porphyr) und damit
     unter den 3,0, die selbst große Schrift braucht; jetzt Marmorcreme – dieselbe Farbe,
     die die Porphyr-Knöpfe ohnehin benutzen.
+- **Quartett.html** – **Quaterniō**, das Wortfeld-Quartett (Oktober 2026). Eine Person gegen
+  das GERÄT: Beide halten Karten, jede trägt ein lateinisches Wort und seine Bedeutung.
+  Nutzt `thema` aus `vocabulary.js` – und nichts sonst von der Semantik.
+  - **AUF DER KARTE STEHT DAS FELD NICHT. Daran hängt das ganze Spiel.** Wer fragen will,
+    wählt eine eigene Karte und sagt, in welches Feld sie gehört; erst dann darf er den
+    Gegner nach diesem Feld fragen. Stünde das Feld oben auf der Karte (wie beim gedruckten
+    Quartett), sähe alles genauso aus und fragte nichts mehr ab. **Genau diese eine
+    Entscheidung** geht in den Vokabelkasten – ein Wort, ein Versuch, sauber zuzuordnen.
+    `test-quartett.js` vergleicht den Kartentext deshalb ZEICHENGENAU mit Wort plus
+    Bedeutung, statt nach dem Feldnamen zu suchen (siehe unten, warum).
+  - **Warum gegen das Gerät** (Entscheidung des Fachlehrers): Ohne Server kann kein Gerät mit
+    einem anderen reden, verdeckte Hände gibt es also nur so. Als EINZELleistung darf das
+    Spiel dafür den Leitner-Kasten bedienen – anders als Memoria, das Bingo und die
+    Fliegenklatsche, wo das Gerät nicht weiß, wer gerade tippt.
+  - **ES BRAUCHT EINE SPANNE, KEINE EINZELNE LEKTION**, und das liegt in der Sache: Eine
+    Pontes-Lektion bringt ein bis zwei Dutzend Nomen, verteilt auf zwölf Felder. Gemessen
+    (`probe-quartett.js`) gibt **keine einzelne Lektion vier volle Familien** her – die beste
+    kommt auf zwei, dreißig haben gar keine. Kumuliert sind es **ab „bis L5" vier Familien,
+    ab L6 fünf, ab L8 sechs und ab L12 alle zwölf**. Die Ablehnung nennt deshalb die Spanne
+    und nicht bloß „mehr Lektionen". Das ist die eine Stelle, an der dieses Spiel vom Rest
+    der Arena abweicht: Im Unterricht ist die Einzellektion sonst der Normalfall.
+    (Die Siebung auf eindeutige Bedeutung, die Bingo und Memoria brauchen, **kostet bei den
+    Nomen nichts** – die Zahl brauchbarer Felder ist mit und ohne dieselbe.)
+  - **Die Partie ist fair, und das ist gemessen** (`probe-quartett-fair.js`, 200 Partien je
+    Feld). Der Gegner ordnet nie falsch zu und fragt immer optimal; die Spielerin muss es
+    erst wissen. Trotzdem:
+
+    | Trefferquote der Spielerin | 100 % | 80 % | 50 % |
+    |---|---|---|---|
+    | gewonnene Partien | 52 % | 35 % | 11 % |
+    | unentschieden | 19 % | 24 % | 20 % |
+
+    Wissen zahlt sich also deutlich aus, und verlieren kann man trotzdem – es bleibt ein
+    Kartenspiel. Eine Partie dauert rund 13 Züge (bei vier Familien 7).
+  - **Der Gegner merkt sich nur, wonach DU gefragt hast** (`gegnerWeiss`), und vergisst es
+    wieder, sobald er dir die Karten abgenommen hat. Ein Gegner, der die ganze Hand kennt,
+    ist nicht schwerer, sondern unfair.
+  - **Die Sperre gegen den Stillstand** (`bleibtAmZug`): Ein frisch abgelegtes Quartett kann
+    die Hand leeren. Ist dann auch der Stapel leer, während der Gegner noch Karten hält, ist
+    die Partie nicht zu Ende und trotzdem niemand am Zug – also übernimmt der Gegner.
+    **Im Zufallsspiel tritt das zu selten auf, um sich darauf zu verlassen**; der Test baut
+    den Zustand deshalb, statt auf ihn zu hoffen.
+  - Gemessene Kontraste: Karte `--pompeji` auf `--putz-hell` **6,99**, Bedeutung `--ink`
+    **13,34**; die abgelegten Quartette `--ink` auf `--wand-tief` **8,71**, ihr Feldname
+    `--pompeji` **4,56**; die Meldung auf dem Pergament 5,41 bis 12,25.
+  - **Kein Vollbild-Spielfeld**: Die Seite scrollt wie Kastell und Arcus, bindet also
+    `zoomsperre.js` NICHT ein (siehe dort – die gehört nur dorthin, wo es nichts
+    heranzuholen gibt).
+  - **Die Kurznamen der Felder stehen im Spiel** (`FELDNAMEN`), die langen Beschreibungen in
+    `latein-tests/thema.json`, das nicht ausgeliefert wird. Zwei Stellen mit denselben
+    Schlüsseln driften auseinander – `test-quartett.js` prüft deshalb **beide Richtungen**.
+  - **Zwei Testfehler, beide lehrreich und beide von `gegenprobe-quartett.js` gefunden:**
+    Die Probe „steht das Feld auf der Karte?" suchte den Feldnamen als Teilzeichenkette –
+    und schlug an *tempus* „die **Zeit**" an, weil das Feld `zeit` heißt. **Eine
+    Teilzeichenkette ist kein Beweis.** Und die Stillstandsprobe baute zuerst einen Zustand,
+    den es im Spiel nicht gibt (Stapel weggeworfen, der Gegner hielt unvollständige
+    Familien) und meldete eine Endlosschleife, die unmöglich ist: Was nicht abgelegt ist,
+    sind immer GANZE Familien. **Ein Zustand, den das Spiel nie erreicht, beweist nichts.**
+
 - **Bingo.html** – **Vokabel-Bingo** (Oktober 2026). Das erste Spiel, bei dem die ganze Klasse
   GLEICHZEITIG am eigenen Gerät spielt – und es braucht trotzdem keinen Server. Eine Datei,
   zwei Rollen: *Beamer: Wörter aufrufen* (Lehrkraft, ruft die lateinischen Wörter auf, führt
@@ -1473,7 +1532,8 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   - ~~Memory~~ – **gebaut** (Oktober 2026) als `Memory.html`, siehe „Aktive Spiele" oben.
   - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
     aus den Umschreibungen erraten.
-  - **Quartett.** Vier Wörter eines Sachfelds sammeln. **Hier stand bis Oktober 2026, das
+  - ~~Quartett~~ – **gebaut** (Oktober 2026) als `Quartett.html`, siehe „Aktive Spiele" oben.
+    Warum es ein EIGENES Feld brauchte, steht hier: **Hier stand bis Oktober 2026, das
     hänge an denselben Sachfeldern wie „Semantik Stufe 2" – ein Datenbestand, zwei Zwecke.
     Das ist falsch, und zwar an echten Daten geprüft.** Ein THEMATISCHES Feld „Krieg", wie
     Quartett es braucht, enthält im vorhandenen Wortschatz:
@@ -1489,8 +1549,8 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Wendung, *castra ferre* nicht. Die thematische Achse und die Achse, die Sätze rettet,
     sind zwei verschiedene Achsen. Quartett braucht also ein **eigenes, zweites Feld** an
     den Nomen – die vorhandenen `feld`-Werte helfen ihm nicht.
-    **Das Feld ist seit Oktober 2026 da** (`thema`, siehe oben), das Spiel noch nicht.
-    Zwölf Themen, 342 Nomen eingestuft:
+    **Feld und Spiel sind seit Oktober 2026 da** (`thema` oben, `Quartett.html` in den
+    aktiven Spielen). Zwölf Themen, 342 Nomen eingestuft:
 
     | mensch 42 | staat 41 | natur 41 | alltag 39 | krieg 33 | gefuehl 32 |
     |---|---|---|---|---|---|
@@ -1679,6 +1739,9 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     nur eine von zwei Sicherungen löst, beweist nichts.
   - **Die Modi in `Arcus.html` sind gebaut** – siehe dort. Drei neue Achievement-Kategorien
     dafür in `progress.js`: *Partizip*, *Bezugswort*, *Partizipialkonstruktion*.
+- **Die Kategorie `Wortfeld`** in `CATEGORY_META` gehört zu Quaternio und meint die
+  thematische Achse `thema`, nicht `feld`: Wovon handelt ein Wort? Wer eine Kategorie
+  ergänzt, trägt sie dort ein – sonst erscheint sie auf der Trophäenseite ohne Namen.
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
   eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
   (Kulturwissen, kein Wortschatz).

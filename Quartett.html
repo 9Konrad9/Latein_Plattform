@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Quaternio - Das Wortfeld-Quartett</title>
+    <script src="fehlerbanner.js"></script>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="review.js"></script>
+    <script src="achievementToast.js"></script>
+    <script src="lessonFilter.js"></script>
+    <script src="bedeutung.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Palette und geteilte Bausteine stehen in theme.css.
+           Hier nur, was das Quartett allein braucht.
+
+           DER KERN DES SPIELS IN EINEM SATZ: Auf der Karte steht das Feld
+           NICHT. Wer fragen will, waehlt eine eigene Karte und sagt, in
+           welches Feld sie gehoert - genau dort sitzt die Uebung, und genau
+           diese eine Entscheidung geht in den Vokabelkasten.
+
+           Es laeuft EINE Person gegen das Geraet. Ohne Server kann kein
+           Geraet mit einem anderen reden, verdeckte Haende gibt es also nur
+           so - und als Einzelleistung darf das Spiel den Leitner-Kasten
+           bedienen, anders als Memoria oder das Bingo.
+
+           Kein Vollbild-Spielfeld: Die Seite scrollt wie bei Kastell und
+           Arcus, deshalb auch KEINE zoomsperre.js (siehe dort - die gehoert
+           nur dorthin, wo es nichts heranzuholen gibt).
+
+           Alle Kontrastwerte gemessen (latein-tests/probe-kontrast-quartett.js). */
+
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 16px 10px 40px;
+        }
+
+        .huelle { width: 100%; max-width: 860px; }
+        .game-container { gap: 12px; }
+
+        /* ---------- Kopfzeile: Quartette und Stapel ---------- */
+        .stand {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+            justify-content: center;
+            font-family: var(--font-display); font-size: 0.98rem;
+        }
+        .stand span {
+            background: var(--wand-tief);          /* --ink darauf 8,71 */
+            border: 1px solid var(--bronze);
+            border-radius: 14px; padding: 4px 12px;
+        }
+        .stand b { color: var(--pompeji); }        /* auf --wand-tief 4,56 */
+
+        /* ---------- Die Hand des Gegners: nur Rueckseiten ---------- */
+        .gegnerhand {
+            display: flex; gap: 4px; justify-content: center;
+            flex-wrap: wrap; min-height: 34px; align-items: center;
+        }
+        .ruecken {
+            width: 22px; height: 32px; border-radius: 4px;
+            background: var(--pompeji); border: 1px solid var(--bronze);
+        }
+        .gegnerhand .leer { color: var(--ink-soft); font-size: 0.86rem; }
+
+        /* ---------- Abgelegte Quartette ---------- */
+        .ablage { display: flex; flex-direction: column; gap: 6px; }
+        .quartett {
+            background: var(--wand-tief);
+            border: 1px solid var(--bronze); border-left: 5px solid var(--bronze);
+            border-radius: 7px; padding: 6px 10px;
+            font-size: 0.84rem; line-height: 1.45; color: var(--ink);
+        }
+        .quartett.du { border-left-color: var(--richtig); }
+        .quartett .feld {
+            font-family: var(--font-display); text-transform: uppercase;
+            letter-spacing: 1px; color: var(--pompeji); margin-right: 8px;
+        }
+        .quartett i { font-family: var(--font-display); color: var(--pompeji); }
+
+        /* ---------- Die Meldung: die eigentliche Rueckmeldung ---------- */
+        .meldung {
+            min-height: 3.4em; text-align: center; line-height: 1.5;
+            font-size: 0.98rem; padding: 6px 4px;
+        }
+        .meldung strong { color: var(--pompeji); }
+        .meldung i { font-family: var(--font-display); color: var(--pompeji); }
+        .meldung.gut strong, .meldung.gut { color: var(--richtig); }   /* 5,45 auf Pergament */
+        .meldung.schlecht strong { color: var(--falsch); }             /* 5,41 */
+
+        /* ---------- Die eigene Hand ---------- */
+        .hand {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            min-height: 90px;
+        }
+        .karte {
+            width: 104px; min-height: 84px;
+            background: var(--putz-hell);            /* --pompeji 6,99 · --ink 13,34 */
+            border: 2px solid var(--bronze); border-radius: 8px;
+            padding: 7px 6px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 4px; text-align: center;
+            transition: transform 0.12s, border-color 0.12s;
+        }
+        .karte:hover { border-color: var(--pompeji); }
+        .karte.gewaehlt {
+            border-color: var(--pompeji); transform: translateY(-6px);
+            box-shadow: var(--schatten);
+        }
+        .karte .lat {
+            font-family: var(--font-display); font-style: italic;
+            color: var(--pompeji); font-size: 1rem; line-height: 1.15;
+        }
+        .karte .de { font-size: 0.74rem; color: var(--ink); line-height: 1.25; }
+        /* Frisch bekommene Karten kurz hervorheben - sonst sieht man in einer
+           Hand von zehn Karten nicht, was dazugekommen ist. */
+        .karte.neu { border-color: var(--richtig); background: #f3f8f1; }
+
+        /* ---------- Die Feldknoepfe ---------- */
+        .felder-frage {
+            text-align: center; font-size: 0.92rem; color: var(--ink-soft);
+            min-height: 1.4em;
+        }
+        .options-grid { flex-grow: 0; }
+        @media (min-width: 620px) {
+            .options-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        .antwort-btn:disabled { opacity: 0.45; }
+
+        /* ---------- Die Wiederholungsrunde ---------- */
+        .wdh-karte {
+            text-align: center; padding: 14px 10px;
+            background: var(--wand-tief); border: 2px solid var(--bronze);
+            border-radius: 10px;
+        }
+        .wdh-karte .lat {
+            font-family: var(--font-display); font-style: italic;
+            color: var(--pompeji); font-size: 1.7rem; display: block;
+        }
+        .wdh-karte .de { color: var(--ink); font-size: 1rem; }
+        .wdh-zaehler { text-align: center; color: var(--ink-soft); font-size: 0.88rem; }
+
+        .end-liste { text-align: left; max-width: 520px; margin: 0 auto 18px; }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏛️</a>
+
+<div class="huelle">
+    <h1 class="seiten-titel">Quaterniō</h1>
+    <p class="seiten-untertitel">Vier Wörter eines Wortfeldes</p>
+
+    <div class="game-container">
+
+        <!-- ---------- Startbildschirm ---------- -->
+        <div class="start-screen" id="start-screen">
+            <div class="notice-box">
+                <h3>📜 So läuft's</h3>
+                <p>Du spielst gegen das Gerät. Beide haben Karten auf der Hand, jede trägt
+                   ein lateinisches Wort und seine Bedeutung — <strong>aber nicht das
+                   Wortfeld, zu dem sie gehört</strong>.</p>
+                <p style="margin-top:10px;"><span class="step">1</span> Wähle eine deiner
+                   Karten und sage, in welches Feld sie gehört.</p>
+                <p style="margin-top:6px;"><span class="step">2</span> Stimmt das, fragst du
+                   den Gegner nach diesem Feld: Er muss alle seine Karten daraus abgeben —
+                   und du bist gleich noch einmal dran. Hat er keine, ziehst du vom Stapel.</p>
+                <p style="margin-top:6px;"><span class="step">3</span> Vier Karten eines
+                   Feldes auf der Hand sind ein <strong>Quartett</strong> und werden
+                   abgelegt. Wer mehr Quartette hat, gewinnt.</p>
+                <p style="margin-top:10px; font-size:0.9rem; color:var(--ink-soft);">
+                   Liegst du mit dem Feld daneben, ist der Gegner dran — und das Wort kommt
+                   in deinem Vokabelkasten auf Rot.</p>
+            </div>
+            <button class="start-btn" id="btn-start">Karten geben</button>
+        </div>
+
+        <!-- ---------- Die Spielfläche ---------- -->
+        <div id="spiel" style="display:none; flex-direction:column; gap:12px;">
+            <div class="stand">
+                <span>Deine Quartette <b id="q-du">0</b></span>
+                <span>Gegner <b id="q-gegner">0</b></span>
+                <span>Stapel <b id="q-stapel">0</b></span>
+            </div>
+
+            <div class="gegnerhand" id="gegnerhand"></div>
+            <div class="ablage" id="ablage"></div>
+            <div class="meldung" id="meldung"></div>
+
+            <div class="wdh-zaehler" id="wdh-zaehler" style="display:none;"></div>
+            <div class="wdh-karte" id="wdh-karte" style="display:none;"></div>
+
+            <div class="hand" id="hand"></div>
+            <div class="felder-frage" id="felder-frage"></div>
+            <div class="options-grid" id="felder"></div>
+        </div>
+
+        <!-- ---------- Schlussbild ---------- -->
+        <div class="feedback-overlay" id="end-overlay">
+            <h2 class="feedback-title" id="end-titel"></h2>
+            <div class="feedback-explanation" id="end-text"></div>
+            <div class="end-liste" id="end-liste"></div>
+            <button class="start-btn wiederholen" id="btn-wdh" style="display:none;"></button>
+            <button class="start-btn" id="btn-nochmal" style="margin-top:10px;">Noch eine Runde</button>
+            <a href="index.html" class="start-btn zweitrangig" style="margin-top:10px;">Zurück zum Menü</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   Die Namen der Wortfelder
+
+   Die Felder selbst stehen als `thema` an den Nomen in vocabulary.js; die
+   langen Beschreibungen liegen in latein-tests/thema.json und werden nicht
+   ausgeliefert. Hier stehen nur die KURZNAMEN, die auf einen Knopf passen.
+
+   Zwei Stellen mit denselben Schluesseln driften auseinander - deshalb
+   prueft test-quartett.js BEIDE Richtungen: jedes `thema` des Wortschatzes
+   hat hier einen Namen, und hier steht kein Name, den es nicht gibt.
+   ============================================================ */
+const FELDNAMEN = {
+    mensch:   'Mensch & Familie',
+    koerper:  'Körper & Leben',
+    gefuehl:  'Gefühl & Charakter',
+    alltag:   'Alltag & Arbeit',
+    sprache:  'Sprache & Bildung',
+    staat:    'Staat & Recht',
+    krieg:    'Krieg & Militär',
+    religion: 'Religion & Mythos',
+    spiele:   'Spiel & Fest',
+    natur:    'Natur & Tiere',
+    ort:      'Ort & Bauwerk',
+    zeit:     'Zeit'
+};
+
+/* ============================================================
+   Die Zahlen
+   ============================================================ */
+/* Wie viele Familien auf den Tisch kommen. Gemessen (probe-quartett.js):
+   Themen mit mindestens vier Woertern gibt es bis L6 fuenf, bis L8 sechs,
+   ab L12 alle zwoelf. Sechs ist also die obere Grenze, die fast immer
+   erreichbar ist; unter vier Familien waere es kein Spiel mehr, sondern
+   ein Umdrehen von acht Karten. */
+const FAMILIEN_MAX = 6;
+const FAMILIEN_MIN = 4;
+const KARTEN_JE_FAMILIE = 4;
+const HANDKARTEN = 5;
+
+/* ============================================================
+   Der Zustand
+   ============================================================ */
+let felder = [];          // die Themen dieser Runde
+let stapel = [];          // Nachziehstapel
+const hand = { du: [], gegner: [] };
+const quartette = { du: [], gegner: [] };   // je { thema, karten }
+let gewaehlt = null;      // Index der angetippten Handkarte
+let gesperrt = false;     // waehrend der Gegner zieht: keine Eingabe
+let richtig = 0, versuche = 0;
+
+/* Was der Gegner ueber deine Hand weiss: die Felder, nach denen DU gefragt
+   hast. Mehr nicht - er merkt sich nur, was auf dem Tisch gesagt wurde, so
+   wie ein Mensch am selben Tisch auch. Ein Gegner, der die ganze Hand kennt,
+   ist nicht schwerer, sondern unfair. */
+let gegnerWeiss = [];
+
+const wdh = LudiReview.neu();   // Buchfuehrung in review.js
+let wdhKarte = null;
+
+/* ============================================================
+   Hilfen
+   ============================================================ */
+function mische(a) {
+    const b = a.slice();
+    for (let i = b.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [b[i], b[j]] = [b[j], b[i]];
+    }
+    return b;
+}
+
+function feldName(t) { return FELDNAMEN[t] || t; }
+
+function esc(t) {
+    return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function melde(html, art) {
+    const el = document.getElementById('meldung');
+    el.className = 'meldung' + (art ? ' ' + art : '');
+    el.innerHTML = html;
+}
+
+/* Ein Wort, wie es in einer Meldung erscheint: Latein kursiv, Bedeutung
+   dahinter. Steht an einer Stelle, weil es in sechs Meldungen vorkommt. */
+function wort(k) { return '<i>' + esc(k.latin) + '</i> (' + esc(k.bedeutung) + ')'; }
+
+/* ============================================================
+   Die Runde aufbauen
+   ============================================================ */
+/* Aus dem gefilterten Wortschatz die Familien bauen. Gibt null zurueck,
+   wenn die Auswahl zu klein ist - abgelehnt wird VOR dem Start, nicht
+   mittendrin (dasselbe Muster wie startDefense() im Kastell). */
+function baueFamilien(gefiltert) {
+    /* Nur Woerter mit EINDEUTIGER Bedeutung: Auf der Karte steht die
+       Bedeutung, und zwei Karten mit demselben deutschen Wort waeren beim
+       Nachsprechen nicht auseinanderzuhalten. Die Siebung steht in
+       bedeutung.js, weil Bingo und Memoria sie genauso brauchen.
+       Gemessen kostet sie bei den NOMEN nichts - die Zahl der brauchbaren
+       Themen ist mit und ohne Siebung dieselbe. */
+    const eindeutig = new Map();
+    LudiBedeutung.eindeutigerTopf(gefiltert).forEach(e => eindeutig.set(e.latin, e.bedeutung));
+
+    const nachFeld = {};
+    gefiltert.forEach(v => {
+        if (v.type !== 'noun' || !v.thema) return;
+        if (!eindeutig.has(v.latin)) return;
+        (nachFeld[v.thema] || (nachFeld[v.thema] = []))
+            .push({ latin: v.latin, bedeutung: eindeutig.get(v.latin), thema: v.thema });
+    });
+
+    const brauchbar = Object.keys(nachFeld).filter(t => nachFeld[t].length >= KARTEN_JE_FAMILIE);
+    if (brauchbar.length < FAMILIEN_MIN) return null;
+
+    const gewaehlteFelder = mische(brauchbar).slice(0, FAMILIEN_MAX);
+    const karten = [];
+    gewaehlteFelder.forEach(t => {
+        mische(nachFeld[t]).slice(0, KARTEN_JE_FAMILIE).forEach(k => karten.push(k));
+    });
+    return { felder: gewaehlteFelder, karten: mische(karten) };
+}
+
+function austeilen(aufbau) {
+    felder = aufbau.felder.slice().sort((a, b) => feldName(a).localeCompare(feldName(b), 'de'));
+    stapel = aufbau.karten;
+    hand.du = stapel.splice(0, HANDKARTEN);
+    hand.gegner = stapel.splice(0, HANDKARTEN);
+    quartette.du = [];
+    quartette.gegner = [];
+    gewaehlt = null;
+    gegnerWeiss = [];
+    richtig = 0;
+    versuche = 0;
+    gesperrt = false;
+    /* Zuruecksetzen, sonst schleppt die Runde die Fehler der vorigen mit. */
+    LudiReview.zuruecksetzen(wdh);
+    wdhKarte = null;
+    /* Gleich beim Austeilen koennen schon Quartette dabei sein. */
+    pruefeQuartette('du', true);
+    pruefeQuartette('gegner', true);
+}
+
+/* ============================================================
+   Zeichnen
+   ============================================================ */
+function baueFeldknoepfe() {
+    const box = document.getElementById('felder');
+    box.innerHTML = '';
+    felder.forEach(t => {
+        const b = document.createElement('button');
+        b.className = 'antwort-btn';
+        b.dataset.feld = t;
+        b.textContent = feldName(t);
+        b.addEventListener('click', () => feldGetippt(t));
+        box.appendChild(b);
+    });
+}
+
+function zeichne(neueKarten) {
+    document.getElementById('q-du').textContent = String(quartette.du.length);
+    document.getElementById('q-gegner').textContent = String(quartette.gegner.length);
+    document.getElementById('q-stapel').textContent = String(stapel.length);
+
+    /* Die Hand des Gegners - nur die Zahl der Karten ist oeffentlich. */
+    const gh = document.getElementById('gegnerhand');
+    gh.innerHTML = '';
+    if (!hand.gegner.length) {
+        gh.innerHTML = '<span class="leer">Der Gegner hat keine Karten mehr.</span>';
+    } else {
+        hand.gegner.forEach(() => {
+            const d = document.createElement('div');
+            d.className = 'ruecken';
+            gh.appendChild(d);
+        });
+    }
+
+    /* Abgelegte Quartette, beide Seiten - sie sind der Lernertrag der Runde
+       und bleiben deshalb sichtbar stehen. */
+    const ab = document.getElementById('ablage');
+    ab.innerHTML = '';
+    [['du', 'Du'], ['gegner', 'Gegner']].forEach(([wer, titel]) => {
+        quartette[wer].forEach(q => {
+            const d = document.createElement('div');
+            d.className = 'quartett' + (wer === 'du' ? ' du' : '');
+            d.innerHTML = '<span class="feld">' + esc(feldName(q.thema)) + '</span>' +
+                q.karten.map(k => '<i>' + esc(k.latin) + '</i> ' + esc(k.bedeutung)).join(' · ') +
+                ' <span style="color:var(--ink-soft)">(' + titel + ')</span>';
+            ab.appendChild(d);
+        });
+    });
+
+    /* Die eigene Hand. */
+    const h = document.getElementById('hand');
+    h.innerHTML = '';
+    hand.du.forEach((k, i) => {
+        const d = document.createElement('div');
+        d.className = 'karte' + (i === gewaehlt ? ' gewaehlt' : '') +
+            (neueKarten && neueKarten.indexOf(k) >= 0 ? ' neu' : '');
+        d.innerHTML = '<span class="lat"></span><span class="de"></span>';
+        /* textContent, nicht innerHTML: Die Bedeutungen kommen aus der
+           Vokabeldatenbank und sind Text, kein Markup. */
+        d.querySelector('.lat').textContent = k.latin;
+        d.querySelector('.de').textContent = k.bedeutung;
+        d.addEventListener('click', () => karteGetippt(i));
+        h.appendChild(d);
+    });
+    if (!hand.du.length) {
+        h.innerHTML = '<span style="color:var(--ink-soft)">Du hast keine Karten mehr.</span>';
+    }
+
+    zeigeFrage();
+}
+
+function zeigeFrage() {
+    const frage = document.getElementById('felder-frage');
+    const knoepfe = document.querySelectorAll('#felder .antwort-btn');
+    if (LudiReview.laeuft(wdh)) {
+        frage.textContent = 'In welches Feld gehört dieses Wort?';
+        knoepfe.forEach(b => b.disabled = false);
+        return;
+    }
+    if (gewaehlt === null) {
+        frage.textContent = hand.du.length
+            ? 'Wähle eine Karte aus deiner Hand.'
+            : '';
+        knoepfe.forEach(b => b.disabled = true);
+    } else {
+        frage.innerHTML = 'In welches Feld gehört <i>' + esc(hand.du[gewaehlt].latin) + '</i>?';
+        knoepfe.forEach(b => b.disabled = gesperrt);
+    }
+}
+
+/* ============================================================
+   Der Zug der Spielerin
+   ============================================================ */
+function karteGetippt(i) {
+    if (gesperrt || LudiReview.laeuft(wdh)) return;
+    gewaehlt = (gewaehlt === i) ? null : i;
+    zeichne();
+}
+
+function feldGetippt(thema) {
+    if (gesperrt) return;
+    if (LudiReview.laeuft(wdh)) { wdhAntwort(thema); return; }
+    if (gewaehlt === null) return;
+
+    const karte = hand.du[gewaehlt];
+    gewaehlt = null;
+    const stimmt = karte.thema === thema;
+    buche(karte, stimmt);
+
+    if (!stimmt) {
+        LudiReview.merken(wdh, karte);
+        melde('Nein — ' + wort(karte) + ' gehört zu <strong>' + esc(feldName(karte.thema)) +
+              '</strong>, nicht zu <strong>' + esc(feldName(thema)) + '</strong>.' +
+              '<br>Jetzt ist der Gegner dran.', 'schlecht');
+        /* Sperren, SOLANGE der Gegner noch nicht gezogen hat - sonst laesst
+           sich in der Wartezeit weiterklicken und zwei Zuege ueberlagern
+           sich. Dieselbe Sperre an jeder Stelle, die den Zug abgibt. */
+        gesperrt = true;
+        zeichne();
+        setTimeout(gegnerZug, 1900);
+        return;
+    }
+
+    /* Richtig geraten heisst: Du darfst nach diesem Feld fragen. */
+    gegnerWeiss.push(thema);
+    const abgeben = hand.gegner.filter(k => k.thema === thema);
+    if (abgeben.length) {
+        hand.gegner = hand.gegner.filter(k => k.thema !== thema);
+        hand.du = hand.du.concat(abgeben);
+        melde('Richtig! Der Gegner gibt dir ' +
+              abgeben.map(wort).join(' und ') + '. <strong>Du bist noch einmal dran.</strong>', 'gut');
+        pruefeQuartette('du');
+        zeichne(abgeben);
+        if (!pruefeEnde()) bleibtAmZug();
+        return;
+    }
+
+    /* Nichts da - eine Karte vom Stapel. Trifft sie das gefragte Feld,
+       geht es weiter; so steht es in den Regeln des Spiels. */
+    const gezogen = stapel.shift();
+    if (!gezogen) {
+        melde('Richtig! Der Gegner hat nichts aus <strong>' + esc(feldName(thema)) +
+              '</strong>, und der Stapel ist leer. Der Gegner ist dran.');
+        gesperrt = true;
+        zeichne();
+        setTimeout(gegnerZug, 1600);
+        return;
+    }
+    hand.du.push(gezogen);
+    const glueck = gezogen.thema === thema;
+    melde('Richtig! Der Gegner hat nichts aus <strong>' + esc(feldName(thema)) +
+          '</strong> — du ziehst ' + wort(gezogen) + '.' +
+          (glueck ? ' <strong>Genau das Feld — du bist noch einmal dran.</strong>'
+                  : ' Jetzt ist der Gegner dran.'), glueck ? 'gut' : '');
+    pruefeQuartette('du');
+    zeichne([gezogen]);
+    if (pruefeEnde()) return;
+    if (glueck) { bleibtAmZug(); return; }
+    gesperrt = true;
+    zeigeFrage();
+    setTimeout(gegnerZug, 1900);
+}
+
+/* Die Spielerin ist weiter dran - aber nur, wenn sie ueberhaupt eine Karte
+   hat. Ein frisch abgelegtes Quartett kann die Hand leeren; ist dann auch
+   der Stapel leer, waere niemand am Zug und das Spiel stuende still,
+   obwohl der Gegner noch Karten haelt. */
+function bleibtAmZug() {
+    if (nachziehenWennLeer('du')) return;
+    melde('Du hast keine Karten mehr und der Stapel ist leer — der Gegner spielt weiter.');
+    gesperrt = true;
+    zeigeFrage();
+    setTimeout(gegnerZug, 1800);
+}
+
+/* Der Vokabelkasten und die Trophaeen. */
+function buche(karte, stimmt) {
+    if (LudiReview.laeuft(wdh)) {
+        if (stimmt) LudiReview.treffer(wdh);
+    } else {
+        versuche++;
+        if (stimmt) richtig++;
+    }
+    // Die Wiederholungsrunde zaehlt NICHT in den Vokabelkasten.
+    // Entscheidung des Fachlehrers: Wer ein Wort erst im zweiten Anlauf und
+    // mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.
+    if (LudiReview.zaehltInDenKasten(wdh)) LudiProgress.recordVocabAttempt(karte.latin, stimmt);
+    // Die Achievement-Zaehler laufen in der Wiederholung WEITER - anders als
+    // der Vokabelkasten eine Zeile darueber. Das ist Absicht, kein Vergessen
+    // (Entscheidung des Fachlehrers): Der Kasten steuert, welches Wort wie oft
+    // drankommt; die Trophaeen zaehlen Fleiss.
+    const unlock = LudiProgress.recordCategoryAttempt('Wortfeld', stimmt);
+    if (unlock) AchievementToast.show(unlock);
+}
+
+/* ============================================================
+   Der Zug des Gegners
+   ============================================================ */
+function gegnerZug() {
+    gesperrt = true;
+    zeigeFrage();
+    if (pruefeEnde()) return;
+
+    if (!hand.gegner.length && !nachziehenWennLeer('gegner', true)) {
+        melde('Der Gegner kann nicht mehr ziehen. Du bist dran.');
+        gesperrt = false;
+        zeichne();
+        return;
+    }
+
+    /* Welches Feld fragt er? Zuerst eines, von dem er weiss, dass du es
+       hast (weil DU danach gefragt hast) und von dem er selbst eine Karte
+       haelt - sonst das Feld, von dem er am meisten hat. */
+    const zaehl = {};
+    hand.gegner.forEach(k => zaehl[k.thema] = (zaehl[k.thema] || 0) + 1);
+    const eigene = Object.keys(zaehl);
+    const bekannt = eigene.filter(t => gegnerWeiss.indexOf(t) >= 0);
+    const topf = bekannt.length ? bekannt : eigene;
+    const thema = topf.sort((a, b) => zaehl[b] - zaehl[a])[0];
+
+    const abgeben = hand.du.filter(k => k.thema === thema);
+    if (abgeben.length) {
+        hand.du = hand.du.filter(k => k.thema !== thema);
+        hand.gegner = hand.gegner.concat(abgeben);
+        /* Er weiss jetzt, dass du aus diesem Feld nichts MEHR hast - sonst
+           fragte er dieselbe Karte in jedem Zug wieder ab. */
+        gegnerWeiss = gegnerWeiss.filter(t => t !== thema);
+        melde('Der Gegner fragt nach <strong>' + esc(feldName(thema)) + '</strong>. ' +
+              'Du gibst ab: ' + abgeben.map(wort).join(' und ') + '.');
+        pruefeQuartette('gegner');
+        zeichne();
+        if (pruefeEnde()) return;
+        nachziehenWennLeer('du');
+        setTimeout(gegnerZug, 2100);     // er darf noch einmal
+        return;
+    }
+
+    const gezogen = stapel.shift();
+    if (gezogen) hand.gegner.push(gezogen);
+    melde('Der Gegner fragt nach <strong>' + esc(feldName(thema)) + '</strong> — du hast ' +
+          'nichts daraus.' + (gezogen ? ' Er zieht eine Karte.' : '') + ' <strong>Du bist dran.</strong>');
+    pruefeQuartette('gegner');
+    zeichne();
+    if (pruefeEnde()) return;
+
+    /* Erst jetzt abgeben - und nur, wenn die Spielerin ueberhaupt etwas tun
+       kann (siehe bleibtAmZug). */
+    gesperrt = false;
+    zeichne();
+    bleibtAmZug();
+}
+
+/* ============================================================
+   Quartette, Nachziehen, Ende
+   ============================================================ */
+function pruefeQuartette(wer, still) {
+    let gefunden = true;
+    while (gefunden) {
+        gefunden = false;
+        const zaehl = {};
+        hand[wer].forEach(k => zaehl[k.thema] = (zaehl[k.thema] || 0) + 1);
+        const voll = Object.keys(zaehl).find(t => zaehl[t] >= KARTEN_JE_FAMILIE);
+        if (!voll) break;
+        const karten = hand[wer].filter(k => k.thema === voll);
+        hand[wer] = hand[wer].filter(k => k.thema !== voll);
+        quartette[wer].push({ thema: voll, karten: karten });
+        gefunden = true;
+        if (!still && wer === 'du') {
+            melde('<strong>Quartett!</strong> ' + esc(feldName(voll)) + ' ist vollständig: ' +
+                  karten.map(wort).join(', ') + '.', 'gut');
+        }
+    }
+}
+
+/* Wer keine Karte mehr hat, zieht nach - sonst koennte er nie wieder fragen.
+   Gibt zurueck, ob danach Karten da sind. */
+function nachziehenWennLeer(wer, still) {
+    if (hand[wer].length) return true;
+    while (hand[wer].length < HANDKARTEN && stapel.length) hand[wer].push(stapel.shift());
+    pruefeQuartette(wer, still);
+    zeichne();
+    return hand[wer].length > 0;
+}
+
+function pruefeEnde() {
+    const fertig = quartette.du.length + quartette.gegner.length >= felder.length;
+    const festgefahren = !stapel.length && !hand.du.length && !hand.gegner.length;
+    if (!fertig && !festgefahren) return false;
+    ende();
+    return true;
+}
+
+function ende() {
+    gesperrt = true;
+    LudiProgress.saveGameResult('quartett', richtig, Math.max(1, versuche));
+
+    const a = quartette.du.length, b = quartette.gegner.length;
+    document.getElementById('end-titel').textContent =
+        a === b ? 'Unentschieden' : (a > b ? '🏆 Du gewinnst' : 'Der Gegner gewinnt');
+    document.getElementById('end-titel').style.color =
+        a > b ? 'var(--richtig)' : (a < b ? 'var(--falsch)' : 'var(--ink)');
+
+    let text = 'Quartette: <strong>' + a + '</strong> zu <strong>' + b + '</strong>.<br>' +
+        'Bei der Frage „in welches Feld gehört das Wort?" lagst du <strong>' + richtig +
+        '</strong> von <strong>' + versuche + '</strong> Mal richtig.';
+    if (LudiReview.anzahl(wdh)) {
+        text += '<br><br>' + LudiReview.anzahl(wdh) +
+            (LudiReview.anzahl(wdh) === 1 ? ' Wort ging' : ' Wörter gingen') + ' daneben.';
+    }
+    document.getElementById('end-text').innerHTML = text;
+
+    /* Alle Felder dieser Runde mit ihren vier Woertern - das ist der
+       eigentliche Ertrag und soll am Ende noch einmal zusammenstehen. */
+    document.getElementById('end-liste').innerHTML =
+        quartette.du.concat(quartette.gegner).map(q =>
+            '<div class="quartett"><span class="feld">' + esc(feldName(q.thema)) + '</span>' +
+            q.karten.map(k => '<i>' + esc(k.latin) + '</i> ' + esc(k.bedeutung)).join(' · ') +
+            '</div>').join('');
+
+    const btn = document.getElementById('btn-wdh');
+    btn.style.display = LudiReview.anzahl(wdh) ? 'inline-block' : 'none';
+    btn.textContent = LudiReview.knopfText(wdh, 'Wort', 'Wörter');
+    document.getElementById('end-overlay').style.display = 'flex';
+}
+
+/* ============================================================
+   Die Wiederholungsrunde
+   ============================================================ */
+function starteWiederholung() {
+    document.getElementById('end-overlay').style.display = 'none';
+    document.getElementById('gegnerhand').style.display = 'none';
+    document.getElementById('ablage').style.display = 'none';
+    document.getElementById('hand').style.display = 'none';
+    document.getElementById('wdh-karte').style.display = 'block';
+    document.getElementById('wdh-zaehler').style.display = 'block';
+    gesperrt = false;
+    wdhKarte = LudiReview.start(wdh);
+    zeigeWdhKarte();
+}
+
+function zeigeWdhKarte() {
+    const f = LudiReview.fortschritt(wdh);
+    document.getElementById('wdh-zaehler').textContent =
+        'Wiederholung ' + f.nummer + ' von ' + f.gesamt;
+    const box = document.getElementById('wdh-karte');
+    box.innerHTML = '<span class="lat"></span><span class="de"></span>';
+    box.querySelector('.lat').textContent = wdhKarte.latin;
+    box.querySelector('.de').textContent = wdhKarte.bedeutung;
+    melde('');
+    zeigeFrage();
+}
+
+function wdhAntwort(thema) {
+    const stimmt = wdhKarte.thema === thema;
+    buche(wdhKarte, stimmt);
+    melde(stimmt
+        ? 'Richtig — <strong>' + esc(feldName(wdhKarte.thema)) + '</strong>.'
+        : 'Nein — ' + wort(wdhKarte) + ' gehört zu <strong>' +
+          esc(feldName(wdhKarte.thema)) + '</strong>.', stimmt ? 'gut' : 'schlecht');
+    gesperrt = true;
+    zeigeFrage();
+    setTimeout(function () {
+        const naechste = LudiReview.naechste(wdh);
+        gesperrt = false;
+        if (!naechste) { beendeWiederholung(); return; }
+        wdhKarte = naechste;
+        zeigeWdhKarte();
+    }, 1700);
+}
+
+function beendeWiederholung() {
+    const bilanz = LudiReview.beenden(wdh);
+    document.getElementById('end-titel').textContent = 'Wiederholung geschafft';
+    document.getElementById('end-titel').style.color = 'var(--ink)';
+    document.getElementById('end-text').innerHTML =
+        'Du hast alle <strong>' + bilanz.gesamt + '</strong> zuvor falschen Wörter nochmal ' +
+        'eingeordnet und dabei <strong>' + bilanz.richtig + '</strong> davon jetzt richtig ' +
+        'zugeordnet.<br><br>Was diesmal wieder falsch war, bleibt in deinem persönlichen ' +
+        'Vokabelkasten auf Rot und kommt beim nächsten Spiel häufiger dran.';
+    document.getElementById('end-liste').innerHTML = '';
+    document.getElementById('btn-wdh').style.display = 'none';
+    document.getElementById('end-overlay').style.display = 'flex';
+}
+
+/* ============================================================
+   Start
+   ============================================================ */
+function starte() {
+    LessonFilter.show(globalVocabularyPool, function (gefiltert) {
+        const aufbau = baueFamilien(gefiltert);
+        /* Ablehnen VOR dem Start, nicht mittendrin stehenbleiben - dasselbe
+           Muster wie startDefense() im Kastell und startGame() in ViaRomana.
+
+           DIESES SPIEL BRAUCHT EINE SPANNE, KEINE EINZELNE LEKTION, und das
+           liegt in der Sache: Eine Pontes-Lektion bringt ein bis zwei Dutzend
+           Nomen, verteilt auf zwoelf Felder. Gemessen hat KEINE einzelne
+           Lektion vier volle Familien - die beste kommt auf zwei, dreissig
+           haben gar keine. Kumuliert sind es ab "bis L5" vier Familien, ab
+           L6 fuenf, ab L8 sechs und ab L12 alle zwoelf. Deshalb nennt die
+           Meldung die Spanne und nicht nur "mehr Lektionen". */
+        if (!aufbau) {
+            alert('Ein Quartett braucht ' + FAMILIEN_MIN + ' Wortfelder mit je ' +
+                  KARTEN_JE_FAMILIE + ' Substantiven — eine einzelne Lektion gibt das nie her.\n\n' +
+                  'Wähle eine Spanne: ab „bis Lektion 5" reicht es, ab Lektion 12 sind alle ' +
+                  'zwölf Felder dabei.');
+            return;
+        }
+
+        austeilen(aufbau);
+        baueFeldknoepfe();
+
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('end-overlay').style.display = 'none';
+        document.getElementById('gegnerhand').style.display = '';
+        document.getElementById('ablage').style.display = '';
+        document.getElementById('hand').style.display = '';
+        document.getElementById('wdh-karte').style.display = 'none';
+        document.getElementById('wdh-zaehler').style.display = 'none';
+        document.getElementById('spiel').style.display = 'flex';
+
+        melde('Die Karten sind gegeben. Wähle eine und sage, in welches Feld sie gehört.');
+        zeichne();
+    });
+}
+
+document.getElementById('btn-start').addEventListener('click', starte);
+document.getElementById('btn-nochmal').addEventListener('click', starte);
+document.getElementById('btn-wdh').addEventListener('click', starteWiederholung);
+</script>
+</body>
+</html>

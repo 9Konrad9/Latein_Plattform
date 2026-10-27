@@ -406,6 +406,10 @@ const LudiProgress = (() => {
         'AcI-Infinitiv': { icon: '🪧', label: 'Infinitiv im AcI' },
         'Zeitverhältnis': { icon: '⏱️', label: 'Zeitverhältnis' },
 
+        // Wortfelder (Quaternio) - die thematische Achse `thema` an den Nomen,
+        // nicht `feld`: Hier geht es darum, WOVON ein Wort handelt.
+        'Wortfeld': { icon: '🗃️', label: 'Wortfeld eines Nomens' },
+
         // Partizipialkonstruktionen (Arcus, ab L18)
         'Partizip': { icon: '🧱', label: 'Partizip finden' },
         'Bezugswort': { icon: '🪢', label: 'Bezugswort des Partizips' },
