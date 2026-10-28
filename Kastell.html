@@ -547,7 +547,15 @@
                       SIND passiv, ihre Bedeutung ist aktiv - in einem Modus, der
                       gerade das Passiv einübt, ist das die eine Form, die das
                       Falsche beibringt. Wer Deponentien üben will, nimmt den
-                      gemischten Verbmodus. */
+                      gemischten Verbmodus.
+
+                      Seit Oktober 2026 gibt der KATALOG schon keine unmöglichen
+                      Passivformen mehr aus (siehe hatPassivFormen in formen.js) -
+                      kannPersoenlichesPassiv ist hier also doppelt gemoppelt und
+                      bleibt trotzdem stehen: Die Deponenten-Zeile darüber ist die
+                      Entscheidung DIESES Modus, und beide zusammen sagen, was er
+                      will. Der Katalog sagt, welche Formen es gibt; der Modus
+                      sagt, welche Verben er üben will. */
                 targetPool = targetPool.filter(v =>
                     v.gram_class !== 'Deponens' && v.latin !== 'fierī' &&
                     kannPersoenlichesPassiv(v) &&

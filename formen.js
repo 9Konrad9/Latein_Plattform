@@ -76,7 +76,22 @@ const LudiFormen = (() => {
         // alle - sonst stehen Formen im Spiel, die nie drankamen.
         const bekanntePersonen = VerbEngine.getKnownPersonIndices(maxLesson);
         const knownTempora = [...new Set(knownCombos.map(c => c.tempus))];
-        const passivKnown = knownCombos.some(c => c.genus === 'Passiv') && VerbEngine.isGenusApplicable(verbObj, 'Passiv');
+        /* Zwei verschiedene Fragen, und sie waren einmal eine:
+           `passivMoeglich` - hat DIESES Verb überhaupt Passivformen?
+           `passivKnown`    - und kennt die Lektionsauswahl das Passiv schon?
+           Die erste war bis Oktober 2026 nur halb beantwortet: Die Engine
+           bildet zu fast jedem Verb Passivformen (sie konjugiert, sie denkt
+           nicht), und so standen „venīmur", „clāmātur", „sedēris" im
+           Katalog. Gemessen waren das 10 % aller Verbformen; im gemischten
+           Verbmodus des Kastells war damit jede zehnte ZIELFORM eine, die es
+           nicht gibt, und jede fünfte Runde zeigte mindestens eine unter den
+           Antworten. Der Passiv-Modus hatte dafür längst einen Filter - aber
+           am Topf, nicht am Katalog, und deshalb half er dem Modus daneben
+           nicht. Die Prüfung gehört hierher: Der Formenkatalog sagt, WELCHE
+           Formen es gibt, und eine Form, die es nicht gibt, gehört nicht
+           dazu. */
+        const passivMoeglich = VerbEngine.isGenusApplicable(verbObj, 'Passiv') && hatPassivFormen(verbObj);
+        const passivKnown = knownCombos.some(c => c.genus === 'Passiv') && passivMoeglich;
         const showTempus = knownTempora.length > 1; // Solange nur Präsens bekannt ist, Tempus nicht extra nennen
         const slots = [];
 
@@ -118,6 +133,10 @@ const LudiFormen = (() => {
          ['Präsens', 'Passiv', GEWICHT.mittel], ['Perfekt', 'Passiv', GEWICHT.selten]].forEach(([t, g, w]) => {
             if (!VerbEngine.isInfinitiveKnown(t, g, maxLesson)) return;
             if (!VerbEngine.isInfinitiveApplicable(verbObj, t, g)) return;
+            /* Eigene Zeile, weil die Infinitive NICHT über `passivKnown`
+               laufen wie Indikativ und Konjunktiv - „venīrī" wäre sonst
+               die eine Passivform, die übrig bliebe. */
+            if (g === 'Passiv' && !passivMoeglich) return;
             const form = VerbEngine.getInfinitive(verbObj, t, g);
             slots.push({ form, label: `Infinitiv ${t} ${g}`, weight: w, merkmale: {
                 art: 'Infinitiv', modus: 'Infinitiv', tempus: t, genus: g, person: null, numerus: null
@@ -225,8 +244,28 @@ const LudiFormen = (() => {
             .some(v => String(v).indexOf('akk') !== -1);
     }
 
+    /* Hat dieses Verb überhaupt Passivformen, die etwas heissen? Das ist
+       die Frage, nach der `verbSlots` den Katalog schneidet - und sie ist
+       NICHT dieselbe wie `kannPersoenlichesPassiv`:
+
+       DEPONENTIEN UND fierī SIND DIE AUSNAHME, AN DER ALLES HÄNGT. Ihre
+       Formen sind passiv gebildet und ihre Bedeutung ist aktiv; andere
+       Formen haben sie nicht. Wer sie über `kannPersoenlichesPassiv`
+       mitfiltert, löscht sie vollständig aus dem Katalog - gemessen 21
+       Verben mit 1600 Formen, die im gemischten Verbmodus spurlos
+       verschwänden. `kannPersoenlichesPassiv` bleibt deshalb, was es ist
+       (die Frage des Passiv-Modus: taugt dieses Verb zum PASSIV-ÜBEN?),
+       und diese Funktion beantwortet die andere.
+
+       Deshalb filtert der Passiv-Modus im Kastell weiterhin selbst: Er
+       will Deponentien NICHT, obwohl ihre Formen existieren. */
+    function hatPassivFormen(verbObj) {
+        if (verbObj.gram_class === 'Deponens' || verbObj.latin === 'fierī') return true;
+        return kannPersoenlichesPassiv(verbObj);
+    }
+
     return {
-        nomenSlots, verbSlots, istPassivform, kannPersoenlichesPassiv,
+        nomenSlots, verbSlots, istPassivform, kannPersoenlichesPassiv, hatPassivFormen,
         PERSONEN, KASUS_LABELS, KASUS_KEYS, GEWICHT
     };
 })();

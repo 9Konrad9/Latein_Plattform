@@ -64,6 +64,27 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   **Die Lektionsgrenzen stehen hier NICHT noch einmal**, sondern kommen durchweg aus den
   Engines (`getKnownCases`, `getKnownCombinations`, `isImperativeKnown` …). Zwei Stellen mit
   denselben Zahlen driften auseinander.
+  **Der Katalog enthält KEINE Formen, die es nicht gibt** (Oktober 2026). Die Engine
+  bildet zu fast jedem Verb Passivformen – sie konjugiert, sie denkt nicht –, und so
+  standen *venīmur*, *clāmātur*, *sedēris* im Katalog: gemessen **10 % aller Verbformen**.
+  `verbSlots` fragt deshalb `hatPassivFormen(verbObj)`, bevor es eine Passivform ausgibt.
+  - **`hatPassivFormen` ist NICHT `kannPersoenlichesPassiv`**, und daran hängt alles:
+    **Deponentien und *fierī* sind die Ausnahme.** Ihre Formen sind passiv GEBILDET und
+    ihre Bedeutung ist aktiv; andere Formen haben sie nicht. Wer sie mitfiltert, löscht
+    sie vollständig – gemessen **12 von 21 Deponentien mit 672 Formen** (*cōnārī, loquī,*
+    *morī, proficīscī, ūtī, fierī* …), nämlich genau die, deren `valenz` kein `akk` trägt.
+    Die neun transitiven (*hortārī* & Co.) überleben und halten jede Summenprobe oben –
+    **die Gegenprobe hat den Schaden deshalb zuerst NICHT gefunden**. `test-formen.js`
+    zählt seitdem jedes Deponens einzeln.
+  - **Der Infinitiv braucht eine eigene Zeile.** Indikativ und Konjunktiv hängen an
+    `passivKnown`, die Infinitive nicht – *venīrī* wäre sonst die eine Passivform, die
+    übrig bliebe. Die Gegenprobe baut genau diese Lücke wieder ein.
+  - **Warum hier und nicht im Spiel:** Der Passiv-Modus des Kastells hatte die Prüfung
+    längst, aber am TOPF (welche Verben kommen dran?) statt am KATALOG (welche Formen gibt
+    es?) – und half dem Modus daneben deshalb nicht. Der Katalog sagt, welche Formen eine
+    Lektionsauswahl hergibt; eine Form, die es nicht gibt, gehört nicht dazu.
+  - Der Passiv-Modus filtert weiterhin selbst: Er will Deponentien **nicht**, obwohl ihre
+    Formen existieren. Das ist eine andere Frage und bleibt dort.
   Bis Oktober 2026 stand das alles in `Kastell.html` – 194 Zeilen, die ein zweites
   Formenspiel hätte abschreiben müssen. Was im Kastell BLIEB, ist das Bauen einer Runde:
   welche vier Antworten nebeneinander stehen (`buildRoundFromSlots`, `waehleDistraktoren`,
@@ -488,10 +509,18 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   - **Die Lektionssperre steht VOR dem Topfbau.** Sie stand zuerst dahinter, und dann war
     `targetPool` schon gefüllt, obwohl die Runde nie startete – gefunden vom Test, der das
     Verhalten prüft statt des Quelltexts. Die Zahl kommt aus `VerbEngine.TEMPUS_LESSON_PASSIV`.
-  - **Noch offen, bewusst nicht mitgeändert:** Modus 2 bietet dieselben unmöglichen
-    Passivformen weiterhin an (*venīmur* & Co.), nur eben seltener, weil dort auch Aktivformen
-    drankommen. Dieselbe Prüfung ließe sich dort einhängen – das ändert aber einen
-    bestehenden Modus und gehört besprochen, nicht nebenbei erledigt.
+  - **Modus 2 bot dieselben unmöglichen Passivformen an – erledigt** (Oktober 2026).
+    „Nur eben seltener" war zu freundlich formuliert; gemessen war im gemischten Verbmodus
+    **jede zehnte ZIELFORM eine, die es nicht gibt** (8–11 % je Lektionsspanne), und **jede
+    fünfte Runde** zeigte mindestens eine unter den vier Antworten (15–21 %). Die Prüfung
+    sitzt jetzt im **Katalog** statt im Topf (siehe `formen.js`), gilt damit für jeden
+    Modus und für jedes künftige Formenspiel. Nachher: 0 %.
+    **Der Preis, und er ist der harmlosere:** Ein paar echte Formen fallen mit weg, wo
+    `valenz` für den SATZBAU gesetzt ist und nicht für die Formenlehre – *abstinēre*,
+    *respicere*, *effugere* stehen als `intrans` da. Von 58 Verben ohne Akkusativ bis L20
+    sind das drei bis vier; die übrigen (*esse, venīre, currere, sedēre, iacēre, dormīre*)
+    haben wirklich kein persönliches Passiv. Und *dēbēre* heißt hier „müssen" (mit
+    Infinitiv), nicht „schulden" – `intrans` ist dort richtig.
 - **Scrinium.html** – **Kasusformen einsortieren** (Oktober 2026). Schriftrollen landen auf
   einem Pult, jede trägt eine Nomenform und darunter das Lemma wie im Vokabelheft
   (*patribus* / *pater, patris m.*). Sie gehören ins Fach ihres Kasus – gezogen oder
