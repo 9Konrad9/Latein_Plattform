@@ -224,6 +224,54 @@ const SentenceEngine = (() => {
         return felder.indexOf(nounObj.feld) !== -1;
     }
 
+    /**
+     * Semantik Stufe 3: das GENITIV-ATTRIBUT.
+     *
+     * Bis Oktober 2026 zog `ergaenzeAttributOderAdverbiale` den Genitiv aus
+     * dem ganzen Topf und hängte ihn an ein beliebiges Nomen - für die
+     * Objektseite gab es `objArt` und `objFeld`, für das Attribut nichts.
+     * Heraus kamen „toga labōris" (die Toga der Mühe), „catella vōcis" (das
+     * Hündchen der Stimme), „servus pecūniārum" (der Sklave der Gelder).
+     * Gemessen trägt die HÄLFTE aller Sätze ein Genitiv-Attribut, und 21 %
+     * davon waren ein abstrakter Genitiv an einem greifbaren Bezugswort.
+     * Beim Messen des Themenfeldes war es genau diese Stelle, an der die
+     * schiefen Sätze hingen - nicht die Themen.
+     *
+     * DIE REGEL IST DIE DES LEHRBUCHS, nicht erfunden. Ein Genitiv-Attribut
+     * sagt, WEM etwas gehört oder WOVON etwas ein Teil ist:
+     *   1. possessivus - der Genitiv ist ein LEBEWESEN. Das ist der Fall,
+     *      den Pontes in L6 einführt, und er passt zu jedem Bezugswort:
+     *      „catella agitātōris", „ōtium magistrī", „toga patris".
+     *   2. subiectivus/obiectivus - das BEZUGSWORT ist abstrakt, dann darf
+     *      der Genitiv alles sein: „amor patriae", „fīnis bellī".
+     *   3. Teil eines Ganzen - Bezugswort und Genitiv sind beide greifbar
+     *      (Ding oder Ort): „porta urbis", „mūrus oppidī".
+     * Alles andere fällt heraus.
+     *
+     * ES BRAUCHT DAFÜR KEIN NEUES FELD. `belebt` steht an allen 342 Nomen,
+     * `feld` an allen 254 Sachen - und die Frage "wem kann etwas gehören?"
+     * ist genau die, die `belebt` beantwortet. Anders als beim Quartett, wo
+     * die thematische Achse eine zweite war, liegt hier alles schon da.
+     */
+    function nomenArt(nounObj) {
+        if (!nounObj) return null;
+        if (nounObj.belebt === 'person') return 'person';
+        if (nounObj.belebt === 'tier') return 'tier';
+        return nounObj.feld || 'abstrakt';
+    }
+
+    function genitivPasst(kopfObj, genObj) {
+        const k = nomenArt(kopfObj), g = nomenArt(genObj);
+        /* Kennen wir eines von beiden nicht, wird nicht gesperrt - dieselbe
+           Richtung wie bei objArt: Eine fehlende Angabe lässt den alten
+           Zustand bestehen, eine zu enge Regel nimmt richtige Sätze weg. */
+        if (!k || !g) return true;
+        if (g === 'person' || g === 'tier') return true;            // possessivus
+        if (k === 'abstrakt') return true;                          // sub-/obiectivus
+        if ((k === 'ding' || k === 'ort') && (g === 'ding' || g === 'ort')) return true;
+        return false;
+    }
+
     function objektPool(pool, kasus, verb) {
         if (kasus === 'dat') return verb.datArt === 'sache' ? nurSachen(pool) : nurBelebte(pool);
 
@@ -527,13 +575,28 @@ const SentenceEngine = (() => {
             .filter(x => x.t.role === 'sub' || x.t.role === 'obj' || x.t.role === 'dat');
 
         if (darf('attr') && maxLesson >= ATTRIBUT_LESSON && bezugsfaehig.length && Math.random() > 0.5) {
-            const pool = mitKasus(nomen, 'gen').filter(n => !belegt.has(n.latin));
+            /* ERST das Bezugswort, DANN ein Genitiv, der dazu passt.
+               DARAN HÄNGT, DASS DIE REGEL NICHTS KOSTET - gemessen
+               (probe-genitiv-reihenfolge.js): So tragen weiterhin 49,6 % der
+               Sätze ein Attribut, obwohl die Regel mehr als die Hälfte aller
+               früher möglichen Paarungen verwirft. Zieht man umgekehrt erst
+               den Genitiv und sucht dann ein Bezugswort dazu, sind es nur
+               noch 33,8 % - zu einem abstrakten Genitiv passt eben nur ein
+               abstraktes Bezugswort, und das steht selten im Satz.
+               Mehrere Bezugswörter DURCHZUPROBIEREN bringt dagegen nichts
+               (49,6 gegen 49,4 %) - der erste passt fast immer, weil
+               Personen zu jedem Bezugswort gehen. Die Schleife stand hier
+               und ist wieder weg: ungeprüft bleiben kann sie nicht, und zu
+               prüfen gibt es an ihr nichts. */
+            const bezug = waehle(bezugsfaehig);
+            const kopfObj = nomen.find(x => x.latin === bezug.t.lemma);
+            const pool = mitKasus(nomen, 'gen')
+                .filter(n => !belegt.has(n.latin) && genitivPasst(kopfObj, n));
             if (pool.length) {
                 const n = waehleGewichtet(pool);
-                belegt.add(n.latin);
                 const text = form(n, 'gen', Math.random() > 0.5 ? 'pl' : 'sg');
                 if (text) {
-                    const bezug = waehle(bezugsfaehig);
+                    belegt.add(n.latin);
                     tokens.push({
                         text, role: 'attr', lemma: n.latin, head: bezug.i,
                         exp: `„${text}“ steht im Genitiv (wessen?) und ist Attribut zu „${bezug.t.text}“ - es bestimmt dieses Wort näher.`

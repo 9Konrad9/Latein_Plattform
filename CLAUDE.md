@@ -1658,6 +1658,8 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
       Themenachse sagt über Möglichkeit nichts, und über Stimmigkeit zu wenig, als dass
       sich eine Bevorzugung lohnte. Sie würde die Kombinationen stark verengen und die
       Sätze eintönig machen.
+      **Die Genitiv-Attribute sind inzwischen repariert** – siehe „Semantik Stufe 3"; der
+      Befund von damals war richtig und hat dorthin geführt.
       **Was sich damit machen LIESSE**, aber ein Feature wäre und keine Verbesserung: ein
       Modus „Sätze zum Thema Krieg".
   - Noch in der Diskussion: **Montagsmaler**. Das Hindernis ist die Wortauswahl – nur ein
@@ -1771,6 +1773,51 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Fassung. Wer hier etwas ändert, ändert eine Schätzung, keine fachliche Entscheidung.
     Die Prüfseite dafür baut `bau-objektseite.js` (drei Reiter: Objektart, Sachfeld der
     Nomen, Felder der Verben).
+
+- **Semantik Stufe 3: das Genitiv-Attribut** – GEBAUT (Oktober 2026). Der Punkt, an dem beim
+  Messen des Themenfeldes die schiefen Sätze wirklich hingen – nicht an den Themen.
+  `ergaenzeAttributOderAdverbiale` zog den Genitiv aus dem ganzen Topf und hängte ihn an ein
+  beliebiges Nomen: Für die Objektseite gab es `objArt` und `objFeld`, für das Attribut
+  nichts. Heraus kamen *toga labōris* (die Toga der Mühe), *catella vōcis* (das Hündchen der
+  Stimme), *servus pecūniārum* (der Sklave der Gelder).
+  - **Es ist kein Randfall: Die HÄLFTE aller Sätze trägt ein Genitiv-Attribut** (gemessen
+    49,9 %), und 21,3 % davon waren ein abstrakter Genitiv an einem greifbaren Bezugswort.
+  - **DIE REGEL IST DIE DES LEHRBUCHS, nicht erfunden.** Ein Genitiv-Attribut sagt, WEM
+    etwas gehört oder WOVON etwas ein Teil ist – also gilt genau dreierlei:
+    1. *possessivus*: Der Genitiv ist ein **Lebewesen**. Das ist der Fall, den Pontes in L6
+       einführt, und er passt zu jedem Bezugswort (*catella agitātōris*, *ōtium magistrī*).
+    2. *subiectivus/obiectivus*: Das **Bezugswort ist abstrakt**, dann darf der Genitiv alles
+       sein (*amor patriae*, *timor perīculī*, *fīnis bellī*).
+    3. **Teil eines Ganzen**: beide greifbar, Ding oder Ort (*porta urbis*, *mūrus oppidī*).
+  - **ES BRAUCHT DAFÜR KEIN NEUES FELD.** `belebt` steht an allen 342 Nomen, `feld` an allen
+    254 Sachen – nachgezählt, nicht angenommen. Und die Frage „wem kann etwas gehören?" ist
+    genau die, die `belebt` beantwortet. Anders als beim Quartett, wo die thematische Achse
+    wirklich eine zweite war, liegt hier alles schon da.
+  - **AN DER REIHENFOLGE HÄNGT, DASS DIE REGEL NICHTS KOSTET.** Erst das Bezugswort wählen,
+    dann einen Genitiv, der dazu passt: So tragen weiterhin **49,6 %** der Sätze ein
+    Attribut, obwohl die Regel mehr als die Hälfte aller früher möglichen Paarungen
+    verwirft. Umgekehrt – erst den Genitiv ziehen, dann ein Bezugswort dazu suchen – sind es
+    nur **33,8 %**, denn zu einem abstrakten Genitiv passt nur ein abstraktes Bezugswort, und
+    das steht selten im Satz. Gemessen in `probe-genitiv-reihenfolge.js`.
+  - **Mehrere Bezugswörter durchzuprobieren bringt dagegen NICHTS** (49,6 gegen 49,4 %) –
+    der erste passt fast immer, weil Personen zu jedem Bezugswort gehen. Die Schleife stand
+    kurz da und ist wieder weg: **Die Gegenprobe fand den Unterschied nicht, weil es keinen
+    gibt.** Ungeprüft bleiben kann so eine Zeile nicht, und zu prüfen gibt es an ihr nichts.
+  - **Gemessen**: abstrakter Genitiv an greifbarem Bezugswort vorher **212 von 997 (21,3 %)**,
+    nachher **0 von 999**. Die Häufigkeit des Attributs bleibt bei 50 %.
+  - **Was das verschiebt, und das muss man wissen:** Der Anteil der PERSONEN unter den
+    Genitiven steigt von 30 % auf 76 %. Das ist fachlich richtig – ein lateinisches
+    Genitiv-Attribut ist überwiegend ein Possessivus –, macht die Sätze aber gleichförmiger.
+  - **Was jetzt noch schief ist, ist LEXIKALISCH, nicht strukturell**, und zwar innerhalb von
+    Regel 2 (abstraktes Bezugswort, 8,7 % aller Attribute): *timor perīculī* und *timor*
+    *verbōrum* sind tadellos, *mors togae* und *dolus saxī* nicht – und der Unterschied liegt
+    am einzelnen Wort, nicht an seinem Feld. Hier ist derselbe gute Punkt zum Aufhören wie
+    bei Stufe 2b.
+  - `test-genitiv.js` prüft am Verhalten, mit drei Proben, die sonst still schiefgehen:
+    kein Verstoß, die **Häufigkeit bleibt** (sonst hätte die Regel das Satzglied heimlich
+    abgeschafft, das Via Rōmāna abfragt), und **alle drei Muster kommen vor** (sonst wäre sie
+    auf „nur noch Personen" zusammengefallen – die Sätze wären korrekt, aber eintönig, und
+    das fiele erst im Unterricht auf). `gegenprobe-genitiv.js` baut sieben Schäden ein.
 
 - **Satzwertige Konstruktionen: die ENGINE-Seite ist gebaut** (Oktober 2026), die Modi in
   `Arcus.html` stehen noch aus.
