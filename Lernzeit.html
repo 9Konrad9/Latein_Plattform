@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Vokabelzeit - Lūdī Rōmānī</title>
+    <script src="fehlerbanner.js"></script>
+    <script src="vocabulary.js"></script>
+    <script src="progress.js"></script>
+    <script src="lessonFilter.js"></script>
+    <!-- Nur fuer SentenceEngine.ACI_LESSON: Die Sperre von Arcus kommt aus
+         der Engine, nicht aus einer zweiten Zahl in lernzeit.js. -->
+    <script src="nounEngine.js"></script>
+    <script src="verbEngine.js"></script>
+    <script src="sentenceEngine.js"></script>
+    <!-- Diese Seite ist der Taktgeber, nicht ein Spiel: Sie braucht den
+         ECHTEN Lektionsfilter und darf ihn sich nicht umbiegen lassen. -->
+    <script>window.LUDI_LERNZEIT_HUB = true;</script>
+    <script src="lernzeit.js"></script>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Die Vokabelzeit ist kein Spiel, sondern der Rahmen um mehrere.
+           Entsprechend schlicht: eine Liste, eine Uhr, ein grosser Knopf. */
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 16px 10px 40px;
+        }
+        .huelle { width: 100%; max-width: 640px; }
+        .game-container { gap: 14px; min-height: 0; }
+
+        /* ---------- Die Uhr ---------- */
+        .uhr {
+            text-align: center;
+            font-family: var(--font-display);
+            font-size: 3.2rem; line-height: 1.1;
+            color: var(--pompeji);              /* auf Pergament 6,42 */
+        }
+        .uhr.knapp { color: var(--falsch); }    /* auf Pergament 5,41 */
+        .uhr-text { text-align: center; color: var(--ink-soft); font-size: 0.92rem; }
+
+        /* ---------- Der Plan ---------- */
+        .plan { display: flex; flex-direction: column; gap: 5px; }
+        .platz {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px; border-radius: 8px;
+            background: var(--wand-tief);        /* --ink darauf 8,71 */
+            border: 1px solid var(--bronze);
+            font-size: 0.95rem; color: var(--ink);
+        }
+        .platz .nr {
+            font-family: var(--font-display); color: var(--pompeji);
+            min-width: 1.4em; text-align: right;
+        }
+        .platz .art {
+            margin-left: auto; font-size: 0.78rem; color: var(--ink-soft);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .platz.fertig { opacity: 0.55; }
+        .platz.fertig .name { text-decoration: line-through; }
+        .platz.dran {
+            background: var(--putz-hell); border-color: var(--pompeji); border-left-width: 5px;
+            font-weight: bold;
+        }
+
+        /* ---------- Die Dauerwahl ---------- */
+        .dauer-wahl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .antwort-btn.gewaehlt {
+            border-color: var(--pompeji); border-width: 3px;
+            background: var(--putz-hell);
+        }
+        .folge-zeile {
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; flex-wrap: wrap;
+            font-size: 0.88rem; color: var(--ink-soft);
+        }
+        .folge-zeile input {
+            width: 72px; padding: 6px; text-align: center;
+            border: 1px solid var(--bronze); border-radius: 6px;
+            background: var(--putz-hell); color: var(--ink);
+            font-family: var(--font-body); font-size: 1rem;
+        }
+
+        /* ---------- Die Auswertung ---------- */
+        .bilanz { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .bilanz div {
+            background: var(--wand-tief); border: 1px solid var(--bronze);
+            border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 110px;
+        }
+        .bilanz b {
+            display: block; font-family: var(--font-display);
+            font-size: 1.9rem; color: var(--pompeji);
+        }
+        .bilanz span { font-size: 0.8rem; color: var(--ink-soft); }
+    </style>
+</head>
+<body>
+
+<a href="index.html" id="global-menu-btn" title="Zurück zum Hauptmenü">🏛️</a>
+
+<div class="huelle">
+    <h1 class="seiten-titel">Vokabelzeit</h1>
+    <p class="seiten-untertitel" id="untertitel">Kurz und dicht: mehrere Spiele hintereinander</p>
+
+    <div class="game-container">
+
+        <!-- ---------- 1. Startbild ---------- -->
+        <div id="bild-start" style="display:none; flex-direction:column; gap:14px;">
+            <div class="notice-box">
+                <h3>📜 So läuft's</h3>
+                <p>Du wählst einmal die Lektionen — danach geht es ohne Rückfrage durch
+                   mehrere Spiele: <strong>Wortschatz und Formen im Wechsel</strong>.
+                   Nach jeder Runde tippst du oben links auf <strong>⏱</strong> und kommst
+                   hierher zurück.</p>
+                <p style="margin-top:10px;">Die Folge wird aus dem <strong>Datum</strong>
+                   gewürfelt: Heute bekommt die ganze Klasse dieselben Spiele, morgen andere.
+                   Niemand bekommt etwas, das der Nachbar nicht auch hat.</p>
+            </div>
+
+            <div class="dauer-wahl" id="dauer-wahl"></div>
+
+            <div class="folge-zeile">
+                <label for="folge">Folge der Lehrkraft:</label>
+                <input type="number" id="folge" min="0" max="99" value="0">
+                <span>(0 = die des Tages)</span>
+            </div>
+
+            <button class="start-btn" id="btn-lektionen">Lektionen wählen und loslegen</button>
+            <a href="index.html" class="start-btn zweitrangig">Zurück zum Menü</a>
+        </div>
+
+        <!-- ---------- 2. Laufende Vokabelzeit ---------- -->
+        <div id="bild-lauf" style="display:none; flex-direction:column; gap:14px;">
+            <div class="uhr" id="uhr">10:00</div>
+            <div class="uhr-text" id="uhr-text"></div>
+            <div class="plan" id="plan"></div>
+            <button class="start-btn" id="btn-weiter">Weiter</button>
+            <button class="start-btn zweitrangig" id="btn-abbrechen">Vokabelzeit beenden</button>
+        </div>
+
+        <!-- ---------- 3. Auswertung ---------- -->
+        <div id="bild-ende" style="display:none; flex-direction:column; gap:14px;">
+            <h2 class="feedback-title" style="color:var(--pompeji);">Zeit ist um</h2>
+            <div class="bilanz" id="bilanz"></div>
+            <div class="plan" id="plan-ende"></div>
+            <div class="uhr-text" id="ende-text"></div>
+            <button class="start-btn" id="btn-neu">Noch eine Vokabelzeit</button>
+            <a href="index.html" class="start-btn zweitrangig">Zurück zum Menü</a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+/* Die anwählbaren Längen. Gemessen (latein-tests/probe-lernzeit.js) hat eine
+   Runde 8 bis 13 Fragen; in zehn Minuten sind das drei bis fünf Spiele.
+   Fünf Minuten sind eine Einstiegsübung, fünfzehn eine halbe Stunde geteilt. */
+const DAUERN = [
+    { sek: 300,  text: '5 Minuten',  klein: 'kurzer Einstieg' },
+    { sek: 600,  text: '10 Minuten', klein: 'die Vokabelzeit' },
+    { sek: 900,  text: '15 Minuten', klein: 'lange Übungsphase' }
+];
+let gewaehlteDauer = 600;
+let ticker = null;
+
+const ARTNAME = { wortschatz: 'Wortschatz', formen: 'Formen', satz: 'Satzbau' };
+
+function zeige(welches) {
+    ['start', 'lauf', 'ende'].forEach(b => {
+        document.getElementById('bild-' + b).style.display = (b === welches) ? 'flex' : 'none';
+    });
+}
+
+/* ---------- Der Messpunkt für die Auswertung ----------
+   Gezählt wird über die Kategorie-Zähler, nicht über den Vokabelkasten:
+   Scrīnium bedient den Kasten bewusst nicht (es gewichtet Phänomene, nicht
+   Lemmata) und fiele sonst aus der Bilanz heraus. */
+function messpunkt() {
+    const k = (LudiProgress.getAllProgress().achievements || {}).categories || {};
+    let fragen = 0, richtig = 0;
+    Object.keys(k).forEach(c => { fragen += k[c].total || 0; richtig += k[c].correct || 0; });
+    return { fragen: fragen, richtig: richtig };
+}
+
+/* ---------- Den Plan zeichnen ---------- */
+function zeichnePlan(ziel, z, fertigAlles) {
+    const el = document.getElementById(ziel);
+    el.innerHTML = '';
+    z.plan.forEach((datei, i) => {
+        const sp = LudiLernzeit.spiel(datei);
+        if (!sp) return;
+        /* Nach dem Ende ist alles, was angefangen wurde, "fertig" - vorher
+           nur das, was vor dem Zeiger liegt. */
+        const fertig = i < z.idx;
+        const dran = !fertigAlles && i === z.idx;
+        const d = document.createElement('div');
+        d.className = 'platz' + (fertig ? ' fertig' : '') + (dran ? ' dran' : '');
+        d.innerHTML = '<span class="nr"></span><span class="name"></span>' +
+                      '<span class="art"></span>';
+        d.querySelector('.nr').textContent = (i + 1) + '.';
+        d.querySelector('.name').textContent = sp.name;
+        d.querySelector('.art').textContent = ARTNAME[sp.art] || sp.art;
+        el.appendChild(d);
+    });
+}
+
+/* ---------- Die Uhr ---------- */
+function tick() {
+    const rest = LudiLernzeit.restzeit();
+    const uhr = document.getElementById('uhr');
+    uhr.textContent = LudiLernzeit.mmss(rest);
+    uhr.classList.toggle('knapp', rest <= 60);
+    if (rest <= 0) { zeigeEnde(); return; }
+
+    const naechste = LudiLernzeit.naechstes();
+    const sp = naechste ? LudiLernzeit.spiel(naechste) : null;
+    document.getElementById('uhr-text').textContent = sp
+        ? 'Als Nächstes: ' + sp.name
+        : 'Alle geplanten Spiele sind durch.';
+    const btn = document.getElementById('btn-weiter');
+    btn.textContent = sp ? 'Weiter: ' + sp.name : 'Vokabelzeit abschließen';
+}
+
+function zeigeLauf() {
+    const z = LudiLernzeit.stand();
+    if (!z) { zeigeStart(); return; }
+    if (LudiLernzeit.zeitUm()) { zeigeEnde(); return; }
+    document.getElementById('untertitel').textContent =
+        'bis Lektion ' + z.maxLektion + ' · Folge vom ' + LudiLernzeit.heute();
+    zeichnePlan('plan', z, false);
+    zeige('lauf');
+    tick();
+    if (ticker) clearInterval(ticker);
+    ticker = setInterval(tick, 1000);
+}
+
+function zeigeStart() {
+    if (ticker) { clearInterval(ticker); ticker = null; }
+    document.getElementById('untertitel').textContent =
+        'Kurz und dicht: mehrere Spiele hintereinander';
+    zeige('start');
+}
+
+function zeigeEnde() {
+    if (ticker) { clearInterval(ticker); ticker = null; }
+    const z = LudiLernzeit.beenden();
+    if (!z) { zeigeStart(); return; }
+
+    const jetzt = messpunkt();
+    const vorher = z.messpunkt || { fragen: 0, richtig: 0 };
+    const fragen = Math.max(0, jetzt.fragen - vorher.fragen);
+    const richtig = Math.max(0, jetzt.richtig - vorher.richtig);
+    const gespielt = z.gespielt.length;
+
+    document.getElementById('bilanz').innerHTML =
+        '<div><b>' + gespielt + '</b><span>Spiele</span></div>' +
+        '<div><b>' + fragen + '</b><span>Fragen</span></div>' +
+        '<div><b>' + (fragen ? Math.round(100 * richtig / fragen) + '%' : '—') +
+        '</b><span>richtig</span></div>';
+
+    /* Nur das Gespielte auflisten, nicht den ganzen Plan - was man nicht
+       mehr geschafft hat, ist keine Leistung und keine Schuld. */
+    zeichnePlan('plan-ende', { plan: z.plan.slice(0, z.idx), idx: z.idx }, true);
+    document.getElementById('ende-text').textContent = fragen
+        ? 'In ' + LudiLernzeit.mmss(z.dauer) + ' Minuten. Alles davon ist in deinem ' +
+          'Vokabelkasten und deinen Trophäen gelandet.'
+        : 'Diesmal ist keine Frage zusammengekommen — beim nächsten Mal.';
+    zeige('ende');
+}
+
+/* ---------- Die Dauerwahl ---------- */
+function baueDauerwahl() {
+    const box = document.getElementById('dauer-wahl');
+    box.innerHTML = '';
+    DAUERN.forEach(d => {
+        const b = document.createElement('button');
+        b.className = 'antwort-btn' + (d.sek === gewaehlteDauer ? ' gewaehlt' : '');
+        b.innerHTML = '<strong></strong><br><small></small>';
+        b.querySelector('strong').textContent = d.text;
+        b.querySelector('small').textContent = d.klein;
+        b.addEventListener('click', () => { gewaehlteDauer = d.sek; baueDauerwahl(); });
+        box.appendChild(b);
+    });
+}
+
+/* ---------- Start ---------- */
+document.getElementById('btn-lektionen').addEventListener('click', function () {
+    LessonFilter.show(globalVocabularyPool, function (gefiltert, lektionen) {
+        const maxLektion = Math.max.apply(null, lektionen);
+        const folge = Number(document.getElementById('folge').value) || 0;
+        const plan = LudiLernzeit.plan(gefiltert, maxLektion, folge);
+
+        /* Ablehnen VOR dem Start - dasselbe Muster wie in den Spielen.
+           Unter zwei Spielen ist es keine Abfolge mehr. */
+        if (plan.length < 2) {
+            alert('Für eine Vokabelzeit braucht es mindestens zwei Spiele, die mit dieser ' +
+                  'Auswahl laufen.\n\nBitte wähle mehr Lektionen aus.');
+            return;
+        }
+        LudiLernzeit.starten(plan, lektionen, maxLektion, gewaehlteDauer, messpunkt());
+        zeigeLauf();
+    });
+});
+
+document.getElementById('btn-weiter').addEventListener('click', function () {
+    const datei = LudiLernzeit.weiter();
+    if (!datei) { zeigeEnde(); return; }
+    location.href = datei;
+});
+
+document.getElementById('btn-abbrechen').addEventListener('click', zeigeEnde);
+document.getElementById('btn-neu').addEventListener('click', zeigeStart);
+
+baueDauerwahl();
+if (LudiLernzeit.laeuft()) zeigeLauf(); else zeigeStart();
+</script>
+</body>
+</html>

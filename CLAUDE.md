@@ -195,6 +195,67 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   die Siebung steht auf der Karte „rufen", aufgerufen wird *vocāre*, und die Kachel stammte
   von *clāmāre*. Gemessen kostet sie wenig: bis L12 fallen 42 von 386 Wörtern weg.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
+- `lernzeit.js` – **die Zehn-Minuten-Vokabelzeit** (Oktober 2026), eingebunden in den elf
+  Einzelspielen (NACH `lessonFilter.js`) und in `Lernzeit.html`.
+  **DAS TRAGENDE PRINZIP: DIE VOKABELZEIT IST EIN RAHMEN, KEIN UMBAU.** Kein Spiel weiß,
+  dass es Teil einer Vokabelzeit ist – keine neue Leiste, kein Eingriff in eine
+  Rundenschleife, keine verkürzte Runde. Das Modul greift an genau zwei Stellen an, die es
+  ohnehin schon gibt:
+  1. `LessonFilter.show` antwortet sofort mit der Auswahl vom Anfang der Vokabelzeit. Die
+     Spiele rufen den Filter auf wie immer und merken nichts. **Deshalb muss `lernzeit.js`
+     NACH `lessonFilter.js` stehen** – `test-lernzeit.js` prüft die Reihenfolge.
+  2. Der Haus-Knopf und jeder Link ins Hauptmenü führen nach `Lernzeit.html`.
+  **Warum keine Fortschrittsleiste im Spiel:** Es gibt keinen freien Rand. Oben links sitzt
+  der Haus-Knopf, oben quer der Fehlerbanner, unten in IssaJump die Steuerpfeile und in
+  Scrīnium das Regal. Eine feste Leiste verdeckte in jedem Vollbildspiel etwas und müsste
+  in jedem einzeln ausgerichtet werden. Der Haus-Knopf dagegen ist in allen elf Spielen
+  Zeichen für Zeichen derselbe.
+  - **Der Würfel hängt am DATUM, nicht am Gerät.** Vom Fachlehrer vorhergesagt: „Die 7er
+    beschweren sich, dass manche Issa springt bekommen haben und andere nicht." Die
+    Beschwerde gilt nicht dem Zufall – niemand stört sich daran, dass die Folge GESTERN
+    anders war. Sie gilt dem Unterschied zum Nachbarn im selben Moment. Also wird aus
+    Datum und Lektionsspanne gewürfelt (FNV-1a + mulberry32, **kein `Math.random`**):
+    Jedes iPad rechnet ohne Absprache dieselbe Folge aus. Dasselbe Prinzip wie beim Bingo.
+    Wer am selben Tag eine zweite Folge braucht, sagt eine Zahl an – die Lehrkraft ist der
+    Synchronisationskanal.
+  - **Die Plätze sind fest, gewürfelt wird nur innerhalb des Platzes.** `TAKT` lautet
+    Wortschatz – Formen – Wortschatz – Formen – Satzbau und wiederholt sich. Grund: Rein
+    gewürfelt käme eine Vokabelzeit aus vier Bedeutungsspielen heraus, denn **der Vorrat ist
+    schief** – gemessen (`probe-lernzeit.js`) stehen schon bei „bis L2" VIER Formenspiele
+    bereit, aber nur ZWEI für die Bedeutung. Auf „die hat Issa bekommen" lautet die Antwort
+    damit: du hattest auch eine Wortschatzrunde, nur eine andere.
+  - **In `SPIELE` steht KEINE Lektionszahl.** `tauglich` fragt die DATEN (gibt es
+    Adjektive? vier Wortfelder mit je vier Nomen?) oder die Konstante der Engine, aus der
+    auch das Spiel seine Sperre nimmt (`SentenceEngine.ACI_LESSON` für Arcus). Eine zweite
+    Zahl an dieser Stelle würde von der des Spiels abdriften, und dann stünde mitten in der
+    Vokabelzeit eine Absage auf dem Schirm. `test-lernzeit.js` startet deshalb **jedes
+    geplante Spiel wirklich** – 102 Starts über zehn Lektionsspannen.
+  - **Die Uhr ist ein absoluter Zeitpunkt, kein Guthaben.** Die Vokabelzeit ist ein Block im
+    Stundenplan und pausiert nicht, wenn jemand das iPad weglegt. Nach jedem Spiel wird
+    gefragt, ob noch Zeit ist – niemand wird mitten in einer Runde abgeschnitten, und jedes
+    Spiel behält seine eigene Länge. Wer schnell ist, schafft fünf Spiele, wer langsam ist
+    drei; beide sind zehn Minuten beschäftigt.
+  - **`Lernzeit.html` setzt `window.LUDI_LERNZEIT_HUB = true` VOR dem Einbinden.** Sie
+    braucht den echten Lektionsfilter, um die Auswahl überhaupt erst zu erfragen – ein
+    umgebogener Filter beantwortete dort die eigene Frage. Sie sagt das ausdrücklich,
+    statt dass das Modul aus dem Pfad rät: Geraten wäre in jsdom, hinter einem Proxy oder
+    unter einem anderen Dateinamen still falsch, und zwar in die gefährliche Richtung.
+  - **Der Rückweg hängt nicht am Standardverhalten des Links.** Beim Nachsehen im Browser
+    kam der Haus-Knopf auf mehreren Seiten gar nicht zum Zug – der Klick wurde abgefangen,
+    nachweislich auch OHNE Vokabelzeit und mit dem Original-Link ins Hauptmenü, also nichts,
+    was dieses Modul angerichtet hätte; im Projekt ist die Ursache nicht zu finden. Das darf
+    der einzige Weg zurück nicht aushalten müssen: Wer dort hängenbleibt, sitzt im Spiel
+    fest. Ein eigener Handler schickt die Seite deshalb selbst weiter.
+  - **Die wichtigste Probe heißt „ohne Vokabelzeit ändert sich nichts".** Elf Spiele haben
+    eine Zeile dazubekommen, und keines darf sich im normalen Betrieb anders verhalten:
+    Haus-Knopf auf `index.html`, Links ins Hauptmenü, und der Lektionsfilter fragt wieder
+    nach. `gegenprobe-lernzeit.js` baut vierzehn Schäden ein und findet alle.
+  - **Zwei Testfehler, beide von der Gegenprobe aufgedeckt:** Die Sperre gegen „zweimal
+    dasselbe Spiel hintereinander" KANN mit dem heutigen Takt gar nicht feuern (benachbarte
+    Plätze haben immer verschiedene Arten). Sie bleibt trotzdem – wer den Takt ändert,
+    braucht sie –, aber der Test entartet den Takt jetzt absichtlich, sonst wäre die Regel
+    ungeprüft. Und die Probe „ohne Vokabelzeit" starb mit einem ReferenceError statt mit
+    einem Befund, als ein Spiel seine Einbindung verlor.
 
 ## Aktive Spiele (Stand zuletzt)
 
@@ -952,6 +1013,19 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     Rückseite **6,08**. Die Rückseite stand zuerst bei 2,55 (Gold auf Porphyr) und damit
     unter den 3,0, die selbst große Schrift braucht; jetzt Marmorcreme – dieselbe Farbe,
     die die Porphyr-Knöpfe ohnehin benutzen.
+- **Lernzeit.html** – **die Vokabelzeit** (Oktober 2026). Kein Spiel, sondern der Rahmen um
+  mehrere: Einmal die Lektionen wählen, dann ohne Rückfrage durch mehrere Spiele, bis die
+  Uhr abgelaufen ist. 5, 10 oder 15 Minuten. Die Mechanik steht in `lernzeit.js` (siehe
+  oben); diese Seite ist der Taktgeber – Startbild, laufende Uhr mit dem Plan, Auswertung.
+  - **Die Auswertung zählt über die KATEGORIE-Zähler, nicht über den Vokabelkasten.
+    Scrīnium bedient den Kasten bewusst nicht** (es gewichtet Phänomene, nicht Lemmata) und
+    fiele sonst aus der Bilanz heraus. Gemessen wird als Differenz zu einem Messpunkt, der
+    beim Start gespeichert wird.
+  - **Draußen bleiben die Gruppenspiele** (Fliegenklatsche, Bingo, Bomba, Memoria, Duell),
+    Silentium und das Kulturquiz: Eine Vokabelzeit läuft auf EINEM Gerät, allein.
+  - Im Hauptmenü steht sie ganz oben, über der Trophäensammlung, und **ohne**
+    Fortschrittsband – der Fortschritt landet in den einzelnen Spielen.
+
 - **Quartett.html** – **Quaterniō**, das Wortfeld-Quartett (Oktober 2026). Eine Person gegen
   das GERÄT: Beide halten Karten, jede trägt ein lateinisches Wort und seine Bedeutung.
   Nutzt `thema` aus `vocabulary.js` – und nichts sonst von der Semantik.
