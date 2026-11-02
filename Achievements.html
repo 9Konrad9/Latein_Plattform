@@ -9,10 +9,25 @@
     <link rel="stylesheet" href="theme.css">
     <style>
         :root {
-            --tier-bronze: #b08d57;
-            --tier-silver: #c8ccd0;
-            --tier-gold: #e5c34d;
-            --tier-diamond: #b9e6ff;
+            /* DIE STUFENFARBEN SIND SCHRIFTFARBEN - und waren als solche
+               unlesbar. Beim Messen für die drei neuen Stufen kam heraus:
+               Auf dem Kartengrund (--putz, #f4ecdb) lagen die vier alten bei
+               Bronze 2,63 · Silber 1,37 · Gold 1,46 · Diamant 1,13. Nötig
+               sind 4,5. „Diamant erreicht!" stand also praktisch unsichtbar
+               da - ausgerechnet die Zeile, die die Belohnung ausspricht.
+               Das Metall ist geblieben, nur dunkler: Bronze 5,30 · Silber
+               4,96 · Gold 5,03 · Diamant 4,97 (ein tiefes Stahlblau - ein
+               helles Diamantblau IST auf hellem Grund nicht lesbar zu
+               bekommen). Alle vier auch auf --wand noch über 4,1. */
+            --tier-bronze: #7d5a2b;
+            --tier-silver: #5f666c;
+            --tier-gold: #7d6010;
+            --tier-diamond: #356b86;
+            /* Die drei römischen Ehren darüber, gemessen auf --putz:
+               Lorbeer 4,82 · Purpur 10,19 · Triumphus 5,84. */
+            --tier-lorbeer: #3f7332;
+            --tier-purpur: #5f1b4e;
+            --tier-triumphus: #96410e;
         }
         * { box-sizing: border-box; }
         body {
@@ -96,7 +111,35 @@
         .tier-silver-text { color: var(--tier-silver); }
         .tier-gold-text { color: var(--tier-gold); }
         .tier-diamond-text { color: var(--tier-diamond); }
+        .tier-lorbeer-text { color: var(--tier-lorbeer); }
+        .tier-purpur-text { color: var(--tier-purpur); }
+        .tier-triumphus-text { color: var(--tier-triumphus); }
         .tier-none-text { color: var(--ink-soft); }
+
+        /* Die drei neuen Stufen haben noch KEIN eigenes Abzeichenbild - die
+           vier vorhandenen sind eigenständige Zeichnungen (300x300), kein
+           umgefärbtes Motiv, lassen sich also nicht nachbauen. Bis die drei
+           Bilder da sind, trägt die Karte das Diamant-Abzeichen und
+           unterscheidet die Stufe durch einen farbigen Ring. Das ist kein
+           Notbehelf, der etwas verdeckt: Die Stufe steht daneben im Klartext,
+           und der Ring nimmt ihre Farbe auf. */
+        .badge-ring {
+            border-radius: 50%;
+            padding: 3px;
+            display: inline-block;
+            line-height: 0;
+        }
+        .badge-ring.tier-lorbeer-ring { box-shadow: 0 0 0 3px var(--tier-lorbeer); }
+        .badge-ring.tier-purpur-ring { box-shadow: 0 0 0 3px var(--tier-purpur); }
+        .badge-ring.tier-triumphus-ring { box-shadow: 0 0 0 3px var(--tier-triumphus); }
+
+        /* Wo eine Leiter kürzer ist als sieben Stufen, steht am Ende nicht
+           Triumphus - und das muss dastehen, sonst sucht jemand ewig nach
+           einer Stufe, die es für diese Trophäe gar nicht gibt. */
+        .hoechststufe {
+            font-size: 0.72rem; color: var(--ink-soft);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
 
         .progress-track {
             background: var(--putz-hell); border-radius: 5px; height: 10px; overflow: hidden; margin-bottom: 4px;
@@ -139,14 +182,36 @@
     </div>
 
     <script>
-        const BADGE_IMAGES = ['', 'assets/achievements/badge_bronze.png', 'assets/achievements/badge_silver.png', 'assets/achievements/badge_gold.png', 'assets/achievements/badge_diamond.png'];
-        const TIER_CLASSES = ['tier-none-text', 'tier-bronze-text', 'tier-silver-text', 'tier-gold-text', 'tier-diamond-text'];
+        /* Ein Eintrag je Stufe, in der Reihenfolge von TIER_NAMES. Die drei
+           obersten teilen sich vorerst das Diamant-Abzeichen und werden durch
+           ihren Ring unterschieden - siehe die Notiz bei .badge-ring.
+           `null` beim Ring heißt: keiner, das Abzeichen spricht für sich. */
+        const STUFEN = [
+            { bild: 'assets/achievements/badge_bronze.png',  text: 'tier-bronze-text',    ring: null },
+            { bild: 'assets/achievements/badge_silver.png',  text: 'tier-silver-text',    ring: null },
+            { bild: 'assets/achievements/badge_gold.png',    text: 'tier-gold-text',      ring: null },
+            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-diamond-text',   ring: null },
+            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-lorbeer-text',   ring: 'tier-lorbeer-ring' },
+            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-purpur-text',    ring: 'tier-purpur-ring' },
+            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-triumphus-text', ring: 'tier-triumphus-ring' }
+        ];
 
         function renderCard(a) {
             const hasTier = a.tier > 0;
-            const badgeSrc = hasTier ? BADGE_IMAGES[a.tier] : BADGE_IMAGES[1]; // ungefärbt zeigen wir trotzdem Bronze-Silhouette, aber gesperrt
-            const tierLabel = hasTier ? `${LudiProgress.TIER_NAMES[a.tier - 1]} erreicht!` : 'Noch nicht freigeschaltet';
-            const tierClass = TIER_CLASSES[a.tier];
+            /* Ungeholt zeigen wir trotzdem die Bronze-Silhouette, aber gesperrt. */
+            const stufe = STUFEN[Math.max(a.tier, 1) - 1];
+            const badgeSrc = stufe.bild;
+            /* Wo die Leiter kürzer ist als sieben Stufen, heißt die oberste
+               eben Diamant, Lorbeer oder Purpur - und das wird gesagt. */
+            const oberste = LudiProgress.TIER_NAMES[a.thresholds.length - 1];
+            const amEnde = hasTier && a.tier === a.thresholds.length;
+            const tierLabel = hasTier
+                ? `${LudiProgress.TIER_NAMES[a.tier - 1]} erreicht!` +
+                  (amEnde && a.thresholds.length < LudiProgress.TIER_NAMES.length
+                      ? ` <span class="hoechststufe">Höchststufe</span>` : '')
+                : 'Noch nicht freigeschaltet';
+            const tierClass = hasTier ? stufe.text : 'tier-none-text';
+            const ringClass = hasTier && stufe.ring ? ' ' + stufe.ring : '';
             const maxThreshold = a.thresholds[a.thresholds.length - 1];
             const progressBase = a.tier > 0 ? a.thresholds[a.tier - 1] : 0;
             const progressTarget = a.nextThreshold !== null ? a.nextThreshold : maxThreshold;
@@ -159,7 +224,7 @@
 
             return `
                 <div class="achievement-card ${hasTier ? '' : 'locked'}">
-                    <img class="badge-img" src="${badgeSrc}" alt="${LudiProgress.TIER_NAMES[Math.max(a.tier,1) - 1]}-Abzeichen">
+                    <span class="badge-ring${ringClass}"><img class="badge-img" src="${badgeSrc}" alt="${LudiProgress.TIER_NAMES[Math.max(a.tier,1) - 1]}-Abzeichen"></span>
                     <div class="achievement-info">
                         <div class="achievement-title">${a.icon} ${a.title}</div>
                         <div class="achievement-tier-label ${tierClass}">${tierLabel}</div>
@@ -172,9 +237,14 @@
 
         function render() {
             const overview = LudiProgress.getAchievementOverview();
-            const totalUnlocked = overview.reduce((sum, a) => sum + a.tier, 0);
-            const totalPossible = overview.length * 4;
-            document.getElementById('total-badge').innerText = `${totalUnlocked} von ${totalPossible} Stufen freigeschaltet`;
+            /* Beide Zahlen aus EINER Quelle. Hier stand `overview.length * 4`
+               - und dieselbe feste Vier noch einmal im Hauptmenü. Seit die
+               Leitern verschieden lang sind (sieben Stufen, wo es nach oben
+               offen ist, weniger unter einer Decke), wäre das an beiden
+               Stellen gleichzeitig falsch. */
+            const summe = LudiProgress.getTierSummary();
+            document.getElementById('total-badge').innerText =
+                `${summe.freigeschaltet} von ${summe.moeglich} Stufen freigeschaltet`;
 
             /* Jede Trophäe sagt selbst, wohin sie gehört (`bereich` in
                progress.js). Vorher stand hier eine feste Liste von vier

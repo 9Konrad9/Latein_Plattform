@@ -623,6 +623,11 @@ function pruefeQuartette(wer, still) {
         if (!still && wer === 'du') {
             melde('<strong>Quartett!</strong> ' + esc(feldName(voll)) + ' ist vollständig: ' +
                   karten.map(wort).join(', ') + '.', 'gut');
+            /* Die Trophäe „Kartensammler" (November 2026): nur die EIGENEN
+               Quartette, und nicht die, die beim Austeilen schon auf der Hand
+               lagen (`still` ist dann gesetzt) - die hat niemand erspielt. */
+            const unlock = LudiProgress.recordCount('quartette', 1);
+            if (unlock) AchievementToast.show(unlock);
         }
     }
 }

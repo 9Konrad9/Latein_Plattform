@@ -245,6 +245,11 @@ function zeigeEnde() {
     const z = LudiLernzeit.beenden();
     if (!z) { zeigeStart(); return; }
 
+    /* Die Trophäe „Stammgast" (November 2026). Gezählt wird nur, wer
+       WIRKLICH gespielt hat: `gespielt` ist leer, wenn jemand die Vokabelzeit
+       startet und sofort abbricht - ein Klick wäre sonst eine Stufe. */
+    if (z.gespielt && z.gespielt.length) LudiProgress.recordCount('lernzeiten', 1);
+
     const jetzt = messpunkt();
     const vorher = z.messpunkt || { fragen: 0, richtig: 0 };
     const fragen = Math.max(0, jetzt.fragen - vorher.fragen);

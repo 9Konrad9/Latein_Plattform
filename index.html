@@ -302,6 +302,12 @@
                 <a href="IssaJump.html" class="play-btn">Losspringen</a>
             </div>
 
+            <!-- Kein Fortschrittsband, wie bei allen Spielen zu zweit: Das
+                 Duell zählt zwei Spielerleben, keine richtigen Antworten - es
+                 hat gar keine Lernquote, die hier stehen könnte. Das Band war
+                 trotzdem da und zeigte dauerhaft „Noch nicht gespielt", weil
+                 Duell.html nie saveGameResult() aufruft. Gefunden beim Bauen
+                 der neuen Trophäenstufen (November 2026). -->
             <div class="game-card" data-game="duell">
                 <div class="game-icon">⚔️</div>
                 <div class="game-title">Gladiatoren-Duell</div>
@@ -309,7 +315,6 @@
                 <div class="game-desc">
                     1-gegen-1 am iPad. Bedeutung, Grundform und Wortklasse - wer schneller und sicherer antwortet, gewinnt den Kampf!
                 </div>
-                <div class="progress-badge"></div>
                 <a href="Duell.html" class="play-btn">Duell starten</a>
             </div>
 
@@ -526,11 +531,12 @@
         if (typeof LudiProgress !== 'undefined') {
             const summaryEl = document.getElementById('achievements-summary');
             if (summaryEl) {
-                const overview = LudiProgress.getAchievementOverview();
-                const unlocked = overview.reduce((sum, a) => sum + a.tier, 0);
-                const possible = overview.length * 4;
+                /* Dieselbe Quelle wie auf der Trophäenseite - hier stand
+                   zweimal dieselbe feste Vier, und die Leitern sind seit
+                   November 2026 verschieden lang. */
+                const summe = LudiProgress.getTierSummary();
                 summaryEl.classList.add('has-score');
-                summaryEl.innerText = `🏅 ${unlocked} von ${possible} Stufen freigeschaltet`;
+                summaryEl.innerText = `🏅 ${summe.freigeschaltet} von ${summe.moeglich} Stufen freigeschaltet`;
             }
         }
 

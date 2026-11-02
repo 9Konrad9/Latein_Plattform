@@ -1896,6 +1896,91 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
   (Kulturwissen, kein Wortschatz).
 
+- **SIEBEN STUFEN statt vier** (November 2026, von den Schüler:innen gewünscht: viele standen
+  auf mehreren Trophäen schon auf Diamant und hatten nichts mehr vor sich).
+  **Bronze → Silber → Gold → Diamant → Lorbeer → Purpur → Triumphus.** Die ersten vier
+  bleiben Materialien, die drei neuen sind römische Ehren, und zwar in der Reihenfolge, in
+  der Rom sie vergab: der Lorbeerkranz für einen Sieg, die purpurne *toga picta*, die nur
+  der Triumphator trug, und zuletzt der Triumphzug selbst. Ab Diamant geht es also nicht
+  mehr um Material, sondern um Ehre – das lässt sich einer Klasse in einem Satz erklären.
+  - **DIE REGEL: JEDE LEITER IST SO LANG, WIE DIE SACHE SIE TRÄGT.** Sieben Stufen gibt es
+    nur, wo die Zahl nach oben offen ist. Unter einer Decke hört die Leiter früher auf, und
+    ihre oberste Stufe heißt dann eben Diamant oder Lorbeer; die Trophäenseite schreibt
+    „Höchststufe" dazu, sonst sucht jemand ewig nach einer Stufe, die es dort nicht gibt.
+
+    | Trophäe | vorher | jetzt | Stufen | Decke |
+    |---|---|---|---|---|
+    | Serien-Meister | 5/10/20/50 | 5/10/20/35/50/75/**100** | 7 | – |
+    | Fleißiges Bienchen | 100/500/1000/2500 | 100/300/700/1500/2500/4000/**6000** | 7 | – |
+    | Beständigkeit | 3/7/14/30 | 2/5/10/20/40/70/**100** | 7 | – |
+    | Himmelsstürmerin | 200/500/1000/2000 | 150/350/700/1200/2000/3000/**4000** | 7 | – |
+    | ~40 Kategorien | 10/25/50/100 | 5/15/30/60/110/200/**350** | 7 | – |
+    | Vokabel-Meisterschaft | 50/200/500/900 | 25/100/250/500/700/**900** | 6 | 998 Wörter |
+    | Archivmeister | 15/30/45/**60** | 10/20/30/40/**50** | 5 | 56 Rollen |
+    | Tabellenfest | 10/20/32/**45** | 8/15/24/32/**40** | 5 | 45 Rollen |
+    | Doppelblick | 4/10/16/**24** | 3/6/10/13/**16** | 5 | 18 Formen |
+
+  - **DREI HÖCHSTSTUFEN WAREN GAR NICHT ERREICHBAR**, und das ist beim Nachrechnen für die
+    neuen Stufen herausgekommen, nicht im Unterricht: Mit Scrīniums heutigen Taktzahlen
+    (7000 → 1100 ms, Faktor 0,96, sechs Plätze) kommt die schnellste gerechnete Spielerin –
+    1,5 Sekunden je Rolle – auf **56 Rollen**. Archivmeisters Diamant stand bei 60, lag also
+    DARÜBER; Doppelblicks 24 hätten rund 75 Rollen gebraucht; Tabellenfests 45 lagen exakt
+    AUF der Decke. **Die Erweiterung und die Reparatur sind hier dieselbe Änderung.**
+    Eine Stufe, die man nicht erreichen kann, sieht aus wie eine, die man noch nicht erreicht
+    hat – deshalb fällt so etwas nie von selbst auf.
+  - **DIE UNTEREN SPROSSEN SIND NACH UNTEN GERÜCKT, NIE NACH OBEN.** Wer heute Diamant hat,
+    darf durch das Update keine Stufe verlieren – ein Abstieg wäre das Gegenteil dessen, was
+    gewünscht war, und würde nicht gemeldet, weil er wie ein eigener Irrtum aussieht.
+    `test-achievements.js` prüft das als Invariante gegen den alten Stand, Zeichen für
+    Zeichen: Für jede Trophäe und jeden Wert muss die neue Stufe mindestens so hoch sein wie
+    die alte. Nebenwirkung, die man kennen muss: Beim ersten Spielen nach dem Update steigen
+    viele gleichzeitig auf – das ist gewollt und sieht wie ein Feuerwerk aus.
+  - **Vier neue Trophäen**, alle an genau EINER neuen Zählstelle:
+    *Weitgereist* 🧭 (verschiedene Spiele, 2/4/6/8/10/11/12), *Hartnäckig* 🔁 (in der
+    Wiederholung nachgearbeitete Vokabeln, 10/25/50/100/200/350/600), *Stammgast* ⏱️
+    (abgeschlossene Vokabelzeiten, 1/3/7/15/30/55/90) und *Kartensammler* 🃏 (abgelegte
+    Quartette, 5/15/30/60/110/200/350).
+    - `recordCount(name, delta)` summiert auf – anders als `recordBest` (nur das Beste) und
+      `recordVocabAttempt` (ein einzelnes Wort). **Der Name IST die Trophäen-Kennung**, es
+      gibt also keine zweite Tabelle wie `BEST_ACHIEVEMENTS`, die abdriften könnte.
+    - Die Zählstellen stehen dort, wo die Sache EINMAL vorkommt: `review.js` (jede
+      Wiederholungsrunde endet dort, nicht in den zehn Spielen), `Lernzeit.html`,
+      `Quartett.html`. `test-achievements.js` prüft, dass jede Marke ihre Stelle hat –
+      eine Trophäe, die niemand füttert, bliebe für immer auf null.
+    - **Weitgereist kostet gar keine Zählstelle**: Welche Spiele jemand gespielt hat, steht
+      längst in `games`. Gezählt wird über `SPIEL_GRUPPEN`, weil Pronomina! seine vier Modi
+      unter vier Kennungen speichert, aber EIN Spiel ist; wer stumpf die Schlüssel zählte,
+      käme mit vier Pronomina-Runden auf vier Spiele. Der Test hält die Liste gegen die
+      Kennungen, die die Spiele wirklich speichern – in beide Richtungen.
+  - **„X von Y Stufen" kommt aus EINER Quelle** (`getTierSummary()`). Vorher rechneten das
+    Hauptmenü und die Trophäenseite jeweils `overview.length * 4` – dieselbe feste Vier an
+    zwei Stellen, und bei verschieden langen Leitern beide falsch.
+  - **DIE STUFENFARBEN SIND SCHRIFTFARBEN – und waren unlesbar.** Beim Messen für die drei
+    neuen kam heraus: Auf dem Kartengrund (`--putz`) lagen Bronze bei **2,63**, Silber 1,37,
+    Gold 1,46 und Diamant **1,13**; nötig sind 4,5. „Diamant erreicht!" stand also praktisch
+    unsichtbar da – ausgerechnet die Zeile, die die Belohnung ausspricht. Das Metall ist
+    geblieben, nur dunkler: 5,30 / 4,96 / 5,03 / 4,97. Die drei neuen: Lorbeer 4,82,
+    Purpur 10,19, Triumphus 5,84.
+  - **Die drei neuen Stufen haben noch KEIN eigenes Abzeichenbild.** Die vier vorhandenen
+    sind eigenständige Zeichnungen (300×300, je rund 52 KB), kein umgefärbtes Motiv – sie
+    lassen sich also nicht nachbauen. Bis die Bilder da sind, trägt die Karte das
+    Diamant-Abzeichen mit einem farbigen **Ring** in der Stufenfarbe; die Stufe steht
+    ohnehin im Klartext daneben. Wer die Bilder ergänzt, trägt sie in `STUFEN` in
+    `Achievements.html` ein – eine Zeile je Stufe.
+  - **Dabei gefundener Nebenschaden, jetzt behoben:** Das **Gladiatoren-Duell** trug im
+    Hauptmenü ein Fortschrittsband, ruft aber nie `saveGameResult()` – dort stand dauerhaft
+    „Noch nicht gespielt". Das Band ist weg, wie bei allen Spielen zu zweit: Das Duell zählt
+    zwei Spielerleben, keine richtigen Antworten, und hat gar keine Lernquote, die dort
+    stehen könnte. **Offen und bewusst nicht mitgeändert:** Es bedient trotzdem den
+    Vokabelkasten und die Kategorien – anders als Memoria und das Bingo. Ob die Antworten
+    zweier Personen in den Kasten EINES Geräts gehören, ist eine fachliche Frage und gehört
+    besprochen. Solange das offen ist, zählt das Duell auch nicht für *Weitgereist*.
+  - **Zwei Testfehler, beide von `gegenprobe-achievements.js` aufgedeckt:** Die Gegenprobe
+    erwartete drei Höchststufen über der Decke – es sind zwei, die dritte liegt exakt
+    darauf, und das ist nicht dasselbe. Und die Quelltextprobe suchte nach
+    `overview.length * 4`, übersah damit aber `getAchievementOverview().length * 4` –
+    denselben Fehler mit anderem Namen.
+
 - **Jede Trophäe sagt selbst, wohin sie gehört** (`bereich`: `allgemein` / `bestleistung` /
   `kategorie`). `Achievements.html` hatte die Zuordnung als feste Liste von vier Kennungen, und
   alles, was nicht darin stand, galt als Wortart – die neue Höhen-Trophäe erschien dadurch

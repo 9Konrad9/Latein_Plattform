@@ -19,9 +19,13 @@ const LudiProgress = (() => {
                     totalAnswered: 0,
                     daysPlayed: [],
                     categories: {},
+                    zaehler: {},      // aufsummierte Marken (wiederholt, lernzeiten, quartette)
                     unlockedTiers: {} // z.B. { 'streak': 2, 'cat_Imperativ': 1 } - höchste bereits gezeigte Stufe (0=keine)
                 };
             }
+            /* Altbestand ohne das Fach absichern - wer vor November 2026
+               gespielt hat, hat keinen `zaehler`-Zweig im Speicher. */
+            if (!data.achievements.zaehler) data.achievements.zaehler = {};
             return data;
         } catch (e) {
             console.warn('Fortschritt konnte nicht geladen werden:', e);
@@ -94,6 +98,42 @@ const LudiProgress = (() => {
         return { neu: true, wert: wert, unlock: unlock };
     }
 
+    /**
+     * Eine Marke, die sich AUFSUMMIERT - anders als recordBest, das nur das
+     * Beste behält, und anders als recordVocabAttempt, das ein einzelnes Wort
+     * führt. Gebraucht von den drei Trophäen, die etwas zählen, das über
+     * Runden hinweg wächst: nachgearbeitete Vokabeln, abgeschlossene
+     * Vokabelzeiten, abgelegte Quartette.
+     *
+     * Der Name IST die Trophäen-Kennung. Absicht: recordBest braucht dafür
+     * eine zweite Tabelle (BEST_ACHIEVEMENTS), und genau die war schon
+     * einmal die Stelle, an der eine Trophäe nie gefunden wurde. Hier gibt
+     * es nichts, was auseinanderlaufen könnte.
+     *
+     * Rückgabe: das neu freigeschaltete Achievement, oder null.
+     */
+    function recordCount(name, delta) {
+        const data = _load();
+        const z = data.achievements.zaehler;
+        z[name] = (z[name] || 0) + (delta || 1);
+        const def = FIXED_ACHIEVEMENTS.find(f => f.id === name);
+        const unlock = def
+            ? _checkUnlock(data, def.id, z[name], def.thresholds,
+                           { icon: def.icon, title: def.title, unit: def.unit })
+            : null;
+        _save(data);
+        return unlock;
+    }
+
+    function getCount(name) {
+        return _load().achievements.zaehler[name] || 0;
+    }
+
+    /** Wie viele der zwölf Spiele hat dieses Gerät schon gespielt? */
+    function _breite(data) {
+        return SPIEL_GRUPPEN.filter(gruppe => gruppe.some(id => data.games[id])).length;
+    }
+
     function getBest(gameId, name) {
         const spiel = _load().games[gameId];
         return (spiel && spiel.bests && spiel.bests[name]) || 0;
@@ -154,7 +194,15 @@ const LudiProgress = (() => {
         const u2 = _checkUnlock(data, 'total', a.totalAnswered, FIXED_ACHIEVEMENTS[1].thresholds, { icon: FIXED_ACHIEVEMENTS[1].icon, title: FIXED_ACHIEVEMENTS[1].title, unit: FIXED_ACHIEVEMENTS[1].unit });
         const u3 = _checkUnlock(data, 'mastery', greenCount, FIXED_ACHIEVEMENTS[2].thresholds, { icon: FIXED_ACHIEVEMENTS[2].icon, title: FIXED_ACHIEVEMENTS[2].title, unit: FIXED_ACHIEVEMENTS[2].unit });
         const u4 = _checkUnlock(data, 'days', a.daysPlayed.length, FIXED_ACHIEVEMENTS[3].thresholds, { icon: FIXED_ACHIEVEMENTS[3].icon, title: FIXED_ACHIEVEMENTS[3].title, unit: FIXED_ACHIEVEMENTS[3].unit });
-        [u1, u2, u3, u4].forEach(u => { if (u) unlocks.push(u); });
+        /* „Weitgereist" hängt an `games`, nicht an dieser Antwort - geprüft
+           wird es trotzdem hier, weil saveGameResult() seinen Rückgabewert
+           nirgends auswertet und ein dreizehnter Aufrufer dafür zu viel wäre.
+           Folge, die man kennen muss: Die Stufe erscheint erst bei der ersten
+           ANTWORT nach dem neuen Spiel, nicht schon beim Speichern. */
+        const def5 = FIXED_ACHIEVEMENTS.find(f => f.id === 'breite');
+        const u5 = _checkUnlock(data, 'breite', _breite(data), def5.thresholds,
+                                { icon: def5.icon, title: def5.title, unit: def5.unit });
+        [u1, u2, u3, u4, u5].forEach(u => { if (u) unlocks.push(u); });
 
         _save(data);
         return unlocks;
@@ -302,7 +350,32 @@ const LudiProgress = (() => {
     // ACHIEVEMENTS
     // ============================================================
 
-    const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Diamant'];
+    /* SIEBEN STUFEN seit November 2026, gewünscht von den Schüler:innen: Viele
+       standen auf mehreren Trophäen schon auf Diamant und hatten nichts mehr
+       vor sich.
+
+       Die ersten vier bleiben Materialien, die drei neuen sind römische EHREN,
+       und zwar in der Reihenfolge, in der Rom sie vergab: der Lorbeerkranz
+       (laurea) für einen Sieg, die purpurne toga picta, die nur der
+       Triumphator trug, und zuletzt der Triumphzug selbst - die seltenste
+       Auszeichnung, die der Senat zu vergeben hatte. Ab Diamant geht es also
+       nicht mehr um Material, sondern um Ehre; das lässt sich einer Klasse in
+       einem Satz erklären.
+
+       DIE REGEL, AN DER ALLES HÄNGT: JEDE LEITER IST SO LANG, WIE DIE SACHE
+       SIE TRÄGT. Sieben Stufen gibt es nur, wo die Zahl nach oben offen ist.
+       Wo eine Decke steht - der Wortschatz hat 998 Wörter, Scrīniums Pult
+       läuft irgendwann voll -, hört die Leiter früher auf, und ihre oberste
+       Stufe heißt dann eben Diamant, Lorbeer oder Purpur. Eine Stufe, die
+       niemand erreichen kann, ist keine Stufe, sondern ein gebrochenes
+       Versprechen; `test-achievements.js` rechnet jede Decke nach.
+
+       UND: DIE UNTEREN SPROSSEN SIND NACH UNTEN GERÜCKT, nie nach oben. Wer
+       heute Diamant hat, darf durch das Update keine Stufe verlieren - ein
+       Abstieg wäre genau das Gegenteil dessen, was gewünscht war. Geprüft
+       wird das als Invariante: Für jede Trophäe und jeden Wert muss die neue
+       Stufe mindestens so hoch sein wie die alte. */
+    const TIER_NAMES = ['Bronze', 'Silber', 'Gold', 'Diamant', 'Lorbeer', 'Purpur', 'Triumphus'];
 
     // Die festen Achievements. Die ersten vier sind spielübergreifend und
     // hängen an recordVocabAttempt; das fünfte gehört zu EINEM Spiel und hängt
@@ -310,10 +383,19 @@ const LudiProgress = (() => {
     // Die Indizes 0 bis 3 werden weiter oben einzeln angesprochen - neue
     // Einträge deshalb HINTEN anhängen.
     const FIXED_ACHIEVEMENTS = [
-        { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 50], bereich: 'allgemein' },
-        { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 500, 1000, 2500], bereich: 'allgemein' },
-        { id: 'mastery', icon: '🟢', title: 'Vokabel-Meisterschaft', unit: 'Vokabeln auf Grün', thresholds: [50, 200, 500, 900], bereich: 'allgemein' },
-        { id: 'days', icon: '📅', title: 'Beständigkeit', unit: 'verschiedene Tage gespielt', thresholds: [3, 7, 14, 30], bereich: 'allgemein' },
+        { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 35, 50, 75, 100], bereich: 'allgemein' },
+        /* 6000 statt 2500 ganz oben: Eine Vokabelzeit von zehn Minuten bringt
+           gemessen rund 40 Fragen (vier Spiele à 8-13). Zweimal die Woche über
+           ein Schuljahr sind das gut 3000 - der Triumphus liegt also bei etwa
+           zwei Jahren regelmäßigen Übens. Weiter oben wäre er bis zum Abitur
+           nicht zu holen. */
+        { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 300, 700, 1500, 2500, 4000, 6000], bereich: 'allgemein' },
+        /* SECHS Stufen, nicht sieben: Der Wortschatz hat 998 Wörter, und für
+           Grün braucht jedes VIER Treffer in Folge. Die alte Höchststufe von
+           900 sind schon 90 % davon - darüber ist keine Stufe mehr, sondern
+           eine Mauer. Die neuen Sprossen liegen deshalb alle DARUNTER. */
+        { id: 'mastery', icon: '🟢', title: 'Vokabel-Meisterschaft', unit: 'Vokabeln auf Grün', thresholds: [25, 100, 250, 500, 700, 900], bereich: 'allgemein' },
+        { id: 'days', icon: '📅', title: 'Beständigkeit', unit: 'verschiedene Tage gespielt', thresholds: [2, 5, 10, 20, 40, 70, 100], bereich: 'allgemein' },
         /* Issas Höhe ist ausnahmsweise eine SPIELleistung - und doch eine
            ehrliche Lernmarke: Höher kommt nur, wer trifft. Drei Herzen enden
            den Lauf, und eine Antwortreihe liegt je drei Plattformreihen
@@ -325,25 +407,85 @@ const LudiProgress = (() => {
            "Formen & Wortarten". Die Höhe erschien dadurch zwischen den
            Wortarten. Wer hier eine Trophäe ergänzt, vergisst die Liste dort
            sonst wieder. */
-        { id: 'hoehe', icon: '☁️', title: 'Himmelsstürmerin', unit: 'Meter mit Issa erklettert', thresholds: [200, 500, 1000, 2000], bereich: 'bestleistung' },
+        { id: 'hoehe', icon: '☁️', title: 'Himmelsstürmerin', unit: 'Meter mit Issa erklettert', thresholds: [150, 350, 700, 1200, 2000, 3000, 4000], bereich: 'bestleistung' },
 
         /* Scrīnium. Die Schwellen sind aus der Taktsimulation abgeleitet
            (latein-tests/probe-takt.js), nicht geschätzt: Gegen fünf Tempi von
            1,5 bis 6,5 Sekunden je Rolle kommen 56 / 47 / 40 / 27 / 18 Rollen
            heraus. Die unterste Stufe soll also fast jede erreichen, die
            oberste über der schnellsten simulierten Spielerin liegen. */
-        { id: 'rollen', icon: '📜', title: 'Archivmeister', unit: 'Rollen in einer Runde einsortiert', thresholds: [15, 30, 45, 60], bereich: 'bestleistung' },
+        /* FÜNF Stufen, und die oberste bei 50 statt 60. Beim Nachrechnen für
+           die neuen Stufen kam heraus: Der alte Diamant war NICHT ERREICHBAR.
+           Mit den heutigen Taktzahlen (7000 → 1100 ms, Faktor 0,96, sechs
+           Plätze) kommt selbst die schnellste gerechnete Spielerin - 1,5
+           Sekunden je Rolle - auf 56 Rollen. Die Stufe stand also über dem,
+           was die Mechanik hergibt, und niemand ist dort je angekommen.
+           Die Erweiterung und die Reparatur sind hier dieselbe Änderung. */
+        { id: 'rollen', icon: '📜', title: 'Archivmeister', unit: 'Rollen in einer Runde einsortiert', thresholds: [10, 20, 30, 40, 50], bereich: 'bestleistung' },
 
-        /* Zehn Fächer statt fünf: Die Entscheidung dauert länger, also rückt
-           dieselbe Leiter eine Stufe nach unten. */
-        { id: 'rollen-numerus', icon: '🗂️', title: 'Tabellenfest', unit: 'Rollen mit Numerus einsortiert', thresholds: [10, 20, 32, 45], bereich: 'bestleistung' },
+        /* Zehn Fächer statt fünf: Die Entscheidung dauert länger (gerechnet
+           35 % mehr Zeit je Rolle), die Decke liegt deshalb bei 45 - genau
+           dort, wo die alte Höchststufe stand. Auch sie war also nur für die
+           allerschnellste Spielerin zu holen. */
+        { id: 'rollen-numerus', icon: '🗂️', title: 'Tabellenfest', unit: 'Rollen mit Numerus einsortiert', thresholds: [8, 15, 24, 32, 40], bereich: 'bestleistung' },
 
         /* Die eigentliche Lernmarke dieses Spiels. Gemessen sind 32 % aller
            Nomenformen mehrdeutig (patribus = Dat. UND Abl.), in einer Runde
            von 40 Rollen also rund 13. Wer die sicher wegräumt, hat begriffen,
            dass eine Endung mehr als einen Fall tragen kann - und DAS ist der
            Grund, warum das Spiel mehrdeutige Formen nicht aussortiert. */
-        { id: 'doppelformen', icon: '👀', title: 'Doppelblick', unit: 'mehrdeutige Formen in einer Runde richtig eingeordnet', thresholds: [4, 10, 16, 24], bereich: 'bestleistung' }
+        /* Dieselbe Geschichte zum dritten Mal: 24 mehrdeutige Formen bräuchten
+           rund 75 Rollen (32 % aller Nomenformen sind mehrdeutig), und bei 56
+           ist Schluss. Die Decke liegt also bei 18; die Höchststufe steht
+           jetzt bei 16, und Diamant bei 13 - das ist eine gute Runde von 40
+           Rollen. */
+        { id: 'doppelformen', icon: '👀', title: 'Doppelblick', unit: 'mehrdeutige Formen in einer Runde richtig eingeordnet', thresholds: [3, 6, 10, 13, 16], bereich: 'bestleistung' },
+
+        /* ---------- Vier neue Trophäen (November 2026) ----------
+           Alle vier zählen etwas AUF, was es im Projekt schon gibt, und
+           hängen deshalb an genau einer neuen Stelle statt an zehn.
+           `quelle` sagt, wo ihr Wert herkommt - dieselbe Idee wie `bereich`:
+           Die Trophäe beschreibt sich selbst, statt dass eine zweite Liste
+           anderswo dasselbe noch einmal behauptet. */
+
+        /* Die Breite. Belohnt genau das, was auch die Vokabelzeit will: nicht
+           nur Issa. Sie kostet KEINE neue Zählstelle - welche Spiele jemand
+           gespielt hat, steht längst in `games`. */
+        { id: 'breite', icon: '🧭', title: 'Weitgereist', unit: 'verschiedene Spiele gespielt',
+          thresholds: [2, 4, 6, 8, 10, 11, 12], bereich: 'allgemein', quelle: 'breite' },
+
+        /* Die Wiederholungsrunde. Der Fachlehrer hat schon entschieden, dass
+           die Zähler dort WEITERLAUFEN, während der Vokabelkasten ruht:
+           "Die Trophäen zählen Fleiß, und wer seine Fehler nochmal durchgeht,
+           hat den Fleiß aufgebracht." Das hier ist die Trophäe dazu. */
+        { id: 'wiederholt', icon: '🔁', title: 'Hartnäckig', unit: 'Vokabeln in der Wiederholung nachgearbeitet',
+          thresholds: [10, 25, 50, 100, 200, 350, 600], bereich: 'allgemein', quelle: 'zaehler' },
+
+        /* Die Vokabelzeit - das neue Format hatte noch gar keine Marke.
+           Gezählt wird nur, was BIS ZUM ENDE gespielt wurde. */
+        { id: 'lernzeiten', icon: '⏱️', title: 'Stammgast', unit: 'Vokabelzeiten abgeschlossen',
+          thresholds: [1, 3, 7, 15, 30, 55, 90], bereich: 'allgemein', quelle: 'zaehler' },
+
+        /* Quaternio. Höchstens sechs Quartette je Partie, die Leiter zählt
+           deshalb über alle Partien. */
+        { id: 'quartette', icon: '🃏', title: 'Kartensammler', unit: 'Quartette abgelegt',
+          thresholds: [5, 15, 30, 60, 110, 200, 350], bereich: 'allgemein', quelle: 'zaehler' }
+    ];
+
+    /* Welche Spiele für „Weitgereist" zählen - und warum als Gruppen:
+       Pronomina! speichert seine vier Modi unter vier Kennungen, ist aber EIN
+       Spiel. Wer hier stumpf die Schlüssel in `games` zählte, käme bei vier
+       Pronomina-Runden auf vier Spiele.
+       Draußen bleiben die Gruppenspiele (Fliegenklatsche, Bingo, Bomba,
+       Memoria) - sie speichern bewusst kein Ergebnis, weil die Leistung der
+       Klasse gehört und nicht dem Gerät. Und das Duell: Es bedient zwar
+       Vokabelkasten und Kategorien, speichert aber kein Ergebnis - siehe den
+       offenen Punkt in CLAUDE.md. `test-achievements.js` prüft, dass diese
+       Liste genau die Kennungen abdeckt, die die Spiele wirklich speichern. */
+    const SPIEL_GRUPPEN = [
+        ['circus'], ['principia'], ['issajump'], ['kastell'], ['scrinium'], ['villa'],
+        ['personalpronomen', 'possessiv', 'demonstrativpronomen', 'relativpronomen'],
+        ['viaromana'], ['pendel'], ['arcus'], ['quartett'], ['quiz']
     ];
 
     /* Bestleistungen, die zusätzlich eine Trophäe tragen. Die Tabelle sagt,
@@ -358,7 +500,13 @@ const LudiProgress = (() => {
 
     // Schwellwerte für alle Kategorie-spezifischen Achievements (Wortarten in
     // Circus Maximus, Kasus/Tempora/Modi im Formen-Kastell)
-    const CATEGORY_THRESHOLDS = [10, 25, 50, 100];
+    /* Auch hier sieben Stufen, und die unteren nach unten gerückt. EINE
+       Leiter für rund vierzig Kategorien heißt zwangsläufig: In den häufigen
+       (Substantiv, Verb, Präsens) ist der Triumphus zu holen, in den seltenen
+       (Gerundium, Konjunktiv) nicht. Das war schon bei vier Stufen so - 100
+       richtige Gerundium-Formen sind ebenso unerreichbar - und je Kategorie
+       eigene Schwellen wären vierzig Entscheidungen statt einer. */
+    const CATEGORY_THRESHOLDS = [5, 15, 30, 60, 110, 200, 350];
 
     // Anzeige-Label + Icon pro Kategorie-Schlüssel. Neue Kategorien können hier
     // einfach ergänzt werden, sobald ein Spiel sie über recordCategoryAttempt meldet.
@@ -483,8 +631,14 @@ const LudiProgress = (() => {
             streak: a.streakBest,
             total: a.totalAnswered,
             mastery: greenCount,
-            days: (a.daysPlayed || []).length
+            days: (a.daysPlayed || []).length,
+            breite: _breite(data)
         };
+        /* Die aufsummierten Marken sagen selbst, wo ihr Wert steht
+           (`quelle: 'zaehler'`), statt dass hier eine zweite Liste dieselben
+           Kennungen noch einmal aufzählt. */
+        FIXED_ACHIEVEMENTS.filter(f => f.quelle === 'zaehler')
+            .forEach(f => { fixedValues[f.id] = (a.zaehler || {})[f.id] || 0; });
         // Dieselbe Quelle wie recordBest() - siehe BEST_ACHIEVEMENTS.
         BEST_ACHIEVEMENTS.forEach(b => {
             const spiel = data.games[b.gameId];
@@ -518,10 +672,29 @@ const LudiProgress = (() => {
         return getAchievementOverview().reduce((sum, a) => sum + a.tier, 0);
     }
 
+    /**
+     * „X von Y Stufen freigeschaltet" - beide Zahlen aus EINER Quelle.
+     *
+     * Vorher rechneten das Hauptmenü und die Trophäenseite jeweils
+     * `overview.length * 4`, also zweimal dieselbe feste Vier. Seit die
+     * Leitern verschieden lang sind (sieben Stufen, wo es nach oben offen
+     * ist, weniger unter einer Decke), wäre das schlicht falsch - und zwar
+     * an zwei Stellen gleichzeitig.
+     */
+    function getTierSummary() {
+        const overview = getAchievementOverview();
+        return {
+            freigeschaltet: overview.reduce((s, a) => s + a.tier, 0),
+            moeglich: overview.reduce((s, a) => s + a.thresholds.length, 0)
+        };
+    }
+
     return {
         saveGameResult,
         recordBest,
         getBest,
+        recordCount,
+        getCount,
         getGameProgress,
         getAllProgress,
         recordVocabAttempt,
@@ -536,6 +709,8 @@ const LudiProgress = (() => {
         recordCategoryAttempt,
         getAchievementOverview,
         getTotalUnlockedCount,
+        getTierSummary,
+        SPIEL_GRUPPEN,
         FIXED_ACHIEVEMENTS,
         CATEGORY_THRESHOLDS,
         TIER_NAMES

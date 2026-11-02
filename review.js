@@ -103,7 +103,20 @@ const LudiReview = (function () {
 
     function beenden(w) {
         w.laeuft = false;
-        return { gesamt: w.liste.length, richtig: w.richtig };
+        /* Die Trophäe „Hartnäckig" (November 2026) zählt, was jemand in der
+           zweiten Runde nachgearbeitet hat. Gemeldet wird es HIER, an der
+           einen Stelle, an der jede Wiederholungsrunde endet - nicht in den
+           zehn Spielen, die sie starten.
+           Gezählt wird die DURCHGEARBEITETE Liste, nicht die Treffer: Der
+           Vokabelkasten bleibt bewusst draußen (siehe oben), hier geht es um
+           Fleiß, und den bringt auch auf, wer beim zweiten Mal wieder
+           danebenliegt. Dass die Zähler in der Wiederholung weiterlaufen,
+           während der Kasten ruht, ist die Entscheidung des Fachlehrers. */
+        if (w.liste.length && typeof LudiProgress !== 'undefined' && LudiProgress.recordCount) {
+            w.letzterUnlock = LudiProgress.recordCount('wiederholt', w.liste.length);
+        }
+        return { gesamt: w.liste.length, richtig: w.richtig,
+                 unlock: w.letzterUnlock || null };
     }
 
     /* "Wiederholung 3 von 7" - die Anzeige während der zweiten Runde. */
