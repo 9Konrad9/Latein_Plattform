@@ -182,18 +182,18 @@
     </div>
 
     <script>
-        /* Ein Eintrag je Stufe, in der Reihenfolge von TIER_NAMES. Die drei
-           obersten teilen sich vorerst das Diamant-Abzeichen und werden durch
-           ihren Ring unterschieden - siehe die Notiz bei .badge-ring.
-           `null` beim Ring heißt: keiner, das Abzeichen spricht für sich. */
+        /* Ein Eintrag je Stufe, in der Reihenfolge von TIER_NAMES.
+           Alle sieben haben seit November 2026 ihr eigenes Abzeichen; der
+           Ring bleibt bei den drei neuen trotzdem stehen, weil ihre Farbe
+           dort die Stufe zusätzlich trägt. `null` heißt: kein Ring. */
         const STUFEN = [
-            { bild: 'assets/achievements/badge_bronze.png',  text: 'tier-bronze-text',    ring: null },
-            { bild: 'assets/achievements/badge_silver.png',  text: 'tier-silver-text',    ring: null },
-            { bild: 'assets/achievements/badge_gold.png',    text: 'tier-gold-text',      ring: null },
-            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-diamond-text',   ring: null },
-            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-lorbeer-text',   ring: 'tier-lorbeer-ring' },
-            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-purpur-text',    ring: 'tier-purpur-ring' },
-            { bild: 'assets/achievements/badge_diamond.png', text: 'tier-triumphus-text', ring: 'tier-triumphus-ring' }
+            { bild: 'assets/achievements/badge_bronze.png',    text: 'tier-bronze-text',    ring: null },
+            { bild: 'assets/achievements/badge_silver.png',    text: 'tier-silver-text',    ring: null },
+            { bild: 'assets/achievements/badge_gold.png',      text: 'tier-gold-text',      ring: null },
+            { bild: 'assets/achievements/badge_diamond.png',   text: 'tier-diamond-text',   ring: null },
+            { bild: 'assets/achievements/badge_lorbeer.png',   text: 'tier-lorbeer-text',   ring: 'tier-lorbeer-ring' },
+            { bild: 'assets/achievements/badge_purpur.png',    text: 'tier-purpur-text',    ring: 'tier-purpur-ring' },
+            { bild: 'assets/achievements/badge_triumphus.png', text: 'tier-triumphus-text', ring: 'tier-triumphus-ring' }
         ];
 
         function renderCard(a) {
