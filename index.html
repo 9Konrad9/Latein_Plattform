@@ -533,8 +533,16 @@
             if (summaryEl) {
                 /* Dieselbe Quelle wie auf der Trophäenseite - hier stand
                    zweimal dieselbe feste Vier, und die Leitern sind seit
-                   November 2026 verschieden lang. */
-                const summe = LudiProgress.getTierSummary();
+                   November 2026 verschieden lang.
+                   Mit demselben Rückfall: Direkt nach einer Auslieferung
+                   kann diese Seite neu sein und `progress.js` noch aus dem
+                   Zwischenspeicher kommen (GitHub Pages: max-age=600 je
+                   Datei). Ohne den Rückfall bliebe das Hauptmenü hängen. */
+                const overview = LudiProgress.getAchievementOverview();
+                const summe = LudiProgress.getTierSummary
+                    ? LudiProgress.getTierSummary()
+                    : { freigeschaltet: overview.reduce((s, a) => s + a.tier, 0),
+                        moeglich: overview.reduce((s, a) => s + a.thresholds.length, 0) };
                 summaryEl.classList.add('has-score');
                 summaryEl.innerText = `🏅 ${summe.freigeschaltet} von ${summe.moeglich} Stufen freigeschaltet`;
             }

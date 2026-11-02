@@ -241,8 +241,21 @@
                - und dieselbe feste Vier noch einmal im Hauptmenü. Seit die
                Leitern verschieden lang sind (sieben Stufen, wo es nach oben
                offen ist, weniger unter einer Decke), wäre das an beiden
-               Stellen gleichzeitig falsch. */
-            const summe = LudiProgress.getTierSummary();
+               Stellen gleichzeitig falsch.
+
+               DER RÜCKFALL IST NICHT ZIERRAT. GitHub Pages schickt
+               `Cache-Control: max-age=600` (gemessen am laufenden Stand), und
+               jede Datei hat ihr eigenes Zehn-Minuten-Fenster: Direkt nach
+               einer Auslieferung kann ein iPad diese Seite schon neu haben,
+               `progress.js` aber noch aus dem Zwischenspeicher. Ohne den
+               Rückfall wirft die Zeile dann, die Trophäenseite bleibt bei
+               „Lade Fortschritt..." stehen und der Fehlerbanner erscheint -
+               im Unterricht, für zehn Minuten, ohne dass irgendetwas kaputt
+               wäre. */
+            const summe = LudiProgress.getTierSummary
+                ? LudiProgress.getTierSummary()
+                : { freigeschaltet: overview.reduce((s, a) => s + a.tier, 0),
+                    moeglich: overview.reduce((s, a) => s + a.thresholds.length, 0) };
             document.getElementById('total-badge').innerText =
                 `${summe.freigeschaltet} von ${summe.moeglich} Stufen freigeschaltet`;
 
