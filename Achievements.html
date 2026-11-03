@@ -102,6 +102,44 @@
         }
         .achievement-card.locked { opacity: 0.55; filter: grayscale(0.6); }
 
+        /* ---------- Ehrentitel ----------
+           Breiter als die Trophäenkarten (ein Titel trägt einen Satz
+           Erklärung), aber im selben Material. Ein noch nicht verliehener
+           Titel wird NICHT ausgegraut wie eine gesperrte Trophäe: Er ist
+           kein verpasster Erfolg, sondern ein Ziel - deshalb bleibt er
+           lesbar und zeigt nur, wie weit es noch ist. */
+        .titel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px; width: 100%; max-width: 1000px; margin-bottom: 10px;
+        }
+        .titel-karte {
+            background: var(--putz);
+            border: 2px solid var(--bronze);
+            border-left: 6px solid var(--bronze);
+            border-radius: 12px; padding: 16px;
+            box-shadow: 0 4px 10px rgba(80, 60, 30, 0.22);
+        }
+        .titel-karte.verliehen { border-left-color: var(--tier-purpur); }
+        .titel-name {
+            font-family: var(--font-display); font-size: 1.25rem;
+            color: var(--pompeji);                 /* 6,40 auf --putz */
+            margin-bottom: 2px;
+        }
+        .titel-karte.verliehen .titel-name { color: var(--tier-purpur); }  /* 10,19 */
+        .titel-stand {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--ink-soft); margin-bottom: 8px;
+        }
+        .titel-karte.verliehen .titel-stand { color: var(--tier-purpur); font-weight: bold; }
+        .titel-rom {
+            font-size: 0.88rem; line-height: 1.5; color: var(--ink);
+            margin-bottom: 10px;
+        }
+        .titel-bedingung { font-size: 0.82rem; color: var(--ink-soft); margin-top: 6px; }
+        .titel-bedingung.erfuellt { color: var(--richtig); }   /* 5,44 auf --putz */
+        .titel-bedingung b { color: var(--ink); }
+
         .badge-img { width: 64px; height: 64px; flex-shrink: 0; object-fit: contain; }
 
         .achievement-info { flex: 1; min-width: 0; }
@@ -169,6 +207,12 @@
     <a href="index.html" class="home-link">← Zurück zum Hauptmenü</a>
     <div class="total-badge" id="total-badge">Lade Fortschritt...</div>
 
+    <!-- Die Ehrentitel stehen GANZ OBEN: Sie krönen die Sammlung darunter,
+         und wer die Seite öffnet, soll zuerst sehen, worauf das Ganze
+         hinausläuft. -->
+    <div class="section-title" id="titel-ueberschrift">🏛️ Ehrentitel</div>
+    <div class="titel-grid" id="titel-grid"></div>
+
     <div class="section-title">🎖️ Allgemeine Erfolge</div>
     <div class="achievement-grid" id="fixed-grid"></div>
 
@@ -235,6 +279,29 @@
             `;
         }
 
+        function renderTitel(t) {
+            const bed = t.bedingungen.map(b => {
+                const fertig = b.wert >= b.anzahl;
+                /* Gedeckelt angezeigt: Wer 27 Trophäen auf Silber hat und 15
+                   braucht, liest „15 von 15" und nicht „27 von 15".
+                   Ein Zusatz in Klammern stand hier zuerst - er wiederholte
+                   bei einer noch offenen Bedingung schlicht dieselbe Zahl
+                   („0 von 3 (du hast 0)"). Im Browser gesehen. */
+                return `<div class="titel-bedingung ${fertig ? 'erfuellt' : ''}">` +
+                       `${fertig ? '✓' : '·'} <b>${Math.min(b.wert, b.anzahl)} von ${b.anzahl}</b> ` +
+                       `Trophäen auf ${b.stufenName} oder höher</div>`;
+            }).join('');
+            return `
+                <div class="titel-karte ${t.verliehen ? 'verliehen' : ''}">
+                    <div class="titel-name">${t.icon} ${t.titel}</div>
+                    <div class="titel-stand">${t.verliehen ? 'verliehen' : t.anteil + ' % des Weges'}</div>
+                    <div class="titel-rom">${t.rom}</div>
+                    <div class="progress-track"><div class="progress-fill" style="width:${t.anteil}%"></div></div>
+                    ${bed}
+                </div>
+            `;
+        }
+
         function render() {
             const overview = LudiProgress.getAchievementOverview();
             /* Beide Zahlen aus EINER Quelle. Hier stand `overview.length * 4`
@@ -267,6 +334,18 @@
             const fixed = ausBereich('allgemein');
             const bestleistungen = ausBereich('bestleistung');
             const categories = ausBereich('kategorie');
+
+            /* Die Ehrentitel kommen aus einer eigenen Quelle, nicht aus der
+               Übersicht: Sonst zählte jeder Titel in „X von Y Stufen" mit
+               und verwässerte genau die Zahl, die er krönt.
+               Mit demselben Rückfall wie oben - direkt nach einer
+               Auslieferung kann progress.js noch aus dem Zwischenspeicher
+               kommen und die Funktion fehlen. */
+            const titel = LudiProgress.getEhrentitel ? LudiProgress.getEhrentitel() : [];
+            document.getElementById('titel-grid').innerHTML = titel.map(renderTitel).join('');
+            /* Ohne Titel auch keine Überschrift - sonst stünde dort ein
+               leerer Abschnitt, und das sieht nach einem Fehler aus. */
+            document.getElementById('titel-ueberschrift').style.display = titel.length ? '' : 'none';
 
             document.getElementById('fixed-grid').innerHTML = fixed.map(renderCard).join('');
             document.getElementById('best-grid').innerHTML = bestleistungen.map(renderCard).join('');

@@ -1981,6 +1981,66 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     `overview.length * 4`, übersah damit aber `getAchievementOverview().length * 4` –
     denselben Fehler mit anderem Namen.
 
+- **DIE EHRENTITEL** (November 2026, auf Vorschlag des Fachlehrers): eine zweite ART von
+  Auszeichnung neben den Leitern. Ein Titel wird nicht für eine Menge vergeben, sondern für
+  den **Besitz MEHRERER Trophäen** – er krönt die Sammlung, statt sie zu verlängern. In Rom
+  war das genauso: *pater patriae* war kein Orden für eine Tat, sondern für eine Laufbahn.
+
+  | Titel | in Rom | Bedingung |
+  |---|---|---|
+  | **Corōna cīvica** 🌿 | Bürgerkrone, für die Rettung eines Mitbürgers | 15 Trophäen auf Silber |
+  | **Prīmus pīlus** 🎖️ | erster Centurio: der höchste Rang für einen einfachen Soldaten | 20 auf Gold |
+  | **Corōna mūrālis** 🧱 | für den Ersten auf der feindlichen Mauer | 5 auf Lorbeer |
+  | **Imperātor** 🦅 | vom eigenen Heer nach einem Sieg ausgerufen | 3 auf Purpur |
+  | **Pater patriae** 🏛️ | Cicero, Augustus – die Krone einer Laufbahn | 3 Triumphe **und** 30 auf Gold |
+
+  - **SIE KOSTEN KEINE EINZIGE NEUE ZÄHLSTELLE.** Alles, was ein Titel wissen muss, steht
+    schon in der Trophäenübersicht. Der erste Entwurf wollte Titel für einzelne TATEN
+    vergeben (eine fehlerfreie Kastell-Runde, eine Vokabelzeit ohne Fehler) – das hätte
+    Zählstellen in vier Spielen gebraucht. Der Zuschnitt des Fachlehrers ist der billigere
+    UND der römischere.
+  - **Sie sind KEINE Trophäen mit Ein-Stufen-Leiter.** Dann zählte jeder Titel in „X von Y
+    Stufen freigeschaltet" mit und verwässerte genau die Zahl, die er krönen soll.
+    `getAchievementOverview()` liefert deshalb weiter nur Leiter-Trophäen, die Titel kommen
+    aus `getEhrentitel()`, und `test-achievements.js` prüft, dass sie dort nicht auftauchen.
+  - **DIE BEDINGUNG HEISST IMMER „MINDESTENS N", NIE „ALLE".** Die Zahl der Trophäen ist
+    nämlich nicht fest: Eine Kategorie erscheint erst, wenn man sie gespielt hat (12 feste
+    plus bis zu 40 Kategorien). „Alle Trophäen auf Silber" würde deshalb **das Erkunden
+    bestrafen** – wer nur Circus spielt, hat drei Kategorien und schafft es leicht; wer
+    alles spielt, hat dreißig und schafft es nie. Genau verkehrt herum.
+  - **Bronze taugt nicht als Bedingung.** Jede Trophäe, die man überhaupt berührt, steht
+    sofort darauf – das wäre eine verkappte Breiten-Zählung, und die gibt es mit
+    *Weitgereist* schon. Der Test prüft das.
+  - **DIE SCHWELLEN SIND GEMESSEN** (`probe-titel.js`: echtes `progress.js`, simuliertes
+    Spielverhalten, zwei Trefferquoten). So wächst eine Sammlung:
+
+    | Trefferquote 80 % | Trophäen | ≥Gold | ≥Diamant | ≥Lorbeer | ≥Purpur | Triumphus |
+    |---|---|---|---|---|---|---|
+    | ein halbes Jahr | 28 | 10 | 8 | 4 | 3 | 1 |
+    | ein Schuljahr | 39 | 29 | 11 | 9 | 4 | 3 |
+    | zwei Jahre | 43 | 42 | 33 | 16 | 10 | 7 |
+
+    Bei 60 % Trefferquote sind es nach einem Jahr 15 statt 29 auf Gold. Daraus die
+    Schwellen: Die *Corōna cīvica* fällt im ersten Halbjahr auch für Schwächere, der
+    *Pater patriae* erst im zweiten Jahr und für niemanden früher.
+  - **Ein beabsichtigter Nebeneffekt: Die Titel verlangen BREITE.** Wer nur ein Spiel
+    spielt, hat höchstens fünfzehn Trophäen und erreicht „20 auf Gold" nie – egal wie gut
+    er ist. Derselbe Gedanke wie bei der Vokabelzeit.
+  - Gezeigt werden sie in einem eigenen Abschnitt **ganz oben** auf der Trophäenseite, mit
+    Fortschritt: „0 von 3 Trophäen auf Triumphus · ✓ 30 von 30 auf Gold". Ein Titel ohne
+    sichtbaren Weg dorthin ist nur eine Ente – und bei *Pater patriae* mit seinen ZWEI
+    Bedingungen wäre nicht zu erraten, woran es hakt. Ein noch nicht verliehener Titel wird
+    **nicht ausgegraut** wie eine gesperrte Trophäe: Er ist kein verpasster Erfolg, sondern
+    ein Ziel.
+  - `_titelPruefen()` läuft **NACH** `_save()` in `recordVocabAttempt`, nicht mittendrin:
+    Die Titel rechnen über `getAchievementOverview()`, und das liest frisch aus dem
+    Speicher – mittendrin sähen sie den Stand von vor dieser Antwort, und der Titel käme
+    eine Frage zu spät.
+  - **Ein Fehler in der Gegenprobe, der leicht wiederkommt:** Ihre Anker stehen mit `\n`,
+    `index.html` hat im Arbeitsbaum aber CRLF – ein mehrzeiliger Anker passt dann nicht,
+    und sie meldet „Stelle nicht gefunden", also ein VERPASST, wo nichts verpasst wurde.
+    Sie bringt den Anker jetzt auf die Zeilenenden der Datei, bevor sie sucht.
+
 - **Jede Trophäe sagt selbst, wohin sie gehört** (`bereich`: `allgemein` / `bestleistung` /
   `kategorie`). `Achievements.html` hatte die Zuordnung als feste Liste von vier Kennungen, und
   alles, was nicht darin stand, galt als Wortart – die neue Höhen-Trophäe erschien dadurch

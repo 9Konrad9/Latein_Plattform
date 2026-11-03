@@ -205,6 +205,10 @@ const LudiProgress = (() => {
         [u1, u2, u3, u4, u5].forEach(u => { if (u) unlocks.push(u); });
 
         _save(data);
+        /* NACH dem Speichern: Die Ehrentitel rechnen über die ganze
+           Übersicht und lesen dafür frisch aus dem Speicher - mittendrin
+           sähen sie den Stand von vor dieser Antwort. */
+        _titelPruefen().forEach(t => unlocks.push(t));
         return unlocks;
     }
 
@@ -472,6 +476,69 @@ const LudiProgress = (() => {
           thresholds: [5, 15, 30, 60, 110, 200, 350], bereich: 'allgemein', quelle: 'zaehler' }
     ];
 
+    /* ---------- DIE EHRENTITEL (November 2026) ----------
+       Eine zweite ART von Auszeichnung neben den Leitern, auf Vorschlag des
+       Fachlehrers: Ein Titel wird nicht für eine Menge vergeben, sondern für
+       den Besitz MEHRERER Trophäen - er krönt die Sammlung, statt sie zu
+       verlängern. In Rom war das genauso: `pater patriae` war kein Orden für
+       eine Tat, sondern für eine Laufbahn.
+
+       WARUM SIE KEINE TROPHÄEN MIT EIN-STUFEN-LEITER SIND: Dann zählte jeder
+       Titel in „X von Y Stufen freigeschaltet" mit und verwässerte genau die
+       Zahl, die er krönen soll. `getAchievementOverview()` liefert deshalb
+       weiter NUR Leiter-Trophäen; die Titel kommen aus `getEhrentitel()`.
+
+       SIE KOSTEN KEINE EINZIGE NEUE ZÄHLSTELLE. Alles, was ein Titel wissen
+       muss, steht schon in der Übersicht.
+
+       DIE SCHWELLEN SIND GEMESSEN, nicht geschätzt (probe-titel.js, echtes
+       progress.js mit simuliertem Spielverhalten). Eine Sammlung wächst so:
+
+         Trefferquote 80 %   Trophäen  >=Gold  >=Diamant  >=Lorbeer  >=Purpur  Triumphus
+         ein halbes Jahr          28      10          8          4         3          1
+         ein Schuljahr            39      29         11          9         4          3
+         zwei Jahre               43      42         33         16        10          7
+
+       Daran hängen die Zahlen unten. „Bronze" taugt dabei NICHT als
+       Bedingung: Jede Trophäe, die man überhaupt berührt, steht sofort
+       darauf - das wäre eine verkappte Breiten-Zählung, und die gibt es mit
+       „Weitgereist" schon.
+
+       UND EIN BEABSICHTIGTER NEBENEFFEKT: Die Titel verlangen BREITE. Wer nur
+       ein Spiel spielt, hat höchstens fünfzehn Trophäen und erreicht „20 auf
+       Gold" nie - egal wie gut er ist. Das ist gewollt und derselbe Gedanke
+       wie bei der Vokabelzeit.
+
+       `stufe` ist die Stufennummer (1 = Bronze ... 7 = Triumphus). */
+    const EHRENTITEL = [
+        { id: 'civica', icon: '🌿', titel: 'Corōna cīvica',
+          rom: 'Die Bürgerkrone aus Eichenlaub — in Rom für die Rettung eines Mitbürgers. ' +
+               'Jedem Soldaten zugänglich und höher geachtet als mancher Orden der Feldherren.',
+          bedingungen: [{ stufe: 2, anzahl: 15 }] },
+
+        { id: 'primuspilus', icon: '🎖️', titel: 'Prīmus pīlus',
+          rom: 'Der erste Centurio der Legion: der höchste Rang, den ein einfacher Soldat ' +
+               'allein durch Verdienst erreichen konnte.',
+          bedingungen: [{ stufe: 3, anzahl: 20 }] },
+
+        { id: 'muralis', icon: '🧱', titel: 'Corōna mūrālis',
+          rom: 'Die Mauerkrone — für den, der als Erster die Mauer der feindlichen Stadt ' +
+               'erstieg.',
+          bedingungen: [{ stufe: 5, anzahl: 5 }] },
+
+        { id: 'imperator', icon: '🦅', titel: 'Imperātor',
+          rom: 'Nach einem großen Sieg rief das Heer seinen Feldherrn so aus — der Titel kam ' +
+               'nicht von oben, sondern von den eigenen Leuten.',
+          bedingungen: [{ stufe: 6, anzahl: 3 }] },
+
+        /* Der einzige mit ZWEI Bedingungen, und das mit Absicht: Rom verlieh
+           ihn für Höhe UND Breite einer Laufbahn, nicht für eine Spitze. */
+        { id: 'paterpatriae', icon: '🏛️', titel: 'Pater patriae',
+          rom: 'Vater des Vaterlandes — Cicero bekam ihn nach der Catilinarischen ' +
+               'Verschwörung, Augustus im Jahr 2 v. Chr. Die Krone einer ganzen Laufbahn.',
+          bedingungen: [{ stufe: 7, anzahl: 3 }, { stufe: 3, anzahl: 30 }] }
+    ];
+
     /* Welche Spiele für „Weitgereist" zählen - und warum als Gruppen:
        Pronomina! speichert seine vier Modi unter vier Kennungen, ist aber EIN
        Spiel. Wer hier stumpf die Schlüssel in `games` zählte, käme bei vier
@@ -673,6 +740,61 @@ const LudiProgress = (() => {
     }
 
     /**
+     * Die Ehrentitel: was jeder verlangt, wie weit man ist, und ob er
+     * verliehen ist. Gerechnet wird aus der Übersicht - ein Titel hat keinen
+     * eigenen Speicher.
+     *
+     * Jede Bedingung bekommt ihren eigenen Stand mit, damit die Karte
+     * „29 von 30 Trophäen auf Gold oder höher" zeigen kann. Ein Titel ohne
+     * sichtbaren Weg dorthin ist nur eine Ente - und bei Pater patriae mit
+     * seinen ZWEI Bedingungen wäre gar nicht zu erraten, woran es hakt.
+     */
+    function getEhrentitel() {
+        const overview = getAchievementOverview();
+        const beiStufe = s => overview.filter(a => a.tier >= s).length;
+        return EHRENTITEL.map(t => {
+            const bedingungen = t.bedingungen.map(b => ({
+                stufe: b.stufe, stufenName: TIER_NAMES[b.stufe - 1],
+                anzahl: b.anzahl, wert: beiStufe(b.stufe)
+            }));
+            return {
+                id: t.id, icon: t.icon, titel: t.titel, rom: t.rom,
+                bedingungen: bedingungen,
+                verliehen: bedingungen.every(b => b.wert >= b.anzahl),
+                /* Der Anteil über ALLE Bedingungen zusammen - bei einer ist
+                   es ihr eigener, bei zweien der Mittelwert. */
+                anteil: Math.round(100 * bedingungen.reduce(
+                    (s, b) => s + Math.min(1, b.wert / b.anzahl), 0) / bedingungen.length)
+            };
+        });
+    }
+
+    /* Frisch verliehene Titel melden - nach demselben Muster wie die Stufen:
+       `unlockedTiers` merkt sich, was schon gefeiert wurde.
+       AUFGERUFEN WIRD DAS ERST NACH DEM SPEICHERN, nicht mittendrin: Der
+       Titel rechnet über getAchievementOverview(), und das liest frisch aus
+       dem Speicher. Mitten in recordVocabAttempt sähe es noch den Stand von
+       vor dieser Antwort, und der Titel käme eine Frage zu spät. */
+    function _titelPruefen() {
+        const neue = [];
+        const titel = getEhrentitel();
+        const data = _load();
+        let geaendert = false;
+        titel.forEach(t => {
+            const kennung = 'titel_' + t.id;
+            if (t.verliehen && !data.achievements.unlockedTiers[kennung]) {
+                data.achievements.unlockedTiers[kennung] = 1;
+                geaendert = true;
+                neue.push({ id: kennung, icon: t.icon, title: t.titel, tier: 1,
+                            tierName: 'Ehrentitel', unit: 'verliehen',
+                            threshold: null, ehrentitel: true });
+            }
+        });
+        if (geaendert) _save(data);
+        return neue;
+    }
+
+    /**
      * „X von Y Stufen freigeschaltet" - beide Zahlen aus EINER Quelle.
      *
      * Vorher rechneten das Hauptmenü und die Trophäenseite jeweils
@@ -711,6 +833,8 @@ const LudiProgress = (() => {
         getTotalUnlockedCount,
         getTierSummary,
         SPIEL_GRUPPEN,
+        getEhrentitel,
+        EHRENTITEL,
         FIXED_ACHIEVEMENTS,
         CATEGORY_THRESHOLDS,
         TIER_NAMES
