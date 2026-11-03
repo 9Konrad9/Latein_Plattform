@@ -454,9 +454,24 @@ const LudiProgress = (() => {
 
         /* Die Breite. Belohnt genau das, was auch die Vokabelzeit will: nicht
            nur Issa. Sie kostet KEINE neue Zählstelle - welche Spiele jemand
-           gespielt hat, steht längst in `games`. */
+           gespielt hat, steht längst in `games`.
+
+           DIE HÖCHSTSTUFE STEHT BEI 11, NICHT BEI 12, obwohl SPIEL_GRUPPEN
+           zwölf Gruppen führt: Quaternio ist seit November 2026 stillgelegt
+           und hat keine Karte im Hauptmenü mehr. Eine Klasse findet also nur
+           elf Spiele, und eine Stufe, die man nicht erreichen kann, sieht aus
+           wie eine, die man noch nicht erreicht hat - dieselbe Falle wie bei
+           Archivmeister und Doppelblick. Quaternio BLEIBT in der Gruppenliste:
+           Wer es gespielt hat, behält es (und wer den Link kennt, kommt weiter
+           hinein). Die Zahl heruntergesetzt statt die Gruppe gestrichen, denn
+           eine gestrichene Gruppe hätte jemandem mit elf Spielen eine Stufe
+           WEGGENOMMEN - genau das, was beim Umbau auf sieben Stufen nicht
+           passieren durfte. Die drei oberen Sprossen sind dafür um eins
+           heruntergerückt (10/11/12 auf 9/10/11), nie nach oben - sonst
+           verlöre jemand eine Stufe. Beim Wiedereinschalten: zurück auf
+           [2, 4, 6, 8, 10, 11, 12]. */
         { id: 'breite', icon: '🧭', title: 'Weitgereist', unit: 'verschiedene Spiele gespielt',
-          thresholds: [2, 4, 6, 8, 10, 11, 12], bereich: 'allgemein', quelle: 'breite' },
+          thresholds: [2, 4, 6, 8, 9, 10, 11], bereich: 'allgemein', quelle: 'breite' },
 
         /* Die Wiederholungsrunde. Der Fachlehrer hat schon entschieden, dass
            die Zähler dort WEITERLAUFEN, während der Vokabelkasten ruht:

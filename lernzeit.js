@@ -74,9 +74,18 @@ const LudiLernzeit = (function () {
           tauglich: function () { return true; } },
         { datei: 'IssaJump.html',  name: 'Issa springt',   art: 'wortschatz',
           tauglich: function () { return true; } },
+        /* QUATERNIO IST STILLGELEGT (November 2026, Entscheidung des
+           Fachlehrers: noch nicht ausgereift). Es stand hier als drittes
+           Wortschatzspiel; ohne es bleiben ZWEI (Circus und Issa), und der
+           Takt hat zwei Wortschatzplaetze je Durchgang. Das laeuft - die
+           Sperre gegen zweimal dasselbe greift nicht, weil die beiden
+           Plaetze nicht benachbart sind -, aber die Abwechslung an diesen
+           Plaetzen ist wieder eine Muenze statt eines Wuerfels: Wer sich
+           beschwert, Issa nicht bekommen zu haben, hatte Circus, und
+           umgekehrt. Beim Wiedereinschalten kommt der Eintrag zurueck,
+           samt Startfunktion in test-lernzeit.js.
+
         { datei: 'Quartett.html',  name: 'Quaterniō',      art: 'wortschatz',
-          /* Vier Wortfelder mit je vier Nomen - dieselbe Bedingung, die das
-             Spiel selbst stellt, nur aus denselben Daten gelesen. */
           tauglich: function (pool) {
               const z = {};
               pool.forEach(function (v) {
@@ -84,6 +93,7 @@ const LudiLernzeit = (function () {
               });
               return Object.keys(z).filter(function (t) { return z[t] >= 4; }).length >= 4;
           } },
+        */
 
         { datei: 'Principia.html', name: 'Principia',      art: 'formen',
           tauglich: function () { return true; } },

@@ -1052,12 +1052,57 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     beim Start gespeichert wird.
   - **Draußen bleiben die Gruppenspiele** (Fliegenklatsche, Bingo, Bomba, Memoria, Duell),
     Silentium und das Kulturquiz: Eine Vokabelzeit läuft auf EINEM Gerät, allein.
+    Seit November 2026 auch **Quaterniō** – es ist stillgelegt (siehe dort), und damit
+    bleiben für die beiden Wortschatzplätze je Takt nur noch Circus und Issa.
   - Im Hauptmenü steht sie ganz oben, über der Trophäensammlung, und **ohne**
     Fortschrittsband – der Fortschritt landet in den einzelnen Spielen.
 
 - **Quartett.html** – **Quaterniō**, das Wortfeld-Quartett (Oktober 2026). Eine Person gegen
   das GERÄT: Beide halten Karten, jede trägt ein lateinisches Wort und seine Bedeutung.
   Nutzt `thema` aus `vocabulary.js` – und nichts sonst von der Semantik.
+  - **STILLGELEGT seit November 2026** (Entscheidung des Fachlehrers: noch nicht
+    ausgereift). **Die Datei bleibt liegen und läuft weiter** – zugemacht sind nur die
+    Wege hinein, die eine Klasse findet. Das ist bewusst so: Wer es gespielt hat, behält
+    seinen Stand im Vokabelkasten, seine Wortfeld-Kategorie und seine *Kartensammler*-
+    Trophäe. Eine gelöschte Datei hätte all das stillschweigend entwertet.
+    Zugemacht sind **vier** Stellen, und die vierte ist die, die man vergisst:
+    1. die Karte im Hauptmenü (auskommentiert, nicht gelöscht),
+    2. der Eintrag in `lernzeit.js` – sonst schickt die Vokabelzeit weiter hinein,
+    3. die Einbindung von `lernzeit.js` in `Quartett.html` selbst: Ein Spiel, das das
+       Modul einbindet, ohne im Plan zu stehen, bekäme einen Haus-Knopf zurück in eine
+       Vokabelzeit, in der es nicht vorkommt. **`test-lernzeit.js` hat das gefunden**,
+       nicht das Lesen – seine Probe „wer bindet es ein, spielt mit" hält beide
+       Richtungen.
+    4. **Weitgereists Höchststufe.** Sie stand bei 12 = allen Spielgruppen; ohne Karte im
+       Menü findet eine Klasse nur elf, und die zwölfte Stufe wäre unerreichbar gewesen –
+       **dieselbe Falle wie bei Archivmeister und Doppelblick**, nur eine Ebene höher:
+       Dort setzte die Spielmechanik die Decke, hier das Menü. Die Leiter steht jetzt auf
+       `[2, 4, 6, 8, 9, 10, 11]`.
+    **Die Gruppe bleibt in `SPIEL_GRUPPEN`, gesenkt wurde die ZAHL.** Hätte man die Gruppe
+    gestrichen, verlöre jemand mit elf Spielen eine Stufe – genau das, was beim Umbau auf
+    sieben Stufen nicht passieren durfte. Die drei oberen Sprossen sind dafür um eins
+    heruntergerückt, nie nach oben.
+    **Was NICHT angefasst wurde:** *Kartensammler* steht weiter in den Trophäen und friert
+    auf seinem Stand ein, die Kategorie *Wortfeld* ebenso (sie erscheint ohnehin nur, wer
+    sie berührt hat). Beides geht von selbst weiter, wenn das Spiel zurückkommt. **Wird die
+    Stilllegung dauerhaft, müssen beide mit** – eine Trophäe, die niemand füttern kann,
+    ist dasselbe Ärgernis wie eine unerreichbare Höchststufe.
+    **Kosten in der Vokabelzeit:** Es war das dritte Wortschatzspiel. Übrig bleiben ZWEI
+    (Circus, Issa) bei zwei Wortschatzplätzen je Takt – das läuft (die Plätze sind nicht
+    benachbart, die Sperre greift nicht), aber die Abwechslung dort ist wieder eine Münze
+    statt eines Würfels. Auf „die hat Issa bekommen" heißt die Antwort jetzt: du hattest
+    Circus.
+    **Die Decke von `Weitgereist` wird seitdem aus dem MENÜ abgeleitet**, nicht aus
+    `SPIEL_GRUPPEN.length` – und zwar aus den LEBENDEN Karten: Die stillgelegte steht noch
+    im Quelltext, nur in einem Kommentar. Wer die Kommentare nicht herausnimmt, zählt sie
+    mit und prüft nichts (derselbe Fehler wie bei Duells Messschutz und Silentiums
+    `MediaRecorder`). `gegenprobe-achievements.js` hält beide Richtungen fest: Höchststufe
+    zurück auf 12 **muss** durchfallen, und die wieder sichtbare Karte **muss grün
+    bleiben** – sonst könnte das Spiel nicht ohne Weiteres zurückkommen. Dafür versteht die
+    Gegenprobe jetzt auch Fälle mit `muster: null`, also „diese Änderung ist KEIN Schaden".
+    **Zum Wiedereinschalten** stehen alle vier Stellen mit genau dieser Liste im Quelltext;
+    `test-start.js` und `test-quartett.js` prüfen das Spiel in der Zwischenzeit weiter,
+    damit es nicht verrottet.
   - **AUF DER KARTE STEHT DAS FELD NICHT. Daran hängt das ganze Spiel.** Wer fragen will,
     wählt eine eigene Karte und sagt, in welches Feld sie gehört; erst dann darf er den
     Gegner nach diesem Feld fragen. Stünde das Feld oben auf der Karte (wie beim gedruckten
