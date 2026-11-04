@@ -385,6 +385,61 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Onager mit Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.
     Häufigkeit nach dem ersten Klassentest halbiert: 11 % (Katapult) und 8 % (Scutum)
     je passender Reihe, also rund alle siebzehn Reihen ein Fund.
+  - **DER BODEN MUSS DURCHLÄSSIG SEIN** (November 2026, gemeldet vom Fachlehrer: „man
+    kann gar nicht abstürzen, der Boden ist undurchlässig"; Maßstab ist **Doodle Jump**,
+    wo man verliert, sobald man unten aus dem Bild fällt). Der Befund war genau richtig,
+    und `loseLife()` war damit toter Code.
+    - **Gemessen, woran es lag:** Eine Antwort-Reihe sind VIER Plattformen à 88 px auf
+      400 px Breite. Die größte Lücke misst **19,6 px**, Issa ist **34 px** breit –
+      durch **0 von 136** Reihen passte sie. Jede dritte Reihe war ein geschlossener
+      Boden quer durchs Bild. Von 600 freien Fällen aus dem Turm kamen **4 %** unten
+      heraus; alle 282 Stürze in echten Läufen lagen im **Startbereich**, wo unter der
+      Startplattform nichts liegt.
+    - **SCHMALERE ANTWORTPLATTFORMEN SIND NICHT DER WEG**, und das ist durchgerechnet:
+      bei 48 px (gut der Hälfte) passt Issa durch **14,8 %** der Breite, bei 56 px durch
+      8,2 %, bei 72 px durch 0,1 %. Eine neutrale Reihe (66 px, EINE Plattform) lässt sie
+      zu **82 %** durch. **Vier lesbare Antworten nebeneinander können also kein
+      Doodle-Jump-Boden sein** – die Beschriftung ist im Median 62 px breit, bei p90
+      88 px, und 68 der 663 Bedeutungen ragen schon heute über ihre Plattform hinaus.
+      Die Beschriftung muss zur Landefläche passen: Wer auf ein Wort zielt, das breiter
+      ist als seine Plattform, fiele sonst trotz richtiger Wahl hindurch.
+    - **Gelöst über die ZEIT statt über die Breite:** Eine Reihe ist nur so lange Boden,
+      wie ihre Frage offen ist. Ist sie beantwortet, blendet sie aus und ist weg. Unter
+      Issa steht dann nur noch neutraler Boden – Doodle-Jump-Dichte. Gemessen enden
+      **28 % der freien Fälle unten aus dem Bild statt 0 %**.
+    - **`REIHE_AUSBLENDEN_FRAMES = 75` ist aus der Sprungbahn abgeleitet, nicht
+      geschätzt:** Issa verlässt die Reihe mit `BOUNCE_VELOCITY` und ist nach
+      `|v|/GRAVITY` = 45 Bildern am Gipfel, nach 90 wieder unten. Bei 75 ist die Reihe
+      also **weg, wenn sie zurückfällt** – genau das soll sie sein –, und sie stand
+      vorher gut eine Sekunde da, damit man die richtige Antwort noch lesen kann.
+    - **Dass sie SICHTBAR ausblendet, gehört dazu.** Eine Plattform, die lautlos
+      verschwindet, fühlt sich nicht nach Regel an, sondern nach Fehler: Issa springt ab,
+      kommt zurück, und der Boden ist ohne Ankündigung fort. Das Ausblenden ist die
+      Ankündigung (gemessene Deckkraft in der Mitte des Vorgangs: 53 %).
+    - **Die Stelle ist `maintainPlatforms()`**, nicht die zwei Stellen, die eine Reihe
+      als beantwortet markieren (das Aufsetzen und der Rundumschlag für alles darunter).
+      Eine dritte Markierstelle würde das Ausblenden sonst vergessen.
+    - **Ein Sturz kostet EIN HERZ, nicht sofort den Lauf.** Doodle Jump kennt nur ein
+      Leben; hier gibt es drei, und eine falsche Antwort kostet genauso eins. Drei Stürze
+      beenden den Lauf also trotzdem. Gemessen bei einem Spieler, der zielt: **1 bis 5
+      von 60 Läufen** enden am Sturz – es wird nicht zur neuen Todesursache. **Ein Kind
+      steuert schlechter als diese Simulation**, die Quote liegt im Unterricht also höher.
+    - Das Scutum hilft gegen den Sturz **nicht** (es deckt falsche Antworten, nicht
+      fehlende Plattformen) – das stand schon immer so im Code und bedeutet jetzt etwas.
+    - **Der Erklärtext auf dem Startbild war falsch**, und zwar doppelt: „Eine falsche
+      Plattform lässt Issa durchfallen und kostet ein Herz." Durchfallen tut sie seit dem
+      Umbau im September nicht mehr (sie setzt auf der RICHTIGEN Plattform auf), und vom
+      Sturz stand dort nichts. **Kein Test liest Prosa** – dieselbe Lehre wie bei
+      Silentiums Startbildschirm. Wer die Regeln ändert, ändert drei Stellen: Code,
+      Erklärtext, Buch.
+    - `test-issa.js` prüft es **am Verhalten** mit Gegenprobe (28 % gegen 0 %) und dazu,
+      dass eine **offene** Frage weiterhin trägt – sonst wäre sie nicht zu beantworten.
+      **Der Turm muss dabei ERSPIELT sein, nicht gestellt**, und daran sind zwei
+      Fassungen gescheitert: Die erste baute einen Turm ohne eine einzige beantwortete
+      Reihe – also fehlte genau die Bedingung, von der die Regel lebt. Die zweite
+      markierte alles im Moment des Absprungs; dann beginnt das Ausblenden erst MIT dem
+      Fall und ist nach 75 Bildern fertig, während der Fall nur rund 65 dauert. Sie
+      meldete 5 %. Im Spiel liegt zwischen Antwort und Fall immer ein Sprung.
   - **KEIN Pergament um dieses Spielfeld**, anders als bei allen anderen Spielen. Der
     Bogen hält dort Text, hier hielte er ein Bild – Mehrwert null, Kosten 14 % Spielhöhe
     im Querformat (gemessen). Dazu kam ein Nebeneffekt, der nicht offensichtlich ist:
@@ -1087,11 +1142,16 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     sie berührt hat). Beides geht von selbst weiter, wenn das Spiel zurückkommt. **Wird die
     Stilllegung dauerhaft, müssen beide mit** – eine Trophäe, die niemand füttern kann,
     ist dasselbe Ärgernis wie eine unerreichbare Höchststufe.
-    **Kosten in der Vokabelzeit:** Es war das dritte Wortschatzspiel. Übrig bleiben ZWEI
-    (Circus, Issa) bei zwei Wortschatzplätzen je Takt – das läuft (die Plätze sind nicht
-    benachbart, die Sperre greift nicht), aber die Abwechslung dort ist wieder eine Münze
-    statt eines Würfels. Auf „die hat Issa bekommen" heißt die Antwort jetzt: du hattest
-    Circus.
+    **Kosten in der Vokabelzeit: KEINE – und meine erste Auskunft dazu war falsch.** Ich
+    hatte geschrieben, mit nur noch zwei Wortschatzspielen (Circus, Issa) sei die
+    Abwechslung „eine Münze statt eines Würfels". Gemessen ist das Gegenteil der Fall:
+    `plan()` bevorzugt über `schonDrin` die noch nicht gespielten, und bei genau ZWEI
+    Spielen auf ZWEI Wortschatzplätzen je Takt kommen deshalb **beide** dran – in
+    **200 von 200** Plänen (`probe-vokabelzeit-auswahl.js`). Gewürfelt wird nur die
+    Reihenfolge (Circus zuerst in 104, Issa in 96 von 200). Die Stilllegung hat die
+    Beschwerde „die hat Issa bekommen und ich nicht" also nicht verschärft, sondern für
+    den Fünfer-Plan **abgeschafft** – mit drei Wortschatzspielen fehlte zwangsläufig
+    eines. Nur wer eine Vokabelzeit nach zwei Spielen abbricht, sieht eines davon nicht.
     **Die Decke von `Weitgereist` wird seitdem aus dem MENÜ abgeleitet**, nicht aus
     `SPIEL_GRUPPEN.length` – und zwar aus den LEBENDEN Karten: Die stillgelegte steht noch
     im Quelltext, nur in einem Kommentar. Wer die Kommentare nicht herausnimmt, zählt sie
@@ -1312,6 +1372,16 @@ dieses Namens, und darauf spielt auch das Spiel an.
     genau eine richtige.
   - `test-issa-lauf.js` – taktet den echten Spielablauf Bild für Bild (Physik, Kamera,
     Gegenstände, Herzverlust, Wiederholung) über 40 Auswahlen.
+    **EIN TEST, DER VIEL LÄUFT, PRÜFT DESHALB NOCH NICHTS** (November 2026 aufgefallen):
+    Er steuerte Issa **zufällig** – und kam damit gemessen auf **7 Meter Höhe**, die
+    Gegenstände-Probe sogar auf **0**. Er hat also 30 000 Bilder lang den Startbereich
+    getaktet und nie den Turm: keine Antwort-Reihe aus der Höhe, keinen Katapultwurf über
+    eine Frage hinweg, keinen Sturz. Seitdem gibt es `window.steuere()` – einen
+    Steuermann, der im Steigen auf die nächste Plattform über Issa zielt und im Fallen
+    auf die nächste darunter. **Im Fallen nach unten zu zielen ist der Punkt**: Die erste
+    Fassung zielte immer nach oben, trieb an der Plattform unter sich vorbei und kam
+    keinen Meter hoch. Jetzt: **1211 Meter**. Die Zufallssteuerung läuft in der Hälfte
+    der Läufe weiter – sie ist das Kind, das wild drückt, und findet anderes.
 
   **Für einen reinen Umbau: erst aufnehmen, dann vergleichen.** Als der Formenkatalog aus
   `Kastell.html` nach `formen.js` wanderte, durfte sich NICHTS ändern. Dafür nimmt

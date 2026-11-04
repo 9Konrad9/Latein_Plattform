@@ -77,13 +77,15 @@ const LudiLernzeit = (function () {
         /* QUATERNIO IST STILLGELEGT (November 2026, Entscheidung des
            Fachlehrers: noch nicht ausgereift). Es stand hier als drittes
            Wortschatzspiel; ohne es bleiben ZWEI (Circus und Issa), und der
-           Takt hat zwei Wortschatzplaetze je Durchgang. Das laeuft - die
-           Sperre gegen zweimal dasselbe greift nicht, weil die beiden
-           Plaetze nicht benachbart sind -, aber die Abwechslung an diesen
-           Plaetzen ist wieder eine Muenze statt eines Wuerfels: Wer sich
-           beschwert, Issa nicht bekommen zu haben, hatte Circus, und
-           umgekehrt. Beim Wiedereinschalten kommt der Eintrag zurueck,
-           samt Startfunktion in test-lernzeit.js.
+           Takt hat zwei Wortschatzplaetze je Durchgang.
+           DAS KOSTET NICHTS, und hier stand zuerst das Gegenteil: Weil
+           `plan()` ueber `schonDrin` die noch nicht gespielten bevorzugt,
+           kommen bei ZWEI Spielen auf ZWEI Plaetzen BEIDE dran - gemessen in
+           200 von 200 Plaenen. Gewuerfelt wird nur die Reihenfolge. Mit drei
+           Wortschatzspielen fehlte dagegen zwangslaeufig eines, und genau das
+           war die Beschwerde "die hat Issa bekommen und ich nicht".
+           Beim Wiedereinschalten kommt der Eintrag zurueck, samt
+           Startfunktion in test-lernzeit.js.
 
         { datei: 'Quartett.html',  name: 'Quaterniō',      art: 'wortschatz',
           tauglich: function (pool) {
