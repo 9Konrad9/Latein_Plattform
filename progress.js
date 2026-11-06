@@ -26,6 +26,12 @@ const LudiProgress = (() => {
             /* Altbestand ohne das Fach absichern - wer vor November 2026
                gespielt hat, hat keinen `zaehler`-Zweig im Speicher. */
             if (!data.achievements.zaehler) data.achievements.zaehler = {};
+            /* Dasselbe für Name und Titel. `profil` liegt NEBEN
+               `achievements`, nicht darin: Es ist kein Erfolg, sondern wie
+               man angesprochen werden möchte - und `resetProgress()` soll
+               den Namen nicht mitnehmen, wenn jemand seinen Fortschritt
+               löscht. */
+            if (!data.profil) data.profil = { name: '', titel: '' };
             return data;
         } catch (e) {
             console.warn('Fortschritt konnte nicht geladen werden:', e);
@@ -771,6 +777,90 @@ const LudiProgress = (() => {
      * sichtbaren Weg dorthin ist nur eine Ente - und bei Pater patriae mit
      * seinen ZWEI Bedingungen wäre gar nicht zu erraten, woran es hakt.
      */
+    /* ---------- NAME UND TITEL (November 2026, von den Schüler:innen
+       gewünscht: „eine Möglichkeit, einen der Titel für sich auszuwählen",
+       verbunden mit einem Namen) ----------
+
+       DIE ANFANGSTITEL SIND DER GRUND, WARUM DAS VON TAG EINS AN FUNKTIONIERT.
+       Die Corōna cīvica verlangt 15 Trophäen auf Silber - im ersten Halbjahr
+       hat die niemand, und eine leere Auswahlliste ist genau das, was an
+       ausgegrauten Trophäen kritisiert wurde. Also trägt jeder von Anfang an
+       einen: Discipulus oder Discipula. Das ist zugleich die EINZIGE Stelle,
+       an der es eine weibliche Form zu wählen gibt - siehe die Notiz unten.
+
+       OFFEN UND BEWUSST NICHT ENTSCHIEDEN: Drei der fünf Ehrentitel sind im
+       Lateinischen männliche Personenbezeichnungen (Prīmus pīlus, Imperātor,
+       Pater patriae). Solange sie nur Trophäennamen waren, stellte sich die
+       Frage nicht; wer sie jetzt als EIGENEN Titel trägt, ist eine bestimmte
+       Person. Māter patriae ist belegt (Livia), Imperātrīx ist spätlateinisch
+       und selten, und bei Prīmus pīlus gibt es keine Form - *prīma pīla wäre
+       falsch, pīlus ist der Rang. Das ist eine fachliche Entscheidung und
+       gehört dem Fachlehrer, nicht mir. Die beiden Kränze (cīvica, mūrālis)
+       sind Gegenstände und davon nicht betroffen. */
+    const ANFANGSTITEL = [
+        { id: 'discipulus', icon: '📖', titel: 'Discipulus', rom: 'Der Schüler - wer lernt, hat den Titel schon verdient.' },
+        { id: 'discipula',  icon: '📖', titel: 'Discipula',  rom: 'Die Schülerin - wer lernt, hat den Titel schon verdient.' }
+    ];
+
+    const NAME_MAX = 20;
+
+    function getProfil() {
+        const data = _load();
+        const p = data.profil || {};
+        return { name: p.name || '', titel: p.titel || '' };
+    }
+
+    /* Der Name wird GEKÜRZT und von Steuerzeichen befreit, nicht abgelehnt:
+       Eine Eingabe, die kommentarlos verschwindet, sieht nach einem Fehler
+       aus. Zeilenumbrüche müssen raus, weil der Name einzeilig angezeigt
+       wird. Gegen HTML schützt die Anzeige (textContent), nicht diese
+       Funktion - der Speicher darf ruhig enthalten, was jemand eintippt. */
+    function setName(name) {
+        const sauber = String(name == null ? '' : name)
+            .replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
+        const data = _load();
+        data.profil = data.profil || {};
+        data.profil.name = sauber;
+        _save(data);
+        return sauber;
+    }
+
+    /* Nur ein Titel, den man auch tragen darf. Ein unbekannter oder noch
+       nicht verliehener wird still auf den ersten Anfangstitel
+       zurückgesetzt - sonst stünde nach einer Änderung an den Bedingungen
+       ein Titel auf dem Hauptmenü, den es nicht mehr gibt. */
+    function setTitel(id) {
+        const erlaubt = waehlbareTitel().some(t => t.id === id);
+        const data = _load();
+        data.profil = data.profil || {};
+        data.profil.titel = erlaubt ? id : ANFANGSTITEL[0].id;
+        _save(data);
+        return data.profil.titel;
+    }
+
+    /* Was zur Wahl steht: die beiden Anfangstitel plus jeder VERLIEHENE
+       Ehrentitel. Die noch nicht verliehenen stehen bewusst nicht dabei -
+       ein Titel, den man sich einfach nehmen kann, ist keiner. */
+    function waehlbareTitel() {
+        return ANFANGSTITEL.concat(
+            getEhrentitel().filter(t => t.verliehen)
+                .map(t => ({ id: t.id, icon: t.icon, titel: t.titel, rom: t.rom })));
+    }
+
+    /* Was gerade getragen wird - immer etwas, nie nichts. Steht im Speicher
+       kein Titel (oder einer, den es nicht mehr gibt), kommt der erste
+       Anfangstitel zurück. */
+    function getTitel() {
+        const gewaehlt = getProfil().titel;
+        const liste = waehlbareTitel();
+        /* Der zweite Rückfall ist kein Zierrat: Stünde ANFANGSTITEL einmal
+           leer da, gäbe liste[0] undefined zurück - und die Trophäenseite
+           stürbe beim Laden an `titel.titel`, statt sauber nichts
+           anzuzeigen. Von der Gegenprobe aufgedeckt. */
+        return liste.filter(t => t.id === gewaehlt)[0] || liste[0] ||
+               { id: '', icon: '', titel: '' };
+    }
+
     function getEhrentitel() {
         const overview = getAchievementOverview();
         const beiStufe = s => overview.filter(a => a.tier >= s).length;
@@ -856,6 +946,13 @@ const LudiProgress = (() => {
         getTierSummary,
         SPIEL_GRUPPEN,
         getEhrentitel,
+        getProfil,
+        setName,
+        setTitel,
+        getTitel,
+        waehlbareTitel,
+        ANFANGSTITEL,
+        NAME_MAX,
         EHRENTITEL,
         FIXED_ACHIEVEMENTS,
         CATEGORY_THRESHOLDS,

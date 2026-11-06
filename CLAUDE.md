@@ -2099,6 +2099,72 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     und sie meldet „Stelle nicht gefunden", also ein VERPASST, wo nichts verpasst wurde.
     Sie bringt den Anker jetzt auf die Zeilenenden der Datei, bevor sie sucht.
 
+- **NAME UND TITEL** (November 2026, von den Schüler:innen gewünscht: „eine Möglichkeit,
+  einen der Titel für sich auswählen zu können", verbunden mit einem Namen). Beides steht
+  im Hauptmenü unter der Bronzetafel („Salvē, Cornelia · 📖 Discipula") und oben auf der
+  Trophäenseite, wo auch gewählt wird. Gespeichert unter `profil` im `localStorage`.
+  - **`profil` liegt NEBEN `achievements`, nicht darin.** Es ist kein Erfolg, sondern wie
+    man angesprochen werden möchte – und `resetProgress()` soll den Namen nicht mitnehmen,
+    wenn jemand seinen Fortschritt löscht.
+  - **ZWEI ANFANGSTITEL, von Tag eins an: *Discipulus* und *Discipula*.** Die Corōna
+    cīvica verlangt 15 Trophäen auf Silber – im ersten Halbjahr hat die niemand, und eine
+    leere Auswahlliste ist genau das, was an ausgegrauten Trophäen kritisiert wurde.
+  - **Zur Wahl stehen nur VERLIEHENE Ehrentitel.** Ein Titel, den man sich einfach nehmen
+    kann, ist keiner. `setTitel()` fällt bei einem unverdienten oder unbekannten Namen
+    still auf den ersten Anfangstitel zurück – sonst stünde nach einer Änderung an den
+    Bedingungen ein Titel im Hauptmenü, den es nicht mehr gibt.
+  - **OFFEN, und das gehört dem Fachlehrer:** Drei der fünf Ehrentitel sind im
+    Lateinischen männliche Personenbezeichnungen (*Prīmus pīlus*, *Imperātor*, *Pater
+    patriae*). Solange sie nur Trophäennamen waren, stellte sich die Frage nicht; wer sie
+    jetzt als EIGENEN Titel trägt, ist eine bestimmte Person. *Māter patriae* ist belegt
+    (Livia), *Imperātrīx* ist spätlateinisch und selten, und bei *Prīmus pīlus* gibt es
+    keine Form – *prīma pīla* wäre falsch, *pīlus* ist der Rang. Die beiden Kränze sind
+    Gegenstände und davon nicht betroffen.
+  - **DER NAME WIRD NIE ALS HTML EINGESETZT**, auf keiner der beiden Seiten. Er kommt aus
+    einem Eingabefeld und geht über `textContent` auf den Schirm – sonst schriebe sich
+    jemand ein `<img onerror=…>` als Namen, und auf einem geteilten iPad liefe das beim
+    Nächsten. `test-profil.js` prüft das am Verhalten (gibt es ein echtes `<img>`?), nicht
+    am Quelltext: Eine Suche nach `textContent` bliebe auch grün, wenn daneben ein
+    `innerHTML` steht.
+  - **DER FEHLER, DER DABEI PASSIERT IST, UND WARUM ER SO TEUER WAR:** Die Wache im
+    Hauptmenü hieß `if (!window.LudiProgress || …) return;`. **`progress.js` deklariert
+    ein top-level `const` – so ein Binding liegt im globalen LEXIKALISCHEN Bereich und
+    NICHT auf `window`.** `window.LudiProgress` ist also immer `undefined`, die Wache
+    schlug immer zu, und die Zeile blieb stumm leer: kein Absturz, keine Meldung, kein
+    roter Banner – nur nichts. Der Block direkt darunter macht es seit jeher richtig
+    (`typeof LudiProgress !== 'undefined'`). **Die Falle steht im Projektbuch schon
+    beschrieben – für das Laden im TEST.** Sie gilt genauso im Seitenskript, und dort hat
+    sie mich erwischt. `gegenprobe-profil.js` baut sie als Fall 1 wieder ein.
+  - Zwei weitere Befunde der Gegenprobe, beide am Test selbst: Die `<img>`-Probe musste
+    VOR die Probe „kommt der Name überhaupt an?" – wird der Name als HTML eingesetzt, ist
+    er aus dem `textContent` verschwunden, und die zweite Probe meldete dann das Falsche.
+    Und `getTitel()` gab `undefined` zurück, wenn `ANFANGSTITEL` leer wäre; die
+    Trophäenseite starb daran beim Laden, statt sauber nichts anzuzeigen. Jetzt gibt es
+    einen harten Rückfall.
+  - **Der Speicherschlüssel steht im Test nicht noch einmal**, sondern wird aus
+    `progress.js` gelesen. Geraten hatte ich ihn zuerst (`ludiRomaniProgress` statt
+    `ludiRomani_progress_v1`) – die Probe meldete daraufhin, die Seite setze den Namen
+    nicht ein, und der Fehler lag im Test.
+
+- **DER STUFENFILTER auf der Trophäenseite** (November 2026, gewünscht: „dass nur
+  Achievements mit der Stufe Bronze/Silber usw. angezeigt werden"). Eine Knopfreihe
+  *Alle · Bronze … Triumphus · Noch offen*.
+  - **Gefiltert wird auf GENAU eine Stufe, nicht „ab".** So war es gewünscht, und es ist
+    auch die nützlichere Frage: „Wo stehe ich auf Silber?" statt „Was habe ich alles."
+  - **Die Knöpfe entstehen aus `TIER_NAMES`**, nicht aus einer zweiten Liste – wer eine
+    achte Stufe einbaut, bekommt den Knopf umsonst. `test-profil.js` hält beide gegen
+    einander.
+  - **Gefiltert wird VOR dem Zeichnen, nicht in `renderCard`.** Sonst stünden die
+    Überschriften über leeren Abschnitten, und ein leerer Abschnitt sieht nach einem
+    Fehler aus. Aus demselben Grund treten auch die **Ehrentitel** bei gesetztem Filter
+    zurück: Sie haben gar keine Stufe, stünden also unter jedem Filter unverändert da –
+    und sähen dann aus, als hätten sie die gewählte.
+  - **Bleibt nichts übrig, muss das DASTEHEN.** Eine leere Seite sieht aus, als wäre etwas
+    kaputt, und man sieht nicht, dass man selbst einen Filter gesetzt hat.
+  - Die Hinweiszeile „noch keine formen-spezifischen Erfolge" gehört zum UNGEFILTERTEN
+    Stand. Mit gesetztem Filter wäre sie falsch: Dass gerade keine Gold-Kategorie da ist,
+    heißt nicht, dass man keine Formen geübt hat.
+
 - **Jede Trophäe sagt selbst, wohin sie gehört** (`bereich`: `allgemein` / `bestleistung` /
   `kategorie`). `Achievements.html` hatte die Zuordnung als feste Liste von vier Kennungen, und
   alles, was nicht darin stand, galt als Wortart – die neue Höhen-Trophäe erschien dadurch

@@ -215,6 +215,10 @@
     <div class="header-section">
         <h1>Lūdī Rōmānī</h1>
         <div class="subtitle">Wähle deine Trainingsarena</div>
+        <!-- Name und Titel (November 2026). Leer, bis progress.js geantwortet
+             hat - und leer bleibt die Zeile auch, wenn die Datei noch aus dem
+             Zwischenspeicher kommt und die Funktion fehlt. -->
+        <div class="subtitle" id="profil-zeile"></div>
     </div>
 
     <div class="trenner" style="max-width: 1000px;" aria-hidden="true"></div>
@@ -243,7 +247,7 @@
             <div class="game-title">Trophäensammlung</div>
             <div class="game-focus">Deine Erfolge auf einen Blick</div>
             <div class="game-desc">
-                Serien, Meisterschaft, Fleiß und formen-spezifische Erfolge - in Bronze, Silber, Gold und Diamant.
+                Serien, Meisterschaft, Fleiß und formen-spezifische Erfolge — von Bronze bis zum Triumphus, dazu die Ehrentitel.
             </div>
             <div class="progress-badge" id="achievements-summary">Lade...</div>
             <a href="Achievements.html" class="play-btn">Trophäen ansehen</a>
@@ -511,6 +515,31 @@
     </section>
 
     <script>
+        /* Name und Titel oben anzeigen. Der Name kommt aus einem
+           Eingabefeld auf der Trophaeenseite und wird deshalb NIE als HTML
+           eingesetzt, sondern nur ueber textContent - sonst liefe ein
+           eingetipptes <img onerror=...> hier los. Die Pruefung auf
+           getTitel faengt den Fall ab, dass diese Seite schon neu ist und
+           progress.js noch aus dem Zwischenspeicher kommt.
+
+           GEPRUEFT WIRD MIT `typeof LudiProgress`, NICHT mit
+           `window.LudiProgress`. progress.js deklariert ein top-level
+           `const` - so ein Binding liegt im globalen LEXIKALISCHEN Bereich
+           und NICHT auf `window`. `window.LudiProgress` ist also immer
+           undefined, die Wache haette immer zugeschlagen und die Zeile
+           waere stumm leer geblieben: kein Fehler, keine Meldung, nichts.
+           Im Projektbuch steht die Falle fuer das Laden im TEST - sie gilt
+           genauso im Seitenskript. Der Block darunter macht es seit jeher
+           richtig. */
+        (function () {
+            if (typeof LudiProgress === 'undefined' || !LudiProgress.getTitel) return;
+            const zeile = document.getElementById('profil-zeile');
+            if (!zeile) return;
+            const p = LudiProgress.getProfil();
+            const t = LudiProgress.getTitel();
+            zeile.textContent = (p.name ? 'Salvē, ' + p.name + ' · ' : '') +
+                                t.icon + ' ' + t.titel;
+        })();
         // Trophäensammlung-Kachel: Anzahl freigeschalteter Stufen anzeigen
         if (typeof LudiProgress !== 'undefined') {
             const summaryEl = document.getElementById('achievements-summary');

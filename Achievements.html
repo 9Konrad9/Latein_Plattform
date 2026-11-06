@@ -42,6 +42,45 @@
         }
         .header-section { text-align: center; margin-bottom: 10px; }
 
+        /* Name und Titel. Farben und Rand kommen aus theme.css - hier nur
+           Maße und Anordnung (siehe die Knopf-Regel im Projektbuch). */
+        .profil {
+            max-width: 1000px; margin: 0 auto 18px; padding: 14px 18px;
+            background: var(--putz-hell); border: 2px solid var(--wand-tief);
+            border-radius: 10px;
+            display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+            justify-content: center;
+        }
+        .profil-anrede { font-size: 1.15rem; color: var(--ink); }
+        .profil-anrede b { color: var(--pompeji); }
+        .profil label { font-size: .95rem; color: var(--ink); }
+        .profil input[type="text"] {
+            font: inherit; font-size: 1rem; padding: 6px 10px; width: 11em;
+            border: 2px solid var(--wand-tief); border-radius: 6px;
+            background: #fff; color: var(--ink);
+        }
+        .titel-wahl { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        /* Die Titelknöpfe sind Antwortknöpfe: hell auf Putz, nicht
+           porphyrrot - hier wird gewählt, nicht gehandelt. */
+        .titel-wahl .antwort-btn { padding: 6px 12px; font-size: .95rem; }
+        .titel-wahl .antwort-btn[aria-pressed="true"] {
+            outline: 3px solid var(--pompeji); outline-offset: 1px;
+        }
+
+        /* Der Stufenfilter. */
+        .stufen-filter {
+            max-width: 1000px; margin: 0 auto 10px;
+            display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+        }
+        .stufen-filter .antwort-btn { padding: 5px 11px; font-size: .9rem; }
+        .stufen-filter .antwort-btn[aria-pressed="true"] {
+            outline: 3px solid var(--pompeji); outline-offset: 1px;
+        }
+        .filter-leer {
+            max-width: 1000px; margin: 0 auto; text-align: center;
+            color: var(--ink); opacity: .8; padding: 14px;
+        }
+
         /* Lorbeerkranz als Emblem über der Überschrift. Als Rahmen um den Titel
            taugt er nicht - der Titel ist breiter als seine Öffnung, und der
            Untertitel verschwand hinter den Blättern. */
@@ -207,23 +246,37 @@
     <a href="index.html" class="home-link">← Zurück zum Hauptmenü</a>
     <div class="total-badge" id="total-badge">Lade Fortschritt...</div>
 
+    <!-- Name und Titel. Steht ÜBER den Ehrentiteln: Was man trägt, zuerst -
+         woher man es hat, gleich darunter. -->
+    <div class="profil">
+        <div class="profil-anrede" id="profil-anrede"></div>
+        <label>Dein Name: <input type="text" id="profil-name" maxlength="20"
+               autocomplete="off" placeholder="z. B. Marcus"></label>
+        <div class="titel-wahl" id="titel-wahl"></div>
+    </div>
+
+    <!-- Nach Stufe filtern (November 2026, gewünscht). Die Knöpfe entstehen
+         aus TIER_NAMES, damit sie nicht von der Leiter abdriften. -->
+    <div class="stufen-filter" id="stufen-filter"></div>
+
     <!-- Die Ehrentitel stehen GANZ OBEN: Sie krönen die Sammlung darunter,
          und wer die Seite öffnet, soll zuerst sehen, worauf das Ganze
          hinausläuft. -->
     <div class="section-title" id="titel-ueberschrift">🏛️ Ehrentitel</div>
     <div class="titel-grid" id="titel-grid"></div>
 
-    <div class="section-title">🎖️ Allgemeine Erfolge</div>
+    <div class="section-title" id="titel-allgemein">🎖️ Allgemeine Erfolge</div>
     <div class="achievement-grid" id="fixed-grid"></div>
 
     <div class="section-title" id="titel-bestleistung">🏆 Bestleistungen</div>
     <div class="achievement-grid" id="best-grid"></div>
 
-    <div class="section-title">📖 Formen &amp; Wortarten</div>
+    <div class="section-title" id="titel-formen">📖 Formen &amp; Wortarten</div>
     <div class="achievement-grid" id="category-grid"></div>
     <div class="empty-note" id="empty-note" style="display:none;">
         Noch keine formen-spezifischen Erfolge freigeschaltet. Spiel z.B. Circus Maximus oder das Formen-Kastell, um hier Fortschritt zu sammeln!
     </div>
+    <div class="filter-leer" id="filter-leer" style="display:none;"></div>
 
     <script>
         /* Ein Eintrag je Stufe, in der Reihenfolge von TIER_NAMES.
@@ -302,6 +355,80 @@
             `;
         }
 
+    /* ---------- NAME UND TITEL ----------
+       DER NAME WIRD NIE ALS HTML EINGESETZT. Er kommt aus einem Eingabefeld
+       und landet über `textContent` auf dem Schirm, nicht über innerHTML -
+       sonst schriebe sich jemand ein `<img onerror=...>` als Namen und das
+       liefe bei ihm selbst (und auf einem geteilten iPad beim Nächsten).
+       Dasselbe gilt im Hauptmenü. */
+    function zeigeProfil() {
+        /* Rückfall wie überall auf dieser Seite: Direkt nach einer
+           Auslieferung kann diese Datei schon neu sein und progress.js noch
+           aus dem Zwischenspeicher kommen (GitHub Pages, max-age=600). Ohne
+           ihn bliebe die ganze Seite bei „Lade Fortschritt..." stehen. */
+        if (!LudiProgress.getTitel || !LudiProgress.waehlbareTitel) {
+            document.querySelector('.profil').style.display = 'none';
+            return;
+        }
+        const profil = LudiProgress.getProfil();
+        const titel = LudiProgress.getTitel();
+        const anrede = document.getElementById('profil-anrede');
+        anrede.textContent = '';
+        const salve = document.createElement('span');
+        salve.textContent = profil.name ? 'Salvē, ' : '';
+        const wer = document.createElement('b');
+        wer.textContent = profil.name ? profil.name : titel.titel;
+        anrede.appendChild(salve);
+        anrede.appendChild(wer);
+        if (profil.name) {
+            const zusatz = document.createElement('span');
+            zusatz.textContent = ' · ' + titel.icon + ' ' + titel.titel;
+            anrede.appendChild(zusatz);
+        }
+
+        const feld = document.getElementById('profil-name');
+        if (document.activeElement !== feld) feld.value = profil.name;
+
+        /* Die Knöpfe neu bauen - es können welche dazugekommen sein, seit
+           die Seite offen ist (ein Titel wird beim Spielen verliehen). */
+        const wahl = document.getElementById('titel-wahl');
+        wahl.textContent = '';
+        LudiProgress.waehlbareTitel().forEach(t => {
+            const b = document.createElement('button');
+            b.className = 'antwort-btn';
+            b.type = 'button';
+            b.textContent = t.icon + ' ' + t.titel;
+            b.title = t.rom || '';
+            b.setAttribute('aria-pressed', String(t.id === titel.id));
+            b.addEventListener('click', () => { LudiProgress.setTitel(t.id); zeigeProfil(); });
+            wahl.appendChild(b);
+        });
+    }
+
+    /* ---------- DER STUFENFILTER ----------
+       Gefiltert wird auf GENAU eine Stufe, nicht „ab" - gewünscht war, „dass
+       nur Achievements mit der Stufe Bronze/Silber usw. angezeigt werden".
+       Die Knöpfe entstehen aus TIER_NAMES, damit sie nicht von der Leiter
+       abdriften: Wer eine achte Stufe einbaut, bekommt den Knopf umsonst. */
+    let stufenFilter = null;          // null = alle
+
+    function baueFilter() {
+        const leiste = document.getElementById('stufen-filter');
+        leiste.textContent = '';
+        const eintraege = [{ wert: null, text: 'Alle' }]
+            .concat(LudiProgress.TIER_NAMES.map((n, i) => ({ wert: i + 1, text: n })))
+            .concat([{ wert: 0, text: 'Noch offen' }]);
+        eintraege.forEach(e => {
+            const b = document.createElement('button');
+            b.className = 'antwort-btn';
+            b.type = 'button';
+            b.textContent = e.text;
+            b.setAttribute('aria-pressed', String(stufenFilter === e.wert));
+            b.addEventListener('click', () => { stufenFilter = e.wert; render(); });
+            leiste.appendChild(b);
+        });
+    }
+
         function render() {
             const overview = LudiProgress.getAchievementOverview();
             /* Beide Zahlen aus EINER Quelle. Hier stand `overview.length * 4`
@@ -330,7 +457,11 @@
                progress.js). Vorher stand hier eine feste Liste von vier
                Kennungen, und alles andere galt als Wortart - eine neue
                Trophäe landete damit stillschweigend im falschen Abschnitt. */
-            const ausBereich = n => overview.filter(a => (a.bereich || 'allgemein') === n);
+            /* Der Stufenfilter greift HIER, nicht in renderCard: Sonst
+               stünden die Überschriften über leeren Abschnitten, und ein
+               leerer Abschnitt sieht nach einem Fehler aus. */
+            const passt = a => stufenFilter === null || a.tier === stufenFilter;
+            const ausBereich = n => overview.filter(a => (a.bereich || 'allgemein') === n && passt(a));
             const fixed = ausBereich('allgemein');
             const bestleistungen = ausBereich('bestleistung');
             const categories = ausBereich('kategorie');
@@ -345,24 +476,56 @@
             document.getElementById('titel-grid').innerHTML = titel.map(renderTitel).join('');
             /* Ohne Titel auch keine Überschrift - sonst stünde dort ein
                leerer Abschnitt, und das sieht nach einem Fehler aus. */
-            document.getElementById('titel-ueberschrift').style.display = titel.length ? '' : 'none';
+            /* Bei gesetztem Stufenfilter bleiben die Ehrentitel weg: Sie
+               haben gar keine Stufe, stuenden also unter jedem Filter
+               unveraendert da - und sahen dann aus, als haetten sie die
+               gewaehlte. */
+            const titelSichtbar = titel.length && stufenFilter === null;
+            document.getElementById('titel-grid').style.display = titelSichtbar ? '' : 'none';
+            document.getElementById('titel-ueberschrift').style.display = titelSichtbar ? '' : 'none';
 
             document.getElementById('fixed-grid').innerHTML = fixed.map(renderCard).join('');
+            /* Über die ID, nicht über den Index: Eine Nummer in
+               querySelectorAll bricht still, sobald jemand einen Abschnitt
+               einfügt - und dann versteckt sich der falsche. */
+            document.getElementById('titel-allgemein').style.display = fixed.length ? '' : 'none';
             document.getElementById('best-grid').innerHTML = bestleistungen.map(renderCard).join('');
             // Die Karte steht auch ungeholt da - wie in den anderen Abschnitten:
             // Ein Ziel, das man sieht, ist ein Ziel. Weg bleibt die Überschrift nur,
             // wenn es GAR keine Bestleistungs-Trophäe mehr gibt.
             document.getElementById('titel-bestleistung').style.display = bestleistungen.length ? '' : 'none';
 
-            if (categories.length === 0) {
-                document.getElementById('empty-note').style.display = 'block';
-                document.getElementById('category-grid').innerHTML = '';
+            /* Die Hinweiszeile „noch nichts gespielt" gehört zum
+               UNGEFILTERTEN Stand. Mit gesetztem Filter wäre sie falsch: Dass
+               gerade keine Gold-Kategorie da ist, heißt nicht, dass man keine
+               Formen geübt hat. */
+            const kategorienGesamt = overview.filter(a => (a.bereich || 'allgemein') === 'kategorie').length;
+            document.getElementById('empty-note').style.display =
+                (kategorienGesamt === 0 && stufenFilter === null) ? 'block' : 'none';
+            document.getElementById('category-grid').innerHTML = categories.map(renderCard).join('');
+            document.getElementById('titel-formen').style.display = categories.length ? '' : 'none';
+
+            /* Bleibt vom Filter gar nichts übrig, muss das DASTEHEN. Eine
+               leere Seite sieht aus, als wäre etwas kaputt - und man sieht
+               nicht, dass man selbst einen Filter gesetzt hat. */
+            const leer = document.getElementById('filter-leer');
+            const nichts = !fixed.length && !bestleistungen.length && !categories.length;
+            if (nichts && stufenFilter !== null) {
+                const name = stufenFilter === 0 ? 'offen' : LudiProgress.TIER_NAMES[stufenFilter - 1];
+                leer.textContent = stufenFilter === 0
+                    ? 'Keine einzige Trophäe steht mehr auf null — alle sind angefangen.'
+                    : 'Noch keine Trophäe steht auf ' + name + '. Mit „Alle" siehst du wieder alles.';
+                leer.style.display = 'block';
             } else {
-                document.getElementById('empty-note').style.display = 'none';
-                document.getElementById('category-grid').innerHTML = categories.map(renderCard).join('');
+                leer.style.display = 'none';
             }
+
+            baueFilter();
         }
 
+        zeigeProfil();
+        document.getElementById('profil-name')
+            .addEventListener('input', e => { LudiProgress.setName(e.target.value); zeigeProfil(); });
         render();
     </script>
 </body>
