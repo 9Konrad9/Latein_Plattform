@@ -60,6 +60,10 @@
             background: #fff; color: var(--ink);
         }
         .titel-wahl { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        /* Die weibliche Form auf der Titelkarte - etwas zurückgenommen, aber
+           lesbar: Sie ist nicht der Zweitname, sondern die zweite Form.
+           `--ink` auf `--putz-hell`, nur kleiner. */
+        .titel-form { font-size: .85em; opacity: .85; }
         /* Die Titelknöpfe sind Antwortknöpfe: hell auf Putz, nicht
            porphyrrot - hier wird gewählt, nicht gehandelt. */
         .titel-wahl .antwort-btn { padding: 6px 12px; font-size: .95rem; }
@@ -346,7 +350,7 @@
             }).join('');
             return `
                 <div class="titel-karte ${t.verliehen ? 'verliehen' : ''}">
-                    <div class="titel-name">${t.icon} ${t.titel}</div>
+                    <div class="titel-name">${t.icon} ${t.titel}${t.titelW ? ' <span class="titel-form">/ ' + t.titelW + '</span>' : ''}</div>
                     <div class="titel-stand">${t.verliehen ? 'verliehen' : t.anteil + ' % des Weges'}</div>
                     <div class="titel-rom">${t.rom}</div>
                     <div class="progress-track"><div class="progress-fill" style="width:${t.anteil}%"></div></div>

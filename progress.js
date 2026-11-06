@@ -552,10 +552,21 @@ const LudiProgress = (() => {
           bedingungen: [{ stufe: 6, anzahl: 3 }] },
 
         /* Der einzige mit ZWEI Bedingungen, und das mit Absicht: Rom verlieh
-           ihn für Höhe UND Breite einer Laufbahn, nicht für eine Spitze. */
+           ihn für Höhe UND Breite einer Laufbahn, nicht für eine Spitze.
+
+           DER EINZIGE MIT EINER WEIBLICHEN FORM, und sie ist belegt:
+           Tacitus berichtet (ann. 1,14), der Senat habe Livia so ehren
+           wollen - „aliī parentem, aliī mātrem patriae appellandam [...]
+           cēnsēbant". Verliehen wurde der Titel allerdings NICHT: Tiberius
+           hat die Ehrungen für seine Mutter abgelehnt. Das steht so in der
+           Erklärung, weil es der interessantere Teil ist. */
         { id: 'paterpatriae', icon: '🏛️', titel: 'Pater patriae',
+          idW: 'materpatriae', titelW: 'Māter patriae',
           rom: 'Vater des Vaterlandes — Cicero bekam ihn nach der Catilinarischen ' +
-               'Verschwörung, Augustus im Jahr 2 v. Chr. Die Krone einer ganzen Laufbahn.',
+               'Verschwörung, Augustus im Jahr 2 v. Chr. Die Krone einer ganzen Laufbahn. ' +
+               'Für Livia wollte der Senat die weibliche Form: „aliī parentem, ' +
+               'aliī mātrem patriae appellandam … cēnsēbant“ (Tacitus, ann. 1,14). ' +
+               'Tiberius lehnte die Ehrung für seine Mutter ab.',
           bedingungen: [{ stufe: 7, anzahl: 3 }, { stufe: 3, anzahl: 30 }] }
     ];
 
@@ -798,9 +809,31 @@ const LudiProgress = (() => {
        gehört dem Fachlehrer, nicht mir. Die beiden Kränze (cīvica, mūrālis)
        sind Gegenstände und davon nicht betroffen. */
     const ANFANGSTITEL = [
-        { id: 'discipulus', icon: '📖', titel: 'Discipulus', rom: 'Der Schüler - wer lernt, hat den Titel schon verdient.' },
-        { id: 'discipula',  icon: '📖', titel: 'Discipula',  rom: 'Die Schülerin - wer lernt, hat den Titel schon verdient.' }
+        { id: 'discipulus', icon: '📖', titel: 'Discipulus',
+          idW: 'discipula', titelW: 'Discipula',
+          rom: 'Der Schüler, die Schülerin - wer lernt, hat den Titel schon verdient.' }
     ];
+
+    /* WEIBLICHE FORMEN NUR, WO SIE BELEGT SIND (November 2026, Entscheidung
+       des Fachlehrers: „Lass uns die Titel gendern, soweit es belegt ist").
+       Ein Titel mit `titelW` steht in beiden Formen zur Wahl, einer ohne nur
+       in einer. Nachgeschlagen, nicht geraten:
+         - Pater patriae -> Māter patriae: belegt, Tacitus ann. 1,14.
+         - Imperātor: KEINE Form aufgenommen. `imperātrīx` ist regelmäßig
+           gebildet, aber eine antike Belegstelle war nicht zu finden - im
+           Volltext von Plautus, „Casina", kommt das Wort nicht vor, und
+           Wiktionary nennt keinen antiken Autor. Lewis & Short und Logeion
+           waren nicht erreichbar, die Frage ist also OFFEN, nicht geklärt.
+         - Prīmus pīlus: keine weibliche Form. Das ist ein Rang, und
+           *prīma pīla hieße etwas anderes - pīlus ist der Rang, pīla der
+           Ball.
+         - Corōna cīvica und mūrālis: Gegenstände, keine
+           Personenbezeichnungen. Sie passen auf jeden, ohne Änderung. */
+    function titelFormen(t) {
+        const formen = [{ id: t.id, icon: t.icon, titel: t.titel, rom: t.rom }];
+        if (t.titelW) formen.push({ id: t.idW, icon: t.icon, titel: t.titelW, rom: t.rom });
+        return formen;
+    }
 
     const NAME_MAX = 20;
 
@@ -842,9 +875,11 @@ const LudiProgress = (() => {
        Ehrentitel. Die noch nicht verliehenen stehen bewusst nicht dabei -
        ein Titel, den man sich einfach nehmen kann, ist keiner. */
     function waehlbareTitel() {
-        return ANFANGSTITEL.concat(
-            getEhrentitel().filter(t => t.verliehen)
-                .map(t => ({ id: t.id, icon: t.icon, titel: t.titel, rom: t.rom })));
+        const liste = [];
+        ANFANGSTITEL.forEach(t => titelFormen(t).forEach(f => liste.push(f)));
+        getEhrentitel().filter(t => t.verliehen)
+            .forEach(t => titelFormen(t).forEach(f => liste.push(f)));
+        return liste;
     }
 
     /* Was gerade getragen wird - immer etwas, nie nichts. Steht im Speicher
@@ -871,6 +906,10 @@ const LudiProgress = (() => {
             }));
             return {
                 id: t.id, icon: t.icon, titel: t.titel, rom: t.rom,
+                /* Die weibliche Form reist mit, damit die Karte BEIDE zeigen
+                   kann - wer den Titel noch nicht hat, soll trotzdem sehen,
+                   dass es ihn in seiner Form gibt. */
+                idW: t.idW, titelW: t.titelW,
                 bedingungen: bedingungen,
                 verliehen: bedingungen.every(b => b.wert >= b.anzahl),
                 /* Der Anteil über ALLE Bedingungen zusammen - bei einer ist

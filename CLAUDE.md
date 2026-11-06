@@ -2113,13 +2113,43 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     kann, ist keiner. `setTitel()` fällt bei einem unverdienten oder unbekannten Namen
     still auf den ersten Anfangstitel zurück – sonst stünde nach einer Änderung an den
     Bedingungen ein Titel im Hauptmenü, den es nicht mehr gibt.
-  - **OFFEN, und das gehört dem Fachlehrer:** Drei der fünf Ehrentitel sind im
-    Lateinischen männliche Personenbezeichnungen (*Prīmus pīlus*, *Imperātor*, *Pater
-    patriae*). Solange sie nur Trophäennamen waren, stellte sich die Frage nicht; wer sie
-    jetzt als EIGENEN Titel trägt, ist eine bestimmte Person. *Māter patriae* ist belegt
-    (Livia), *Imperātrīx* ist spätlateinisch und selten, und bei *Prīmus pīlus* gibt es
-    keine Form – *prīma pīla* wäre falsch, *pīlus* ist der Rang. Die beiden Kränze sind
-    Gegenstände und davon nicht betroffen.
+  - **WEIBLICHE FORMEN, SOWEIT SIE BELEGT SIND** (Entscheidung des Fachlehrers,
+    November 2026). Solange die Titel nur Trophäennamen waren, stellte sich die Frage
+    nicht; wer einen als EIGENEN Titel trägt, ist eine bestimmte Person.
+    **Nachgeschlagen, nicht aus dem Gedächtnis geschrieben** – das Ergebnis fiel knapper
+    aus als erwartet:
+
+    | Titel | Form | Befund |
+    |---|---|---|
+    | **Pater patriae** | **Māter patriae** | belegt: Tacitus, *ann.* 1,14 |
+    | Imperātor | – | **nicht belegbar**, siehe unten |
+    | Prīmus pīlus | – | Rang ohne weibliche Form |
+    | Corōna cīvica / mūrālis | – | Gegenstände, keine Personenbezeichnungen |
+    | Discipulus | Discipula | beide selbstverständlich |
+
+    - **Der Beleg steht im Erklärtext der Karte**, und zwar der interessante Teil:
+      Tacitus berichtet, der Senat habe Livia so ehren WOLLEN – „aliī parentem, aliī
+      mātrem patriae appellandam … cēnsēbant" –, **Tiberius hat es abgelehnt**. Der Titel
+      wurde also vorgeschlagen, nicht verliehen. Gekürzt wird mit Auslassungszeichen,
+      nicht stillschweigend.
+    - **`Imperātrīx` ist NICHT aufgenommen, und das ist eine bewusste Lücke.** Das Wort
+      ist regelmäßig gebildet (`imperō` + `-trīx`), aber eine antike Belegstelle war nicht
+      zu finden: Im Volltext von Plautus' *Casina* kommt es nicht vor (geprüft), und
+      Wiktionary nennt für die lateinische Bedeutung „empress" keinen antiken Autor.
+      Lewis & Short und Logeion waren nicht erreichbar (403 bzw. eine Seite, die ihren
+      Artikel per JavaScript nachlädt). **Die Frage ist damit offen, nicht geklärt** –
+      wer Georges oder das OLD zur Hand hat, entscheidet sie in zehn Sekunden. Bis dahin
+      bleibt die Form draußen, denn die Regel hieß „soweit es belegt ist".
+    - **Bei `Prīmus pīlus` gibt es keine Form.** Das ist ein Rang; `prīma pīla` hieße
+      etwas anderes – `pīlus` ist der Rang, `pīla` der Ball.
+    - **Ein Titel mit `titelW` steht in BEIDEN Formen zur Wahl**, einer ohne nur in einer.
+      Die Karte zeigt beide („Pater patriae / Māter patriae"), auch bevor der Titel
+      verliehen ist: Wer ihn noch nicht hat, soll trotzdem sehen, dass es ihn in seiner
+      Form gibt.
+    - **Die Kennungen bleiben, was sie waren** (`discipulus`/`discipula`), obwohl die
+      beiden Anfangstitel jetzt EIN Eintrag mit zwei Formen sind. Eine generierte Kennung
+      wie `discipulus-w` hätte jedem, der schon gewählt hat, still seine Wahl genommen.
+      `gegenprobe-profil.js` baut genau das als Schaden ein.
   - **DER NAME WIRD NIE ALS HTML EINGESETZT**, auf keiner der beiden Seiten. Er kommt aus
     einem Eingabefeld und geht über `textContent` auf den Schirm – sonst schriebe sich
     jemand ein `<img onerror=…>` als Namen, und auf einem geteilten iPad liefe das beim
