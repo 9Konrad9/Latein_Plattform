@@ -385,10 +385,43 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Onager mit Wurfarm); Bild-Assets können an dieselbe Stelle wie die Plattformen.
     Häufigkeit nach dem ersten Klassentest halbiert: 11 % (Katapult) und 8 % (Scutum)
     je passender Reihe, also rund alle siebzehn Reihen ein Fund.
-  - **DER BODEN MUSS DURCHLÄSSIG SEIN** (November 2026, gemeldet vom Fachlehrer: „man
-    kann gar nicht abstürzen, der Boden ist undurchlässig"; Maßstab ist **Doodle Jump**,
-    wo man verliert, sobald man unten aus dem Bild fällt). Der Befund war genau richtig,
-    und `loseLife()` war damit toter Code.
+  - **DER DURCHLÄSSIGE BODEN: VERSUCHT UND NACH ZWEI TAGEN ZURÜCKGENOMMEN**
+    (4.–6. November 2026). Gemeldet hatte der Fachlehrer: „man kann gar nicht abstürzen,
+    der Boden ist undurchlässig"; Maßstab war **Doodle Jump**, wo man verliert, sobald
+    man unten aus dem Bild fällt. Der Befund war richtig, `loseLife()` war toter Code –
+    **die Lösung war es nicht.** Sie steht vollständig im Commit `dc83825`; was unten
+    gemessen ist, gilt weiter und ist der nächste Anlauf wert.
+    - **WORAN SIE GESCHEITERT IST, und das ist der eigentliche Eintrag hier:** Die Regel
+      nahm jede DRITTE Reihe aus dem Turm (die beantworteten Antwort-Reihen). Reihen
+      liegen 125–145 px auseinander, **ein Sprung trägt 207** – über einer
+      weggefallenen Reihe klaffte also eine Lücke von zwei Abständen, **250 bis 290 px.**
+      Aus dem Unterricht: „Nachdem die Kinder durch zuvor ausgeblendete Plattformen
+      weiter runtergefallen waren, wurden sie vom unteren Rand aufgefangen, aber es war
+      keine erreichbare Plattform mehr da, von der aus sie wieder nach oben hätten
+      springen können." Nachgemessen: **27 % aller Übergänge im Turm waren
+      unüberwindbar** (51 von 187, weiteste Lücke 284 px). Issa saß unten fest, bis die
+      Herzen alle waren.
+    - **DIE REGEL „ein Sprung trägt genau EINE Reihe" IST DER GRUND, WARUM DER BODEN
+      GESCHLOSSEN IST.** Beides zusammen geht nicht: Wer Reihen entfernt, muss die
+      übrigen enger setzen – also die Sprungphysik oder die Reihenabstände mit ändern,
+      nicht nur die Durchlässigkeit. Diese Kopplung stand nirgends, und genau sie ist
+      beim Bauen übersehen worden.
+    - **WARUM VIERZIG TESTS ES NICHT FANDEN:** Es gab keine Ausnahme, keine ungültige
+      Zahl, keinen roten Banner. Das Spiel lief einwandfrei weiter und war trotzdem
+      unspielbar. `test-issa-lauf.js` fragt „wirft es?", `test-antworten.js` fragt „zeigt
+      es etwas Falsches?" – **„führt es irgendwohin?" hat keiner gefragt.** Die Probe
+      dafür steht jetzt in `test-issa.js` und bleibt, obwohl die Regel weg ist: Sie
+      prüft, dass über jeder Ebene die nächste in `SPRUNGHOEHE` liegt (heute 0 von 260
+      Stellen zu weit, weiteste Lücke 145 px). **Die Gegenprobe musste umgebaut werden:**
+      Erst maß sie nur die Stelle, auf der Issa nach dem Sturz steht – das traf den
+      Schaden in 1 von 40 Läufen, eine Gegenprobe, die meistens grün bleibt, ist keine.
+      Jetzt prüft sie jede Stelle im Turm und findet 51 von 187.
+    - **Der Erklärtext auf dem Startbild ist trotzdem berichtigt geblieben.** Er behauptete
+      seit September fälschlich „Eine falsche Plattform lässt Issa durchfallen" – sie setzt
+      auf der RICHTIGEN Plattform auf. Das war ein eigener Fehler und hat mit dem Boden
+      nichts zu tun. **Kein Test liest Prosa.**
+
+    Was damals gemessen wurde und weiter gilt:
     - **Gemessen, woran es lag:** Eine Antwort-Reihe sind VIER Plattformen à 88 px auf
       400 px Breite. Die größte Lücke misst **19,6 px**, Issa ist **34 px** breit –
       durch **0 von 136** Reihen passte sie. Jede dritte Reihe war ein geschlossener
@@ -403,43 +436,21 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
       88 px, und 68 der 663 Bedeutungen ragen schon heute über ihre Plattform hinaus.
       Die Beschriftung muss zur Landefläche passen: Wer auf ein Wort zielt, das breiter
       ist als seine Plattform, fiele sonst trotz richtiger Wahl hindurch.
-    - **Gelöst über die ZEIT statt über die Breite:** Eine Reihe ist nur so lange Boden,
-      wie ihre Frage offen ist. Ist sie beantwortet, blendet sie aus und ist weg. Unter
-      Issa steht dann nur noch neutraler Boden – Doodle-Jump-Dichte. Gemessen enden
-      **28 % der freien Fälle unten aus dem Bild statt 0 %**.
-    - **`REIHE_AUSBLENDEN_FRAMES = 75` ist aus der Sprungbahn abgeleitet, nicht
-      geschätzt:** Issa verlässt die Reihe mit `BOUNCE_VELOCITY` und ist nach
-      `|v|/GRAVITY` = 45 Bildern am Gipfel, nach 90 wieder unten. Bei 75 ist die Reihe
-      also **weg, wenn sie zurückfällt** – genau das soll sie sein –, und sie stand
-      vorher gut eine Sekunde da, damit man die richtige Antwort noch lesen kann.
-    - **Dass sie SICHTBAR ausblendet, gehört dazu.** Eine Plattform, die lautlos
-      verschwindet, fühlt sich nicht nach Regel an, sondern nach Fehler: Issa springt ab,
-      kommt zurück, und der Boden ist ohne Ankündigung fort. Das Ausblenden ist die
-      Ankündigung (gemessene Deckkraft in der Mitte des Vorgangs: 53 %).
-    - **Die Stelle ist `maintainPlatforms()`**, nicht die zwei Stellen, die eine Reihe
-      als beantwortet markieren (das Aufsetzen und der Rundumschlag für alles darunter).
-      Eine dritte Markierstelle würde das Ausblenden sonst vergessen.
-    - **Ein Sturz kostet EIN HERZ, nicht sofort den Lauf.** Doodle Jump kennt nur ein
-      Leben; hier gibt es drei, und eine falsche Antwort kostet genauso eins. Drei Stürze
-      beenden den Lauf also trotzdem. Gemessen bei einem Spieler, der zielt: **1 bis 5
-      von 60 Läufen** enden am Sturz – es wird nicht zur neuen Todesursache. **Ein Kind
-      steuert schlechter als diese Simulation**, die Quote liegt im Unterricht also höher.
-    - Das Scutum hilft gegen den Sturz **nicht** (es deckt falsche Antworten, nicht
-      fehlende Plattformen) – das stand schon immer so im Code und bedeutet jetzt etwas.
-    - **Der Erklärtext auf dem Startbild war falsch**, und zwar doppelt: „Eine falsche
-      Plattform lässt Issa durchfallen und kostet ein Herz." Durchfallen tut sie seit dem
-      Umbau im September nicht mehr (sie setzt auf der RICHTIGEN Plattform auf), und vom
-      Sturz stand dort nichts. **Kein Test liest Prosa** – dieselbe Lehre wie bei
-      Silentiums Startbildschirm. Wer die Regeln ändert, ändert drei Stellen: Code,
-      Erklärtext, Buch.
-    - `test-issa.js` prüft es **am Verhalten** mit Gegenprobe (28 % gegen 0 %) und dazu,
-      dass eine **offene** Frage weiterhin trägt – sonst wäre sie nicht zu beantworten.
-      **Der Turm muss dabei ERSPIELT sein, nicht gestellt**, und daran sind zwei
-      Fassungen gescheitert: Die erste baute einen Turm ohne eine einzige beantwortete
-      Reihe – also fehlte genau die Bedingung, von der die Regel lebt. Die zweite
-      markierte alles im Moment des Absprungs; dann beginnt das Ausblenden erst MIT dem
-      Fall und ist nach 75 Bildern fertig, während der Fall nur rund 65 dauert. Sie
-      meldete 5 %. Im Spiel liegt zwischen Antwort und Fall immer ein Sprung.
+    - **Der damalige Weg war, es über die ZEIT zu lösen statt über die Breite:** Eine
+      Reihe trägt nur, solange ihre Frage offen ist; danach blendet sie aus (75 Bilder,
+      aus der Sprungbahn abgeleitet) und ist weg. Das hat gewirkt – **28 % der freien
+      Fälle endeten unten aus dem Bild statt 0 %** – und es hat eben dadurch den Turm
+      zerlegt. Ein Sturz kostete ein Herz, nicht sofort den Lauf.
+    - **Meine Simulation hat die Sackgasse nicht gesehen, und sie hätte es können.** Sie
+      meldete „1 bis 5 von 60 Läufen enden am Sturz" und zählte einen Lauf, in dem Issa
+      unten festsitzt, als „noch offen" statt als Befund. Dazu steht im Buch schon der
+      Satz „Ein Kind steuert schlechter als diese Simulation" – richtig, aber zu
+      harmlos: Das Problem war nicht die Steuerung, sondern die Geometrie.
+    - **Für einen nächsten Anlauf** bliebe von den Messungen oben der harte Teil: Vier
+      lesbare Antworten nebeneinander können kein durchlässiger Boden sein. Wer es
+      wieder versucht, muss zuerst die **Reihenabstände** anfassen, nicht die
+      Durchlässigkeit – und `test-issa.js` prüft seitdem, dass der Turm dabei
+      begehbar bleibt.
   - **KEIN Pergament um dieses Spielfeld**, anders als bei allen anderen Spielen. Der
     Bogen hält dort Text, hier hielte er ein Bild – Mehrwert null, Kosten 14 % Spielhöhe
     im Querformat (gemessen). Dazu kam ein Nebeneffekt, der nicht offensichtlich ist:

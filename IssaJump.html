@@ -148,7 +148,6 @@
             <p>Hilf Issa, immer höher zu springen! Oben siehst du die aktuelle Vokabel, z. B. <span class="example">canis</span> - lenke Issa auf die Plattform mit der richtigen Bedeutung.</p>
             <p><strong>Steuerung:</strong> Pfeiltasten/A+D am Computer, Tipp-Tasten am iPad. Issa springt automatisch.</p>
             <p style="color: var(--falsch); font-weight:bold;">Achtung: Eine falsche Antwort kostet ein Herz — Issa setzt dann auf der richtigen Plattform auf, damit du sie siehst.</p>
-            <p><strong>Und Vorsicht nach unten:</strong> Eine beantwortete Reihe blendet aus und trägt dich nicht mehr. Wer unten aus dem Bild fällt, verliert ebenfalls ein Herz.</p>
             <button class="start-btn" id="btn-start">Los geht's!</button>
         </div>
 
@@ -379,15 +378,6 @@
         let beantworteteReihen = new Set();
         let hudHalten = 0;          // Frames, die das beantwortete Wort noch stehen bleibt
         const HUD_HALTEN_FRAMES = 45;   // gut dreiviertel Sekunde
-        /* Wie lange eine beantwortete Antwort-Reihe noch steht, bevor sie
-           ausgeblendet ist und kein Boden mehr ist. 75 Bilder sind aus der
-           Sprungbahn abgeleitet, nicht geschaetzt: Issa verlaesst die Reihe
-           mit BOUNCE_VELOCITY und ist nach |v|/GRAVITY = 45 Bildern am
-           Gipfel, nach 90 wieder unten. Bei 75 ist die Reihe also WEG, wenn
-           Issa zurueckfaellt - genau das soll sie sein -, und sie stand
-           vorher gut eine Sekunde lang da, damit man die richtige Antwort
-           noch lesen kann. */
-        const REIHE_AUSBLENDEN_FRAMES = 75;
 
         function resetGame() {
             issa = { x: CW / 2 - ISSA_W / 2, y: CH - 120, vx: 0, vy: BOUNCE_VELOCITY, facing: 1, animT: 0 };
@@ -588,50 +578,8 @@
         /* ============ PLATTFORM-NACHSCHUB ============ */
         let cameraY = 0, spawnCycle = 0, nextSpawnY = 0;
 
-        /* DER BODEN MUSS DURCHLAESSIG SEIN (November 2026, gemeldet vom
-           Fachlehrer: "man kann gar nicht abstuerzen, der Boden ist
-           undurchlaessig" - Maszstab ist Doodle Jump, wo man verliert, sobald
-           man unten aus dem Bild faellt).
-
-           Gemessen war der Befund genau richtig: Eine Antwort-Reihe ist VIER
-           Plattformen von 88 px auf 400 px Breite, die groesste Luecke 19,6 px
-           bei 34 px Issa-Breite - durch 0 von 136 Reihen passte sie. Jede
-           dritte Reihe war damit ein geschlossener Boden quer durchs Bild,
-           und loseLife() war toter Code: In 600 freien Faellen aus dem Turm
-           kamen 4 % unten heraus, der Rest wurde aufgefangen.
-
-           SCHMALERE ANTWORTPLATTFORMEN SIND NICHT DER WEG, und das ist
-           durchgerechnet: Bei 48 px - gut der Haelfte - passt Issa durch
-           14,8 % der Breite, bei 56 px durch 8,2 %. Eine neutrale Reihe
-           laesst sie zu 82 % durch. Vier lesbare Antworten nebeneinander
-           KOENNEN also kein Doodle-Jump-Boden sein: Die Beschriftung ist im
-           Median schon 62 px breit, bei p90 88 px, und sie muss zur
-           Landeflaeche passen - wer auf ein Wort zielt, das breiter ist als
-           seine Plattform, faellt sonst trotz richtiger Wahl hindurch.
-
-           Also loest es die ZEIT statt der Breite: Eine Reihe ist nur so
-           lange Boden, wie ihre Frage offen ist. Danach blendet sie aus und
-           ist weg. Unter Issa steht damit nur noch neutraler Boden - Doodle-
-           Jump-Dichte. Gemessen: 35 % der freien Faelle enden unten aus dem
-           Bild statt 4 %.
-
-           DASS SIE SICHTBAR AUSBLENDET, GEHOERT DAZU. Eine Plattform, die
-           lautlos verschwindet, fuehlt sich nicht nach Regel an, sondern
-           nach Fehler - Issa springt ab, kommt zurueck, und der Boden ist
-           ohne Ankuendigung fort. Das Ausblenden ist die Ankuendigung.
-
-           HIER und nicht an den zwei Stellen, die eine Reihe als beantwortet
-           markieren (das Aufsetzen und der Rundumschlag fuer alles darunter):
-           Eine dritte Markierstelle wuerde das Ausblenden sonst vergessen. */
         function maintainPlatforms() {
-            platforms.forEach(p => {
-                if (p.type === 'answer' && p.ausblenden === undefined &&
-                    beantworteteReihen.has(p.reiheId)) p.ausblenden = REIHE_AUSBLENDEN_FRAMES;
-                if (p.ausblenden > 0) p.ausblenden--;
-            });
-            /* `!== 0` statt `> 0`: Die neutralen Reihen tragen gar kein
-               `ausblenden` (undefined), und die muessen bleiben. */
-            platforms = platforms.filter(p => p.y < cameraY + CH + 150 && p.ausblenden !== 0);
+            platforms = platforms.filter(p => p.y < cameraY + CH + 150);
             items = items.filter(it => it.y < cameraY + CH + 150);
             while (nextSpawnY > cameraY - 100) baueNaechsteReihe();
         }
@@ -871,14 +819,6 @@
                 }
             } else {
                 const h = 26;
-                /* Eine beantwortete Reihe blendet aus - siehe
-                   maintainPlatforms(). Sichtbar, damit das Verschwinden eine
-                   Ankuendigung ist und keine Ueberraschung. */
-                const blass = p.ausblenden !== undefined;
-                if (blass) {
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, p.ausblenden / REIHE_AUSBLENDEN_FRAMES);
-                }
                 if (imgReady('platformAnswer')) {
                     ctx.drawImage(images.platformAnswer, p.x, p.y, p.w, h);
                 } else {
@@ -891,7 +831,6 @@
                 ctx.font = 'bold 11px Verdana';
                 ctx.textAlign = 'center';
                 ctx.fillText(truncateText(p.text, 13), p.x + p.w / 2, p.y + h / 2 + 4);
-                if (blass) ctx.restore();
             }
         }
 
