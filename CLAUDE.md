@@ -2122,7 +2122,7 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     | Titel | Form | Befund |
     |---|---|---|
     | **Pater patriae** | **Māter patriae** | belegt: Tacitus, *ann.* 1,14 |
-    | Imperātor | – | **nicht belegbar**, siehe unten |
+    | **Imperātor** | **Imperātrīx** | **nicht belegt** – bewusst aufgenommen, siehe unten |
     | Prīmus pīlus | – | Rang ohne weibliche Form |
     | Corōna cīvica / mūrālis | – | Gegenstände, keine Personenbezeichnungen |
     | Discipulus | Discipula | beide selbstverständlich |
@@ -2132,14 +2132,31 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
       mātrem patriae appellandam … cēnsēbant" –, **Tiberius hat es abgelehnt**. Der Titel
       wurde also vorgeschlagen, nicht verliehen. Gekürzt wird mit Auslassungszeichen,
       nicht stillschweigend.
-    - **`Imperātrīx` ist NICHT aufgenommen, und das ist eine bewusste Lücke.** Das Wort
-      ist regelmäßig gebildet (`imperō` + `-trīx`), aber eine antike Belegstelle war nicht
-      zu finden: Im Volltext von Plautus' *Casina* kommt es nicht vor (geprüft), und
-      Wiktionary nennt für die lateinische Bedeutung „empress" keinen antiken Autor.
-      Lewis & Short und Logeion waren nicht erreichbar (403 bzw. eine Seite, die ihren
-      Artikel per JavaScript nachlädt). **Die Frage ist damit offen, nicht geklärt** –
-      wer Georges oder das OLD zur Hand hat, entscheidet sie in zehn Sekunden. Bis dahin
-      bleibt die Form draußen, denn die Regel hieß „soweit es belegt ist".
+    - **`Imperātrīx` IST AUFGENOMMEN, OBWOHL NICHT BELEGT – und das ist eine bewusste
+      Ungenauigkeit, keine Schlamperei.** Erst die Recherche: Das Wort ist regelmäßig
+      gebildet (`imperō` + `-trīx`), aber eine antike Belegstelle war nicht zu finden –
+      im Volltext von Plautus' *Casina* kommt es nicht vor (geprüft), und Wiktionary
+      nennt für die lateinische Bedeutung „empress" keinen antiken Autor; Lewis & Short
+      und Logeion waren nicht erreichbar (403 bzw. eine Seite, die ihren Artikel per
+      JavaScript nachlädt). Der Titel *Imperātor* als Ausruf des Heeres ist ohnehin nie
+      an eine Frau gegangen.
+      Dann die Entscheidung des Fachlehrers: **„diese philologische Ungenauigkeit können
+      wir uns leisten".** Der Grund trägt: Für eine Schülerin ist ein männlicher Titel
+      das größere Problem als eine unsichere Wortgeschichte.
+      **Wer das liest, soll es nicht für einen Beleg halten.** Anders als bei
+      *Māter patriae* steht hinter dieser Form keine Stelle, sondern eine Abwägung – der
+      Kommentar an `EHRENTITEL` in `progress.js` sagt das noch einmal, damit niemand sie
+      im Unterricht als antik ausgibt. **Auf der Karte steht davon nichts:** Der
+      Erklärtext sagt, was der Titel in Rom war, und das ist für beide Formen dasselbe
+      und richtig.
+    - **Deshalb steht im Test eine LISTE und keine Regel.** Solange „soweit belegt" galt,
+      war die Probe mechanisch; jetzt ist jede Form eine eigene Entscheidung. Wer eine
+      dritte ergänzt, bekommt Rot – nicht weil sie falsch wäre, sondern weil jemand sie
+      entschieden haben muss. Dann kommt sie in `ERWARTETE_FORMEN` und hierher.
+      Die Gegenprobe musste dabei mitziehen: Ihr Fall „eine unbelegte Form kommt dazu"
+      baute genau *Imperātrīx* ein – seit der Fachlehrer sie aufgenommen hat, wäre das
+      kein Schaden mehr, sondern der echte Stand. **Eine Gegenprobe, die den Normalfall
+      beschädigt, prüft nichts.** Sie nimmt jetzt `Prīma pīla`.
     - **Bei `Prīmus pīlus` gibt es keine Form.** Das ist ein Rang; `prīma pīla` hieße
       etwas anderes – `pīlus` ist der Rang, `pīla` der Ball.
     - **Ein Titel mit `titelW` steht in BEIDEN Formen zur Wahl**, einer ohne nur in einer.

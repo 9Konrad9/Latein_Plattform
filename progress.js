@@ -546,7 +546,30 @@ const LudiProgress = (() => {
                'erstieg.',
           bedingungen: [{ stufe: 5, anzahl: 5 }] },
 
+        /* ACHTUNG, HIER STEHT EINE BEWUSSTE UNGENAUIGKEIT.
+           `Imperātrīx` ist regelmäßig gebildet (`imperō` + `-trīx`), aber
+           eine ANTIKE BELEGSTELLE DAFÜR IST NICHT GEFUNDEN WORDEN: Im
+           Volltext von Plautus' „Casina" kommt das Wort nicht vor, und
+           Wiktionary nennt für die lateinische Bedeutung keinen antiken
+           Autor; Lewis & Short und Logeion waren nicht erreichbar. Der
+           Titel „Imperator" als Ausruf des Heeres ist ohnehin nie an eine
+           Frau gegangen.
+
+           AUFGENOMMEN AUF ENTSCHEIDUNG DES FACHLEHRERS: „diese
+           philologische Ungenauigkeit können wir uns leisten". Der Grund
+           ist didaktisch und er trägt: Für eine Schülerin ist ein
+           männlicher Titel das größere Problem als eine unsichere
+           Wortgeschichte.
+
+           WER DAS HIER LIEST, SOLL ES NICHT FÜR EINEN BELEG HALTEN. Anders
+           als `Māter patriae` (Tacitus, ann. 1,14) steht hinter dieser Form
+           keine Stelle, sondern eine Abwägung. Wenn jemand einen Beleg
+           findet, gehört er hierher und in CLAUDE.md - bis dahin bleibt der
+           Satz stehen, wie er ist. Auf der KARTE steht davon nichts: Der
+           Erklärtext sagt, was der Titel in Rom war, und das ist für beide
+           Formen dasselbe und richtig. */
         { id: 'imperator', icon: '🦅', titel: 'Imperātor',
+          idW: 'imperatrix', titelW: 'Imperātrīx',
           rom: 'Nach einem großen Sieg rief das Heer seinen Feldherrn so aus — der Titel kam ' +
                'nicht von oben, sondern von den eigenen Leuten.',
           bedingungen: [{ stufe: 6, anzahl: 3 }] },
