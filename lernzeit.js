@@ -74,28 +74,14 @@ const LudiLernzeit = (function () {
           tauglich: function () { return true; } },
         { datei: 'IssaJump.html',  name: 'Issa springt',   art: 'wortschatz',
           tauglich: function () { return true; } },
-        /* QUATERNIO IST STILLGELEGT (November 2026, Entscheidung des
-           Fachlehrers: noch nicht ausgereift). Es stand hier als drittes
-           Wortschatzspiel; ohne es bleiben ZWEI (Circus und Issa), und der
-           Takt hat zwei Wortschatzplaetze je Durchgang.
-           DAS KOSTET NICHTS, und hier stand zuerst das Gegenteil: Weil
-           `plan()` ueber `schonDrin` die noch nicht gespielten bevorzugt,
-           kommen bei ZWEI Spielen auf ZWEI Plaetzen BEIDE dran - gemessen in
-           200 von 200 Plaenen. Gewuerfelt wird nur die Reihenfolge. Mit drei
-           Wortschatzspielen fehlte dagegen zwangslaeufig eines, und genau das
-           war die Beschwerde "die hat Issa bekommen und ich nicht".
-           Beim Wiedereinschalten kommt der Eintrag zurueck, samt
-           Startfunktion in test-lernzeit.js.
-
-        { datei: 'Quartett.html',  name: 'Quaterniō',      art: 'wortschatz',
-          tauglich: function (pool) {
-              const z = {};
-              pool.forEach(function (v) {
-                  if (v.type === 'noun' && v.thema) z[v.thema] = (z[v.thema] || 0) + 1;
-              });
-              return Object.keys(z).filter(function (t) { return z[t] >= 4; }).length >= 4;
-          } },
-        */
+        /* Quaternio stand hier als drittes Wortschatzspiel und ist im
+           November 2026 aus dem Projekt geflogen. Uebrig bleiben ZWEI
+           (Circus und Issa) bei zwei Wortschatzplaetzen je Takt - das kostet
+           nichts: Weil `plan()` ueber `schonDrin` die noch nicht gespielten
+           bevorzugt, kommen BEIDE dran, gemessen in 200 von 200 Plaenen.
+           Gewuerfelt wird nur die Reihenfolge. Mit drei Wortschatzspielen
+           fehlte dagegen zwangslaeufig eines, und genau das war die
+           Beschwerde "die hat Issa bekommen und ich nicht". */
 
         { datei: 'Principia.html', name: 'Principia',      art: 'formen',
           tauglich: function () { return true; } },

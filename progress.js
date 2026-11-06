@@ -19,7 +19,7 @@ const LudiProgress = (() => {
                     totalAnswered: 0,
                     daysPlayed: [],
                     categories: {},
-                    zaehler: {},      // aufsummierte Marken (wiederholt, lernzeiten, quartette)
+                    zaehler: {},      // aufsummierte Marken (wiederholt, lernzeiten)
                     unlockedTiers: {} // z.B. { 'streak': 2, 'cat_Imperativ': 1 } - höchste bereits gezeigte Stufe (0=keine)
                 };
             }
@@ -103,7 +103,7 @@ const LudiProgress = (() => {
      * Beste behält, und anders als recordVocabAttempt, das ein einzelnes Wort
      * führt. Gebraucht von den drei Trophäen, die etwas zählen, das über
      * Runden hinweg wächst: nachgearbeitete Vokabeln, abgeschlossene
-     * Vokabelzeiten, abgelegte Quartette.
+     * Vokabelzeiten.
      *
      * Der Name IST die Trophäen-Kennung. Absicht: recordBest braucht dafür
      * eine zweite Tabelle (BEST_ACHIEVEMENTS), und genau die war schon
@@ -456,22 +456,17 @@ const LudiProgress = (() => {
            nur Issa. Sie kostet KEINE neue Zählstelle - welche Spiele jemand
            gespielt hat, steht längst in `games`.
 
-           DIE HÖCHSTSTUFE STEHT BEI 11, NICHT BEI 12, obwohl SPIEL_GRUPPEN
-           zwölf Gruppen führt: Quaternio ist seit November 2026 stillgelegt
-           und hat keine Karte im Hauptmenü mehr. Eine Klasse findet also nur
-           elf Spiele, und eine Stufe, die man nicht erreichen kann, sieht aus
-           wie eine, die man noch nicht erreicht hat - dieselbe Falle wie bei
-           Archivmeister und Doppelblick. Quaternio BLEIBT in der Gruppenliste:
-           Wer es gespielt hat, behält es (und wer den Link kennt, kommt weiter
-           hinein). Die Zahl heruntergesetzt statt die Gruppe gestrichen, denn
-           eine gestrichene Gruppe hätte jemandem mit elf Spielen eine Stufe
-           WEGGENOMMEN - genau das, was beim Umbau auf sieben Stufen nicht
-           passieren durfte. Die drei oberen Sprossen sind dafür um eins
-           heruntergerückt (10/11/12 auf 9/10/11), nie nach oben - sonst
-           verlöre jemand eine Stufe. Beim Wiedereinschalten: zurück auf
-           [2, 4, 6, 8, 10, 11, 12]. */
+           DIE GANZE LEITER IST UM EINS HERUNTERGERÜCKT, weil Quaternio im
+           November 2026 aus dem Projekt geflogen ist. Es zählte als eigene
+           Gruppe, also hat jeder, der es gespielt hatte, von heute auf
+           morgen ein Spiel WENIGER - und wer bei genau einer Schwelle stand,
+           verlöre dadurch eine Stufe. Das ist dieselbe Regel wie beim Umbau
+           auf sieben Stufen: nach unten rücken, nie nach oben. Elf Gruppen,
+           Höchststufe bei 10 - also mit zehn von elf Spielen erreichbar.
+           Dass die Decke stimmt, prüft `test-achievements.js` am MENÜ, nicht
+           an dieser Liste. */
         { id: 'breite', icon: '🧭', title: 'Weitgereist', unit: 'verschiedene Spiele gespielt',
-          thresholds: [2, 4, 6, 8, 9, 10, 11], bereich: 'allgemein', quelle: 'breite' },
+          thresholds: [1, 3, 5, 7, 8, 9, 10], bereich: 'allgemein', quelle: 'breite' },
 
         /* Die Wiederholungsrunde. Der Fachlehrer hat schon entschieden, dass
            die Zähler dort WEITERLAUFEN, während der Vokabelkasten ruht:
@@ -483,12 +478,16 @@ const LudiProgress = (() => {
         /* Die Vokabelzeit - das neue Format hatte noch gar keine Marke.
            Gezählt wird nur, was BIS ZUM ENDE gespielt wurde. */
         { id: 'lernzeiten', icon: '⏱️', title: 'Stammgast', unit: 'Vokabelzeiten abgeschlossen',
-          thresholds: [1, 3, 7, 15, 30, 55, 90], bereich: 'allgemein', quelle: 'zaehler' },
+          thresholds: [1, 3, 7, 15, 30, 55, 90], bereich: 'allgemein', quelle: 'zaehler' }
 
-        /* Quaternio. Höchstens sechs Quartette je Partie, die Leiter zählt
-           deshalb über alle Partien. */
-        { id: 'quartette', icon: '🃏', title: 'Kartensammler', unit: 'Quartette abgelegt',
-          thresholds: [5, 15, 30, 60, 110, 200, 350], bereich: 'allgemein', quelle: 'zaehler' }
+        /* HIER STAND „Kartensammler" (🃏, abgelegte Quartette). Quaternio ist
+           im November 2026 aus dem Projekt geflogen, und eine Trophäe, die
+           niemand mehr füttern kann, ist dasselbe Ärgernis wie eine
+           unerreichbare Höchststufe - deshalb musste sie mit. Wer sie hatte,
+           verliert sie; das ist der Preis und war die Entscheidung des
+           Fachlehrers. Der aufsummierte Wert bleibt unter `zaehler.quartette`
+           im Speicher liegen und schadet dort nicht: Er wird nur noch
+           gelesen, wenn es die Trophäe wieder gibt. */
     ];
 
     /* ---------- DIE EHRENTITEL (November 2026) ----------
@@ -563,11 +562,12 @@ const LudiProgress = (() => {
        Klasse gehört und nicht dem Gerät. Und das Duell: Es bedient zwar
        Vokabelkasten und Kategorien, speichert aber kein Ergebnis - siehe den
        offenen Punkt in CLAUDE.md. `test-achievements.js` prüft, dass diese
-       Liste genau die Kennungen abdeckt, die die Spiele wirklich speichern. */
+       Liste genau die Kennungen abdeckt, die die Spiele wirklich speichern -
+       deshalb musste `quartett` hier raus, als die Datei gelöscht wurde. */
     const SPIEL_GRUPPEN = [
         ['circus'], ['principia'], ['issajump'], ['kastell'], ['scrinium'], ['villa'],
         ['personalpronomen', 'possessiv', 'demonstrativpronomen', 'relativpronomen'],
-        ['viaromana'], ['pendel'], ['arcus'], ['quartett'], ['quiz']
+        ['viaromana'], ['pendel'], ['arcus'], ['quiz']
     ];
 
     /* Bestleistungen, die zusätzlich eine Trophäe tragen. Die Tabelle sagt,
@@ -636,9 +636,6 @@ const LudiProgress = (() => {
         'AcI-Infinitiv': { icon: '🪧', label: 'Infinitiv im AcI' },
         'Zeitverhältnis': { icon: '⏱️', label: 'Zeitverhältnis' },
 
-        // Wortfelder (Quaternio) - die thematische Achse `thema` an den Nomen,
-        // nicht `feld`: Hier geht es darum, WOVON ein Wort handelt.
-        'Wortfeld': { icon: '🗃️', label: 'Wortfeld eines Nomens' },
 
         // Partizipialkonstruktionen (Arcus, ab L18)
         'Partizip': { icon: '🧱', label: 'Partizip finden' },
@@ -734,7 +731,17 @@ const LudiProgress = (() => {
             return { ...def, value, tier, nextThreshold };
         });
 
+        /* Kategorien aus Spielen, die es nicht mehr gibt. Der Wert bleibt im
+           Speicher - gelöscht wird nichts -, aber er erscheint nicht mehr als
+           Trophäe: Eine Kategorie, die niemand mehr füttern kann, ist genau
+           das, wogegen auch „Kartensammler" weichen musste. OHNE diese Liste
+           stünde „Wortfeld" bei jedem weiter da, der Quaternio gespielt hat -
+           mit dem Ersatznamen aus CATEGORY_META, also ohne Symbol und ohne
+           Erklärung. */
+        const STILLGELEGTE_KATEGORIEN = ['Wortfeld'];   // Quaternio, Nov. 2026
+
         Object.keys(a.categories).forEach(cat => {
+            if (STILLGELEGTE_KATEGORIEN.indexOf(cat) >= 0) return;
             const meta = CATEGORY_META[cat] || { icon: '🏅', label: cat };
             const value = a.categories[cat].correct;
             const tier = _tierForValue(value, CATEGORY_THRESHOLDS);

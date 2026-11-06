@@ -1118,117 +1118,10 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     beim Start gespeichert wird.
   - **Draußen bleiben die Gruppenspiele** (Fliegenklatsche, Bingo, Bomba, Memoria, Duell),
     Silentium und das Kulturquiz: Eine Vokabelzeit läuft auf EINEM Gerät, allein.
-    Seit November 2026 auch **Quaterniō** – es ist stillgelegt (siehe dort), und damit
-    bleiben für die beiden Wortschatzplätze je Takt nur noch Circus und Issa.
+    Quaterniō stand hier bis November 2026 als drittes Wortschatzspiel und ist aus dem
+    Projekt geflogen; für die beiden Wortschatzplätze je Takt bleiben Circus und Issa.
   - Im Hauptmenü steht sie ganz oben, über der Trophäensammlung, und **ohne**
     Fortschrittsband – der Fortschritt landet in den einzelnen Spielen.
-
-- **Quartett.html** – **Quaterniō**, das Wortfeld-Quartett (Oktober 2026). Eine Person gegen
-  das GERÄT: Beide halten Karten, jede trägt ein lateinisches Wort und seine Bedeutung.
-  Nutzt `thema` aus `vocabulary.js` – und nichts sonst von der Semantik.
-  - **STILLGELEGT seit November 2026** (Entscheidung des Fachlehrers: noch nicht
-    ausgereift). **Die Datei bleibt liegen und läuft weiter** – zugemacht sind nur die
-    Wege hinein, die eine Klasse findet. Das ist bewusst so: Wer es gespielt hat, behält
-    seinen Stand im Vokabelkasten, seine Wortfeld-Kategorie und seine *Kartensammler*-
-    Trophäe. Eine gelöschte Datei hätte all das stillschweigend entwertet.
-    Zugemacht sind **vier** Stellen, und die vierte ist die, die man vergisst:
-    1. die Karte im Hauptmenü (auskommentiert, nicht gelöscht),
-    2. der Eintrag in `lernzeit.js` – sonst schickt die Vokabelzeit weiter hinein,
-    3. die Einbindung von `lernzeit.js` in `Quartett.html` selbst: Ein Spiel, das das
-       Modul einbindet, ohne im Plan zu stehen, bekäme einen Haus-Knopf zurück in eine
-       Vokabelzeit, in der es nicht vorkommt. **`test-lernzeit.js` hat das gefunden**,
-       nicht das Lesen – seine Probe „wer bindet es ein, spielt mit" hält beide
-       Richtungen.
-    4. **Weitgereists Höchststufe.** Sie stand bei 12 = allen Spielgruppen; ohne Karte im
-       Menü findet eine Klasse nur elf, und die zwölfte Stufe wäre unerreichbar gewesen –
-       **dieselbe Falle wie bei Archivmeister und Doppelblick**, nur eine Ebene höher:
-       Dort setzte die Spielmechanik die Decke, hier das Menü. Die Leiter steht jetzt auf
-       `[2, 4, 6, 8, 9, 10, 11]`.
-    **Die Gruppe bleibt in `SPIEL_GRUPPEN`, gesenkt wurde die ZAHL.** Hätte man die Gruppe
-    gestrichen, verlöre jemand mit elf Spielen eine Stufe – genau das, was beim Umbau auf
-    sieben Stufen nicht passieren durfte. Die drei oberen Sprossen sind dafür um eins
-    heruntergerückt, nie nach oben.
-    **Was NICHT angefasst wurde:** *Kartensammler* steht weiter in den Trophäen und friert
-    auf seinem Stand ein, die Kategorie *Wortfeld* ebenso (sie erscheint ohnehin nur, wer
-    sie berührt hat). Beides geht von selbst weiter, wenn das Spiel zurückkommt. **Wird die
-    Stilllegung dauerhaft, müssen beide mit** – eine Trophäe, die niemand füttern kann,
-    ist dasselbe Ärgernis wie eine unerreichbare Höchststufe.
-    **Kosten in der Vokabelzeit: KEINE – und meine erste Auskunft dazu war falsch.** Ich
-    hatte geschrieben, mit nur noch zwei Wortschatzspielen (Circus, Issa) sei die
-    Abwechslung „eine Münze statt eines Würfels". Gemessen ist das Gegenteil der Fall:
-    `plan()` bevorzugt über `schonDrin` die noch nicht gespielten, und bei genau ZWEI
-    Spielen auf ZWEI Wortschatzplätzen je Takt kommen deshalb **beide** dran – in
-    **200 von 200** Plänen (`probe-vokabelzeit-auswahl.js`). Gewürfelt wird nur die
-    Reihenfolge (Circus zuerst in 104, Issa in 96 von 200). Die Stilllegung hat die
-    Beschwerde „die hat Issa bekommen und ich nicht" also nicht verschärft, sondern für
-    den Fünfer-Plan **abgeschafft** – mit drei Wortschatzspielen fehlte zwangsläufig
-    eines. Nur wer eine Vokabelzeit nach zwei Spielen abbricht, sieht eines davon nicht.
-    **Die Decke von `Weitgereist` wird seitdem aus dem MENÜ abgeleitet**, nicht aus
-    `SPIEL_GRUPPEN.length` – und zwar aus den LEBENDEN Karten: Die stillgelegte steht noch
-    im Quelltext, nur in einem Kommentar. Wer die Kommentare nicht herausnimmt, zählt sie
-    mit und prüft nichts (derselbe Fehler wie bei Duells Messschutz und Silentiums
-    `MediaRecorder`). `gegenprobe-achievements.js` hält beide Richtungen fest: Höchststufe
-    zurück auf 12 **muss** durchfallen, und die wieder sichtbare Karte **muss grün
-    bleiben** – sonst könnte das Spiel nicht ohne Weiteres zurückkommen. Dafür versteht die
-    Gegenprobe jetzt auch Fälle mit `muster: null`, also „diese Änderung ist KEIN Schaden".
-    **Zum Wiedereinschalten** stehen alle vier Stellen mit genau dieser Liste im Quelltext;
-    `test-start.js` und `test-quartett.js` prüfen das Spiel in der Zwischenzeit weiter,
-    damit es nicht verrottet.
-  - **AUF DER KARTE STEHT DAS FELD NICHT. Daran hängt das ganze Spiel.** Wer fragen will,
-    wählt eine eigene Karte und sagt, in welches Feld sie gehört; erst dann darf er den
-    Gegner nach diesem Feld fragen. Stünde das Feld oben auf der Karte (wie beim gedruckten
-    Quartett), sähe alles genauso aus und fragte nichts mehr ab. **Genau diese eine
-    Entscheidung** geht in den Vokabelkasten – ein Wort, ein Versuch, sauber zuzuordnen.
-    `test-quartett.js` vergleicht den Kartentext deshalb ZEICHENGENAU mit Wort plus
-    Bedeutung, statt nach dem Feldnamen zu suchen (siehe unten, warum).
-  - **Warum gegen das Gerät** (Entscheidung des Fachlehrers): Ohne Server kann kein Gerät mit
-    einem anderen reden, verdeckte Hände gibt es also nur so. Als EINZELleistung darf das
-    Spiel dafür den Leitner-Kasten bedienen – anders als Memoria, das Bingo und die
-    Fliegenklatsche, wo das Gerät nicht weiß, wer gerade tippt.
-  - **ES BRAUCHT EINE SPANNE, KEINE EINZELNE LEKTION**, und das liegt in der Sache: Eine
-    Pontes-Lektion bringt ein bis zwei Dutzend Nomen, verteilt auf zwölf Felder. Gemessen
-    (`probe-quartett.js`) gibt **keine einzelne Lektion vier volle Familien** her – die beste
-    kommt auf zwei, dreißig haben gar keine. Kumuliert sind es **ab „bis L5" vier Familien,
-    ab L6 fünf, ab L8 sechs und ab L12 alle zwölf**. Die Ablehnung nennt deshalb die Spanne
-    und nicht bloß „mehr Lektionen". Das ist die eine Stelle, an der dieses Spiel vom Rest
-    der Arena abweicht: Im Unterricht ist die Einzellektion sonst der Normalfall.
-    (Die Siebung auf eindeutige Bedeutung, die Bingo und Memoria brauchen, **kostet bei den
-    Nomen nichts** – die Zahl brauchbarer Felder ist mit und ohne dieselbe.)
-  - **Die Partie ist fair, und das ist gemessen** (`probe-quartett-fair.js`, 200 Partien je
-    Feld). Der Gegner ordnet nie falsch zu und fragt immer optimal; die Spielerin muss es
-    erst wissen. Trotzdem:
-
-    | Trefferquote der Spielerin | 100 % | 80 % | 50 % |
-    |---|---|---|---|
-    | gewonnene Partien | 52 % | 35 % | 11 % |
-    | unentschieden | 19 % | 24 % | 20 % |
-
-    Wissen zahlt sich also deutlich aus, und verlieren kann man trotzdem – es bleibt ein
-    Kartenspiel. Eine Partie dauert rund 13 Züge (bei vier Familien 7).
-  - **Der Gegner merkt sich nur, wonach DU gefragt hast** (`gegnerWeiss`), und vergisst es
-    wieder, sobald er dir die Karten abgenommen hat. Ein Gegner, der die ganze Hand kennt,
-    ist nicht schwerer, sondern unfair.
-  - **Die Sperre gegen den Stillstand** (`bleibtAmZug`): Ein frisch abgelegtes Quartett kann
-    die Hand leeren. Ist dann auch der Stapel leer, während der Gegner noch Karten hält, ist
-    die Partie nicht zu Ende und trotzdem niemand am Zug – also übernimmt der Gegner.
-    **Im Zufallsspiel tritt das zu selten auf, um sich darauf zu verlassen**; der Test baut
-    den Zustand deshalb, statt auf ihn zu hoffen.
-  - Gemessene Kontraste: Karte `--pompeji` auf `--putz-hell` **6,99**, Bedeutung `--ink`
-    **13,34**; die abgelegten Quartette `--ink` auf `--wand-tief` **8,71**, ihr Feldname
-    `--pompeji` **4,56**; die Meldung auf dem Pergament 5,41 bis 12,25.
-  - **Kein Vollbild-Spielfeld**: Die Seite scrollt wie Kastell und Arcus, bindet also
-    `zoomsperre.js` NICHT ein (siehe dort – die gehört nur dorthin, wo es nichts
-    heranzuholen gibt).
-  - **Die Kurznamen der Felder stehen im Spiel** (`FELDNAMEN`), die langen Beschreibungen in
-    `latein-tests/thema.json`, das nicht ausgeliefert wird. Zwei Stellen mit denselben
-    Schlüsseln driften auseinander – `test-quartett.js` prüft deshalb **beide Richtungen**.
-  - **Zwei Testfehler, beide lehrreich und beide von `gegenprobe-quartett.js` gefunden:**
-    Die Probe „steht das Feld auf der Karte?" suchte den Feldnamen als Teilzeichenkette –
-    und schlug an *tempus* „die **Zeit**" an, weil das Feld `zeit` heißt. **Eine
-    Teilzeichenkette ist kein Beweis.** Und die Stillstandsprobe baute zuerst einen Zustand,
-    den es im Spiel nicht gibt (Stapel weggeworfen, der Gegner hielt unvollständige
-    Familien) und meldete eine Endlosschleife, die unmöglich ist: Was nicht abgelegt ist,
-    sind immer GANZE Familien. **Ein Zustand, den das Spiel nie erreicht, beweist nichts.**
 
 - **Bingo.html** – **Vokabel-Bingo** (Oktober 2026). Das erste Spiel, bei dem die ganze Klasse
   GLEICHZEITIG am eigenen Gerät spielt – und es braucht trotzdem keinen Server. Eine Datei,
@@ -1306,6 +1199,32 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
 Gelöscht/nicht mehr vorhanden (bewusst entfernt, falls in altem Stand noch auftauchend):
 Bollwerk.html, Kastell_backup.html, Adventura.html, Possessiv.html, Tabularium.html,
 LektionsCheck.html, Genitiv.html (Compone!) – alle redundant zu neueren/reichhaltigeren Spielen.
+
+**`Quartett.html` (Quaterniō) ist im November 2026 dazugekommen** – anders als die sieben
+oben nicht, weil es etwas doppelte, sondern weil es **seinen Zweck nicht erfüllt hat**:
+„Es verwirrt die Schülis mehr, als dass es hilft" (Fachlehrer). Es stand vier Wochen, davon
+die letzten zwei stillgelegt. Was daran zu lernen ist, steht unten bei „Klassische
+Vokabelspiele digitalisieren".
+
+**Mitgegangen sind seine Trophäen**, und das war ausdrücklich Teil der Entscheidung: die
+Leiter *Kartensammler* 🃏 und die Kategorie *Wortfeld*. Eine Trophäe, die niemand mehr
+füttern kann, ist dasselbe Ärgernis wie eine unerreichbare Höchststufe – nur dauerhaft.
+Wer sie hatte, verliert sie; das ist der Preis. **Gelöscht wird dabei nichts**: Die Werte
+liegen weiter unter `zaehler.quartette` und `categories.Wortfeld` im Speicher. Die
+Kategorie wird in `getAchievementOverview()` über `STILLGELEGTE_KATEGORIEN` übersprungen –
+ohne diese Liste stünde „Wortfeld" bei jedem weiter da, der es gespielt hat, nur mit dem
+Ersatznamen aus `CATEGORY_META`, also ohne Symbol und ohne Erklärung.
+
+**`Weitgereists` Leiter ist deshalb um eins heruntergerückt** (`[1, 3, 5, 7, 8, 9, 10]`
+statt `[2, 4, 6, 8, 9, 10, 11]`): Quaternio zählte als eigene Gruppe, wer es gespielt
+hatte, hat jetzt ein Spiel WENIGER – und wer genau auf einer Schwelle stand, verlöre eine
+Stufe. Dieselbe Regel wie beim Umbau auf sieben Stufen: nach unten rücken, nie nach oben.
+Elf Gruppen, Höchststufe bei 10, also mit zehn von elf Spielen erreichbar.
+
+**Das Feld `thema` an den 342 Nomen BLEIBT**, obwohl nur das Quartett es gelesen hat.
+Es ist fachlich sortierte Arbeit (zwölf Themen, genau eines je Wort), es kostet nichts,
+und `test-thema.js` hält es weiter sauber. Wer ein Spiel sucht, das Wortfelder braucht,
+findet die Daten fertig vor – **die Einstufungen sind allerdings nie gegengelesen worden.**
 
 ## Die Familie Cornelia
 
@@ -1761,7 +1680,17 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   - ~~Memory~~ – **gebaut** (Oktober 2026) als `Memory.html`, siehe „Aktive Spiele" oben.
   - **Heißer Stuhl.** Die Klasse sieht das Wort am Beamer, eine Person nicht und muss es
     aus den Umschreibungen erraten.
-  - ~~Quartett~~ – **gebaut** (Oktober 2026) als `Quartett.html`, siehe „Aktive Spiele" oben.
+  - **Quartett – gebaut (Oktober 2026), im November wieder gelöscht.** Es hat seinen Zweck
+    nicht erfüllt: „Es verwirrt die Schülis mehr, als dass es hilft" (Fachlehrer).
+    **Was daran zu lernen ist:** Das Spiel war technisch in Ordnung und gemessen fair
+    (52 / 35 / 11 % Siegquote bei 100 / 80 / 50 % Trefferquote), es ist nicht an einem
+    Fehler gescheitert. Es ist daran gescheitert, dass die eigentliche Lernfrage – „in
+    welches Feld gehört dieses Wort?" – im Kartenspiel untergeht: Eine Partie dauert rund
+    dreizehn Züge, und davon ist jeder nur ZU EINEM DRITTEL eine Zuordnung, der Rest ist
+    Kartenverwaltung. Dazu kam die eine Stelle, an der es vom ganzen Rest der Arena
+    abwich: Es brauchte eine Lektions-SPANNE, keine Einzellektion – im Unterricht ist die
+    Einzellektion aber der Normalfall. **Vor dem nächsten Spiel dieser Art lohnt die
+    Frage, wie viele Züge einer Partie wirklich Lernen sind.**
     Warum es ein EIGENES Feld brauchte, steht hier: **Hier stand bis Oktober 2026, das
     hänge an denselben Sachfeldern wie „Semantik Stufe 2" – ein Datenbestand, zwei Zwecke.
     Das ist falsch, und zwar an echten Daten geprüft.** Ein THEMATISCHES Feld „Krieg", wie
@@ -2015,9 +1944,11 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     nur eine von zwei Sicherungen löst, beweist nichts.
   - **Die Modi in `Arcus.html` sind gebaut** – siehe dort. Drei neue Achievement-Kategorien
     dafür in `progress.js`: *Partizip*, *Bezugswort*, *Partizipialkonstruktion*.
-- **Die Kategorie `Wortfeld`** in `CATEGORY_META` gehört zu Quaternio und meint die
-  thematische Achse `thema`, nicht `feld`: Wovon handelt ein Wort? Wer eine Kategorie
-  ergänzt, trägt sie dort ein – sonst erscheint sie auf der Trophäenseite ohne Namen.
+- **Wer eine Achievement-Kategorie ergänzt, trägt sie in `CATEGORY_META` ein** – sonst
+  erscheint sie auf der Trophäenseite mit dem Ersatznamen, also ohne Symbol und ohne
+  Erklärung. Und wer ein Spiel löscht, trägt seine Kategorien in
+  `STILLGELEGTE_KATEGORIEN` ein (siehe Quaternio oben): Der gespeicherte Wert bleibt,
+  die Trophäe verschwindet.
 - Achievement-Kategorie-Tracking (`recordCategoryAttempt`) ruft inzwischen jedes Spiel auf, das
   eine sinnvolle Kategorie hat – seit September 2026 auch IssaJump. Ohne bleibt nur Quiz.html
   (Kulturwissen, kein Wortschatz).
@@ -2062,10 +1993,11 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     die alte. Nebenwirkung, die man kennen muss: Beim ersten Spielen nach dem Update steigen
     viele gleichzeitig auf – das ist gewollt und sieht wie ein Feuerwerk aus.
   - **Vier neue Trophäen**, alle an genau EINER neuen Zählstelle:
-    *Weitgereist* 🧭 (verschiedene Spiele, 2/4/6/8/10/11/12), *Hartnäckig* 🔁 (in der
-    Wiederholung nachgearbeitete Vokabeln, 10/25/50/100/200/350/600), *Stammgast* ⏱️
-    (abgeschlossene Vokabelzeiten, 1/3/7/15/30/55/90) und *Kartensammler* 🃏 (abgelegte
-    Quartette, 5/15/30/60/110/200/350).
+    *Weitgereist* 🧭 (verschiedene Spiele, heute 1/3/5/7/8/9/10), *Hartnäckig* 🔁 (in der
+    Wiederholung nachgearbeitete Vokabeln, 10/25/50/100/200/350/600) und *Stammgast* ⏱️
+    (abgeschlossene Vokabelzeiten, 1/3/7/15/30/55/90). **Die vierte, *Kartensammler* 🃏
+    (abgelegte Quartette), ist im November mit Quaternio wieder gelöscht worden** – siehe
+    die Liste der entfernten Dateien.
     - `recordCount(name, delta)` summiert auf – anders als `recordBest` (nur das Beste) und
       `recordVocabAttempt` (ein einzelnes Wort). **Der Name IST die Trophäen-Kennung**, es
       gibt also keine zweite Tabelle wie `BEST_ACHIEVEMENTS`, die abdriften könnte.
