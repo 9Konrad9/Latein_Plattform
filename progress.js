@@ -546,28 +546,45 @@ const LudiProgress = (() => {
                'erstieg.',
           bedingungen: [{ stufe: 5, anzahl: 5 }] },
 
-        /* ACHTUNG, HIER STEHT EINE BEWUSSTE UNGENAUIGKEIT.
-           `Imperātrīx` ist regelmäßig gebildet (`imperō` + `-trīx`), aber
-           eine ANTIKE BELEGSTELLE DAFÜR IST NICHT GEFUNDEN WORDEN: Im
-           Volltext von Plautus' „Casina" kommt das Wort nicht vor, und
-           Wiktionary nennt für die lateinische Bedeutung keinen antiken
-           Autor; Lewis & Short und Logeion waren nicht erreichbar. Der
-           Titel „Imperator" als Ausruf des Heeres ist ohnehin nie an eine
-           Frau gegangen.
+        /* `Imperātrīx` IST BELEGT, ABER DÜNN - und der Unterschied zu
+           `Māter patriae` darunter ist wichtig genug für diesen Kommentar.
 
-           AUFGENOMMEN AUF ENTSCHEIDUNG DES FACHLEHRERS: „diese
-           philologische Ungenauigkeit können wir uns leisten". Der Grund
-           ist didaktisch und er trägt: Für eine Schülerin ist ein
-           männlicher Titel das größere Problem als eine unsichere
-           Wortgeschichte.
+           Was ich selbst prüfen konnte, ergab NICHTS: Im Volltext von
+           Plautus' „Casina" kommt das Wort nicht vor, Wiktionary nennt für
+           die lateinische Bedeutung keinen antiken Autor, Lewis & Short und
+           Logeion waren nicht erreichbar. Auf dieser Grundlage stand hier
+           zuerst „eine antike Belegstelle ist nicht gefunden worden".
+           DAS WAR FALSCH, und zwar nicht vorsichtig, sondern schlicht
+           unvollständig: Der Fachlehrer hat im GEORGES nachgeschlagen, und
+           der weist eine Stelle bei CICERO und eine bei PLINIUS aus.
 
-           WER DAS HIER LIEST, SOLL ES NICHT FÜR EINEN BELEG HALTEN. Anders
-           als `Māter patriae` (Tacitus, ann. 1,14) steht hinter dieser Form
-           keine Stelle, sondern eine Abwägung. Wenn jemand einen Beleg
-           findet, gehört er hierher und in CLAUDE.md - bis dahin bleibt der
-           Satz stehen, wie er ist. Auf der KARTE steht davon nichts: Der
-           Erklärtext sagt, was der Titel in Rom war, und das ist für beide
-           Formen dasselbe und richtig. */
+           Drei Einschränkungen gehören dazu, zwei davon von ihm selbst:
+           1. „Zu wenig, um Imperatrix als klassisch zu bezeichnen, aber
+              immerhin." Zwei vereinzelte Stellen machen kein gängiges Wort.
+           2. DER KONTEXT IST UNGEPRÜFT. Sollte Cicero das Wort übertragen
+              gebrauchen - von einer Sache, die beherrscht, nicht von einer
+              Frau -, stützt die Stelle unsere Verwendung gar nicht. Das ist
+              die offene Frage, nicht mehr die nach dem Beleg überhaupt.
+           3. Die genauen Stellenangaben stehen hier NICHT, weil ich sie
+              nicht gelesen habe: zeno.org (Georges) war von hier aus
+              zweimal nicht erreichbar. Eine abgeschriebene Stelle, die ich
+              nicht gesehen habe, wäre schlimmer als keine. Wer den Artikel
+              öffnen kann, trägt Werk und Buchzahl hier und in CLAUDE.md
+              nach - das ist eine Zeile.
+
+           Der Titel „Imperator" als Ausruf des Heeres ist davon unberührt:
+           Der ist nie an eine Frau gegangen.
+
+           AUFGENOMMEN AUF ENTSCHEIDUNG DES FACHLEHRERS, und die fiel noch
+           VOR dem Blick in den Georges: „diese philologische Ungenauigkeit
+           können wir uns leisten". Der Grund ist didaktisch und er trägt:
+           Für eine Schülerin ist ein männlicher Titel das größere Problem
+           als eine unsichere Wortgeschichte. Der Georges hat die
+           Entscheidung nachträglich besser abgestützt, nicht ersetzt.
+
+           Auf der KARTE steht von alledem nichts: Der Erklärtext sagt, was
+           der Titel in Rom war, und das ist für beide Formen dasselbe und
+           richtig. */
         { id: 'imperator', icon: '🦅', titel: 'Imperātor',
           idW: 'imperatrix', titelW: 'Imperātrīx',
           rom: 'Nach einem großen Sieg rief das Heer seinen Feldherrn so aus — der Titel kam ' +

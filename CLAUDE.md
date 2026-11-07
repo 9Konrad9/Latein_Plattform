@@ -2122,7 +2122,7 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     | Titel | Form | Befund |
     |---|---|---|
     | **Pater patriae** | **Māter patriae** | belegt: Tacitus, *ann.* 1,14 |
-    | **Imperātor** | **Imperātrīx** | **nicht belegt** – bewusst aufgenommen, siehe unten |
+    | **Imperātor** | **Imperātrīx** | **dünn belegt** – Georges nennt Cicero und Plinius, siehe unten |
     | Prīmus pīlus | – | Rang ohne weibliche Form |
     | Corōna cīvica / mūrālis | – | Gegenstände, keine Personenbezeichnungen |
     | Discipulus | Discipula | beide selbstverständlich |
@@ -2132,23 +2132,37 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
       mātrem patriae appellandam … cēnsēbant" –, **Tiberius hat es abgelehnt**. Der Titel
       wurde also vorgeschlagen, nicht verliehen. Gekürzt wird mit Auslassungszeichen,
       nicht stillschweigend.
-    - **`Imperātrīx` IST AUFGENOMMEN, OBWOHL NICHT BELEGT – und das ist eine bewusste
-      Ungenauigkeit, keine Schlamperei.** Erst die Recherche: Das Wort ist regelmäßig
-      gebildet (`imperō` + `-trīx`), aber eine antike Belegstelle war nicht zu finden –
-      im Volltext von Plautus' *Casina* kommt es nicht vor (geprüft), und Wiktionary
-      nennt für die lateinische Bedeutung „empress" keinen antiken Autor; Lewis & Short
-      und Logeion waren nicht erreichbar (403 bzw. eine Seite, die ihren Artikel per
-      JavaScript nachlädt). Der Titel *Imperātor* als Ausruf des Heeres ist ohnehin nie
-      an eine Frau gegangen.
-      Dann die Entscheidung des Fachlehrers: **„diese philologische Ungenauigkeit können
-      wir uns leisten".** Der Grund trägt: Für eine Schülerin ist ein männlicher Titel
-      das größere Problem als eine unsichere Wortgeschichte.
-      **Wer das liest, soll es nicht für einen Beleg halten.** Anders als bei
-      *Māter patriae* steht hinter dieser Form keine Stelle, sondern eine Abwägung – der
-      Kommentar an `EHRENTITEL` in `progress.js` sagt das noch einmal, damit niemand sie
-      im Unterricht als antik ausgibt. **Auf der Karte steht davon nichts:** Der
-      Erklärtext sagt, was der Titel in Rom war, und das ist für beide Formen dasselbe
-      und richtig.
+    - **`Imperātrīx` ist DÜNN BELEGT – und wie dieser Eintrag zustande kam, ist selbst
+      die Lehre.** Was ich prüfen konnte, ergab nichts: Im Volltext von Plautus' *Casina*
+      kommt das Wort nicht vor (geprüft), Wiktionary nennt für die lateinische Bedeutung
+      „empress" keinen antiken Autor, Lewis & Short und Logeion waren nicht erreichbar
+      (403 bzw. eine Seite, die ihren Artikel per JavaScript nachlädt). Daraufhin stand
+      hier **„nicht belegbar"** – und das war falsch. **Der Fachlehrer hat in den GEORGES
+      geschaut: eine Stelle bei Cicero, eine bei Plinius.**
+      **Die Lehre: „ich habe nichts gefunden" ist nicht „es gibt nichts".** Vier
+      Nachschlagewerke, von denen zwei blockten und eines nur online existiert, sind kein
+      Befund – ein Handwörterbuch im Regal schlägt sie alle. Wer hier recherchiert und
+      leer ausgeht, schreibt das als *offen* hin, nicht als *negativ*. Genau so war es
+      beim ersten Mal auch formuliert („die Frage ist offen, nicht geklärt"), nur die
+      Tabelle daneben sagte „nicht belegbar" – **zwei Stellen, zwei Schärfegrade, und die
+      schärfere war die falsche.**
+      Drei Einschränkungen bleiben, zwei davon vom Fachlehrer selbst:
+      1. **„Zu wenig, um *Imperātrīx* als klassisch zu bezeichnen, aber immerhin."**
+         Zwei vereinzelte Stellen machen kein gängiges Wort.
+      2. **Der Kontext ist ungeprüft.** Gebraucht Cicero das Wort übertragen – von einer
+         Sache, die beherrscht, nicht von einer Frau –, dann stützt die Stelle unsere
+         Verwendung gar nicht. Das ist die offene Frage, nicht mehr die nach dem Beleg.
+      3. **Die genauen Stellenangaben stehen hier nicht**, weil ich sie nicht gelesen
+         habe: zeno.org (Georges) war zweimal nicht erreichbar, die Ersatzseite lieferte
+         ein anderes Lemma. Eine abgeschriebene Stelle, die ich nicht gesehen habe, wäre
+         schlimmer als keine. Wer den Artikel öffnet, trägt Werk und Buchzahl hier und in
+         `progress.js` nach.
+      **Die Entscheidung fiel VOR dem Blick in den Georges** („diese philologische
+      Ungenauigkeit können wir uns leisten") und aus didaktischem Grund: Für eine
+      Schülerin ist ein männlicher Titel das größere Problem als eine unsichere
+      Wortgeschichte. Der Georges hat sie nachträglich besser abgestützt, nicht ersetzt.
+      **Auf der Karte steht von alledem nichts:** Der Erklärtext sagt, was der Titel in
+      Rom war, und das ist für beide Formen dasselbe und richtig.
     - **Deshalb steht im Test eine LISTE und keine Regel.** Solange „soweit belegt" galt,
       war die Probe mechanisch; jetzt ist jede Form eine eigene Entscheidung. Wer eine
       dritte ergänzt, bekommt Rot – nicht weil sie falsch wäre, sondern weil jemand sie
