@@ -283,6 +283,10 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
 - **CircusV.html** – reine Bedeutungsabfrage (Circus Maximus)
 - **Duell.html** – Wortschatz-Duell, mehrere Fragetypen. Zwei Spielfelder übereinander,
   das obere auf dem Kopf – **das einzige Spiel, das seine Höhe selbst ausrechnet**.
+  **Es verbucht seit November 2026 NICHTS** – kein Vokabelkasten, keine Kategorien, nur
+  einen Vermerk „gespielt" für *Weitgereist*. Der Grund ist der Wettlauf: Je Frage
+  antwortet nur die schnellere der beiden Personen. Ausführlich im eigenen Abschnitt
+  weiter unten.
   **Die Regel: Die Spielfläche FOLGT dem sichtbaren Bereich, in beide Richtungen.**
   Dreimal ist hier dasselbe gemeldet worden („das Format stimmt auf dem iPad nicht"),
   und zweimal hat der Versuch, auf Nummer sicher zu gehen, es schlimmer gemacht:
@@ -1640,7 +1644,10 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     ein. Begründung: Sonst ginge der Fortschritt zu schnell – wer ein Wort erst im zweiten
     Anlauf und mit der Antwort noch im Kopf trifft, hat es nicht gekonnt.
     Technisch heißt das: in der zweiten Runde **kein** `recordVocabAttempt`.
-  - **Gebaut in allen zehn Spielen mit Vokabelkasten.** Draußen bleiben Bomba (das Gerät
+  - **Gebaut in zehn Spielen.** Neun davon haben einen Vokabelkasten; das **Duell** hat die
+    Wiederholungsrunde, verbucht aber seit November 2026 **nichts** (siehe seinen Abschnitt
+    weiter unten) – seine Runde steht trotzdem in `test-wiederholung.js`, nur mit umgedrehter
+    Erwartung. Draußen bleiben Bomba (das Gerät
     wandert im Kreis, die Runde endet mit dem Knall), die Fliegenklatsche (kein
     Richtig/Falsch) und Circus' Kartenmodus (der hat kein Ende, sondern läuft, bis jemand
     zurück ins Menü geht – es gäbe keinen Moment, an dem sich die Fehler anbieten ließen).
@@ -2029,10 +2036,8 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     Hauptmenü ein Fortschrittsband, ruft aber nie `saveGameResult()` – dort stand dauerhaft
     „Noch nicht gespielt". Das Band ist weg, wie bei allen Spielen zu zweit: Das Duell zählt
     zwei Spielerleben, keine richtigen Antworten, und hat gar keine Lernquote, die dort
-    stehen könnte. **Offen und bewusst nicht mitgeändert:** Es bedient trotzdem den
-    Vokabelkasten und die Kategorien – anders als Memoria und das Bingo. Ob die Antworten
-    zweier Personen in den Kasten EINES Geräts gehören, ist eine fachliche Frage und gehört
-    besprochen. Solange das offen ist, zählt das Duell auch nicht für *Weitgereist*.
+    stehen könnte. **Die damals offene Frage – bedient das Duell den Vokabelkasten? – ist
+    im November 2026 entschieden; siehe den eigenen Abschnitt weiter unten.**
   - **Zwei Testfehler, beide von `gegenprobe-achievements.js` aufgedeckt:** Die Gegenprobe
     erwartete drei Höchststufen über der Decke – es sind zwei, die dritte liegt exakt
     darauf, und das ist nicht dasselbe. Und die Quelltextprobe suchte nach
@@ -2206,6 +2211,100 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     `progress.js` gelesen. Geraten hatte ich ihn zuerst (`ludiRomaniProgress` statt
     `ludiRomani_progress_v1`) – die Probe meldete daraufhin, die Seite setze den Namen
     nicht ein, und der Fehler lag im Test.
+
+- **DAS DUELL VERBUCHT NICHTS MEHR** (November 2026, Entscheidung des Fachlehrers). Es
+  bediente den Vokabelkasten und die Kategorie-Zähler – als einziges Spiel zu zweit.
+  Memoria und das Bingo binden `progress.js` gar nicht erst ein.
+  - **DER GRUND IST DER WETTLAUF, nicht das geteilte Gerät.** `lockAllButtons(true)` steht
+    in der ersten Zeile von `playerClick`, aufgemacht wird erst wieder in `showQuestion()`.
+    Je Frage antwortet also **genau eine** der beiden Personen – die schnellere –, und die
+    andere kommt gar nicht zu Wort. Ein Duell läuft über **5 bis 9 Fragen** (fünf Herzen,
+    jede Frage kostet genau eines), das waren 5 bis 9 Einträge in den EINEN Kasten des
+    Geräts, **alle von der schnelleren Person**.
+    Wer schnell und gut ist, schob damit Wörter auf **Grün** – im Kasten der langsameren
+    Person, also genau die Wörter, die die bräuchte. Und ihr eigenes Nichtwissen wurde
+    **nie** verbucht, weil sie nicht geklickt hat. Die Fehlerrichtung ist die unangenehme:
+    Der Kasten hört auf zu zeigen, was fehlt – das ist die eine Aufgabe, die er hat.
+  - **WARUM BOMBA TROTZDEM SCHREIBEN DARF**, obwohl das Gerät auch dort im Kreis geht:
+    Jede Person beantwortet ihre **eigene** Karte. Der Kasten bekommt eine Mischung der
+    Gruppe, aber niemandes falsche Antwort tritt **an die Stelle** einer richtigen. Im
+    Duell ist genau das der Normalfall. **Das Duell ist der Sonderfall, nicht Bomba.**
+  - **Die Kategorie-Zähler sind mitgegangen**, obwohl sie nur Fleiß messen und auf dem
+    Gerät wirklich zwei Leute gearbeitet haben. Die Regel heißt jetzt ohne Abstufung: Ein
+    Spiel ohne einzelne Besitzerin verbucht nichts. „Halb verbuchen" hieße, nicht mehr
+    sagen zu können, welche Hälfte. Mit den Zählern ist auch die Einbindung von
+    `achievementToast.js` gegangen – das Duell kann gar keine Trophäe mehr freischalten,
+    und eine Einbindung, die niemand benutzt, sieht aus als wäre die Sache geregelt.
+  - **ES ZÄHLT TROTZDEM FÜR *WEITGEREIST*** (zweite Entscheidung, gleicher Anlass). Die
+    Trophäe misst **Breite, nicht Können** – wer ein Duell gespielt hat, war in diesem
+    Spiel. Dafür gibt es **`LudiProgress.markiereGespielt(gameId)`**: ein Vermerk, DASS
+    gespielt wurde, gerufen in `endMatch()`.
+    - **Zwei Unterschiede zu `saveGameResult()`, beide mit Absicht.** Es baut den Eintrag
+      **nicht neu**, sondern ergänzt ihn – die Warnung dort ist teuer bezahlt (Issas Höhe
+      aus `recordBest()` ging verloren), und eine zweite Funktion an derselben Stelle ist
+      genau der Ort, an dem das wiederkommt. Und **`maxScore` bleibt `null`**: Das ist im
+      Projekt das Zeichen „keine Lernquote", und `index.html` liest es schon so. Ein Spiel
+      ohne richtige Antworten hat keine Quote, die irgendwo stehen könnte – das
+      Fortschrittsband der Karte bleibt deshalb weg.
+    - **Die Leiter von *Weitgereist* bleibt unverändert** (`[1, 3, 5, 7, 8, 9, 10]`), jetzt
+      bei **zwölf** Gruppen. Eine zwölfte Gruppe macht jede Schwelle **leichter**, niemand
+      verliert eine Stufe. Sie anzuheben wäre gegen die Projektregel „nach unten rücken,
+      nie nach oben" – wer heute genau zehn Gruppen hat, verlöre sonst den Triumph.
+      Die Höchststufe ist damit mit zehn von zwölf Spielen zu holen.
+  - **EIN LECK BLEIBT, UND ZWAR BEWUSST: die Trophäe *Hartnäckig*.** `review.js` meldet sie
+    in `beenden()` – an der einen Stelle, an der jede Wiederholungsrunde endet, und
+    **spielblind**, was das tragende Prinzip des Moduls ist. Das Duell behält seine
+    Wiederholungsrunde, füttert also weiter diese eine Trophäe.
+    Entscheidung des Fachlehrers: **so lassen.** Die Sache ist vertretbar – *Hartnäckig*
+    zählt nachgearbeitete Wörter, und nachgearbeitet haben die beiden sie wirklich,
+    gemeinsam und in Ruhe: Die Wiederholungsrunde im Duell hat **keinen Countdown**, dort
+    gibt es den Wettlauf nicht, an dem die ganze Entscheidung hängt. Ein Ausschalten hätte
+    `LudiReview.neu({ zaehlt: false })` gekostet – machbar, ohne dem Modul zu sagen, WELCHES
+    Spiel es ist –, aber es gibt keinen Grund dafür. **Das steht hier, damit es als
+    entschieden gilt und nicht als vergessen.**
+  - Betroffen ist von alldem nur das Duell: Memoria, Bingo und Bomba haben **gar keine**
+    Wiederholungsrunde.
+  - **Drei Tests haben die Seite gewechselt, statt wegzufallen** – wer eine Regel umdreht,
+    prüft die neue, statt die alte nicht mehr zu prüfen:
+    `test-wiederholung.js` behält den Duell-Eintrag mit `ohneKasten: true` (die Erwartung
+    dreht sich auf NULL Einträge, alles andere – feste zweite Runde, keine
+    Selbstfütterung – gilt unverändert), `test-kategorien.js` löst dieselben fünf
+    Fragetypen aus wie vorher und verlangt, dass **nichts** herauskommt, und
+    `test-achievements.js` prüft `markiereGespielt()` auf beides, was sein Kommentar
+    verspricht: dass `bests` überlebt und dass keine Lernquote behauptet wird.
+    `gegenprobe-duell.js` baut sieben Schäden ein und findet alle.
+  - **VIER TESTFEHLER DABEI, und alle vier sind lehrreich:**
+    1. **Die Decke von *Weitgereist* wird aus dem Quelltext abgeleitet** – aus den Dateien,
+       die das Menü verlinkt, und den Kennungen, die sie speichern. Gesucht wurde nur
+       `saveGameResult`. Mit einem zweiten Schreiber meldete der Test gleichzeitig „Decke
+       12" und „duell speichert nie": **dieselbe Suche stand zweimal da**, und nur eine
+       Fassung hatte den neuen Schreiber gelernt. Jetzt gibt es `kennungZuDatei()` einmal,
+       von beiden Proben benutzt.
+    2. **Der Test streifte die Kommentare nur aus dem Menü**, nicht aus den Dateien, in
+       denen er die Kennungen sucht. Die Duell-Karte in `index.html` **erklärt** in einem
+       Kommentar, dass das Duell `markiereGespielt('duell')` ruft – und `index.html` wird
+       nach `Duell.html` gelesen. Der Kommentar bog die Kennung also auf `index.html` um,
+       und weil sich `index.html` nicht selbst verlinkt, galt die Gruppe als unerreichbar.
+       **Derselbe Fehler wie bei Duells Messschutz und Silentiums `MediaRecorder`, nur
+       diesmal im Test selbst.**
+    3. **Dieser Schaden war echt und FOLGENLOS zugleich** – und das ist der eigentliche
+       Befund. Die Decke fiel still von 12 auf 11, aber die Deckenprobe blieb grün (die
+       Höchststufe liegt bei 10, also unter **beiden** Zahlen), und die Abdeckungsprobe
+       auch (sie fragt nur, OB eine Kennung gespeichert wird, nicht von wem). Die
+       Gegenprobe hat ihn zuerst **verpasst**, und das war richtig: Es gab nichts zu
+       finden. Erst eine neue Probe spricht ihn aus – **jede Spielkennung muss aus ihrer
+       eigenen Datei stammen, keine aus dem Menü**, denn das Menü baut kein Spiel.
+       Bewusst NICHT geprüft wird „erreichbare == alle Gruppen": Eine stillgelegte Karte
+       darf in der Liste stehen bleiben, ohne im Menü zu sein (so stand Quaterniō dort).
+    4. **Zwei Fälle in `gegenprobe-achievements.js` beschädigten den Normalfall nicht
+       mehr.** Einer baute `['duell']` als „Spiel, das nie speichert" ein – seit es
+       speichert, ist das der echte Stand; die Kennung ist jetzt eine erfundene
+       (`niemalsgespeichert`), denn ein echtes, noch nicht gebautes Spiel würde den Fall
+       still verrotten lassen, sobald es gebaut ist. Der andere hob die Höchststufe auf 12,
+       um die Decke zu überschreiten – bei zwölf Gruppen liegt 12 aber **genau darauf**,
+       und das ist nicht dasselbe wie darüber (derselbe feine Unterschied, den der Test
+       bei Tabellenfest schon macht). Jetzt 13. **Eine Gegenprobe, die den Normalfall
+       beschädigt, prüft nichts** – dieselbe Lehre wie bei *Imperātrīx*.
 
 - **DER STUFENFILTER auf der Trophäenseite** (November 2026, gewünscht: „dass nur
   Achievements mit der Stufe Bronze/Silber usw. angezeigt werden"). Eine Knopfreihe

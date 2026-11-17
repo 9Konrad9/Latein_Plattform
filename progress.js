@@ -76,6 +76,38 @@ const LudiProgress = (() => {
     }
 
     /**
+     * Ein Spiel als GESPIELT vermerken, ohne eine Lernquote zu behaupten.
+     *
+     * Gebraucht vom Gladiatoren-Duell. Das verbucht seit November 2026 weder
+     * Vokabeln noch Kategorien: Dort antwortet je Frage nur die SCHNELLERE
+     * der beiden Personen (der erste Klick sperrt beide Haelften), und diese
+     * eine Antwort landete im EINEN Kasten des Geraets - wer schnell und gut
+     * ist, schob damit Woerter im Kasten der langsameren Person auf Gruen.
+     * Die Begruendung steht ausfuehrlich in Duell.html.
+     *
+     * Fuer "Weitgereist" zaehlt aber, DASS es gespielt wurde: Die Trophaee
+     * misst Breite, nicht Koennen. Genau dafuer ist diese Funktion da - und
+     * nur dafuer.
+     *
+     * ZWEI UNTERSCHIEDE ZU saveGameResult(), beide mit Absicht:
+     * 1. Der Eintrag wird NICHT neu gebaut, sondern ergaenzt. Die Warnung
+     *    darueber ist teuer bezahlt (Issas Hoehe aus recordBest() ging
+     *    verloren); hier kann das gar nicht passieren.
+     * 2. maxScore bleibt null. Das ist im Projekt das Zeichen "keine
+     *    Lernquote", und das Hauptmenue liest es schon so. Ein Spiel ohne
+     *    richtige Antworten hat keine Quote, die irgendwo stehen koennte.
+     */
+    function markiereGespielt(gameId) {
+        const data = _load();
+        const spiel = data.games[gameId] || (data.games[gameId] = {
+            bestScore: 0, maxScore: null, lastScore: 0, lastPlayed: null, timesPlayed: 0
+        });
+        spiel.timesPlayed = (spiel.timesPlayed || 0) + 1;
+        spiel.lastPlayed = new Date().toISOString();
+        _save(data);
+    }
+
+    /**
      * Eine ZWEITE Bestleistung neben bestScore.
      *
      * bestScore ist überall im Projekt die Lernquote ("richtig von gesamt"),
@@ -621,10 +653,17 @@ const LudiProgress = (() => {
        offenen Punkt in CLAUDE.md. `test-achievements.js` prüft, dass diese
        Liste genau die Kennungen abdeckt, die die Spiele wirklich speichern -
        deshalb musste `quartett` hier raus, als die Datei gelöscht wurde. */
+    /* Das Duell steht hier, obwohl es nichts anderes verbucht: "Weitgereist"
+       zaehlt Breite, nicht Koennen - wer ein Duell gespielt hat, war in
+       diesem Spiel. Seinen Eintrag unter games schreibt markiereGespielt().
+       Die Leiter der Trophaee BLEIBT dabei unveraendert: Eine zwoelfte Gruppe
+       macht jede Schwelle leichter, niemand verliert eine Stufe. Sie
+       anzuheben waere gegen die Projektregel "nach unten ruecken, nie nach
+       oben" - wer heute genau zehn Gruppen hat, verlor sonst den Triumph. */
     const SPIEL_GRUPPEN = [
         ['circus'], ['principia'], ['issajump'], ['kastell'], ['scrinium'], ['villa'],
         ['personalpronomen', 'possessiv', 'demonstrativpronomen', 'relativpronomen'],
-        ['viaromana'], ['pendel'], ['arcus'], ['quiz']
+        ['viaromana'], ['pendel'], ['arcus'], ['quiz'], ['duell']
     ];
 
     /* Bestleistungen, die zusätzlich eine Trophäe tragen. Die Tabelle sagt,
@@ -1004,6 +1043,7 @@ const LudiProgress = (() => {
 
     return {
         saveGameResult,
+        markiereGespielt,
         recordBest,
         getBest,
         recordCount,

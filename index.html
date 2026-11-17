@@ -311,7 +311,11 @@
                  hat gar keine Lernquote, die hier stehen könnte. Das Band war
                  trotzdem da und zeigte dauerhaft „Noch nicht gespielt", weil
                  Duell.html nie saveGameResult() aufruft. Gefunden beim Bauen
-                 der neuen Trophäenstufen (November 2026). -->
+                 der neuen Trophäenstufen (November 2026).
+                 Seitdem ruft es markiereGespielt('duell') - das ist etwas
+                 anderes: ein Vermerk DASS gespielt wurde, für „Weitgereist",
+                 ohne Lernquote (maxScore bleibt null). Das Band bleibt
+                 deshalb weg. -->
             <div class="game-card" data-game="duell">
                 <div class="game-icon">⚔️</div>
                 <div class="game-title">Gladiatoren-Duell</div>

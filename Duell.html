@@ -10,7 +10,11 @@
     <script src="progress.js"></script>
     <script src="review.js"></script>
     <script src="bedeutung.js"></script>
-    <script src="achievementToast.js"></script>
+    <!-- achievementToast.js ist hier BEWUSST nicht eingebunden: Das Duell
+         verbucht keine Kategorien mehr, es kann also gar keine Trophaee
+         freischalten (siehe playerClick). Eine Einbindung, die niemand
+         benutzt, sieht aus als waere die Sache geregelt - dieselbe Lehre wie
+         bei den toten Regeln in theme.css. -->
     <script src="lessonFilter.js"></script>
     <link rel="stylesheet" href="theme.css">
     <style>
@@ -246,9 +250,6 @@
            Klassenfrage, und wiederholt werden soll die, die danebenging. */
         const wdh = LudiReview.neu();   // Buchfuehrung in review.js
 
-        // Gleiche Zuordnung wie in Circus Maximus, damit Bedeutungsfragen aus beiden
-        // Spielen auf dieselben Zähler einlaufen.
-        const WORTART_CATEGORY = { noun: 'Substantiv', verb: 'Verb', adjective: 'Adjektiv' };
         let countdownInterval = null;
         let activePool = [];
         let maxSelectedLesson = 0;
@@ -677,22 +678,44 @@
             lockAllButtons(true);
             const clickedBtn = document.getElementById(`p${playerNum}-opt${optIdx}`);
             const isCorrect = (clickedBtn.innerText === currentCorrectAnswer);
-            // Die Wiederholungsrunde zaehlt nicht in den Vokabelkasten.
-            if (!LudiReview.laeuft(wdh)) LudiProgress.recordVocabAttempt(currentDuelItem.latin, isCorrect);
+
+            /* HIER WIRD ABSICHTLICH NICHTS VERBUCHT - weder der Vokabelkasten
+               noch die Kategorie-Zaehler. Entscheidung des Fachlehrers
+               (November 2026), und der Grund steckt in der Zeile darueber:
+               lockAllButtons(true) sperrt BEIDE Haelften, aufgemacht wird erst
+               wieder in showQuestion(). Je Frage antwortet also GENAU EINE der
+               beiden Personen - die schnellere -, und die andere kommt gar
+               nicht zu Wort.
+
+               Ein Duell laeuft ueber 5 bis 9 Fragen (fuenf Herzen, jede Frage
+               kostet genau eines). Das waren 5 bis 9 Eintraege in den EINEN
+               Kasten des Geraets, alle von der schnelleren Person. Wer schnell
+               und gut ist, schob damit Woerter auf Gruen - im Kasten der
+               langsameren Person, also genau die Woerter, die die braeuchte.
+               Und ihr eigenes Nichtwissen wurde nie verbucht, weil sie nicht
+               geklickt hat. Die Fehlerrichtung ist die unangenehme: Der Kasten
+               hoert auf, zu zeigen, was fehlt - das ist die eine Aufgabe, die
+               er hat.
+
+               WARUM BOMBA TROTZDEM SCHREIBEN DARF, obwohl das Geraet auch dort
+               herumgeht: Jede Person beantwortet ihre EIGENE Karte. Der Kasten
+               bekommt eine Mischung der Gruppe, aber niemandes falsche Antwort
+               tritt an die Stelle einer richtigen. Im Duell ist genau das der
+               Normalfall. Das Duell ist der Sonderfall, nicht Bomba.
+
+               Die Kategorie-Zaehler sind mitgegangen, obwohl sie nur Fleiss
+               messen und auf diesem Geraet wirklich zwei Leute gearbeitet
+               haben. Die Regel heisst jetzt: Ein Spiel ohne einzelne
+               Besitzerin verbucht nichts - wie Memoria und das Bingo, die
+               progress.js gar nicht erst einbinden.
+
+               WAS BLEIBT: die Wiederholungsrunde (LudiReview merkt sich, was
+               danebenging - das gehoert der Runde, nicht einer Person) und
+               ein Vermerk am Matchende, dass dieses Spiel gespielt wurde
+               (markiereGespielt, fuer "Weitgereist"). */
             if (!isCorrect && !LudiReview.laeuft(wdh)) LudiReview.merken(wdh, { item: currentDuelItem, qType: currentQType });
             if (isCorrect && LudiReview.laeuft(wdh)) LudiReview.treffer(wdh);
 
-            // Der Zaehler laeuft in der Wiederholung weiter - Absicht, kein Vergessen:
-            // Trophaeen zaehlen Fleiss, der Vokabelkasten steuert die Auswahl.
-            // Bedeutungsfragen zählen auf die Wortart-Zähler ein - dieselbe Fähigkeit,
-            // die Circus Maximus abfragt. Formen- und Klassenfragen bekommen eigene.
-            const kategorie = currentQType === 0
-                ? WORTART_CATEGORY[currentDuelItem.type]
-                : (currentQType === 1 ? 'Grundformen' : 'Wortartklassen');
-            if (kategorie) {
-                const unlock = LudiProgress.recordCategoryAttempt(kategorie, isCorrect);
-                if (unlock) AchievementToast.show(unlock);
-            }
             let winnerZone = playerNum === 1 ? "player1" : "player2";
 
             if (isCorrect) {
@@ -723,6 +746,15 @@
         }
 
         function endMatch() {
+            /* Der EINZIGE Eintrag, den dieses Spiel hinterlaesst: dass es
+               gespielt wurde. Fuer "Weitgereist", die Breite zaehlt und nicht
+               Koennen. Keine Lernquote - die hat das Duell nicht, deshalb
+               traegt seine Karte im Hauptmenue auch kein Fortschrittsband.
+               Am Matchende und nicht beim Start, wie in allen anderen
+               Spielen; endReview() ruft es NICHT noch einmal, sonst zaehlte
+               ein Duell mit Wiederholungsrunde doppelt. */
+            LudiProgress.markiereGespielt('duell');
+
             const overlay = document.getElementById('end-overlay');
             const winText = document.getElementById('end-winner-text');
 
