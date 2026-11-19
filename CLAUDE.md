@@ -1148,8 +1148,42 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
       **Warum es so lange überlebt hat:** Der Test prüfte für jedes Format nur die TIEFE
       („alle zwischen 0.52 und 0.94"), nie die Breite – eine Probe, die die halbe Frage
       stellt, sieht aus wie eine ganze. Jetzt prüft er beides, mit Gegenprobe
-      (`gegenprobe-breite.js` baut beide alten Stände wieder ein; sie finden 22 bzw. 2 von
-      680 Gästen).
+      (`gegenprobe-breite.js` baut beide alten Stände wieder ein).
+      **DIESE GEGENPROBE WAR ZUFÄLLIG ROT – in 2 von 5 Läufen** (November 2026 gefunden,
+      beim Gesamtlauf nach einer ganz anderen Änderung). Sie ist repariert, und daran
+      hängen drei Lehren:
+      - **Der Würfel ist jetzt GESÄT** (mulberry32, Saat 20261119, wie in `lernzeit.js`
+        und im Bingo – **kein `Math.random`**). Die Probe sucht einen seltenen Fall: Ein
+        Gast ragt nur hinaus, wenn sein Platz zufällig dicht am Rand liegt, und
+        `platzSuchen()` nimmt gerade den Platz mit dem GRÖSSTEN Abstand. Ungesät war die
+        Gegenprobe mal rot, mal grün, ohne dass sich etwas geändert hätte. **Ein Test, der
+        grundlos die Farbe wechselt, erzieht dazu, Rot zu ignorieren** – dieselbe Lehre wie
+        bei Silentiums Häufigkeitsprobe, nur andersherum: Dort war die feste Grenze zu eng,
+        hier war die Stichprobe zu klein für einen seltenen Fall. Welcher Würfel die Plätze
+        liefert, ist für die Frage „ragt jemand aus dem Bild?" ohne Belang.
+      - **DIE SCHWELLE WAR ZU LASCH, und das ist der eigentliche Befund.** Sie stand auf
+        `halb * 0.5`: Ein Gast musste zu einem Viertel draußen sein, um zu zählen. Gemessen
+        ragt im gesunden Stand über alle **2040 Platzierungen** hinweg aber **niemand**
+        hinaus – der größte Überstand ist **exakt 0,000 px**. Die Regel ist also absolut,
+        und jede Toleranz darüber war unbegründeter Schlupf, der genau den Schaden
+        verdeckte, den die Gegenprobe sucht. Jetzt gilt ein halbes Pixel (Gleitkomma-
+        schlupf). Damit findet sie **31 von 680 Gästen (bis 245 px)** für den Stand ohne
+        Ausschnitt-Zuschnitt und **8 von 680 (bis 28 px)** für den ohne halbe Figurenbreite
+        – dreimal hintereinander Zeichen für Zeichen dasselbe.
+      - **Sie unterscheidet jetzt „grün geblieben" von „gar nicht gelaufen".** Beim Schärfen
+        der Schwelle hat ein **Backtick in einem Kommentar INNERHALB eines Template-
+        Literals** `test-silentium.js` unparsbar gemacht. Von der Gegenprobe aus sah das
+        genauso aus wie ein Test, der den Schaden übersehen hat: In beiden Fällen fehlt das
+        Muster, und sie meldete **VERPASST statt „kaputt"**. Sie prüft deshalb auf die
+        Kopfzeile des Tests. (Die Backtick-Falle steht unter den Fallstricken schon für die
+        Bash-Zeile – sie gilt genauso im Template-Literal.)
+      **Dabei gefunden und NICHT repariert:** `gegenprobe-breite.js` hatte den
+      Zeilenenden-Schutz nicht, den `gegenprobe-profil.js` seit November trägt. Ein
+      `git checkout Silentium.html` brachte die Datei von LF auf CRLF (`git ls-files --eol`
+      zeigt `i/lf w/crlf`), und schlagartig passte **kein einziger** mehrzeiliger Anker mehr
+      – „Stelle nicht gefunden" statt eines Befundes. Hier ist er nachgerüstet. **Elf
+      weitere Gegenproben haben ihn weiterhin nicht**; im Projekt liegen 17 CRLF-, 16 LF-
+      und 2 gemischte Dateien, die Falle kann also jede davon treffen.
     - **Niemand tritt unter den Bildrand.** Der Hintergrund wird formatfüllend gezeichnet und
       auf breiten Schirmen oben und unten beschnitten. Gemessen bei 1280×663: Rahmen 1280×859,
       je 98 Punkte fallen weg, **13 % der Wiese liegen unter der Fläche**. Wer dort eintrat,
