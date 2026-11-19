@@ -145,18 +145,25 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   eine ganze Runde, eine Frage samt Fragetyp). Was NICHT dort liegt: wie eine Frage
   aussieht, wie sie wieder gestellt wird, und was während der Wiederholung ruht.
 - **Der Caesar-Wortschatz** (Oktober 2026) steht in `vocabulary.js` unter **`lesson: 36` bis
-  `42`** – eine Stufe je Kapitel von *Bellum Gallicum* I 1–7, hinter T1–T4. Sie schalten die
-  ganze Formenlehre frei, was für die Lektüre richtig ist. **81 Einträge**: 43 Substantive,
-  31 Verben, 6 Adjektive, 1 Adverb.
+  `43`** – eine Stufe je Kapitel von *Bellum Gallicum* I 1–8, hinter T1–T4. Sie schalten die
+  ganze Formenlehre frei, was für die Lektüre richtig ist. **84 Einträge**: 43 Substantive,
+  32 Verben, 6 Adjektive, 1 Adverb, 1 Präposition, 1 Pronomen.
   - **Nach Kapiteln unterteilt** (nachträglich gewünscht, nachdem die ersten drei Kapitel
     gelesen waren). Ein Wort steht bei dem Kapitel, in dem es **zuerst** vorkommt – gemessen
     am Text, nicht geschätzt (`latein-tests/caesar-kapitel.js`):
 
-    | Kapitel | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
-    |---|---|---|---|---|---|---|---|
-    | Stufe | 36 | 37 | 38 | 39 | 40 | 41 | 42 |
-    | neue Wörter | 24 | 15 | 20 | 6 | 6 | 2 | 8 |
-    | kumuliert | 24 | 39 | **59** | 65 | 71 | 73 | 81 |
+    | Kapitel | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+    |---|---|---|---|---|---|---|---|---|
+    | Stufe | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 |
+    | neue Wörter | 24 | 15 | 20 | 6 | 6 | 2 | 8 | 3 |
+    | kumuliert | 24 | 39 | **59** | 65 | 71 | 73 | 81 | 84 |
+
+    **Kapitel 8 ist anders entstanden als 1–7, und das muss man wissen:** Seine Liste kam
+    vom Fachlehrer als fertige **Kapitel-Wortliste** – zwanzig Wörter, von denen
+    **siebzehn längst im Lehrgang standen** (*lēx* in L15, *ōrātiō* in L19, *imperāre* in
+    L23, *lātus* in T1 …). Neu waren nur **drei**: *trāns*, *ūllus*, *repellere*. Die
+    Zuordnung ist deshalb **nicht am Text gemessen** wie bei 1–7; wer das nachholen will,
+    gibt `test-caesar.js` die Textdatei mit.
 
     Einzelne späte Kapitel sind zu klein für eine Runde (Kap. 6 hat zwei Wörter) – die Spiele
     lehnen das sauber ab, und im Unterricht wählt man ohnehin mehrere Stufen.
@@ -189,10 +196,102 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Textdatei als Argument prüft er zusätzlich, dass **jedes Wort wirklich im Text steht** –
     dabei ist aufgefallen, dass Caesar *adsciscunt* schreibt, nicht *asciscunt*.
 - **Die Lektionsauswahl beschriftet ihre Stufen** (`LESSON_LABELS` in `lessonFilter.js`):
-  0 = „Salvē", 32–35 = „T1"–„T4", 36–42 = „Caesar 1"–„Caesar 7". Vorher gab es nur den
+  0 = „Salvē", 32–35 = „T1"–„T4", 36–43 = „Caesar 1"–„Caesar 8", 44 = „Konnektoren".
+  Vorher gab es nur den
   Sonderfall 0, und die
   Transitio-Lektionen hießen „Lektion 32" bis „Lektion 35" – im Buch heißen sie T1–T4, und
   niemand sucht sie unter einer Zahl. **Wer eine Stufe ergänzt, ergänzt sie dort.**
+- **EIN WORT KANN MEHREREN STUFEN ANGEHÖREN** (`auchLektionen`, November 2026). Anlass war
+  Caesar 8: Die Kapitel-Wortlisten des Lehrbuchs sind **kumulativ** – Kapitel 8 nennt zwanzig
+  Wörter, von denen siebzehn längst im Lehrgang stehen. **Im Unterricht ist die
+  EINZELLEKTION der Normalfall**, und wer „nur Caesar 8" anklickt, bekäme sonst drei Wörter
+  statt zwanzig.
+  - **DER FALSCHE WEG WÄRE EIN ZWEITER EINTRAG**, und zwar genau der Fehler, den
+    `bedeutung.js` behoben hat: Zwei Einträge für *lēx* mit „das Gesetz" und „Gesetz" –
+    in einem Topf, der beide enthält, stünde die eine richtige Übersetzung als FALSCHE
+    Antwort auf die andere. Aus dem Unterricht gemeldet und der ärgerlichste Fehler, den
+    dieses Projekt hatte. Stattdessen trägt der **vorhandene** Eintrag ein
+    `auchLektionen: [43]`.
+  - **Das Feld ADDIERT nur, es nimmt nie etwas weg.** Ein Wort bleibt immer auch in seiner
+    eigenen Lektion. Für die Spanne („bis Lektion X") ändert sich dadurch nichts: Die
+    Zusatzstufen sind die höchsten, eine Spanne, die sie einschließt, enthält ohnehin alles
+    darunter.
+  - **Dass das drei Zeilen kostet, liegt an EINER Stelle:** Der Topf wird in
+    `lessonFilter.js` gebaut und nirgends sonst. Die Zuordnung steht dort in `passt()` und
+    wird **exportiert** – `lernzeit.js` biegt `LessonFilter.show` um und braucht dieselbe
+    Regel. Ein eigener Vergleich gegen `v.lesson` hätte dort die Zusatzstufen still
+    verschluckt, und die Vokabelzeit hätte einen anderen Topf gehabt als dasselbe Spiel
+    außerhalb. Zwei Stellen mit derselben Logik driften auseinander.
+  - **Die Kacheln entstehen mit** (`getAvailableLessons` vereinigt beide Felder) – sonst gäbe
+    es die Stufe im Wortschatz, aber keinen Knopf dafür.
+  - **`test-caesar.js` leitet die Kapitelspanne jetzt aus `LESSON_LABELS` ab.** Dort stand
+    die Obergrenze **fest auf 42**, und mit Kapitel 8 meldete der Test dessen Einträge als
+    falsch einsortiert. Eine zweite Liste derselben Zahlen driftet ab – „Caesar 9" kostet
+    jetzt nur die Label-Zeile.
+  - **UND DERSELBE FEHLER STAND IN `test-start.js`, nur still:** Dort lief
+    `for (let L = 1; L <= 42; L++)`. Die neuen Stufen 43 und 44 hat der Test also **nie
+    angefasst** – er blieb grün und sagte über sie **nichts**. Genau die Sorte Fehler, die
+    dieser Test finden soll, nur in ihm selbst; dieselbe Lehre wie bei `test-issa-lauf.js`
+    („ein Test, der viel läuft, prüft deshalb noch nichts"). Jetzt kommen die Stufen aus
+    `LessonFilter.getAvailableLessons` – **44 Stufen statt 42**.
+  - **Und er prüfte den falschen Topf.** Seine Auswahl hieß `v.lesson === L`, also ohne
+    `auchLektionen`: Für „nur Konnektoren" wäre der Topf **leer** gewesen statt achtzehn
+    Wörter groß. Dazu baute er `lektionen` aus den **Eigenlektionen der Wörter** statt aus
+    den gewählten Stufen – bei „nur Konnektoren" hätte er `[0,1,3,4,7,…]` übergeben und
+    damit eine ganz andere Lektionsspanne behauptet, an der `maxSelectedLesson` hängt.
+    Beides kommt jetzt aus dem echten Filter.
+  - **Gegengeprüft, dass die Formenspiele wirklich ablehnen** (`probe-stufe44.js`): Alle
+    fünf – Scrīnium, Kastell (alle drei Modi), Villa, Pendel, Principia – lehnen Stufe 44
+    mit einer sinnvollen Meldung ab, und auf dem Schirm steht kein `undefined`. „Kein
+    Absturz" wäre hier zu wenig gewesen.
+
+- **DIE STUFE 44 „KONNEKTOREN"** (November 2026) ist **kein Kapitel und keine Lektion**,
+  sondern eine Übersicht: *et/-que, sed/autem, cum* (Präp. UND `cum (Konj.)`), *ut/nē,*
+  *quod, sī/nisi, tamen, nam/enim, ita/sīc, iam/tum*. **Achtzehn Einträge, kein einziger
+  neu** – sie kommen alle über `auchLektionen` dorthin. *ut* und *sī* stehen in beiden
+  Listen und tragen deshalb `[43, 44]`.
+  - **SIE IST EINE REINE BEDEUTUNGSSTUFE, und das ist gemessen** (`probe-caesar8.js`):
+    null Nomen, null Verben, null Adjektive. Kastell, Principia, Scrīnium, Villa und die
+    Satzbauspiele **lehnen sie also ab** – richtig so, und `test-start.js` prüft, dass sie
+    das sauber tun statt zu stürzen. Es gehen: **Circus, Issa springt und Memoria**
+    (10 Wörter mit eindeutiger Bedeutung, also reicht es für 8 Paare). **Bingo nicht** –
+    es braucht 16 eindeutige.
+  - Acht der achtzehn fallen aus `eindeutigerTopf` heraus, weil sie sich eine Bedeutung
+    teilen: *et*/*-que* („und"), *sed*/*autem* („aber"), *ita*/*sīc* („so"), *ut*,
+    *cum (Konj.)*. Das ist kein Fehler, sondern genau die Siebung, für die es sie gibt.
+  - **Caesar 8 ist dagegen für sich allein spielbar** (gemessen): 3 Nomen, 5 Verben,
+    4 Adjektive, 4 Adverbien, 2 Konjunktionen, 1 Präposition, 1 Pronomen – jedes Spiel
+    nimmt es, 19 der 20 haben eine eindeutige Bedeutung.
+
+- **DREI NEUE EINTRÄGE, und bei jedem steckt eine Entscheidung drin:**
+  - ***ūllus, -a, -um* ist `type: "pronoun"`, NICHT `adjective`.** Es ist ein
+    Pronominaladjektiv (Gen. Sg. *ūllīus*, Dat. Sg. *ūllī* für alle Geschlechter). Als
+    `adjective` stünde es in Villas KNG-Spiel zwischen den o-/a-Adjektiven und würde dort
+    falsch dekliniert – **genau der Grund, aus dem *ulterior* und *īnferior* draußen
+    geblieben sind**. Gebeugt werden nur `adjective`, `noun` und `verb` (Villa, Kastell,
+    Principia, Scrīnium – nachgesehen, nicht angenommen); als Pronomen ist das Wort
+    lernbar, ohne irgendwo erfunden gebeugt zu werden.
+  - ***trāns*** ist Präposition + Akk. Das Beispiel des Fachlehrers („bspw. Alpes") steht im
+    `gram_clue`, nicht in der Bedeutung – sonst stünde es als Antwort auf einer Knopffläche.
+  - ***repellere*** trägt **kein `objArt`/`objFeld`**. Der Leitsatz des Projekts lautet „im
+    Zweifel egal": Eine zu enge Regel nimmt richtige Sätze weg, eine fehlende lässt nur den
+    alten Zustand bestehen. *repellere* geht mit Feinden wie mit einem Angriff. Das Perfekt
+    hat **Doppel-p** (*reppulī*) und steht deshalb auch im `gram_clue`.
+  - **`perfectLesson`/`pppLesson` bleiben leer**, wie bei allen Lektürestufen.
+
+- **MEIN EIGENER FEHLER BEIM ABGLEICH, und er ist die Spiegelung einer Falle, die hier schon
+  steht:** Um die Liste gegen den Bestand zu halten, habe ich die Lemmata makronfrei
+  normalisiert – und dabei **alle Nichtbuchstaben weggeworfen**. Ein Adjektiv steht aber als
+  `"lātus, -a, -um"` in der Datenbank, also wurde daraus `latusaum`, und das traf nichts.
+  **Drei der sechs „neuen" Wörter standen längst drin** (*lātus*, *angustus*, *extrēmus*) –
+  ich hätte drei Dubletten angelegt, also genau den Fehler, gegen den der ganze Abschnitt
+  oben argumentiert. Aufgefallen ist es erst beim Prüfen der BEDEUTUNGEN auf Kollisionen,
+  nicht beim Lemma-Abgleich.
+  **Dieselbe Falle steht beim Caesar-Wortschatz schon beschrieben** – dort hieß sie
+  `multitudinisf` und betraf `middle`. Verglichen wird jetzt nur der **Teil vor dem ersten
+  Komma**. Wer wieder eine Liste abgleicht, nimmt `latein-tests/pruef-caesar8.js` als
+  Vorlage, nicht eine frisch geschriebene Normalisierung.
+
 - `bedeutung.js` – zerlegt eine Bedeutungsangabe in ihre **Sinne** und sagt, ob zwei Einträge
   sich einen davon teilen (`LudiBedeutung.kollidiert`, `waehleDistraktoren`). Gebraucht von
   allen Spielen, die nach der Bedeutung fragen (Issa springt, Circus, Duell).

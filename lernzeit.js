@@ -265,9 +265,20 @@ const LudiLernzeit = (function () {
         /* 1. Der Lektionsfilter antwortet sofort. Die Spiele rufen ihn auf
               wie immer; sie merken nichts. */
         if (typeof LessonFilter !== 'undefined' && LessonFilter.show) {
+            /* Die Zuordnung Wort -> Stufe kommt aus LessonFilter.passt, NICHT
+               aus einem eigenen Vergleich gegen v.lesson. Seit November 2026
+               kann ein Wort mehreren Stufen angehoeren (auchLektionen, fuer
+               die kumulativen Caesar-Kapitellisten) - ein eigener Vergleich
+               hier haette die Zusatzstufen still verschluckt, und die
+               Vokabelzeit haette einen anderen Topf gehabt als das Spiel
+               ausserhalb. Der Rueckfall gilt nur fuer einen alten Stand von
+               lessonFilter.js ohne passt(). */
+            const zugehoerig = LessonFilter.passt || function (v, lek) {
+                return lek.indexOf(v.lesson) >= 0;
+            };
             LessonFilter.show = function (pool, danach) {
                 danach(pool.filter(function (v) {
-                    return z.lektionen.indexOf(v.lesson) >= 0;
+                    return zugehoerig(v, z.lektionen);
                 }), z.lektionen.slice());
             };
         }

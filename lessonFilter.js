@@ -5,9 +5,41 @@
 
 const LessonFilter = (() => {
 
+    /* EIN WORT KANN MEHREREN STUFEN ANGEHÖREN (November 2026).
+
+       Anlass: Die Caesar-Kapitel bringen Wortlisten mit, die KUMULATIV sind -
+       Kapitel 8 nennt 20 Wörter, von denen 17 längst im Lehrgang stehen
+       (lēx in L15, ōrātiō in L19, imperāre in L23 …). Im Unterricht ist die
+       EINZELLEKTION der Normalfall, und wer "nur Caesar 8" anklickt, bekäme
+       sonst drei Wörter statt zwanzig.
+
+       DER FALSCHE WEG WÄRE EIN ZWEITER EINTRAG. Zwei Einträge für lēx mit
+       "das Gesetz" und "Gesetz" sind genau der Fehler, den bedeutung.js
+       behoben hat: In einem Topf, der beide enthält, stünde die eine richtige
+       Übersetzung als falsche Antwort auf die andere. Aus dem Unterricht
+       gemeldet und der ärgerlichste Fehler, den dieses Projekt hatte.
+
+       Stattdessen trägt der VORHANDENE Eintrag ein `auchLektionen: [43]`.
+       Das Feld ADDIERT nur, es nimmt nie etwas weg - ein Wort bleibt immer
+       auch in seiner eigenen Lektion.
+
+       Dass das so wenig kostet, liegt daran, dass der Topf an genau einer
+       Stelle gebaut wird. Die Zuordnung steht deshalb hier in `passt()` und
+       wird exportiert: lernzeit.js biegt `show` um und braucht dieselbe
+       Regel. Zwei Stellen mit derselben Logik driften auseinander. */
+    function stufen(v) {
+        const extra = Array.isArray(v.auchLektionen) ? v.auchLektionen : [];
+        return [v.lesson].concat(extra).filter(l => l !== undefined && l !== null);
+    }
+
+    function passt(v, lektionen) {
+        return stufen(v).some(l => lektionen.indexOf(l) >= 0);
+    }
+
     function getAvailableLessons(pool) {
-        const lessons = [...new Set(pool.map(v => v.lesson))].filter(l => l !== undefined);
-        return lessons.sort((a, b) => a - b);
+        const alle = [];
+        pool.forEach(v => stufen(v).forEach(l => alle.push(l)));
+        return [...new Set(alle)].sort((a, b) => a - b);
     }
 
     /* Nicht jede Stufe heisst "Lektion N".
@@ -24,7 +56,12 @@ const LessonFilter = (() => {
         32: "T1", 33: "T2", 34: "T3", 35: "T4",
         // Die Lektürestufen: eine je Kapitel des Bellum Gallicum I.
         36: "Caesar 1", 37: "Caesar 2", 38: "Caesar 3", 39: "Caesar 4",
-        40: "Caesar 5", 41: "Caesar 6", 42: "Caesar 7"
+        40: "Caesar 5", 41: "Caesar 6", 42: "Caesar 7", 43: "Caesar 8",
+        /* Keine Lektion und kein Kapitel, sondern eine Übersicht: die
+           Konnektoren, die ein Satz braucht (et, sed, cum, ut, quod …).
+           Alle 18 Einträge stehen längst im Lehrgang und kommen über
+           `auchLektionen` hierher - neu angelegt wurde dafür nichts. */
+        44: "Konnektoren"
     };
 
     function lessonLabel(l) {
@@ -149,11 +186,11 @@ const LessonFilter = (() => {
         confirmBtn.addEventListener('click', () => {
             if (selected.size === 0) return;
             const selectedNums = Array.from(selected).map(Number).sort((a, b) => a - b);
-            const filtered = pool.filter(v => selectedNums.includes(v.lesson));
+            const filtered = pool.filter(v => passt(v, selectedNums));
             document.body.removeChild(overlay);
             onConfirm(filtered, selectedNums);
         });
     }
 
-    return { show };
+    return { show, passt, stufen, getAvailableLessons };
 })();
