@@ -536,10 +536,15 @@
                Aus dem Unterricht gemeldet, Oktober 2026; die Begründung steht
                in bedeutung.js. */
             const alsText = v => LudiBedeutung.fuer(v, maxSelectedLesson);
-            let wrongPool = LudiBedeutung.waehleDistraktoren(
-                item, activePool.filter(i => i.type === item.type), 3, alsText);
-            // Reicht die eigene Wortart nicht, zählt der ganze Topf.
-            if (wrongPool.length < 3) wrongPool = LudiBedeutung.waehleDistraktoren(item, activePool, 3, alsText);
+            /* Der ganze Weg zu den drei falschen Antworten steht in
+               bedeutung.js: Wortart zuerst, bei zu wenigen Artgenossen
+               Öffnung auf alles schon Bekannte, ein Platz bleibt der
+               gewählten Lektion reserviert. Ohne die Öffnung gäbe es in
+               Lektion 24 für ein Nomen nur VIER mögliche Antwortmengen -
+               genau so aus dem Unterricht gemeldet. Das ZIELWORT bleibt in
+               der Auswahl. */
+            const wrongPool = LudiBedeutung.waehleFalsche(
+                item, activePool, maxSelectedLesson, 3, alsText);
 
             const finalOptions = [currentCorrectAnswer, ...wrongPool].sort(() => Math.random() - 0.5);
 

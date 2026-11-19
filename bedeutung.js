@@ -165,7 +165,98 @@ const LudiBedeutung = (() => {
         return raus;
     }
 
-    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren, fuer, eindeutigerTopf };
+    /* ---------- Woher die FALSCHEN Antworten kommen dürfen ----------
+       (November 2026, nach einer Rückmeldung aus dem Unterricht:
+       "bei Lektion 24 kommen immer nur dieselben Vokabeln")
+
+       Circus und das Duell ziehen ihre Distraktoren ZUERST aus der eigenen
+       Wortart - damit die Wortklasse die Lösung nicht verrät. Der Rückfall
+       auf den ganzen Topf greift erst, wenn die eigene Wortart keine drei
+       hergibt.
+
+       GENAU DAZWISCHEN BRICHT DIE VIELFALT ZUSAMMEN. Lektion 24 hat fünf
+       Nomen: Für ein Nomen bleiben vier Kandidaten für drei Plätze, macht
+       C(4,3) = VIER mögliche Antwortmengen - und der Rückfall feuert nie,
+       weil vier ja für drei reichen. Wer nach `proelium` gefragt wird, sieht
+       jedes Mal dieselben Bedeutungen.
+       Gemessen betrifft das **244 von 1001 Wörtern (24 %)** bei
+       Einzellektions-Auswahl, 154 davon mit höchstens vier möglichen Mengen;
+       im schlimmsten Fall gibt es nur EINE (die vier Verben von L15, die
+       vier Adjektive von L28, L30, L31 …). Bei einer Lektions-SPANNE tritt
+       es nicht auf - und die Einzellektion ist im Unterricht der Normalfall.
+
+       DIE LÖSUNG KAM VOM FACHLEHRER: Die falschen Antworten dürfen aus allem
+       kommen, was die Klasse **schon kennt**, nicht nur aus der gewählten
+       Lektion. Das hält die Wortart-Reinheit (Nomen gibt es bis L23
+       reichlich) und wiederholt nebenbei alten Wortschatz.
+
+       MIT SCHWELLE, NICHT PAUSCHAL ("wenn es nur so wenige Substantive
+       gibt"): Hat die Auswahl genug Artgenossen, bleibt alles wie bisher.
+       Ab acht gleichartigen Wörtern gibt es C(7,3) = 35 mögliche Mengen -
+       genug. Darunter wird geöffnet.
+       Das ZIELWORT bleibt davon unberührt: Gefragt wird weiterhin nur, was
+       in der gewählten Lektion steht - sonst wäre der Lektionsfilter hin. */
+    const VIELFALT_SCHWELLE = 8;
+
+    function bekannteWoerter(auswahl, maxLektion) {
+        if (typeof globalVocabularyPool === 'undefined') return auswahl;
+        /* `lesson <= maxLektion` ist "bereits bekannt". auchLektionen braucht
+           es hier nicht: Ein Wort mit einer Zusatzstufe trägt seine eigene,
+           frühere Lektion ohnehin mit sich. */
+        const bekannt = globalVocabularyPool.filter(v => v.lesson <= maxLektion);
+        return bekannt.length > auswahl.length ? bekannt : auswahl;
+    }
+
+    /**
+     * Die drei falschen Antworten für eine Bedeutungsfrage - der ganze Weg
+     * an EINER Stelle, weil Circus und das Duell ihn sonst doppelt führen
+     * und auseinanderlaufen.
+     *
+     * EIN PLATZ BLEIBT DER GEWÄHLTEN LEKTION RESERVIERT, und das ist nicht
+     * kosmetisch: Öffnet man einfach auf alles Bekannte, kommen gemessen nur
+     * noch 1-3 % der Distraktoren aus der aktuellen Lektion - die richtige
+     * Antwort wäre dann fast immer die EINZIGE, die nicht nach alter Lektion
+     * aussieht, und ließe sich durch Wiedererkennen ausschließen, ohne das
+     * gefragte Wort zu kennen. Dieselbe Sorgfalt wie beim Kastell, das seine
+     * Distraktoren in der GESTALT angleicht.
+     */
+    function waehleFalsche(ziel, auswahl, maxLektion, anzahl, alsText) {
+        const gleichartig = v => v.type === ziel.type;
+        const eigene = auswahl.filter(gleichartig);
+
+        /* Genug Artgenossen in der Auswahl? Dann bleibt alles wie bisher. */
+        if (eigene.length >= VIELFALT_SCHWELLE) {
+            const d = waehleDistraktoren(ziel, eigene, anzahl, alsText);
+            return d.length >= anzahl ? d
+                 : waehleDistraktoren(ziel, auswahl, anzahl, alsText);
+        }
+
+        const bekannt = bekannteWoerter(auswahl, maxLektion);
+        if (bekannt === auswahl) {
+            const d = waehleDistraktoren(ziel, eigene, anzahl, alsText);
+            return d.length >= anzahl ? d
+                 : waehleDistraktoren(ziel, auswahl, anzahl, alsText);
+        }
+
+        /* Erst der reservierte Platz aus der gewählten Lektion - erst unter
+           den Artgenossen, sonst irgendeiner. */
+        let gesetzt = waehleDistraktoren(ziel, eigene, 1, alsText);
+        if (!gesetzt.length) gesetzt = waehleDistraktoren(ziel, auswahl, 1, alsText);
+
+        /* Dann auffüllen aus allem Bekannten, Wortart zuerst. */
+        const dazu = t => gesetzt.indexOf(t) < 0;
+        let rest = waehleDistraktoren(ziel, bekannt.filter(gleichartig), anzahl, alsText).filter(dazu);
+        let raus = gesetzt.concat(rest).slice(0, anzahl);
+        if (raus.length < anzahl) {
+            const weiter = waehleDistraktoren(ziel, bekannt, anzahl, alsText)
+                .filter(t => raus.indexOf(t) < 0);
+            raus = raus.concat(weiter).slice(0, anzahl);
+        }
+        return raus;
+    }
+
+    return { sinne, kern, kernSinne, kollidiert, waehleDistraktoren, fuer,
+             eindeutigerTopf, waehleFalsche, bekannteWoerter, VIELFALT_SCHWELLE };
 })();
 
 // Auch unter Node erreichbar, damit die Tests es ohne Browser prüfen können.

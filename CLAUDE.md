@@ -307,6 +307,62 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   vidēre, agere, manēre, quaerere*.
   Kommen keine drei sauberen Distraktoren zusammen, wird **weniger** zurückgegeben – nie
   aufgefüllt. Der Aufrufer nimmt dann ein anderes Wort.
+  **`LudiBedeutung.waehleFalsche(ziel, auswahl, maxLektion, anzahl, alsText)`** ist der
+  ganze Weg zu den drei falschen Antworten, an EINER Stelle – Circus und das Duell führten
+  ihn vorher doppelt. Drei Regeln stecken darin, und alle drei sind gemessen:
+  - **Wortart zuerst** (wie bisher), damit die Wortklasse die Lösung nicht verrät.
+  - **Bei zu wenigen Artgenossen Öffnung auf alles schon BEKANNTE** (`lesson <=`
+    `maxLektion`), nicht nur die gewählte Lektion. **Aus dem Unterricht gemeldet**
+    (November 2026): „Bei Lektion 24 kommen in Circus Maximus und im Gladiatoren-Duell
+    immer nur dieselben Vokabeln."
+    **Die Ursache war nicht die FRAGE, sondern die ANTWORT.** L24 ist mit 14 Wörtern der
+    kleinste Pontes-Topf und hat fünf Nomen – für ein Nomen bleiben vier Kandidaten für
+    drei Plätze, macht **C(4,3) = VIER mögliche Antwortmengen**. Und der alte Rückfall auf
+    den ganzen Topf feuerte nie, weil vier für drei ja reichen. Wer nach *proelium* gefragt
+    wurde, sah jedes Mal dieselben vier Bedeutungen.
+    Gemessen betraf das **244 von 1001 Wörtern (24 %)** bei Einzellektions-Auswahl, 154
+    davon mit höchstens vier Mengen; im schlimmsten Fall gab es **genau EINE** – die vier
+    Verben von L15 (*pellere, iacere, opprimere, mūtāre*), die vier Adjektive von L28, L30
+    und L31, die Personalpronomina von L3. **Bei einer Lektions-SPANNE tritt es nicht auf**
+    – und die Einzellektion ist im Unterricht der Normalfall.
+    Der Vorschlag kam vom Fachlehrer und ist der bessere: Die falschen Antworten dürfen aus
+    allem kommen, was die Klasse schon kennt. Damit bleibt die Wortart-Reinheit erhalten
+    (Nomen gibt es bis L23 reichlich), und alter Wortschatz wird nebenbei wiederholt.
+    **MIT SCHWELLE, NICHT PAUSCHAL** („wenn es nur so wenige Substantive gibt"): Ab acht
+    gleichartigen Wörtern in der Auswahl gibt es C(7,3) = 35 mögliche Mengen, das reicht –
+    große Lektionen bleiben deshalb **unverändert** (nachgemessen an L11: 39 Wörter, keine
+    Öffnung). Geöffnet werden 47 % der Wörter bei Einzellektions-Auswahl.
+  - **EIN PLATZ BLEIBT DER GEWÄHLTEN LEKTION RESERVIERT**, und das ist der Teil, den man
+    beim ersten Anlauf übersieht. Öffnet man einfach auf alles Bekannte, kommen gemessen
+    nur noch **1–3 %** der Distraktoren aus der aktuellen Lektion – die richtige Antwort
+    wäre dann fast immer die **einzige, die nicht nach alter Lektion aussieht**, und ließe
+    sich durch bloßes Wiedererkennen ausschließen, ohne das gefragte Wort zu kennen.
+    Mit dem reservierten Platz sind es **33–35 %**, und **1001 von 1001 Wörtern** bekommen
+    in über 95 % der Fälle einen Distraktor aus der eigenen Lektion. Dieselbe Sorgfalt wie
+    beim Kastell, das seine Distraktoren in der GESTALT angleicht.
+  **Das ZIELWORT bleibt unberührt**: Gefragt wird weiterhin nur, was in der gewählten
+  Lektion steht – sonst wäre der Lektionsfilter hin.
+  Nachher gemessen: L24 kommt auf **190–200 verschiedene Antwortmengen in 200 Ziehungen**
+  (vorher vier), die vier L15-Verben auf 198–200 (vorher eine).
+  **Issa ruft weiter `waehleDistraktoren` direkt** – es zieht ohne Wortart-Vorzug aus dem
+  ganzen Topf und hatte das Problem nie (bei 14 Wörtern C(13,3) = 286 Mengen).
+  - **`test-distraktoren.js` schließt die Lücke, durch die das überhaupt kam.**
+    `test-antworten.js` prüft, was eine Schülerin SIEHT – aber nur für IssaJump und das
+    Kastell. **Die beiden gemeldeten Spiele waren nicht abgedeckt.** Der neue Test prüft
+    für jede Einzellektion vier Dinge: immer drei Distraktoren, keine zwei gleich
+    aussehenden Antworten, wechselnde Mengen, und mindestens einer aus der gewählten
+    Lektion. `gegenprobe-distraktoren.js` baut vier Schäden ein und findet alle.
+  - **Die Vielfalt-Grenze im Test wird GEMESSEN, nicht gesetzt.** Erst stand dort eine
+    feste Zahl, und der Test meldete neun Wörter aus L1 und L3 als Fehler – zu Unrecht: In
+    Lektion 1 kennt die Klasse 43 Wörter, davon drei Konjunktionen, für *nam* KANN es keine
+    zwölf Mengen geben. Der Test sammelt deshalb erst, welche Distraktoren überhaupt
+    erreichbar sind, und verlangt nur, was davon möglich ist. **Ein Test, der dort Rot
+    meldet, wo die Daten die Grenze setzen, erzieht dazu, Rot zu ignorieren.**
+  - Dabei fiel ein zweiter veralteter Quelltext-Test auf: `test-bedeutung.js` suchte nach
+    `LudiBedeutung.waehleDistraktoren` und meldete Circus und Duell als „bindet
+    bedeutung.js ein, benutzt es aber nicht", sobald sie über `waehleFalsche` gingen. Eine
+    Probe, die einen Funktionsnamen nennt, bricht beim Umbenennen, ohne dass etwas kaputt
+    wäre.
   **`LudiBedeutung.fuer(eintrag, maxLektion)`** gehört dazu: Manche Wörter heißen in der
   LEKTÜRE etwas anderes als im Lehrgang. Siehe `meaningAb` unten.
   **`LudiBedeutung.eindeutigerTopf(pool)`** ebenso: Wörter, deren erste Bedeutungsangabe im
