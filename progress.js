@@ -313,15 +313,28 @@ const LudiProgress = (() => {
      * tiefe: wie viele der zuletzt gezogenen gesperrt werden (optional;
      *        ohne Angabe ein Drittel des Topfes, höchstens vier).
      */
+    /* Die Sperre selbst - EINMAL, weil es seit November 2026 ZWEI Zieher
+       gibt: weightedPick (mit Vokabelkasten) und zieheOhneKasten (ohne).
+       Stünde sie zweimal da, liefe sie auseinander. */
+    function _ohneZuletzt(pool, tiefe) {
+        const gesperrt = new Set(_zuletztGezogen.slice(
+            -(tiefe === undefined ? _merkTiefe(pool.length) : tiefe)));
+        const topf = pool.filter(item => !gesperrt.has(item.latin));
+        // Sicherheitsnetz: Wenn die Sperre fast alles wegnimmt, gilt sie nicht.
+        return topf.length < 2 ? pool : topf;
+    }
+
+    function _merken(latin) {
+        _zuletztGezogen.push(latin);
+        if (_zuletztGezogen.length > 8) _zuletztGezogen.shift();
+    }
+
     function weightedPick(pool, tiefe) {
         if (!pool || pool.length === 0) return null;
         const data = _load();
         const boxWeights = [5, 4, 3, 2, 1]; // Stufe 0..4
 
-        const gesperrt = new Set(_zuletztGezogen.slice(-(tiefe === undefined ? _merkTiefe(pool.length) : tiefe)));
-        let topf = pool.filter(item => !gesperrt.has(item.latin));
-        // Sicherheitsnetz: Wenn die Sperre fast alles wegnimmt, gilt sie nicht.
-        if (topf.length < 2) topf = pool;
+        const topf = _ohneZuletzt(pool, tiefe);
 
         const weights = topf.map(item => {
             const entry = data.vocab[item.latin];
@@ -337,8 +350,32 @@ const LudiProgress = (() => {
             if (r <= 0) { gewaehlt = topf[i]; break; }
         }
 
-        _zuletztGezogen.push(gewaehlt.latin);
-        if (_zuletztGezogen.length > 8) _zuletztGezogen.shift();
+        _merken(gewaehlt.latin);
+        return gewaehlt;
+    }
+
+    /**
+     * Ein Wort ziehen, OHNE den Vokabelkasten zu lesen - nur mit der Sperre
+     * der zuletzt gezogenen Wörter. Alle Wörter bleiben gleich wahrscheinlich.
+     *
+     * Gebraucht vom Gladiatoren-Duell (November 2026, nach einer Rückmeldung
+     * aus dem Unterricht: "bei Lektion 24 kommen immer nur dieselben
+     * Vokabeln"). Es zog sein Zielwort roh gleichverteilt, als EINZIGES
+     * Vokabelspiel ohne jede Sperre - gemessen enthielten dadurch 81 % der
+     * Partien in L24 dasselbe Wort zweimal und 6,5 % der Fragen direkt
+     * hintereinander; selbst in der grössten Lektion waren es noch 43 %.
+     *
+     * WARUM NICHT EINFACH weightedPick: Das liest den Vokabelkasten, und der
+     * gehört dem GERÄT, nicht den beiden Spielenden. Das Duell verbucht seit
+     * November 2026 bewusst nichts (siehe Duell.html) - seine Auswahl nach
+     * dem Wissensstand einer dritten Person zu richten, wäre derselbe Fehler
+     * noch einmal, nur beim Lesen statt beim Schreiben.
+     */
+    function zieheOhneKasten(pool, tiefe) {
+        if (!pool || pool.length === 0) return null;
+        const topf = _ohneZuletzt(pool, tiefe);
+        const gewaehlt = topf[Math.floor(Math.random() * topf.length)];
+        _merken(gewaehlt.latin);
         return gewaehlt;
     }
 
@@ -1044,6 +1081,7 @@ const LudiProgress = (() => {
     return {
         saveGameResult,
         markiereGespielt,
+        zieheOhneKasten,
         recordBest,
         getBest,
         recordCount,

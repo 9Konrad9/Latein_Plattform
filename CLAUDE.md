@@ -52,6 +52,10 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   dran – das ist der Kasten. `test-auswahl.js` prüft beides, die fehlenden Wiederholungen
   und die erhaltene Gewichtung; ohne die zweite Probe könnte die Sperre die Gewichtung
   unbemerkt einebnen.
+  **Seit November 2026 gibt es ZWEI Zieher**: `weightedPick` (mit Kasten) und
+  **`zieheOhneKasten`** (ohne). Die Sperre selbst steht deshalb in `_ohneZuletzt()` und
+  `_merken()` – einmal, nicht zweimal, sonst läuft sie auseinander. Warum es den zweiten
+  braucht, steht beim Duell weiter unten.
   (`LudiProgress.recordCategoryAttempt`, `getAchievementOverview`). Speichert in `localStorage`.
 - `formen.js` – **der Formenkatalog** (Oktober 2026). Die Engines rechnen, aber sie sagen
   nicht, WELCHE Formen eine Lektionsauswahl hergibt, wie häufig eine Form ist und wie sie
@@ -2453,6 +2457,40 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     entschieden gilt und nicht als vergessen.**
   - Betroffen ist von alldem nur das Duell: Memoria, Bingo und Bomba haben **gar keine**
     Wiederholungsrunde.
+
+  **DIE WIEDERHOLUNGSSPERRE** (November 2026, aus derselben Untersuchung wie die
+  Distraktoren-Öffnung – siehe `bedeutung.js`). Das Duell zog sein ZIELWORT roh
+  gleichverteilt:
+  ```js
+  activePool[Math.floor(Math.random() * activePool.length)]
+  ```
+  Es war damit **das einzige Vokabelspiel ohne jede Sperre** – Circus, Kastell, Principia
+  und Issa gehen alle über `weightedPick`, das die zuletzt gezogenen Wörter sperrt.
+  Gemessen in Lektion 24 (14 Wörter): **81 % der Partien** enthielten dasselbe Wort
+  zweimal, **6,3 %** der Fragen direkt hintereinander. Selbst in der größten Lektion
+  (L11, 39 Wörter) waren es noch 44 %. Nachher: **31 %** und **0 %**.
+
+  | Lektion | Wörter | vorher | jetzt |
+  |---|---|---|---|
+  | L24 / L35 | 14 | 81 % | **31 %** |
+  | L20 / L15 | 18–19 | 70 % | **24 %** |
+  | L11 / L5 | 37–39 | 44 % | **11 %** |
+
+  - **WARUM NICHT EINFACH `weightedPick`**, wie die vier anderen Spiele: Das liest den
+    Vokabelkasten, und der gehört dem **Gerät**, nicht den beiden Spielenden. Das Duell
+    verbucht seit November bewusst nichts – seine Auswahl nach dem Wissensstand einer
+    dritten Person zu richten, wäre derselbe Fehler noch einmal, nur beim LESEN statt
+    beim Schreiben. `zieheOhneKasten` hat deshalb die Sperre und sonst nichts.
+    Nachgemessen mit absichtlich schiefem Kasten (die halbe Lektion auf „sitzt"): Die
+    Auswahl bleibt gleichverteilt, Spanne **10 %** des Solls über 6000 Ziehungen.
+  - **Die Sperre selbst ist aus `weightedPick` herausgezogen** (`_ohneZuletzt`,
+    `_merken`). Zwei Zieher mit derselben, doppelt geschriebenen Sperre wären genau die
+    Sorte Stelle, die auseinanderläuft – dieselbe Überlegung wie bei `kennungZuDatei()`
+    im Test eine Änderung zuvor.
+  - **Die Tiefe kommt aus `_merkTiefe`**, also ein Drittel des Topfes, höchstens vier.
+    Bei 14 Wörtern sind das vier gesperrte – deshalb fällt die Sofortwiederholung auf
+    glatt 0 % und die Partien-Quote nicht auf null: Nach vier Fragen darf sich ein Wort
+    wiederholen, und eine Partie hat bis zu neun.
   - **Drei Tests haben die Seite gewechselt, statt wegzufallen** – wer eine Regel umdreht,
     prüft die neue, statt die alte nicht mehr zu prüfen:
     `test-wiederholung.js` behält den Duell-Eintrag mit `ohneKasten: true` (die Erwartung

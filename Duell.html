@@ -523,7 +523,16 @@
         }
 
         function nextRound(forced) {
-            const item = forced ? forced.item : activePool[Math.floor(Math.random() * activePool.length)];
+            /* Die Sperre der zuletzt gezogenen Woerter - OHNE den
+               Vokabelkasten zu lesen, denn der gehoert dem Geraet und nicht
+               den beiden Spielenden (siehe playerClick und progress.js).
+               Vorher zog das Duell roh gleichverteilt, als einziges
+               Vokabelspiel ohne jede Sperre: Gemessen enthielten 81 % der
+               Partien in L24 dasselbe Wort zweimal, 6,5 % der Fragen direkt
+               hintereinander. Aus dem Unterricht gemeldet. */
+            const item = forced ? forced.item
+                : (LudiProgress.zieheOhneKasten(activePool)
+                   || activePool[Math.floor(Math.random() * activePool.length)]);
             currentDuelItem = item;
             let allowedTypes = [0];
             if (item.type === "noun" || item.type === "verb") allowedTypes.push(1, 2);
