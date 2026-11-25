@@ -860,6 +860,80 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     Vokabelkasten schweigt (am Verhalten, nicht am Quelltext – im Quelltext steht das Wort
     in einem Kommentar), dass das Phänomen gewichtet wird und genug andere Wörter es teilen,
     und dass die Wiederholungsrunde sich nicht selbst füttert.
+  - **Modus 3: das ganze Paradigma** (November 2026, Idee des Fachlehrers: „Jetzt, wo die
+    7er alle Kasus haben, müssen wir die Endungen nachhaltig einbauen."). Alle zehn Formen
+    EINES Wortes liegen durcheinander auf dem Pult; sie werden ins Regal sortiert, bis die
+    vollständige Deklination dasteht. **Keine Uhr, kein Pult-voll-Ende, keine
+    Bestleistung** – und damit keine der beiden Dramaturgien, die die ersten beiden Modi
+    tragen. Das ist der Punkt: Hier soll nichts ziehen.
+    - **GEPRÜFT WIRD ERST, WENN ALLE ZEHN LIEGEN** (Entscheidung des Fachlehrers). Beim
+      Legen gibt es kein Urteil – sonst wäre es wieder Modus 2, nur mit zehn Fächern. Beim
+      Prüfen bleiben die richtigen **fest** liegen (sie sind Teil der Tabelle, die entstehen
+      soll), die falschen kehren auf den Haufen zurück und werden neu einsortiert. Die
+      Korrekturschleife IST die Wiederholungsrunde; eine zweite daneben gibt es nicht.
+    - **ZEHN PERGAMENTE, DUBLETTEN MEHRFACH** (Entscheidung des Fachlehrers). Gemessen hat
+      ein Paradigma nur **6 bis 8 verschiedene** Formen – *fīliae* steht dreimal da. Wer die
+      Dubletten einspart, hätte sieben Pergamente für zehn Fächer und nähme dem Modus genau
+      seinen Lerngegenstand: dass eine Endung mehr als einen Fall trägt. Jedes Pergament
+      trägt alle Fächer, in die es passt; welches der gleichen wohin geht, ist egal.
+    - **NUR VOLLSTÄNDIGE PARADIGMEN.** Gemessen haben **317 von 342** Nomen alle zehn
+      Formen; die übrigen sind fast alle Pluralia tantum (*arma*, *castra*, *thermae*) und
+      haben GAR KEINEN Singular. Eine halbe Tabelle wäre keine Aufgabe, sondern ein Fehler.
+      Bis L12 bleiben 108 Wörter.
+    - **Die Sperre ab L9** – alle fünf Kasus UND der Plural. Die Zahl kommt aus
+      `NounEngine.getKnownCases` / `isPluralKnown`, nicht aus der Datei: Zwei Stellen mit
+      derselben Zahl driften auseinander. Abgelehnt wird VOR dem Start, wie
+      `startDefense()` im Kastell.
+    - **Die Rotation läuft über die Klassen, die DIE AUSWAHL hergibt**, nicht über eine
+      feste Liste. Bis L12 sind das drei (konsonantisch, o-, a-); die u-Deklination kommt
+      erst in L26, die e- in L21, die i- gar erst bei Caesar. Eine feste Sechserliste stünde
+      die halbe Schulzeit lang zur Hälfte leer. Innerhalb der Klasse zieht
+      **`zieheOhneKasten`** – die Sperre gegen Wiederholung, ohne den Vokabelkasten zu
+      lesen, den Scrīnium ja bewusst nicht bedient.
+    - **Verbucht wird wie in den anderen Modi:** Kategorie-Zähler ja, Vokabelkasten nein –
+      einmal je Pergament und Prüfung, nicht je Hinlegen, sonst zählte Herumschieben als
+      Leistung.
+    - **DREI FEHLER, DIE NUR DER BROWSER GEZEIGT HAT**, und alle drei sind lehrreich, weil
+      jsdom sie strukturell nicht finden kann – es hat kein Layout:
+      1. **Zehn Pergamente in EINER Reihe sind nicht lesbar.** Der Pult hat sechs Plätze;
+         zehn davon sind auf einem 768 px breiten iPad je 60 px breit, davon frisst der
+         Rahmen 28. Auf dem Schirm stand ***earus*** statt *deārum*, an beiden Enden
+         abgeschnitten. `passeSchriftAn` schrumpft zwar, aber nur bis 7 px, und darunter
+         liegt die Grenze schon lange. Jetzt **zwei Reihen zu fünf** mit leicht
+         überlappenden Zeilen – das ist zugleich der Haufen, um den es ging. Zum Vergleich
+         gemessen: Modus 2 ist auf 375 px mit 43 px je Pergament **enger** als der neue
+         Modus mit 53–57; die schmale Stelle ist also nicht neu und betrifft eine Breite,
+         die im Unterricht nicht vorkommt.
+      2. **Die Drehung war wirkungslos.** Sie stand als eigene Regel
+         (`.rolle.gestreut { transform: rotate(…) }`), und `setze()` setzt `transform`
+         inline – also bei jedem Setzen, also immer. Zehn kerzengerade Pergamente in Reih
+         und Glied, und zwar völlig fehlerfrei. Die Drehung wird jetzt in **dasselbe**
+         `transform` gerechnet, und sie muss **vor** `legeAufPlatz` gesetzt sein.
+      3. **Das fehlende Lemma warf beim Start.** Im Paradigma-Modus steht das Wort über dem
+         Regal statt auf jedem Pergament – `passeSchriftAn` lief trotzdem über `.lemma` und
+         griff auf `null` zu. In jsdom ist `clientWidth` 0, die Funktion steigt vorher aus,
+         der Fehler blieb unsichtbar.
+      **Die Lehre:** Ein neuer Modus, der dieselben Bausteine anders zusammensetzt, bringt
+      genau die Fehler mit, die am Zusammensetzen hängen – und die sieht man nur im Browser.
+      `test-paradigma.js` prüft die beiden letzten seitdem trotzdem, indem es die Maße
+      vorgibt, die jsdom fehlen.
+    - **Die Aufgabenzeile liegt auf einem Pergamentband, nicht auf der Wand.** Als blosser
+      Text über dem Regal war sie praktisch unlesbar: Der Hintergrund ist eine Fotografie
+      der Regalwand, auf der `--ink` je nach Buchstabe mal auf Holz und mal in eine dunkle
+      Fuge fällt. **Wort für Wort derselbe Fall wie beim Bingo** (dort gemessen 7,53 bis
+      2,54 auf derselben Fläche); auf dem Pergamentfeld sind es gleichmässige 11,3.
+    - `test-paradigma.js` prüft zwölf Dinge am Verhalten, `gegenprobe-paradigma.js` baut
+      **neun** Schäden ein und findet alle. Sie unterscheidet dabei „grün geblieben",
+      „durch den Schaden abgestürzt" und „der Test ist gar nicht gelaufen" – die dritte
+      Lage hat im Projekt schon einmal ein VERPASST vorgetäuscht.
+    - **DABEI AUFGEFALLEN: `test-start.js` hat Scrīniums Modi NIE angefasst.** Das Spiel
+      stand dort ohne Modusliste, der Test startete also 50-mal denselben ersten Modus –
+      auch Modus 2 war über alle Lektionen nie geprüft. Und der naheliegende Nachtrag
+      (`modi: [...]`) half **nicht**: `modi` setzt eine globale Variable, Scrīnium nimmt
+      den Modus aber als **Argument** und dreht `modus` beim Aufruf ohne Argument wieder
+      auf `kasus`. Dreimal derselbe Modus, 150 Starts, grün. Jetzt über `argumente` –
+      141 Starts, **15 saubere Ablehnungen statt 6**. Dieselbe Lehre wie bei
+      `test-issa-lauf.js`: Ein Test, der viel läuft, prüft deshalb noch nichts.
 - **Villa.html** (Aedificium Rōmānum) – KNG-Kongruenz. Drei Adjektiv-Modi (regulär -us/-a/-um,
   i-Deklination, gemischt). Sechs Bild-Stufen für den Baufortschritt in `assets/villa/`.
 - **ViaRomana.html** – **zwei Modi.**

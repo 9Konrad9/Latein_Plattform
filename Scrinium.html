@@ -148,6 +148,48 @@ body {
 
 .fach.treffer { filter: brightness(1.25) saturate(1.1); }
 .fach.daneben { filter: brightness(0.75) saturate(0.6); }
+
+/* ---------- Paradigma-Modus ---------- */
+/* Die Streuung auf dem Pult: eine leichte Drehung je Pergament. Mehr braucht
+   der Haufen-Eindruck nicht - die Pultplaetze liegen ohnehin ueberlappungs-
+   frei, und sich ueberdeckende Pergamente waeren halb unlesbar (filiarum
+   neben filiis ist kein Fall fuer Verdeckung). */
+/* Die Drehung steht NICHT hier als eigene transform-Regel: setze() setzt
+   transform inline und wuerde sie ueberschreiben. Sie wird dort mit
+   hineingerechnet; .gestreut traegt nur noch den Schatten des Haufens. */
+.rolle.gestreut { box-shadow: 0 3px 7px rgba(40, 25, 12, 0.45); }
+/* Was sitzt, steht gerade und fest: Die Tabelle, die am Ende dasteht, soll
+   wie eine Tabelle aussehen und nicht wie ein Haufen. */
+.rolle.fest { transform: rotate(0deg); box-shadow: 0 0 0 2px rgba(122,143,90,0.9); }
+.fach.sitzt { filter: brightness(1.12) saturate(1.05); }
+
+/* DAS LEMMA STEHT AUF EINEM PERGAMENTBAND, NICHT AUF DER WAND. Zuerst stand
+   es als blosser Text ueber dem Regal - und war dort praktisch unlesbar:
+   Der Hintergrund ist eine Fotografie der Regalwand, auf der --ink je nach
+   Buchstabe mal auf Holz und mal auf eine dunkle Fuge faellt. Genau der
+   Fall, der beim Bingo schon einmal gemessen wurde (dort 7,53 bis 2,54 auf
+   derselben Flaeche). Auf dem Pergamentfeld (#f6e8cb) sind es gleichmaessig
+   11,3 mit #3b2a18 - der beste Lesegrund, den das Projekt hat.
+   Im Browser gesehen, nicht gerechnet. */
+#paradigma-aufgabe {
+    text-align: center;
+    font-size: clamp(13px, 2.4vh, 20px);
+    color: #3b2a18;
+    padding: 2px 8px 4px;
+    width: fit-content;
+    max-width: 92%;
+    margin: 2px auto 0;
+    border-style: solid;
+    border-width: clamp(5px, 1.3vh, 9px) clamp(14px, 3vw, 28px);
+    border-image: url('assets/ui/pergament.png') 12 40 12 40 fill;
+}
+#btn-pruefen {
+    display: block;
+    margin: 6px auto 0;
+    padding: 6px 18px;
+    font-size: clamp(12px, 2.2vh, 17px);
+}
+#btn-pruefen:disabled { opacity: 0.45; }
 .fach.ziel    { outline: 3px solid var(--gold); outline-offset: -3px; }
 
 /* ====== Das Pult ====== */
@@ -189,6 +231,24 @@ body {
     box-shadow: inset 0 1px 3px rgba(40, 25, 12, 0.3);
 }
 .platz.belegt { background: transparent; box-shadow: none; }
+
+/* DER HAUFEN. Zehn Pergamente in EINER Reihe sind nicht lesbar: Gemessen auf
+   einem 768 px breiten iPad bleiben je Pergament 60 px, davon frisst der
+   Rahmen (border-image) 28 - auf dem Pult stand `earus` statt `deārum`, an
+   beiden Enden abgeschnitten. `passeSchriftAn` schrumpft zwar, aber nur bis
+   7 px, und darunter liegt die Grenze schon lange.
+   Also zwei Reihen zu fuenf. Die Pergamente sind damit so breit wie im
+   Sechser-Pult der anderen Modi, und die Reihen ueberlappen leicht
+   (negativer Zeilenabstand) - zusammen mit der Drehung je Pergament ist das
+   der Haufen, um den es geht. */
+body.paradigma #plaetze {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    row-gap: clamp(-14px, -2vh, -6px);
+    top: 4%;
+}
+/* Das Pult muss die zweite Reihe tragen, sonst haengt sie unten heraus. */
+body.paradigma #pult { min-height: clamp(150px, 31vh, 240px); }
 
 /* ====== Die Schriftrolle ====== */
 .rolle {
@@ -267,10 +327,12 @@ body {
     <span id="k-melder"></span>
 </div>
 
+<div id="paradigma-aufgabe" style="display:none"></div>
 <div id="regal"></div>
 
 <div id="pult-raum">
     <div id="pult"><div id="plaetze"></div></div>
+    <button class="start-btn" id="btn-pruefen" style="display:none">Prüfen</button>
 </div>
 
 <div class="start-overlay" id="start">
@@ -286,6 +348,13 @@ body {
     <button class="start-btn" id="btn-start-numerus">Kasus <b>und</b> Numerus</button>
     <p class="klein" style="margin-top:10px">Im zweiten Modus ist das Regal die
        Deklinationstabelle: Spalten sind die Fälle, Zeilen Singular und Plural.</p>
+    <br>
+    <button class="start-btn" id="btn-start-paradigma">Ganzes Paradigma</button>
+    <p class="klein" style="margin-top:10px">Alle zehn Formen <b>eines</b> Wortes liegen
+       auf dem Pult. Keine Uhr: Leg sie alle, dann prüfe – was sitzt, bleibt liegen,
+       der Rest kommt zurück. Am Ende steht die ganze Deklination da.
+       <b>Gleiche Formen kommen mehrfach vor</b> – das ist kein Fehler, sondern die
+       Übung. Ab Lektion 9.</p>
 </div>
 
 <div class="end-screen" id="ende">
@@ -329,6 +398,12 @@ body {
    das Koennen und nicht die Uhr. Vorher waren es 24 / 17 / 11 / 6 bei durchweg
    46 bis 67 Sekunden. */
 const PLAETZE      = 6;
+/* Der Paradigma-Modus legt ALLE Formen eines Wortes auf einmal hin, und das
+   sind immer genau zehn (fuenf Kasus mal Singular/Plural). Der Pult bekommt
+   dafuer zehn Plaetze statt sechs - die sind ueberlappungsfrei, der
+   Haufen-Eindruck entsteht durch eine leichte Drehung je Pergament. */
+const PLAETZE_PARADIGMA = 10;
+function plaetzeAnzahl() { return modus === 'paradigma' ? PLAETZE_PARADIGMA : PLAETZE; }
 const TAKT_START   = 7000;
 /* 1100, nicht 2000: Mit 2000 ms verlor niemand mehr, der 2,0 s je Rolle
    schafft - das Modell kam auf 2097 Rollen in 71 Minuten, bei 1,5 s auf
@@ -360,6 +435,17 @@ let maxLektion = 0;
    Doppelbelegungen liegen in DERSELBEN Zeile (Dat.+Abl. Pl. 116-mal bis L12,
    Nom.+Akk. Pl. 57-mal); die eine lehrreiche Ausnahme kreuzt die Zeilen: das
    -ae der a-Deklination ist Gen. Sg., Dat. Sg. UND Nom. Pl. (35-mal). */
+/* 'paradigma' - ebenfalls zehn Faecher, aber eine ganz andere Aufgabe:
+   ALLE Formen EINES Wortes liegen auf einem Haufen und muessen zur
+   vollstaendigen Deklination zusammengelegt werden. Kein Zeitdruck, die
+   Formen bleiben liegen, am Ende steht die Tabelle da.
+   Idee des Fachlehrers (November 2026): "Jetzt, wo die 7er alle Kasus haben,
+   muessen wir die Endungen nachhaltig einbauen."
+   DIE DUBLETTEN SIND HIER DER LERNGEGENSTAND: Ein Paradigma hat gemessen nur
+   6 bis 8 VERSCHIEDENE Formen fuer zehn Faecher (7 bei 53 % der Woerter) -
+   bei filia steht filiae dreimal da (Gen. Sg., Dat. Sg., Nom. Pl.) und
+   filiis zweimal. Der Haufen traegt sie deshalb mehrfach; welches der
+   gleichen Pergamente in welches der passenden Faecher geht, ist egal. */
 let modus = 'kasus';
 /* Ein Fach ist { key, kasus, numerus, label }. Im ersten Modus ist numerus
    null - dann zaehlt jede Form des Kasus, gleich welcher Zahl. */
@@ -410,14 +496,31 @@ function phSchluessel(eintrag) {
 /* ---------- Lektionsauswahl ---------- */
 document.getElementById('btn-start').addEventListener('click', () => promptLessonsAndStart('kasus'));
 document.getElementById('btn-start-numerus').addEventListener('click', () => promptLessonsAndStart('numerus'));
+document.getElementById('btn-start-paradigma').addEventListener('click', () => promptLessonsAndStart('paradigma'));
+/* EIN Knopf, zwei Beschriftungen: Solange die Tabelle nicht steht, heisst er
+   "Prüfen"; ist sie vollstaendig, "Nächste Deklination". Zwei Knoepfe
+   nebeneinander wuerden fragen lassen, welcher jetzt gemeint ist. */
+document.getElementById('btn-pruefen').addEventListener('click', () => {
+    const knopf = document.getElementById('btn-pruefen');
+    if (knopf.textContent === 'Nächste Deklination') {
+        knopf.textContent = 'Prüfen';
+        legeParadigma();
+    } else pruefeParadigma();
+});
 
 /* Die Faecher, die eine Lektionsauswahl hergibt. Sie wachsen mit dem Lehrgang:
    im Kasus-Modus zwei bis L5, drei ab L6, vier ab L7, fuenf ab L9 - im
    Numerus-Modus das Doppelte, sobald der Plural da ist (L2). */
+/* Zwei Modi benutzen das Gitter (Kasus mal Numerus): 'numerus' und
+   'paradigma'. Die Frage "ist das ein Gitter?" steht deshalb EINMAL hier und
+   nicht fuenfmal als Vergleich gegen 'numerus' - sonst vergisst man beim
+   dritten Modus eine der Stellen, und das Regal baut sich halb falsch auf. */
+function istGitter() { return modus === 'numerus' || modus === 'paradigma'; }
+
 function baueFaecher() {
     const bekannt = NounEngine.getKnownCases(maxLektion);
     const kasus = KASUS_ORDNUNG.filter(k => bekannt.indexOf(k) !== -1);
-    if (modus !== 'numerus') {
+    if (!istGitter()) {
         return kasus.map(k => ({ key: k, kasus: KASUS_NAME[k], numerus: null,
                                  label: KASUS_NAME[k] }));
     }
@@ -436,13 +539,45 @@ function feldLabel(key) {
 }
 
 function promptLessonsAndStart(gewaehlterModus) {
-    modus = gewaehlterModus === 'numerus' ? 'numerus' : 'kasus';
+    modus = ['numerus', 'paradigma'].indexOf(gewaehlterModus) >= 0 ? gewaehlterModus : 'kasus';
+    /* Der Modus steht am Koerper, damit das Stylesheet ihn sieht: Pult und
+       Haufen brauchen im Paradigma-Modus andere Maße, und die gehoeren ins
+       CSS und nicht in Inline-Stile, die beim naechsten Umbau niemand
+       findet. */
+    document.body.classList.toggle('paradigma', modus === 'paradigma');
     LessonFilter.show(globalVocabularyPool, (gefiltert, gewaehlteLektionen) => {
         maxLektion = gewaehlteLektionen && gewaehlteLektionen.length
                    ? Math.max.apply(null, gewaehlteLektionen) : 999;
         const nomen = gefiltert.filter(v => v.type === 'noun' && !v.latin.includes(' '));
 
         faecher = baueFaecher();
+
+        /* DER PARADIGMA-MODUS BRAUCHT DIE GANZE TABELLE. Eine halbe
+           Deklination ist keine Aufgabe - also erst, wenn alle fuenf Kasus
+           UND der Plural eingefuehrt sind. Die Zahl kommt aus der Engine
+           (getKnownCases / isPluralKnown), nicht aus dieser Datei: Zwei
+           Stellen mit derselben Zahl driften auseinander.
+           Abgelehnt wird VOR dem Start, nicht mittendrin - dasselbe Muster
+           wie startDefense() im Kastell. */
+        if (modus === 'paradigma') {
+            const alleKasus = KASUS_ORDNUNG.every(k =>
+                NounEngine.getKnownCases(maxLektion).indexOf(k) !== -1);
+            if (!alleKasus || !NounEngine.isPluralKnown(maxLektion)) {
+                alert('Eine vollständige Deklination braucht alle fünf Fälle und den Plural – '
+                    + 'die gibt es ab Lektion 9. Bitte mehr Lektionen wählen.');
+                return;
+            }
+            baueParadigmaTopf(nomen);
+            if (!paradigmaKlassen.length) {
+                alert('In dieser Auswahl gibt es kein Substantiv mit vollständiger Deklination. '
+                    + 'Bitte mehr Lektionen wählen.');
+                return;
+            }
+            document.getElementById('start').style.display = 'none';
+            starten();
+            return;
+        }
+
         if (faecher.length < 2) {
             alert('Bis hierher ist nur ein Kasus eingeführt – zum Einsortieren braucht es mindestens zwei. Bitte mehr Lektionen wählen.');
             return;
@@ -512,6 +647,83 @@ function waehleForm() {
     return eintrag;
 }
 
+/* ========== Paradigma-Modus ==========
+   Der Zustand steht hier beisammen, nicht verstreut: Wer den Modus liest,
+   soll an einer Stelle sehen, woraus er besteht. */
+let paradigmaWort = null;      // das Nomen, dessen Deklination gerade liegt
+let paradigmaKlassen = [];     // die Deklinationsklassen der Auswahl
+let paradigmaKlasseIdx = -1;   // wo die Rotation gerade steht
+let paradigmaNachKlasse = {};  // Klasse -> taugliche Nomen
+let paradigmaRunden = 0;       // wie oft geprueft wurde
+let paradigmaFertig = 0;       // vollstaendig gelegte Deklinationen
+
+/* NUR VOLLSTAENDIGE PARADIGMEN. Gemessen haben 317 von 342 Nomen alle zehn
+   Formen; die 25 uebrigen sind fast alle PLURALIA TANTUM (arma, castra,
+   thermae) und haben GAR KEINEN Singular - eine halbe Tabelle waere hier
+   keine Aufgabe, sondern ein Fehler. Mehrwortige Lemmata fallen schon vorher
+   heraus (patres conscripti laesst sich nicht ueber einen Stamm beugen). */
+function paradigmaTauglich(wort) {
+    let d;
+    try { d = NounEngine.decline(wort); } catch (e) { return false; }
+    if (!d) return false;
+    return ['sg', 'pl'].every(num =>
+        KASUS_ORDNUNG.every(k => d[num] && d[num][k]));
+}
+
+/* Die Rotation laeuft ueber die Klassen, die DIE AUSWAHL hergibt, nicht ueber
+   eine feste Liste. Gemessen gibt es bis L12 nur drei (konsonantisch 35,
+   o- 39, a- 35 Woerter); u-Deklination kommt erst in L26, e- in L21, i- gar
+   erst bei Caesar. Eine feste Sechserliste stuende also die halbe Schulzeit
+   lang zur Haelfte leer. */
+function baueParadigmaTopf(nomen) {
+    paradigmaNachKlasse = {};
+    nomen.filter(paradigmaTauglich).forEach(w => {
+        const k = w.gram_class || 'ohne Klasse';
+        (paradigmaNachKlasse[k] = paradigmaNachKlasse[k] || []).push(w);
+    });
+    paradigmaKlassen = Object.keys(paradigmaNachKlasse).sort();
+    paradigmaKlasseIdx = -1;
+}
+
+/* Reihum die naechste Klasse, darin ein Wort ueber zieheOhneKasten: Das ist
+   die Sperre gegen Wiederholung OHNE den Vokabelkasten zu lesen - und
+   Scrinium bedient den bewusst nicht (es gewichtet Phaenomene, nicht
+   Lemmata). Siehe progress.js. */
+function naechstesParadigmaWort() {
+    if (!paradigmaKlassen.length) return null;
+    paradigmaKlasseIdx = (paradigmaKlasseIdx + 1) % paradigmaKlassen.length;
+    const topf = paradigmaNachKlasse[paradigmaKlassen[paradigmaKlasseIdx]];
+    return LudiProgress.zieheOhneKasten(topf) || topf[0];
+}
+
+/* Die zehn Pergamente. Gleiche Formen kommen MEHRFACH vor - das ist Absicht
+   (siehe oben bei `modus`). Jedes traegt alle Faecher, in die es passt;
+   welches der gleichen wohin geht, ist damit egal. */
+function paradigmaFormen(wort) {
+    const d = NounEngine.decline(wort);
+    const nachForm = {};
+    const raus = [];
+    ['sg', 'pl'].forEach(num => {
+        const numName = num === 'sg' ? 'Singular' : 'Plural';
+        KASUS_ORDNUNG.forEach(k => {
+            const form = d[num][k];
+            const key = k + '|' + numName;
+            (nachForm[form] = nachForm[form] || []).push(key);
+        });
+    });
+    ['sg', 'pl'].forEach(num => {
+        const numName = num === 'sg' ? 'Singular' : 'Plural';
+        KASUS_ORDNUNG.forEach(k => {
+            const form = d[num][k];
+            raus.push({ form: form, wort: wort, keys: nachForm[form].slice(),
+                        klasse: wort.gram_class,
+                        kasusNamen: nachForm[form].map(x => KASUS_NAME[x.split('|')[0]]),
+                        numerus: numName });
+        });
+    });
+    return raus;
+}
+
 /* ---------- Runde ---------- */
 function starten() {
     LudiReview.zuruecksetzen(wdh);
@@ -522,13 +734,54 @@ function starten() {
     gewaehlt = null; letzteForm = null; laeuft = true;
     anzeige();
     clearTimeout(timer);
+    /* KEINE UHR im Paradigma-Modus. Das ist nicht nur das Weglassen eines
+       Timers: Ohne Pult-voll-Ende gibt es auch keine Bestleistung und keinen
+       Takt, der anzieht - die ganze Dramaturgie der ersten beiden Modi
+       haengt an der Uhr, und hier soll sie gerade nicht ziehen. */
+    if (modus === 'paradigma') { legeParadigma(); return; }
     timer = setTimeout(neueRolle, takt);
+}
+
+/* Ein neues Paradigma auf den Haufen. */
+function legeParadigma() {
+    paradigmaWort = naechstesParadigmaWort();
+    if (!paradigmaWort) { melde('Kein vollständiges Paradigma in dieser Auswahl.'); return; }
+    paradigmaRunden = 0;
+    document.querySelectorAll('.rolle').forEach(r => r.remove());
+    plaetze.forEach(p => { p.rolle = null; p.el.classList.remove('belegt'); });
+    document.querySelectorAll('.fach').forEach(f => {
+        f.classList.remove('sitzt', 'daneben-fest');
+        f._rolle = null;
+    });
+
+    const formen = paradigmaFormen(paradigmaWort);
+    /* Gemischt, sonst laege die Tabelle schon fertig sortiert da. */
+    for (let i = formen.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = formen[i]; formen[i] = formen[j]; formen[j] = t;
+    }
+    formen.forEach((daten, i) => baueRolle(daten, plaetze[i]));
+    zeigeAufgabe();
+    anzeige();
+}
+
+/* Die Aufgabe steht ueber dem Regal: WELCHES Wort dekliniert wird. Ohne das
+   waere bei gleichen Endungen nicht zu erkennen, worum es geht - und das
+   Lemma mit Genitiv sagt zugleich die Deklinationsklasse an, genau wie auf
+   den Rollen der ersten beiden Modi. */
+function zeigeAufgabe() {
+    const el = document.getElementById('paradigma-aufgabe');
+    if (!el) return;
+    el.style.display = modus === 'paradigma' ? 'block' : 'none';
+    if (modus !== 'paradigma' || !paradigmaWort) return;
+    el.innerHTML = '<b>' + lemmaZeile(paradigmaWort) + '</b> – ' +
+                   (paradigmaWort.gram_class || '');
 }
 
 function baueRegal() {
     const regal = document.getElementById('regal');
     regal.textContent = '';
-    regal.classList.toggle('gitter', modus === 'numerus');
+    regal.classList.toggle('gitter', istGitter());
 
     const fachEl = f => {
         const el = document.createElement('div');
@@ -536,11 +789,11 @@ function baueRegal() {
         el.dataset.key = f.key;
         el.setAttribute('aria-label', f.label);
         // Im Gitter beschriftet die Tabelle, nicht das einzelne Fach.
-        if (modus !== 'numerus') el.innerHTML = '<div class="fach-schild">' + f.label + '</div>';
+        if (!istGitter()) el.innerHTML = '<div class="fach-schild">' + f.label + '</div>';
         return el;
     };
 
-    if (modus !== 'numerus') {
+    if (!istGitter()) {
         faecher.forEach(f => regal.appendChild(fachEl(f)));
         return;
     }
@@ -577,7 +830,7 @@ function bauePlaetze() {
     wrap.textContent = '';
     plaetze = [];
     document.querySelectorAll('.rolle').forEach(r => r.remove());
-    for (let i = 0; i < PLAETZE; i++) {
+    for (let i = 0; i < plaetzeAnzahl(); i++) {
         const el = document.createElement('div');
         el.className = 'platz';
         wrap.appendChild(el);
@@ -593,23 +846,46 @@ function neueRolle(vorgabe) {
     const daten = vorgabe || waehleForm();
     if (!daten) { if (!LudiReview.laeuft(wdh)) timer = setTimeout(neueRolle, takt); return; }
 
+    baueRolle(daten, frei);
+
+    anzeige();
+    if (!LudiReview.laeuft(wdh)) timer = setTimeout(neueRolle, takt);
+}
+
+/* Eine Rolle bauen und auf ihren Platz legen. Herausgezogen, weil der
+   Paradigma-Modus zehn auf einmal hinlegt statt einer nach der anderen -
+   zweimal derselbe Aufbau waere genau die Stelle, die auseinanderlaeuft. */
+function baueRolle(daten, platz) {
     const el = document.createElement('div');
     el.className = 'rolle';
+    /* Im Paradigma-Modus steht das Lemma ueber dem Regal, nicht auf jedem
+       Pergament: Es ist ja zehnmal dasselbe Wort, und der Platz auf dem
+       Pergament ist knapp. */
     el.innerHTML = '<span class="form">' + daten.form + '</span>' +
-                   '<span class="lemma">' + lemmaZeile(daten.wort) + '</span>';
+        (modus === 'paradigma' ? ''
+            : '<span class="lemma">' + lemmaZeile(daten.wort) + '</span>');
     el.dataset.keys = daten.keys.join(',');
     el._daten = daten;
     document.body.appendChild(el);
 
-    frei.rolle = el;
-    el._platz = frei;
-    frei.el.classList.add('belegt');
-    legeAufPlatz(el, frei);
+    platz.rolle = el;
+    el._platz = platz;
+    platz.el.classList.add('belegt');
+    /* Der Haufen-Eindruck: eine leichte, feste Drehung je Pergament. Fest,
+       nicht bei jedem Zeichnen neu - sonst zappelt es beim Zurueckspringen.
+       VOR legeAufPlatz: setze() rechnet die Drehung in dasselbe transform
+       hinein und liest sie dafuer aus --dreh. Stand sie danach, lag das
+       erste Setzen ungedreht da - und weil jedes weitere Setzen sie dann
+       mitnahm, sprangen die Pergamente beim ersten Anfassen schief. */
+    if (modus === 'paradigma') {
+        el._dreh = (Math.random() * 10 - 5).toFixed(1) + 'deg';
+        el.style.setProperty('--dreh', el._dreh);
+        el.classList.add('gestreut');
+    }
+    legeAufPlatz(el, platz);
     passeSchriftAn(el);
     zieherAnhaengen(el);
-
-    anzeige();
-    if (!LudiReview.laeuft(wdh)) timer = setTimeout(neueRolle, takt);
+    return el;
 }
 
 /* Das Wort steht dabei wie im Vokabelheft. Ohne den Genitiv waere die
@@ -624,8 +900,14 @@ function lemmaZeile(wort) {
    Statt die Rolle breiter zu machen (dann ueberlappen sich die Plaetze)
    schrumpft die Schrift, bis sie hineinpasst. */
 function passeSchriftAn(el) {
+    /* Das Lemma FEHLT im Paradigma-Modus - dort steht es ueber dem Regal,
+       weil es zehnmal dasselbe Wort waere. Ohne diese Wache griff die
+       Schleife auf null zu und warf; in jsdom fiel das nicht auf, weil es
+       dort gar keine Breiten gibt und die Funktion vorher aussteigt.
+       Gefunden im Browser, nicht im Test. */
     ['.form', '.lemma'].forEach(wahl => {
         const t = el.querySelector(wahl);
+        if (!t) return;
         const platz = el.clientWidth;
         if (!platz || !t.scrollWidth) return;
         const faktor = platz / t.scrollWidth;
@@ -651,7 +933,15 @@ function legeAufPlatz(el, platz) {
 function setze(el, x, y) {
     el.style.setProperty('--tx', x + 'px');
     el.style.setProperty('--ty', y + 'px');
-    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    /* DIE DREHUNG GEHOERT IN DIESELBE EIGENSCHAFT. Sie stand als eigene
+       Regel (.rolle.gestreut { transform: rotate(...) }) im Stylesheet und
+       war damit wirkungslos: Dieser Inline-Stil ueberschreibt sie, und zwar
+       jedes Mal, wenn ein Pergament gesetzt wird - also immer. Auf dem
+       Schirm lagen zehn kerzengerade Pergamente in Reih und Glied statt
+       eines Haufens. Im Browser gesehen, nicht gerechnet. */
+    const dreh = el.style.getPropertyValue('--dreh');
+    el.style.transform = 'translate(' + x + 'px,' + y + 'px)'
+        + (dreh && dreh !== '0deg' ? ' rotate(' + dreh + ')' : '');
 }
 
 /* ---------- Ziehen UND Tippen ----------
@@ -662,6 +952,11 @@ function zieherAnhaengen(el) {
 
     el.addEventListener('pointerdown', e => {
         if (!laeuft) return;
+        /* Was schon sitzt, bleibt liegen: Ein richtig eingeordnetes Pergament
+           ist Teil der Tabelle, die am Ende dastehen soll - es wieder
+           herauszuziehen waere nur ein Weg, sich die eigene Lösung kaputt zu
+           machen. */
+        if (el.classList.contains('fest')) return;
         e.preventDefault();
         // Sonst reisst der Zug ab, sobald der Finger die Rolle verlaesst.
         // In try/catch, weil setPointerCapture bei einem Zeiger, den das
@@ -692,8 +987,19 @@ function zieherAnhaengen(el) {
         if (bewegt < 10) { waehle(el); return; }
 
         const fach = fachUnter(e.clientX, e.clientY);
-        if (fach) einsortieren(el, fach);
-        else zurueck(el);
+        if (fach) { einsortieren(el, fach); return; }
+        /* Im Paradigma-Modus darf man ein Pergament auch wieder AUS dem Fach
+           holen und aufs Pult zurueckziehen - sonst sitzt ein Fehlgriff fest,
+           bis man ihn auf ein anderes Fach schiebt. Das Fach wird dabei frei. */
+        if (modus === 'paradigma' && el._fach) {
+            el._fach._rolle = null;
+            el._fach = null;
+            el._platz.el.classList.add('belegt');
+            legeAufPlatz(el, el._platz);
+            anzeige();
+            return;
+        }
+        zurueck(el);
     };
     el.addEventListener('pointerup', los);
     el.addEventListener('pointercancel', los);
@@ -729,6 +1035,13 @@ document.getElementById('regal').addEventListener('click', e => {
 
 /* ---------- Einsortieren ---------- */
 function einsortieren(el, fach) {
+    /* IM PARADIGMA-MODUS WIRD BEIM LEGEN NICHT GEURTEILT (Entscheidung des
+       Fachlehrers): Das Pergament bleibt liegen, geprueft wird erst, wenn
+       alle zehn da sind, und die falschen muessen danach neu einsortiert
+       werden. Das zwingt dazu, das ganze Paradigma zu durchdenken, statt
+       Fach fuer Fach zu probieren. */
+    if (modus === 'paradigma') { legeInsFach(el, fach); return; }
+
     const keys = el.dataset.keys.split(',');
     const passt = keys.indexOf(fach.dataset.key) !== -1;
     const schluessel = phSchluessel(el._daten);
@@ -789,6 +1102,101 @@ function einsortieren(el, fach) {
     anzeige();
 }
 
+/* ---------- Paradigma: legen, pruefen, korrigieren ---------- */
+
+/* Legen. Ein Fach traegt genau ein Pergament; wer auf ein belegtes legt,
+   TAUSCHT - abweisen waere die unfreundlichere Haelfte derselben Regel, und
+   beim Umsortieren einer Tabelle tauscht man dauernd. */
+function legeInsFach(el, fach) {
+    if (fach.classList.contains('sitzt')) {
+        melde('Das Fach stimmt schon – das bleibt so.');
+        zurueck(el);
+        return;
+    }
+    const vorher = fach._rolle;
+    const altesFach = el._fach || null;
+
+    if (vorher && vorher !== el) {
+        if (altesFach) { altesFach._rolle = vorher; vorher._fach = altesFach; setzeInsFach(vorher, altesFach); }
+        else { vorher._fach = null; legeAufPlatz(vorher, vorher._platz); vorher._platz.el.classList.add('belegt'); }
+    } else if (altesFach) {
+        altesFach._rolle = null;
+    }
+
+    if (!altesFach && el._platz) el._platz.el.classList.remove('belegt');
+    fach._rolle = el;
+    el._fach = fach;
+    setzeInsFach(el, fach);
+    anzeige();
+}
+
+function setzeInsFach(el, fach) {
+    const r = fach.getBoundingClientRect();
+    const b = el.getBoundingClientRect();
+    setze(el, r.left + (r.width - b.width) / 2, r.top + (r.height - b.height) / 2);
+}
+
+/* Wie viele der zehn liegen schon im Regal? */
+function paradigmaGelegt() {
+    return document.querySelectorAll('.fach').length
+        ? Array.prototype.filter.call(document.querySelectorAll('.fach'), f => f._rolle).length
+        : 0;
+}
+
+/* Pruefen. Richtige bleiben FEST liegen (sie sind Teil der Tabelle, die am
+   Ende dastehen soll), falsche kehren auf den Haufen zurueck. */
+function pruefeParadigma() {
+    const faecherEl = Array.prototype.slice.call(document.querySelectorAll('.fach'));
+    if (faecherEl.some(f => !f._rolle)) {
+        melde('Erst alle zehn legen, dann prüfen.');
+        return;
+    }
+    paradigmaRunden++;
+    let richtig = 0;
+    faecherEl.forEach(f => {
+        const el = f._rolle;
+        if (f.classList.contains('sitzt')) { richtig++; return; }
+        const keys = el.dataset.keys.split(',');
+        const passt = keys.indexOf(f.dataset.key) !== -1;
+        versuche++;
+        /* Wie in den anderen Modi: Kategorie-Zaehler ja, Vokabelkasten nein.
+           Gezaehlt wird hier EINMAL je Pergament und Pruefung - nicht je
+           Hinlegen, sonst zaehlte blosses Herumschieben als Leistung. */
+        LudiProgress.recordCategoryAttempt('Substantiv', passt);
+        if (passt) {
+            richtig++;
+            f.classList.add('sitzt');
+            el.classList.add('fest');
+            el.style.setProperty('--dreh', '0deg');
+            setzeInsFach(el, f);
+            if (keys.length > 1) doppel++;
+        } else {
+            fehler++;
+            f.classList.add('daneben');
+            setTimeout(() => f.classList.remove('daneben'), 400);
+            f._rolle = null;
+            el._fach = null;
+            el._platz.el.classList.add('belegt');
+            legeAufPlatz(el, el._platz);
+        }
+    });
+
+    zahl = richtig;
+    anzeige();
+    if (richtig === faecherEl.length) { paradigmaGeschafft(); return; }
+    melde(richtig + ' von ' + faecherEl.length + ' sitzen – die anderen liegen wieder auf dem Pult.');
+}
+
+function paradigmaGeschafft() {
+    paradigmaFertig++;
+    const ohneFehler = paradigmaRunden === 1;
+    melde(ohneFehler
+        ? 'Vollständig – und auf Anhieb richtig!'
+        : 'Vollständig! (' + paradigmaRunden + ' Durchgänge)');
+    const knopf = document.getElementById('btn-pruefen');
+    if (knopf) knopf.textContent = 'Nächste Deklination';
+}
+
 function zurueck(el) {
     const h = el._heim;
     el.classList.add('zurueck');
@@ -808,6 +1216,19 @@ function anzeige() {
     document.getElementById('k-zahl').textContent = zahl;
     document.getElementById('k-fehler').textContent = fehler;
     const r = document.getElementById('k-runde');
+    if (modus === 'paradigma') {
+        const knopf = document.getElementById('btn-pruefen');
+        if (knopf) {
+            knopf.style.display = 'inline-block';
+            /* Der Knopf ist gesperrt, solange nicht alle zehn liegen - sonst
+               klickt man ihn aus Versehen und bekommt nur eine Meldung. */
+            const alleDa = paradigmaGelegt() === faecher.length;
+            knopf.disabled = !alleDa && knopf.textContent === 'Prüfen';
+        }
+        r.textContent = paradigmaGelegt() + ' von ' + faecher.length + ' gelegt'
+            + (paradigmaFertig ? '  ·  ' + paradigmaFertig + ' fertig' : '');
+        return;
+    }
     if (LudiReview.laeuft(wdh)) {
         const f = LudiReview.fortschritt(wdh);
         // Gedeckelt: Zwischen der letzten richtigen Rolle und endeWiederholung
