@@ -19,7 +19,7 @@ const LudiProgress = (() => {
                     totalAnswered: 0,
                     daysPlayed: [],
                     categories: {},
-                    zaehler: {},      // aufsummierte Marken (wiederholt, lernzeiten)
+                    zaehler: {},      // aufsummierte Marken (wiederholt)
                     unlockedTiers: {} // z.B. { 'streak': 2, 'cat_Imperativ': 1 } - höchste bereits gezeigte Stufe (0=keine)
                 };
             }
@@ -139,9 +139,9 @@ const LudiProgress = (() => {
     /**
      * Eine Marke, die sich AUFSUMMIERT - anders als recordBest, das nur das
      * Beste behält, und anders als recordVocabAttempt, das ein einzelnes Wort
-     * führt. Gebraucht von den drei Trophäen, die etwas zählen, das über
-     * Runden hinweg wächst: nachgearbeitete Vokabeln, abgeschlossene
-     * Vokabelzeiten.
+     * führt. Gebraucht von den Trophäen, die etwas zählen, das über Runden
+     * hinweg wächst - heute nur noch von einer: den nachgearbeiteten
+     * Vokabeln der Wiederholungsrunde.
      *
      * Der Name IST die Trophäen-Kennung. Absicht: recordBest braucht dafür
      * eine zweite Tabelle (BEST_ACHIEVEMENTS), und genau die war schon
@@ -463,11 +463,13 @@ const LudiProgress = (() => {
     // Einträge deshalb HINTEN anhängen.
     const FIXED_ACHIEVEMENTS = [
         { id: 'streak', icon: '🔥', title: 'Serien-Meister', unit: 'Fragen in Folge richtig', thresholds: [5, 10, 20, 35, 50, 75, 100], bereich: 'allgemein' },
-        /* 6000 statt 2500 ganz oben: Eine Vokabelzeit von zehn Minuten bringt
-           gemessen rund 40 Fragen (vier Spiele à 8-13). Zweimal die Woche über
-           ein Schuljahr sind das gut 3000 - der Triumphus liegt also bei etwa
-           zwei Jahren regelmäßigen Übens. Weiter oben wäre er bis zum Abitur
-           nicht zu holen. */
+        /* 6000 statt 2500 ganz oben: Der Maßstab war eine Vokabelzeit von zehn
+           Minuten - gemessen rund 40 Fragen (vier Spiele à 8-13), zweimal die
+           Woche über ein Schuljahr gut 3000. Der Triumphus liegt damit bei etwa
+           zwei Jahren regelmäßigen Übens; weiter oben wäre er bis zum Abitur
+           nicht zu holen. Das FORMAT ist im November 2026 aus dem Projekt, die
+           Rechnung bleibt: Eine Übungsstunde bringt rund diese 40 Fragen,
+           gleich in welchem Rahmen. */
         { id: 'total', icon: '📚', title: 'Fleißiges Bienchen', unit: 'Fragen insgesamt beantwortet', thresholds: [100, 300, 700, 1500, 2500, 4000, 6000], bereich: 'allgemein' },
         /* SECHS Stufen, nicht sieben: Der Wortschatz hat 998 Wörter, und für
            Grün braucht jedes VIER Treffer in Folge. Die alte Höchststufe von
@@ -527,9 +529,8 @@ const LudiProgress = (() => {
            Die Trophäe beschreibt sich selbst, statt dass eine zweite Liste
            anderswo dasselbe noch einmal behauptet. */
 
-        /* Die Breite. Belohnt genau das, was auch die Vokabelzeit will: nicht
-           nur Issa. Sie kostet KEINE neue Zählstelle - welche Spiele jemand
-           gespielt hat, steht längst in `games`.
+        /* Die Breite: nicht nur Issa. Sie kostet KEINE neue Zählstelle -
+           welche Spiele jemand gespielt hat, steht längst in `games`.
 
            DIE GANZE LEITER IST UM EINS HERUNTERGERÜCKT, weil Quaternio im
            November 2026 aus dem Projekt geflogen ist. Es zählte als eigene
@@ -548,12 +549,20 @@ const LudiProgress = (() => {
            "Die Trophäen zählen Fleiß, und wer seine Fehler nochmal durchgeht,
            hat den Fleiß aufgebracht." Das hier ist die Trophäe dazu. */
         { id: 'wiederholt', icon: '🔁', title: 'Hartnäckig', unit: 'Vokabeln in der Wiederholung nachgearbeitet',
-          thresholds: [10, 25, 50, 100, 200, 350, 600], bereich: 'allgemein', quelle: 'zaehler' },
+          thresholds: [10, 25, 50, 100, 200, 350, 600], bereich: 'allgemein', quelle: 'zaehler' }
 
-        /* Die Vokabelzeit - das neue Format hatte noch gar keine Marke.
-           Gezählt wird nur, was BIS ZUM ENDE gespielt wurde. */
-        { id: 'lernzeiten', icon: '⏱️', title: 'Stammgast', unit: 'Vokabelzeiten abgeschlossen',
-          thresholds: [1, 3, 7, 15, 30, 55, 90], bereich: 'allgemein', quelle: 'zaehler' }
+        /* HIER STAND AUCH „Stammgast" (⏱️, abgeschlossene Vokabelzeiten).
+           Die Vokabelzeit ist im November 2026 aus dem Projekt genommen
+           worden, und damit gilt für sie Wort für Wort dasselbe wie für
+           „Kartensammler" darunter: Was niemand mehr füttern kann, gehört
+           nicht in die Liste. Der aufsummierte Wert bleibt unter
+           `zaehler.lernzeiten` im Speicher liegen.
+
+           Dass hier zweimal fast dasselbe steht, ist kein Versehen, sondern
+           der Punkt: Eine Trophäe hängt an EINER Zählstelle, und wer ein
+           Format löscht, löscht beides. `test-achievements.js` prüft die
+           Richtung von der anderen Seite - jede Marke in dieser Liste MUSS
+           eine Zählstelle haben, sonst stünde sie für immer auf null. */
 
         /* HIER STAND „Kartensammler" (🃏, abgelegte Quartette). Quaternio ist
            im November 2026 aus dem Projekt geflogen, und eine Trophäe, die
@@ -595,8 +604,7 @@ const LudiProgress = (() => {
 
        UND EIN BEABSICHTIGTER NEBENEFFEKT: Die Titel verlangen BREITE. Wer nur
        ein Spiel spielt, hat höchstens fünfzehn Trophäen und erreicht „20 auf
-       Gold" nie - egal wie gut er ist. Das ist gewollt und derselbe Gedanke
-       wie bei der Vokabelzeit.
+       Gold" nie - egal wie gut er ist. Das ist gewollt.
 
        `stufe` ist die Stufennummer (1 = Bronze ... 7 = Triumphus). */
     const EHRENTITEL = [

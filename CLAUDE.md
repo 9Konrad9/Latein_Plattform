@@ -93,7 +93,7 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   Formenspiel hätte abschreiben müssen. Was im Kastell BLIEB, ist das Bauen einer Runde:
   welche vier Antworten nebeneinander stehen (`buildRoundFromSlots`, `waehleDistraktoren`,
   die Achsen-Logik). Das ist eine andere Frage als „welche Formen gibt es".
-- `fehlerbanner.js` – **auf JEDER der 21 Seiten, und als erstes Skript** (Oktober 2026).
+- `fehlerbanner.js` – **auf JEDER der 20 Seiten, und als erstes Skript** (Oktober 2026).
   Fängt `error` und `unhandledrejection` ab und zeigt die Meldung samt Zeilennummer in
   einem roten Band oben, mit der Bitte, den Text der Lehrkraft zu zeigen.
   **Wozu:** Aus dem Unterricht kommt sonst „bei Issa kommen Fehler" – damit lässt sich
@@ -222,10 +222,13 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
     darunter.
   - **Dass das drei Zeilen kostet, liegt an EINER Stelle:** Der Topf wird in
     `lessonFilter.js` gebaut und nirgends sonst. Die Zuordnung steht dort in `passt()` und
-    wird **exportiert** – `lernzeit.js` biegt `LessonFilter.show` um und braucht dieselbe
-    Regel. Ein eigener Vergleich gegen `v.lesson` hätte dort die Zusatzstufen still
-    verschluckt, und die Vokabelzeit hätte einen anderen Topf gehabt als dasselbe Spiel
-    außerhalb. Zwei Stellen mit derselben Logik driften auseinander.
+    wird **exportiert**. Gebraucht hat den Export die Vokabelzeit – sie bog
+    `LessonFilter.show` um und brauchte dieselbe Regel; ein eigener Vergleich gegen
+    `v.lesson` hätte dort die Zusatzstufen still verschluckt, und sie hätte einen anderen
+    Topf gehabt als dasselbe Spiel außerhalb. **Die Vokabelzeit ist im November 2026 aus
+    dem Projekt** (siehe unten), der Export ist damit vorerst ungenutzt und bleibt trotzdem:
+    Die nächste Stelle, die den Topf anders aufbaut, klopft genau hier wieder an. Zwei
+    Stellen mit derselben Logik driften auseinander.
   - **Die Kacheln entstehen mit** (`getAvailableLessons` vereinigt beide Felder) – sonst gäbe
     es die Stufe im Wortschatz, aber keinen Knopf dafür.
   - **`test-caesar.js` leitet die Kapitelspanne jetzt aus `LESSON_LABELS` ab.** Dort stand
@@ -375,67 +378,6 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
   die Siebung steht auf der Karte „rufen", aufgerufen wird *vocāre*, und die Kachel stammte
   von *clāmāre*. Gemessen kostet sie wenig: bis L12 fallen 42 von 386 Wörtern weg.
 - `lessonFilter.js` – die Lektionsauswahl-Overlay-Komponente, von praktisch jedem Spiel genutzt.
-- `lernzeit.js` – **die Zehn-Minuten-Vokabelzeit** (Oktober 2026), eingebunden in den elf
-  Einzelspielen (NACH `lessonFilter.js`) und in `Lernzeit.html`.
-  **DAS TRAGENDE PRINZIP: DIE VOKABELZEIT IST EIN RAHMEN, KEIN UMBAU.** Kein Spiel weiß,
-  dass es Teil einer Vokabelzeit ist – keine neue Leiste, kein Eingriff in eine
-  Rundenschleife, keine verkürzte Runde. Das Modul greift an genau zwei Stellen an, die es
-  ohnehin schon gibt:
-  1. `LessonFilter.show` antwortet sofort mit der Auswahl vom Anfang der Vokabelzeit. Die
-     Spiele rufen den Filter auf wie immer und merken nichts. **Deshalb muss `lernzeit.js`
-     NACH `lessonFilter.js` stehen** – `test-lernzeit.js` prüft die Reihenfolge.
-  2. Der Haus-Knopf und jeder Link ins Hauptmenü führen nach `Lernzeit.html`.
-  **Warum keine Fortschrittsleiste im Spiel:** Es gibt keinen freien Rand. Oben links sitzt
-  der Haus-Knopf, oben quer der Fehlerbanner, unten in IssaJump die Steuerpfeile und in
-  Scrīnium das Regal. Eine feste Leiste verdeckte in jedem Vollbildspiel etwas und müsste
-  in jedem einzeln ausgerichtet werden. Der Haus-Knopf dagegen ist in allen elf Spielen
-  Zeichen für Zeichen derselbe.
-  - **Der Würfel hängt am DATUM, nicht am Gerät.** Vom Fachlehrer vorhergesagt: „Die 7er
-    beschweren sich, dass manche Issa springt bekommen haben und andere nicht." Die
-    Beschwerde gilt nicht dem Zufall – niemand stört sich daran, dass die Folge GESTERN
-    anders war. Sie gilt dem Unterschied zum Nachbarn im selben Moment. Also wird aus
-    Datum und Lektionsspanne gewürfelt (FNV-1a + mulberry32, **kein `Math.random`**):
-    Jedes iPad rechnet ohne Absprache dieselbe Folge aus. Dasselbe Prinzip wie beim Bingo.
-    Wer am selben Tag eine zweite Folge braucht, sagt eine Zahl an – die Lehrkraft ist der
-    Synchronisationskanal.
-  - **Die Plätze sind fest, gewürfelt wird nur innerhalb des Platzes.** `TAKT` lautet
-    Wortschatz – Formen – Wortschatz – Formen – Satzbau und wiederholt sich. Grund: Rein
-    gewürfelt käme eine Vokabelzeit aus vier Bedeutungsspielen heraus, denn **der Vorrat ist
-    schief** – gemessen (`probe-lernzeit.js`) stehen schon bei „bis L2" VIER Formenspiele
-    bereit, aber nur ZWEI für die Bedeutung. Auf „die hat Issa bekommen" lautet die Antwort
-    damit: du hattest auch eine Wortschatzrunde, nur eine andere.
-  - **In `SPIELE` steht KEINE Lektionszahl.** `tauglich` fragt die DATEN (gibt es
-    Adjektive? vier Wortfelder mit je vier Nomen?) oder die Konstante der Engine, aus der
-    auch das Spiel seine Sperre nimmt (`SentenceEngine.ACI_LESSON` für Arcus). Eine zweite
-    Zahl an dieser Stelle würde von der des Spiels abdriften, und dann stünde mitten in der
-    Vokabelzeit eine Absage auf dem Schirm. `test-lernzeit.js` startet deshalb **jedes
-    geplante Spiel wirklich** – 102 Starts über zehn Lektionsspannen.
-  - **Die Uhr ist ein absoluter Zeitpunkt, kein Guthaben.** Die Vokabelzeit ist ein Block im
-    Stundenplan und pausiert nicht, wenn jemand das iPad weglegt. Nach jedem Spiel wird
-    gefragt, ob noch Zeit ist – niemand wird mitten in einer Runde abgeschnitten, und jedes
-    Spiel behält seine eigene Länge. Wer schnell ist, schafft fünf Spiele, wer langsam ist
-    drei; beide sind zehn Minuten beschäftigt.
-  - **`Lernzeit.html` setzt `window.LUDI_LERNZEIT_HUB = true` VOR dem Einbinden.** Sie
-    braucht den echten Lektionsfilter, um die Auswahl überhaupt erst zu erfragen – ein
-    umgebogener Filter beantwortete dort die eigene Frage. Sie sagt das ausdrücklich,
-    statt dass das Modul aus dem Pfad rät: Geraten wäre in jsdom, hinter einem Proxy oder
-    unter einem anderen Dateinamen still falsch, und zwar in die gefährliche Richtung.
-  - **Der Rückweg hängt nicht am Standardverhalten des Links.** Beim Nachsehen im Browser
-    kam der Haus-Knopf auf mehreren Seiten gar nicht zum Zug – der Klick wurde abgefangen,
-    nachweislich auch OHNE Vokabelzeit und mit dem Original-Link ins Hauptmenü, also nichts,
-    was dieses Modul angerichtet hätte; im Projekt ist die Ursache nicht zu finden. Das darf
-    der einzige Weg zurück nicht aushalten müssen: Wer dort hängenbleibt, sitzt im Spiel
-    fest. Ein eigener Handler schickt die Seite deshalb selbst weiter.
-  - **Die wichtigste Probe heißt „ohne Vokabelzeit ändert sich nichts".** Elf Spiele haben
-    eine Zeile dazubekommen, und keines darf sich im normalen Betrieb anders verhalten:
-    Haus-Knopf auf `index.html`, Links ins Hauptmenü, und der Lektionsfilter fragt wieder
-    nach. `gegenprobe-lernzeit.js` baut vierzehn Schäden ein und findet alle.
-  - **Zwei Testfehler, beide von der Gegenprobe aufgedeckt:** Die Sperre gegen „zweimal
-    dasselbe Spiel hintereinander" KANN mit dem heutigen Takt gar nicht feuern (benachbarte
-    Plätze haben immer verschiedene Arten). Sie bleibt trotzdem – wer den Takt ändert,
-    braucht sie –, aber der Test entartet den Takt jetzt absichtlich, sonst wäre die Regel
-    ungeprüft. Und die Probe „ohne Vokabelzeit" starb mit einem ReferenceError statt mit
-    einem Befund, als ein Spiel seine Einbindung verlor.
 
 ## Aktive Spiele (Stand zuletzt)
 
@@ -1286,8 +1228,8 @@ praktisch nie, und der Schwierigkeitsgrad wächst automatisch mit der Lektionsau
       **DIESE GEGENPROBE WAR ZUFÄLLIG ROT – in 2 von 5 Läufen** (November 2026 gefunden,
       beim Gesamtlauf nach einer ganz anderen Änderung). Sie ist repariert, und daran
       hängen drei Lehren:
-      - **Der Würfel ist jetzt GESÄT** (mulberry32, Saat 20261119, wie in `lernzeit.js`
-        und im Bingo – **kein `Math.random`**). Die Probe sucht einen seltenen Fall: Ein
+      - **Der Würfel ist jetzt GESÄT** (mulberry32, Saat 20261119, wie im Bingo –
+        **kein `Math.random`**). Die Probe sucht einen seltenen Fall: Ein
         Gast ragt nur hinaus, wenn sein Platz zufällig dicht am Rand liegt, und
         `platzSuchen()` nimmt gerade den Platz mit dem GRÖSSTEN Abstand. Ungesät war die
         Gegenprobe mal rot, mal grün, ohne dass sich etwas geändert hätte. **Ein Test, der
@@ -1379,20 +1321,6 @@ Gefunden beim Einhängen des Bingos, `test-bingo.js` hält es fest.
     Rückseite **6,08**. Die Rückseite stand zuerst bei 2,55 (Gold auf Porphyr) und damit
     unter den 3,0, die selbst große Schrift braucht; jetzt Marmorcreme – dieselbe Farbe,
     die die Porphyr-Knöpfe ohnehin benutzen.
-- **Lernzeit.html** – **die Vokabelzeit** (Oktober 2026). Kein Spiel, sondern der Rahmen um
-  mehrere: Einmal die Lektionen wählen, dann ohne Rückfrage durch mehrere Spiele, bis die
-  Uhr abgelaufen ist. 5, 10 oder 15 Minuten. Die Mechanik steht in `lernzeit.js` (siehe
-  oben); diese Seite ist der Taktgeber – Startbild, laufende Uhr mit dem Plan, Auswertung.
-  - **Die Auswertung zählt über die KATEGORIE-Zähler, nicht über den Vokabelkasten.
-    Scrīnium bedient den Kasten bewusst nicht** (es gewichtet Phänomene, nicht Lemmata) und
-    fiele sonst aus der Bilanz heraus. Gemessen wird als Differenz zu einem Messpunkt, der
-    beim Start gespeichert wird.
-  - **Draußen bleiben die Gruppenspiele** (Fliegenklatsche, Bingo, Bomba, Memoria, Duell),
-    Silentium und das Kulturquiz: Eine Vokabelzeit läuft auf EINEM Gerät, allein.
-    Quaterniō stand hier bis November 2026 als drittes Wortschatzspiel und ist aus dem
-    Projekt geflogen; für die beiden Wortschatzplätze je Takt bleiben Circus und Issa.
-  - Im Hauptmenü steht sie ganz oben, über der Trophäensammlung, und **ohne**
-    Fortschrittsband – der Fortschritt landet in den einzelnen Spielen.
 
 - **Bingo.html** – **Vokabel-Bingo** (Oktober 2026). Das erste Spiel, bei dem die ganze Klasse
   GLEICHZEITIG am eigenen Gerät spielt – und es braucht trotzdem keinen Server. Eine Datei,
@@ -1496,6 +1424,75 @@ Elf Gruppen, Höchststufe bei 10, also mit zehn von elf Spielen erreichbar.
 Es ist fachlich sortierte Arbeit (zwölf Themen, genau eines je Wort), es kostet nichts,
 und `test-thema.js` hält es weiter sauber. Wer ein Spiel sucht, das Wortfelder braucht,
 findet die Daten fertig vor – **die Einstufungen sind allerdings nie gegengelesen worden.**
+
+**`Lernzeit.html` und `lernzeit.js` (die VOKABELZEIT) sind im November 2026 wieder
+herausgeflogen** – Entscheidung des Fachlehrers: „die hat sich nicht bewährt". Sie stand
+einen Monat. Weg sind die beiden Dateien, die Karte ganz oben im Hauptmenü, die
+Einbindung in zehn Spielen und die Trophäe *Stammgast* ⏱️.
+
+*Was sie war:* ein Rahmen um mehrere Spiele – einmal die Lektionen wählen, dann ohne
+Rückfrage Wortschatz und Formen im Wechsel, bis die Uhr abgelaufen war; 5, 10 oder 15
+Minuten, die Spielfolge aus dem Datum gewürfelt, damit die ganze Klasse dieselbe hatte.
+
+- **DASS DER AUSBAU EINE ZEILE JE SPIEL GEKOSTET HAT, IST DER EIGENTLICHE EINTRAG HIER.**
+  Das tragende Prinzip war „ein Rahmen, kein Umbau": Kein Spiel wusste, dass es Teil einer
+  Vokabelzeit war. Das Modul griff an genau zwei Stellen an, die es ohnehin schon gab –
+  `LessonFilter.show` und der Haus-Knopf –, und beide gehörten nicht den Spielen. Deshalb
+  war das Entfernen zehnmal `<script src="lernzeit.js">`, eine Karte und eine Trophäe:
+  keine Rundenschleife zurückzubauen, keine Leiste in acht Vollbildspielen neu
+  auszurichten, kein Spiel neu zu prüfen. **Ein Format, das sich so billig wieder ausbauen
+  lässt, darf man ausprobieren** – und umgekehrt: Hätte jedes Spiel eine
+  Fortschrittsleiste bekommen, stünden jetzt zehn halb zurückgebaute Spiele da. Die
+  damalige Begründung gegen die Leiste war der fehlende Rand; billig rückbaubar zu sein
+  war ein Nebenprodukt und ist im Rückblick der größere Gewinn.
+- **Teuer war nicht der Code, sondern die TROPHÄE.** *Stammgast* geht mit, aus demselben
+  Grund wie *Kartensammler* bei Quaternio. Nur hängen an der Trophäenzahl auch die
+  Schwellen der Ehrentitel, und die sind gemessen – die Messung ist deshalb neu gelaufen
+  (`probe-titel.js`, Tabelle weiter unten). **Eine Trophäe anzulegen kostet drei Zeilen und
+  bindet die halbe Trophäenseite.** Wer das nächste Format baut, wartet damit, bis es sich
+  im Unterricht gehalten hat.
+- **DER „HAUS-KNOPF-FEHLER" WAR KEINER – aufgeklärt beim Ausbau, November 2026.** Im Buch
+  stand seit Oktober, der Klick auf den Haus-Knopf komme auf mehreren Seiten „gar nicht zum
+  Zug", nachweislich auch ohne Vokabelzeit, und die Ursache sei im Projekt nicht zu finden.
+  Sie steht im Knopf selbst:
+
+  ```html
+  <a href="index.html" id="global-menu-btn"
+     onclick="return confirm('Zurück zum Hauptmenü? Der aktuelle Fortschritt …')">🏠</a>
+  ```
+
+  **Ein `onclick`, das `false` zurückgibt, bricht den Link ab** – und in einem gesteuerten
+  Browser wird jeder Dialog automatisch WEGGEKLICKT, `confirm()` liefert also `false`. Auf
+  dem iPad erscheint die Rückfrage, die Schülerin tippt „OK", und es geht ins Menü. Gemessen
+  am Verhalten: `confirm` auf `true` umgebogen → der Klick führt auf `index.html`; die elf
+  Seiten MIT Rückfrage (Arcus, Circus, Duell, Issa, Kastell, Pendel, Principia, Pronomina,
+  Quiz, ViaRomana, Villa) verhalten sich alle so, die fünf OHNE (Bingo, Bomba,
+  Fliegenklatsche, Memoria, Scrīnium) führen schon auf den einfachen Klick weiter.
+  **Genau das meinte „auf mehreren Seiten".**
+
+  Zwei Lehren, und die zweite ist die unangenehme:
+  1. **Ein gesteuerter Browser ist kein Mensch.** Er beantwortet keine Dialoge, er
+     verschluckt sie – und was danach nicht passiert, sieht wie ein Fehler aus. Wer im
+     Browser etwas prüft, das an `confirm`, `alert` oder `prompt` hängt, biegt die Funktion
+     vorher um und schreibt dazu, dass er es getan hat.
+  2. **„Im Projekt nicht zu finden" war eine Vermutung und stand als Befund im Buch.** Der
+     eigene Handler in `lernzeit.js` war daraufhin gebaut – und er hat die Rückfrage
+     **stillschweigend abgeschafft**: Wer während einer Vokabelzeit auf den Haus-Knopf tippte,
+     verlor seine Runde ohne Nachfrage. Eine Notlösung gegen einen Fehler, den es nicht gab,
+     hat also eine Absicht zerstört, die es gab. **Ein ungeklärter Befund gehört als FRAGE
+     ins Buch, nicht als Tatsache** – sonst baut der Nächste darauf.
+- **Was an Messungen bleibt:** Der Spielvorrat ist schief – schon bei „bis L2" stehen VIER
+  Formenspiele bereit, aber nur ZWEI für die Bedeutung (Circus und Issa; Quaternio war das
+  dritte). Wer wieder etwas baut, das Spiele mischt, muss die Art je Platz festlegen,
+  sonst kommen vier Bedeutungsspielen hintereinander heraus.
+- **Die Tests sind nicht gelöscht, sondern abgelegt** in
+  `latein-tests/_abgelegt/vokabelzeit/` (Test, Gegenprobe mit vierzehn Schäden, zwei
+  Proben und `einbau-lernzeit.js`, das die Einbindung wiederherstellen könnte).
+  `latein-tests` steht nicht unter Versionskontrolle – gelöscht wäre endgültig. Sie liegen
+  **ausserhalb** des Hauptordners, damit der Gesamtlauf (`test-*.js`) sie nicht findet.
+- Stehengeblieben sind zwei Dinge mit Absicht: der `passt()`-Export in `lessonFilter.js`
+  (siehe oben) und der aufsummierte Wert unter `zaehler.lernzeiten` im Speicher – er
+  schadet dort nicht und wird nur noch gelesen, wenn es die Trophäe wieder gibt.
 
 ## Die Familie Cornelia
 
@@ -2267,17 +2264,20 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
     die alte. Nebenwirkung, die man kennen muss: Beim ersten Spielen nach dem Update steigen
     viele gleichzeitig auf – das ist gewollt und sieht wie ein Feuerwerk aus.
   - **Vier neue Trophäen**, alle an genau EINER neuen Zählstelle:
-    *Weitgereist* 🧭 (verschiedene Spiele, heute 1/3/5/7/8/9/10), *Hartnäckig* 🔁 (in der
-    Wiederholung nachgearbeitete Vokabeln, 10/25/50/100/200/350/600) und *Stammgast* ⏱️
-    (abgeschlossene Vokabelzeiten, 1/3/7/15/30/55/90). **Die vierte, *Kartensammler* 🃏
-    (abgelegte Quartette), ist im November mit Quaternio wieder gelöscht worden** – siehe
-    die Liste der entfernten Dateien.
+    *Weitgereist* 🧭 (verschiedene Spiele, heute 1/3/5/7/8/9/10) und *Hartnäckig* 🔁 (in der
+    Wiederholung nachgearbeitete Vokabeln, 10/25/50/100/200/350/600). **Zwei davon sind
+    wieder gelöscht**, beide im November 2026 mit dem Format, das sie fütterte:
+    *Kartensammler* 🃏 (abgelegte Quartette) mit Quaternio und *Stammgast* ⏱️
+    (abgeschlossene Vokabelzeiten) mit der Vokabelzeit – siehe die Liste der entfernten
+    Dateien. **Von vier neuen Trophäen haben zwei ein Jahr nicht überlebt**, und das ist
+    der Preis dafür, eine Trophäe an genau EIN Format zu hängen.
     - `recordCount(name, delta)` summiert auf – anders als `recordBest` (nur das Beste) und
       `recordVocabAttempt` (ein einzelnes Wort). **Der Name IST die Trophäen-Kennung**, es
       gibt also keine zweite Tabelle wie `BEST_ACHIEVEMENTS`, die abdriften könnte.
-    - Die Zählstellen stehen dort, wo die Sache EINMAL vorkommt: `review.js` (jede
-      Wiederholungsrunde endet dort, nicht in den zehn Spielen), `Lernzeit.html`,
-      `Quartett.html`. `test-achievements.js` prüft, dass jede Marke ihre Stelle hat –
+    - Die Zählstellen stehen dort, wo die Sache EINMAL vorkommt – heute ist das nur noch
+      `review.js` (jede Wiederholungsrunde endet dort, nicht in den zehn Spielen); die
+      beiden anderen, `Lernzeit.html` und `Quartett.html`, sind mit ihren Trophäen
+      gegangen. `test-achievements.js` prüft, dass jede Marke ihre Stelle hat –
       eine Trophäe, die niemand füttert, bliebe für immer auf null.
     - **Weitgereist kostet gar keine Zählstelle**: Welche Spiele jemand gespielt hat, steht
       längst in `games`. Gezählt wird über `SPIEL_GRUPPEN`, weil Pronomina! seine vier Modi
@@ -2344,18 +2344,28 @@ erzeugten Sätze pro Lektionsgrenze nichts Verfrühtes enthalten.
   - **DIE SCHWELLEN SIND GEMESSEN** (`probe-titel.js`: echtes `progress.js`, simuliertes
     Spielverhalten, zwei Trefferquoten). So wächst eine Sammlung:
 
-    | Trefferquote 80 % | Trophäen | ≥Gold | ≥Diamant | ≥Lorbeer | ≥Purpur | Triumphus |
-    |---|---|---|---|---|---|---|
-    | ein halbes Jahr | 28 | 10 | 8 | 4 | 3 | 1 |
-    | ein Schuljahr | 39 | 29 | 11 | 9 | 4 | 3 |
-    | zwei Jahre | 43 | 42 | 33 | 16 | 10 | 7 |
+    | Trefferquote 80 % | Trophäen | ≥Silber | ≥Gold | ≥Diamant | ≥Lorbeer | ≥Purpur | Triumphus |
+    |---|---|---|---|---|---|---|---|
+    | ein halbes Jahr | 26 | 25 | 9 | 7 | 4 | 3 | 1 |
+    | ein Schuljahr | 37 | 36 | 30 | 10 | 9 | 5 | 3 |
+    | zwei Jahre | 40 | 39 | 39 | 32 | 15 | 9 | 7 |
 
-    Bei 60 % Trefferquote sind es nach einem Jahr 15 statt 29 auf Gold. Daraus die
+    Bei 60 % Trefferquote sind es nach einem Jahr 13 statt 30 auf Gold. Daraus die
     Schwellen: Die *Corōna cīvica* fällt im ersten Halbjahr auch für Schwächere, der
     *Pater patriae* erst im zweiten Jahr und für niemanden früher.
+
+    **NEU GEMESSEN im November 2026**, nachdem *Stammgast* mit der Vokabelzeit gegangen
+    ist: Eine Trophäe weniger heißt an jeder Stufe eine weniger, und die Zahlen oben lagen
+    vorher um eins bis drei höher (28/39/43 Trophäen). **Keine Schwelle wird dadurch
+    unerreichbar** – nachgerechnet liegt jede weiterhin unter dem, was eine Sammlung zur
+    gleichen Zeit hergibt, und `test-achievements.js` prüft genau das. Dass die Spalte
+    ≥Silber dazugekommen ist, hat denselben Grund: An ihr hängt die *Corōna cīvica*, und
+    sie stand in der Tabelle nie drin. **Wer eine Trophäe hinzufügt oder löscht, rechnet
+    hier nach** – sonst verschiebt sich eine Titel-Schwelle still mit, und eine Schwelle,
+    die man nicht erreichen kann, sieht aus wie eine, die man noch nicht erreicht hat.
   - **Ein beabsichtigter Nebeneffekt: Die Titel verlangen BREITE.** Wer nur ein Spiel
     spielt, hat höchstens fünfzehn Trophäen und erreicht „20 auf Gold" nie – egal wie gut
-    er ist. Derselbe Gedanke wie bei der Vokabelzeit.
+    er ist.
   - Gezeigt werden sie in einem eigenen Abschnitt **ganz oben** auf der Trophäenseite, mit
     Fortschritt: „0 von 3 Trophäen auf Triumphus · ✓ 30 von 30 auf Gold". Ein Titel ohne
     sichtbaren Weg dorthin ist nur eine Ente – und bei *Pater patriae* mit seinen ZWEI

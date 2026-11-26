@@ -25,8 +25,11 @@ const LessonFilter = (() => {
 
        Dass das so wenig kostet, liegt daran, dass der Topf an genau einer
        Stelle gebaut wird. Die Zuordnung steht deshalb hier in `passt()` und
-       wird exportiert: lernzeit.js biegt `show` um und braucht dieselbe
-       Regel. Zwei Stellen mit derselben Logik driften auseinander. */
+       wird EXPORTIERT, obwohl heute nichts von aussen sie mehr braucht: Die
+       Vokabelzeit hat `show` umgebogen und dieselbe Regel gebraucht, und sie
+       ist im November 2026 aus dem Projekt genommen worden. Der Export bleibt,
+       weil die naechste Stelle, die den Topf anders aufbaut, genau hier wieder
+       anklopft - zwei Stellen mit derselben Logik driften auseinander. */
     function stufen(v) {
         const extra = Array.isArray(v.auchLektionen) ? v.auchLektionen : [];
         return [v.lesson].concat(extra).filter(l => l !== undefined && l !== null);
